@@ -32,10 +32,12 @@
 │   ├── ignore/             ← 記録しないファイル（R8）
 │   └── cli/                ← サブコマンド（R2 から順に）
 ├── extension/              ← srwr-view（VSCode 拡張、TypeScript）（R4）
-│   ├── src/                ← server（通信）・present・replay・live・controls・sidebar・extension
+│   ├── src/                ← server（通信）・timeline・lines・present・replay・live・controls・sidebar・config・extension
 │   ├── test/
 │   │   ├── fixtures/       ← 実物のテープ。ui-check/ は固定テープ3本の作業場。**書き換えない**（最初からある）
-│   │   └── golden/         ← コマの列の正解（22本）。**書き換えない**（最初からある）
+│   │   ├── golden/         ← コマの列の正解（22本）。**書き換えない**（最初からある）
+│   │   └── baseline/       ← 画面の基準（録画3本・ライブ2本。`capture.test.ts` が比べる）（R4）
+│   ├── media/srwr.svg      ← 左端のアイコン
 │   ├── package.json
 │   └── tsconfig.json
 ├── vim/                    ← srwr-view.vim（Vim9 script）（R5）
@@ -76,7 +78,7 @@
 - `vim/embed.go` は Go のパッケージ（`go:embed` は親ディレクトリを参照できないので、埋め込む側を `vim/` に置く）。`internal/cli` の `view` がこれを使う
 
 ### 確認の自動化
-- 画面の取得・比較・確認ページの生成は `tools/ui-check/`（Go で書く。シェルスクリプトは最小限）。`qsoku ui-check`・`ui-live`・`ui-open` から呼ぶ
+- 画面の取得・比較・確認ページの生成は `tools/ui-check/`（Go で書く。シェルスクリプトは最小限）。`qsoku ui-check`・`ui-live`・`ui-open` から呼ぶ。今あるのは `ui-open vscode`（作業場づくり、`.vsix`、VSCode を開く、ライブの追記）。VSCode の画面の取得は拡張のテスト（`extension/test/capture.ts`）にある
 - 基準（前回 OK だった画面の記録）はリポジトリに入れる。結果（`ui-check-result/`）は入れない
 
 ## 各ファイル・ディレクトリの補足

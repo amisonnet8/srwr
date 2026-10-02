@@ -1,0 +1,5602 @@
+[
+ {
+  "frame": 0,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0949-external/entry.go",
+    "column": 1,
+    "text": "package accesslog\n\nimport (\n\t\"errors\"\n\t\"fmt\"\n\t\"strconv\"\n\t\"strings\"\n\t\"time\"\n)\n\nconst maxLineLen = 4096 // これより長い行は壊れた行として扱う\n\n// Entry はアクセスログの1行。\ntype Entry struct {\n\tTime      time.Time\n\tIP        string\n\tMethod    string\n\tPath      string // クエリを除いたパス\n\tQuery     string\n\tStatus    int\n\tBytes     int\n\tLatencyMS float64 // 応答時間（ミリ秒）\n}\n\n// ErrTooLong は行が maxLineLen を超えたときのエラー。\nvar ErrTooLong = errors.New(\"accesslog: line too long\")\n\n// msPerUnit は応答時間の単位を、ミリ秒に直すための倍率。\n◆ 秒からミリ秒への倍率が間違っていて 1.5s が 150ms になっているため\nvar msPerUnit = map[string]float64{\"us\": 0.001, \"ms\": 1, \"s\": 100}\n\n// parseLatency は \"35ms\"、\"1.5s\"、\"500us\" のような応答時間をミリ秒にする。\nfunc parseLatency(s string) (float64, error) {\n\tfor _, unit := range []string{\"us\", \"ms\", \"s\"} {\n\t\tif !strings.HasSuffix(s, unit) {\n\t\t\tcontinue\n\t\t}\n\t\tv, err := strconv.ParseFloat(strings.TrimSuffix(s, unit), 64)\n\t\tif err != nil || v < 0 {\n\t\t\treturn 0, fmt.Errorf(\"accesslog: bad latency %q\", s)\n\t\t}\n\t\treturn v * msPerUnit[unit], nil\n\t}\n\treturn 0, fmt.Errorf(\"accesslog: unknown latency unit %q\", s)\n}\n\n// ParseLine は1行をパースする。形式は次のとおり。\n//\n//\t時刻(RFC3339) IP メソッド パス[?クエリ] ステータス バイト数 応答時間\n//\n// バイト数が \"-\" のときは 0 とする。時刻は UTC にそろえる。\nfunc ParseLine(line string) (Entry, error) {\n\tif len(line) > maxLineLen {\n\t\treturn Entry{}, ErrTooLong\n\t}\n\tf := strings.Fields(line)\n\tif len(f) != 7 {\n\t\treturn Entry{}, fmt.Errorf(\"accesslog: want 7 fields, got %d\", len(f))\n\t}\n\tt, err := time.Parse(time.RFC3339, f[0])\n\tif err != nil {\n\t\treturn Entry{}, fmt.Errorf(\"accesslog: bad time: %w\", err)\n\t}\n\tstatus, err := strconv.Atoi(f[4])\n\tif err != nil || status < 100 || status > 599 {\n\t\treturn Entry{}, fmt.Errorf(\"accesslog: bad status %q\", f[4])\n\t}\n\tn := 0\n\tif f[5] != \"-\" {\n\t\tif n, err = strconv.Atoi(f[5]); err != nil || n < 0 {\n\t\t\treturn Entry{}, fmt.Errorf(\"accesslog: bad bytes %q\", f[5])\n\t\t}\n\t}\n\tms, err := parseLatency(f[6])\n\tif err != nil {\n\t\treturn Entry{}, err\n\t}\n\tpath, query, _ := strings.Cut(f[3], \"?\")\n\treturn Entry{\n\t\tTime: t.UTC(), IP: f[1], Method: f[2], Path: path, Query: query,\n\t\tStatus: status, Bytes: n, LatencyMS: ms,\n\t}, nil\n}\n\n// ParseAll は複数行をパースする。空行と # で始まる行は読み飛ばし、\n// 壊れた行は捨てて bad に数える。\nfunc ParseAll(text string) (entries []Entry, bad int) {\n\tfor _, line := range strings.Split(text, \"\\n\") {\n\t\tline = strings.TrimSpace(line)\n\t\tif line == \"\" || strings.HasPrefix(line, \"#\") {\n\t\t\tcontinue\n\t\t}\n\t\te, err := ParseLine(line)\n\t\tif err != nil {\n\t\t\tbad++\n\t\t\tcontinue\n\t\t}\n\t\tentries = append(entries, e)\n\t}\n\treturn entries, bad\n}\n",
+    "options": {
+     "lineNumbers": 0
+    },
+    "reveal": 30,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#1d3a5c",
+       "light": {
+        "backgroundColor": "#cfe3fb"
+       }
+      },
+      "ranges": [
+       {
+        "line": 29
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#0b61a4",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 28
+       }
+      ]
+     },
+     {
+      "opts": {
+       "before": {
+        "color": {
+         "id": "editorLineNumber.foreground"
+        }
+       }
+      },
+      "ranges": [
+       {
+        "line": 0,
+        "before": "  1  "
+       },
+       {
+        "line": 1,
+        "before": "  2  "
+       },
+       {
+        "line": 2,
+        "before": "  3  "
+       },
+       {
+        "line": 3,
+        "before": "  4  "
+       },
+       {
+        "line": 4,
+        "before": "  5  "
+       },
+       {
+        "line": 5,
+        "before": "  6  "
+       },
+       {
+        "line": 6,
+        "before": "  7  "
+       },
+       {
+        "line": 7,
+        "before": "  8  "
+       },
+       {
+        "line": 8,
+        "before": "  9  "
+       },
+       {
+        "line": 9,
+        "before": " 10  "
+       },
+       {
+        "line": 10,
+        "before": " 11  "
+       },
+       {
+        "line": 11,
+        "before": " 12  "
+       },
+       {
+        "line": 12,
+        "before": " 13  "
+       },
+       {
+        "line": 13,
+        "before": " 14  "
+       },
+       {
+        "line": 14,
+        "before": " 15  "
+       },
+       {
+        "line": 15,
+        "before": " 16  "
+       },
+       {
+        "line": 16,
+        "before": " 17  "
+       },
+       {
+        "line": 17,
+        "before": " 18  "
+       },
+       {
+        "line": 18,
+        "before": " 19  "
+       },
+       {
+        "line": 19,
+        "before": " 20  "
+       },
+       {
+        "line": 20,
+        "before": " 21  "
+       },
+       {
+        "line": 21,
+        "before": " 22  "
+       },
+       {
+        "line": 22,
+        "before": " 23  "
+       },
+       {
+        "line": 23,
+        "before": " 24  "
+       },
+       {
+        "line": 24,
+        "before": " 25  "
+       },
+       {
+        "line": 25,
+        "before": " 26  "
+       },
+       {
+        "line": 26,
+        "before": " 27  "
+       },
+       {
+        "line": 27,
+        "before": " 28  "
+       },
+       {
+        "line": 28,
+        "before": "     "
+       },
+       {
+        "line": 29,
+        "before": " 29  "
+       },
+       {
+        "line": 30,
+        "before": " 30  "
+       },
+       {
+        "line": 31,
+        "before": " 31  "
+       },
+       {
+        "line": 32,
+        "before": " 32  "
+       },
+       {
+        "line": 33,
+        "before": " 33  "
+       },
+       {
+        "line": 34,
+        "before": " 34  "
+       },
+       {
+        "line": 35,
+        "before": " 35  "
+       },
+       {
+        "line": 36,
+        "before": " 36  "
+       },
+       {
+        "line": 37,
+        "before": " 37  "
+       },
+       {
+        "line": 38,
+        "before": " 38  "
+       },
+       {
+        "line": 39,
+        "before": " 39  "
+       },
+       {
+        "line": 40,
+        "before": " 40  "
+       },
+       {
+        "line": 41,
+        "before": " 41  "
+       },
+       {
+        "line": 42,
+        "before": " 42  "
+       },
+       {
+        "line": 43,
+        "before": " 43  "
+       },
+       {
+        "line": 44,
+        "before": " 44  "
+       },
+       {
+        "line": 45,
+        "before": " 45  "
+       },
+       {
+        "line": 46,
+        "before": " 46  "
+       },
+       {
+        "line": 47,
+        "before": " 47  "
+       },
+       {
+        "line": 48,
+        "before": " 48  "
+       },
+       {
+        "line": 49,
+        "before": " 49  "
+       },
+       {
+        "line": 50,
+        "before": " 50  "
+       },
+       {
+        "line": 51,
+        "before": " 51  "
+       },
+       {
+        "line": 52,
+        "before": " 52  "
+       },
+       {
+        "line": 53,
+        "before": " 53  "
+       },
+       {
+        "line": 54,
+        "before": " 54  "
+       },
+       {
+        "line": 55,
+        "before": " 55  "
+       },
+       {
+        "line": 56,
+        "before": " 56  "
+       },
+       {
+        "line": 57,
+        "before": " 57  "
+       },
+       {
+        "line": 58,
+        "before": " 58  "
+       },
+       {
+        "line": 59,
+        "before": " 59  "
+       },
+       {
+        "line": 60,
+        "before": " 60  "
+       },
+       {
+        "line": 61,
+        "before": " 61  "
+       },
+       {
+        "line": 62,
+        "before": " 62  "
+       },
+       {
+        "line": 63,
+        "before": " 63  "
+       },
+       {
+        "line": 64,
+        "before": " 64  "
+       },
+       {
+        "line": 65,
+        "before": " 65  "
+       },
+       {
+        "line": 66,
+        "before": " 66  "
+       },
+       {
+        "line": 67,
+        "before": " 67  "
+       },
+       {
+        "line": 68,
+        "before": " 68  "
+       },
+       {
+        "line": 69,
+        "before": " 69  "
+       },
+       {
+        "line": 70,
+        "before": " 70  "
+       },
+       {
+        "line": 71,
+        "before": " 71  "
+       },
+       {
+        "line": 72,
+        "before": " 72  "
+       },
+       {
+        "line": 73,
+        "before": " 73  "
+       },
+       {
+        "line": 74,
+        "before": " 74  "
+       },
+       {
+        "line": 75,
+        "before": " 75  "
+       },
+       {
+        "line": 76,
+        "before": " 76  "
+       },
+       {
+        "line": 77,
+        "before": " 77  "
+       },
+       {
+        "line": 78,
+        "before": " 78  "
+       },
+       {
+        "line": 79,
+        "before": " 79  "
+       },
+       {
+        "line": 80,
+        "before": " 80  "
+       },
+       {
+        "line": 81,
+        "before": " 81  "
+       },
+       {
+        "line": 82,
+        "before": " 82  "
+       },
+       {
+        "line": 83,
+        "before": " 83  "
+       },
+       {
+        "line": 84,
+        "before": " 84  "
+       },
+       {
+        "line": 85,
+        "before": " 85  "
+       },
+       {
+        "line": 86,
+        "before": " 86  "
+       },
+       {
+        "line": 87,
+        "before": " 87  "
+       },
+       {
+        "line": 88,
+        "before": " 88  "
+       },
+       {
+        "line": 89,
+        "before": " 89  "
+       },
+       {
+        "line": 90,
+        "before": " 90  "
+       },
+       {
+        "line": 91,
+        "before": " 91  "
+       },
+       {
+        "line": 92,
+        "before": " 92  "
+       },
+       {
+        "line": 93,
+        "before": " 93  "
+       },
+       {
+        "line": 94,
+        "before": " 94  "
+       },
+       {
+        "line": 95,
+        "before": " 95  "
+       },
+       {
+        "line": 96,
+        "before": " 96  "
+       },
+       {
+        "line": 97,
+        "before": " 97  "
+       },
+       {
+        "line": 98,
+        "before": " 98  "
+       },
+       {
+        "line": 99,
+        "before": " 99  "
+       },
+       {
+        "line": 100,
+        "before": "100  "
+       },
+       {
+        "line": 101,
+        "before": "101  "
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  entry.go:29",
+    "description": "秒からミリ秒への倍率が間違っていて 1.5s が 150ms になっているため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  stats.go:45",
+    "description": "Merge の平均が件数を無視した単純平均になっているため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  stats.go:81-89",
+    "description": "PerMinute が「分」の数字だけで集計していて、別の時の同じ分が混ざるため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  replace  entry.go:29",
+    "description": "1秒は1000ミリ秒なので",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "5  replace  stats.go:45-47",
+    "description": "件数で重み付けしないと全体の平均にならず、空の集計を混ぜると平均が半分になってしまうため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "6  外部変更  stats.go:1-126",
+    "description": "srwr の外でファイルが変わった",
+    "color": "charts.purple",
+    "kind": "external"
+   },
+   {
+    "label": "7  replace  stats.go:83-86",
+    "description": "分の先頭時刻そのものをキーにすれば、10:59 と 11:59 のような別の時が混ざらないため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "8  select  stats.go:87-90",
+    "description": "start マップを消したので、バケットを作るループもキーの時刻を使うように直す必要があるため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "9  replace  stats.go:87-90",
+    "description": "キー自体が分の先頭時刻になったので、それをそのまま Start に使えるため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "10  録画後  entry.go:1-100",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   },
+   {
+    "label": "11  録画後  stats.go:1-121",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) 戻る",
+    "color": "rgba(255, 255, 255, 0.4)",
+    "visible": true
+   },
+   {
+    "text": "進む $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "1/11",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0949-external",
+  "quickPick": {
+   "placeHolder": "再生するテープを選ぶ",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9操作 · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7操作 · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10操作 · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 1,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0949-external/stats.go",
+    "column": 1,
+    "text": "package accesslog\n\nimport (\n\t\"math\"\n\t\"sort\"\n\t\"time\"\n)\n\n// Summary は複数のエントリをまとめた集計。\ntype Summary struct {\n\tCount  int\n\tErrors int // ステータスが 400 以上の件数\n\tBytes  int\n\tAvgMS  float64\n\tMaxMS  float64\n}\n\n// Summarize はエントリを集計する。\nfunc Summarize(entries []Entry) Summary {\n\ts := Summary{Count: len(entries)}\n\tif s.Count == 0 {\n\t\treturn s\n\t}\n\tsum := 0.0\n\tfor _, e := range entries {\n\t\tif e.Status >= 400 {\n\t\t\ts.Errors++\n\t\t}\n\t\ts.Bytes += e.Bytes\n\t\tsum += e.LatencyMS\n\t\ts.MaxMS = math.Max(s.MaxMS, e.LatencyMS)\n\t}\n\ts.AvgMS = sum / float64(s.Count)\n\treturn s\n}\n\n// Merge は別々に集計した2つの Summary を1つにまとめる（ログを分割して処理するとき用）。\nfunc Merge(a, b Summary) Summary {\n\tout := Summary{\n\t\tCount:  a.Count + b.Count,\n\t\tErrors: a.Errors + b.Errors,\n\t\tBytes:  a.Bytes + b.Bytes,\n\t\tMaxMS:  math.Max(a.MaxMS, b.MaxMS),\n\t}\n◆ Merge の平均が件数を無視した単純平均になっているため\n\tout.AvgMS = (a.AvgMS + b.AvgMS) / 2\n\treturn out\n}\n\n// ErrorRate はエラーの割合（パーセント）を返す。件数が 0 なら 0。\nfunc (s Summary) ErrorRate() float64 {\n\tif s.Count == 0 {\n\t\treturn 0\n\t}\n\treturn float64(s.Errors) * 100 / float64(s.Count)\n}\n\n// Percentile は応答時間の p パーセンタイル（最近順位法）を返す。\n// 空のときは 0。エントリの並びは変えない。\nfunc Percentile(entries []Entry, p float64) float64 {\n\tif len(entries) == 0 {\n\t\treturn 0\n\t}\n\tms := make([]float64, len(entries))\n\tfor i, e := range entries {\n\t\tms[i] = e.LatencyMS\n\t}\n\tsort.Float64s(ms)\n\trank := int(math.Ceil(p / 100 * float64(len(ms))))\n\trank = min(max(rank, 1), len(ms))\n\treturn ms[rank-1]\n}\n\n// Bucket は1分ぶんのリクエスト数。\ntype Bucket struct {\n\tStart time.Time // 分の先頭\n\tCount int\n}\n\n// PerMinute は分ごとのリクエスト数を、時刻の早い順に返す。\nfunc PerMinute(entries []Entry) []Bucket {\n\tcounts := make(map[int]int)\n\tstart := make(map[int]time.Time)\n\tfor _, e := range entries {\n\t\tk := e.Time.Minute()\n\t\tcounts[k]++\n\t\tif _, ok := start[k]; !ok {\n\t\t\tstart[k] = e.Time.Truncate(time.Minute)\n\t\t}\n\t}\n\tbuckets := make([]Bucket, 0, len(counts))\n\tfor k, n := range counts {\n\t\tbuckets = append(buckets, Bucket{Start: start[k], Count: n})\n\t}\n\tsort.Slice(buckets, func(i, j int) bool { return buckets[i].Start.Before(buckets[j].Start) })\n\treturn buckets\n}\n\n// PathCount はパスごとのリクエスト数。\ntype PathCount struct {\n\tPath  string\n\tCount int\n}\n\n// TopPaths はリクエストの多いパスを上位 n 件返す。同数ならパスの辞書順。\nfunc TopPaths(entries []Entry, n int) []PathCount {\n\tcounts := make(map[string]int)\n\tfor _, e := range entries {\n\t\tcounts[e.Path]++\n\t}\n\tout := make([]PathCount, 0, len(counts))\n\tfor p, c := range counts {\n\t\tout = append(out, PathCount{p, c})\n\t}\n\tsort.Slice(out, func(i, j int) bool {\n\t\tif out[i].Count != out[j].Count {\n\t\t\treturn out[i].Count > out[j].Count\n\t\t}\n\t\treturn out[i].Path < out[j].Path\n\t})\n\tif len(out) > n {\n\t\tout = out[:n]\n\t}\n\treturn out\n}\n",
+    "options": {
+     "lineNumbers": 0
+    },
+    "reveal": 46,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#1d3a5c",
+       "light": {
+        "backgroundColor": "#cfe3fb"
+       }
+      },
+      "ranges": [
+       {
+        "line": 45
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#0b61a4",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 44
+       }
+      ]
+     },
+     {
+      "opts": {
+       "before": {
+        "color": {
+         "id": "editorLineNumber.foreground"
+        }
+       }
+      },
+      "ranges": [
+       {
+        "line": 0,
+        "before": "  1  "
+       },
+       {
+        "line": 1,
+        "before": "  2  "
+       },
+       {
+        "line": 2,
+        "before": "  3  "
+       },
+       {
+        "line": 3,
+        "before": "  4  "
+       },
+       {
+        "line": 4,
+        "before": "  5  "
+       },
+       {
+        "line": 5,
+        "before": "  6  "
+       },
+       {
+        "line": 6,
+        "before": "  7  "
+       },
+       {
+        "line": 7,
+        "before": "  8  "
+       },
+       {
+        "line": 8,
+        "before": "  9  "
+       },
+       {
+        "line": 9,
+        "before": " 10  "
+       },
+       {
+        "line": 10,
+        "before": " 11  "
+       },
+       {
+        "line": 11,
+        "before": " 12  "
+       },
+       {
+        "line": 12,
+        "before": " 13  "
+       },
+       {
+        "line": 13,
+        "before": " 14  "
+       },
+       {
+        "line": 14,
+        "before": " 15  "
+       },
+       {
+        "line": 15,
+        "before": " 16  "
+       },
+       {
+        "line": 16,
+        "before": " 17  "
+       },
+       {
+        "line": 17,
+        "before": " 18  "
+       },
+       {
+        "line": 18,
+        "before": " 19  "
+       },
+       {
+        "line": 19,
+        "before": " 20  "
+       },
+       {
+        "line": 20,
+        "before": " 21  "
+       },
+       {
+        "line": 21,
+        "before": " 22  "
+       },
+       {
+        "line": 22,
+        "before": " 23  "
+       },
+       {
+        "line": 23,
+        "before": " 24  "
+       },
+       {
+        "line": 24,
+        "before": " 25  "
+       },
+       {
+        "line": 25,
+        "before": " 26  "
+       },
+       {
+        "line": 26,
+        "before": " 27  "
+       },
+       {
+        "line": 27,
+        "before": " 28  "
+       },
+       {
+        "line": 28,
+        "before": " 29  "
+       },
+       {
+        "line": 29,
+        "before": " 30  "
+       },
+       {
+        "line": 30,
+        "before": " 31  "
+       },
+       {
+        "line": 31,
+        "before": " 32  "
+       },
+       {
+        "line": 32,
+        "before": " 33  "
+       },
+       {
+        "line": 33,
+        "before": " 34  "
+       },
+       {
+        "line": 34,
+        "before": " 35  "
+       },
+       {
+        "line": 35,
+        "before": " 36  "
+       },
+       {
+        "line": 36,
+        "before": " 37  "
+       },
+       {
+        "line": 37,
+        "before": " 38  "
+       },
+       {
+        "line": 38,
+        "before": " 39  "
+       },
+       {
+        "line": 39,
+        "before": " 40  "
+       },
+       {
+        "line": 40,
+        "before": " 41  "
+       },
+       {
+        "line": 41,
+        "before": " 42  "
+       },
+       {
+        "line": 42,
+        "before": " 43  "
+       },
+       {
+        "line": 43,
+        "before": " 44  "
+       },
+       {
+        "line": 44,
+        "before": "     "
+       },
+       {
+        "line": 45,
+        "before": " 45  "
+       },
+       {
+        "line": 46,
+        "before": " 46  "
+       },
+       {
+        "line": 47,
+        "before": " 47  "
+       },
+       {
+        "line": 48,
+        "before": " 48  "
+       },
+       {
+        "line": 49,
+        "before": " 49  "
+       },
+       {
+        "line": 50,
+        "before": " 50  "
+       },
+       {
+        "line": 51,
+        "before": " 51  "
+       },
+       {
+        "line": 52,
+        "before": " 52  "
+       },
+       {
+        "line": 53,
+        "before": " 53  "
+       },
+       {
+        "line": 54,
+        "before": " 54  "
+       },
+       {
+        "line": 55,
+        "before": " 55  "
+       },
+       {
+        "line": 56,
+        "before": " 56  "
+       },
+       {
+        "line": 57,
+        "before": " 57  "
+       },
+       {
+        "line": 58,
+        "before": " 58  "
+       },
+       {
+        "line": 59,
+        "before": " 59  "
+       },
+       {
+        "line": 60,
+        "before": " 60  "
+       },
+       {
+        "line": 61,
+        "before": " 61  "
+       },
+       {
+        "line": 62,
+        "before": " 62  "
+       },
+       {
+        "line": 63,
+        "before": " 63  "
+       },
+       {
+        "line": 64,
+        "before": " 64  "
+       },
+       {
+        "line": 65,
+        "before": " 65  "
+       },
+       {
+        "line": 66,
+        "before": " 66  "
+       },
+       {
+        "line": 67,
+        "before": " 67  "
+       },
+       {
+        "line": 68,
+        "before": " 68  "
+       },
+       {
+        "line": 69,
+        "before": " 69  "
+       },
+       {
+        "line": 70,
+        "before": " 70  "
+       },
+       {
+        "line": 71,
+        "before": " 71  "
+       },
+       {
+        "line": 72,
+        "before": " 72  "
+       },
+       {
+        "line": 73,
+        "before": " 73  "
+       },
+       {
+        "line": 74,
+        "before": " 74  "
+       },
+       {
+        "line": 75,
+        "before": " 75  "
+       },
+       {
+        "line": 76,
+        "before": " 76  "
+       },
+       {
+        "line": 77,
+        "before": " 77  "
+       },
+       {
+        "line": 78,
+        "before": " 78  "
+       },
+       {
+        "line": 79,
+        "before": " 79  "
+       },
+       {
+        "line": 80,
+        "before": " 80  "
+       },
+       {
+        "line": 81,
+        "before": " 81  "
+       },
+       {
+        "line": 82,
+        "before": " 82  "
+       },
+       {
+        "line": 83,
+        "before": " 83  "
+       },
+       {
+        "line": 84,
+        "before": " 84  "
+       },
+       {
+        "line": 85,
+        "before": " 85  "
+       },
+       {
+        "line": 86,
+        "before": " 86  "
+       },
+       {
+        "line": 87,
+        "before": " 87  "
+       },
+       {
+        "line": 88,
+        "before": " 88  "
+       },
+       {
+        "line": 89,
+        "before": " 89  "
+       },
+       {
+        "line": 90,
+        "before": " 90  "
+       },
+       {
+        "line": 91,
+        "before": " 91  "
+       },
+       {
+        "line": 92,
+        "before": " 92  "
+       },
+       {
+        "line": 93,
+        "before": " 93  "
+       },
+       {
+        "line": 94,
+        "before": " 94  "
+       },
+       {
+        "line": 95,
+        "before": " 95  "
+       },
+       {
+        "line": 96,
+        "before": " 96  "
+       },
+       {
+        "line": 97,
+        "before": " 97  "
+       },
+       {
+        "line": 98,
+        "before": " 98  "
+       },
+       {
+        "line": 99,
+        "before": " 99  "
+       },
+       {
+        "line": 100,
+        "before": "100  "
+       },
+       {
+        "line": 101,
+        "before": "101  "
+       },
+       {
+        "line": 102,
+        "before": "102  "
+       },
+       {
+        "line": 103,
+        "before": "103  "
+       },
+       {
+        "line": 104,
+        "before": "104  "
+       },
+       {
+        "line": 105,
+        "before": "105  "
+       },
+       {
+        "line": 106,
+        "before": "106  "
+       },
+       {
+        "line": 107,
+        "before": "107  "
+       },
+       {
+        "line": 108,
+        "before": "108  "
+       },
+       {
+        "line": 109,
+        "before": "109  "
+       },
+       {
+        "line": 110,
+        "before": "110  "
+       },
+       {
+        "line": 111,
+        "before": "111  "
+       },
+       {
+        "line": 112,
+        "before": "112  "
+       },
+       {
+        "line": 113,
+        "before": "113  "
+       },
+       {
+        "line": 114,
+        "before": "114  "
+       },
+       {
+        "line": 115,
+        "before": "115  "
+       },
+       {
+        "line": 116,
+        "before": "116  "
+       },
+       {
+        "line": 117,
+        "before": "117  "
+       },
+       {
+        "line": 118,
+        "before": "118  "
+       },
+       {
+        "line": 119,
+        "before": "119  "
+       },
+       {
+        "line": 120,
+        "before": "120  "
+       },
+       {
+        "line": 121,
+        "before": "121  "
+       },
+       {
+        "line": 122,
+        "before": "122  "
+       },
+       {
+        "line": 123,
+        "before": "123  "
+       },
+       {
+        "line": 124,
+        "before": "124  "
+       },
+       {
+        "line": 125,
+        "before": "125  "
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  entry.go:29",
+    "description": "秒からミリ秒への倍率が間違っていて 1.5s が 150ms になっているため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  stats.go:45",
+    "description": "Merge の平均が件数を無視した単純平均になっているため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  stats.go:81-89",
+    "description": "PerMinute が「分」の数字だけで集計していて、別の時の同じ分が混ざるため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  replace  entry.go:29",
+    "description": "1秒は1000ミリ秒なので",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "5  replace  stats.go:45-47",
+    "description": "件数で重み付けしないと全体の平均にならず、空の集計を混ぜると平均が半分になってしまうため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "6  外部変更  stats.go:1-126",
+    "description": "srwr の外でファイルが変わった",
+    "color": "charts.purple",
+    "kind": "external"
+   },
+   {
+    "label": "7  replace  stats.go:83-86",
+    "description": "分の先頭時刻そのものをキーにすれば、10:59 と 11:59 のような別の時が混ざらないため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "8  select  stats.go:87-90",
+    "description": "start マップを消したので、バケットを作るループもキーの時刻を使うように直す必要があるため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "9  replace  stats.go:87-90",
+    "description": "キー自体が分の先頭時刻になったので、それをそのまま Start に使えるため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "10  録画後  entry.go:1-100",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   },
+   {
+    "label": "11  録画後  stats.go:1-121",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) 戻る",
+    "visible": true
+   },
+   {
+    "text": "進む $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "2/11",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0949-external",
+  "quickPick": {
+   "placeHolder": "再生するテープを選ぶ",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9操作 · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7操作 · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10操作 · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 2,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0949-external/stats.go",
+    "column": 1,
+    "text": "package accesslog\n\nimport (\n\t\"math\"\n\t\"sort\"\n\t\"time\"\n)\n\n// Summary は複数のエントリをまとめた集計。\ntype Summary struct {\n\tCount  int\n\tErrors int // ステータスが 400 以上の件数\n\tBytes  int\n\tAvgMS  float64\n\tMaxMS  float64\n}\n\n// Summarize はエントリを集計する。\nfunc Summarize(entries []Entry) Summary {\n\ts := Summary{Count: len(entries)}\n\tif s.Count == 0 {\n\t\treturn s\n\t}\n\tsum := 0.0\n\tfor _, e := range entries {\n\t\tif e.Status >= 400 {\n\t\t\ts.Errors++\n\t\t}\n\t\ts.Bytes += e.Bytes\n\t\tsum += e.LatencyMS\n\t\ts.MaxMS = math.Max(s.MaxMS, e.LatencyMS)\n\t}\n\ts.AvgMS = sum / float64(s.Count)\n\treturn s\n}\n\n// Merge は別々に集計した2つの Summary を1つにまとめる（ログを分割して処理するとき用）。\nfunc Merge(a, b Summary) Summary {\n\tout := Summary{\n\t\tCount:  a.Count + b.Count,\n\t\tErrors: a.Errors + b.Errors,\n\t\tBytes:  a.Bytes + b.Bytes,\n\t\tMaxMS:  math.Max(a.MaxMS, b.MaxMS),\n\t}\n\tout.AvgMS = (a.AvgMS + b.AvgMS) / 2\n\treturn out\n}\n\n// ErrorRate はエラーの割合（パーセント）を返す。件数が 0 なら 0。\nfunc (s Summary) ErrorRate() float64 {\n\tif s.Count == 0 {\n\t\treturn 0\n\t}\n\treturn float64(s.Errors) * 100 / float64(s.Count)\n}\n\n// Percentile は応答時間の p パーセンタイル（最近順位法）を返す。\n// 空のときは 0。エントリの並びは変えない。\nfunc Percentile(entries []Entry, p float64) float64 {\n\tif len(entries) == 0 {\n\t\treturn 0\n\t}\n\tms := make([]float64, len(entries))\n\tfor i, e := range entries {\n\t\tms[i] = e.LatencyMS\n\t}\n\tsort.Float64s(ms)\n\trank := int(math.Ceil(p / 100 * float64(len(ms))))\n\trank = min(max(rank, 1), len(ms))\n\treturn ms[rank-1]\n}\n\n// Bucket は1分ぶんのリクエスト数。\ntype Bucket struct {\n\tStart time.Time // 分の先頭\n\tCount int\n}\n\n// PerMinute は分ごとのリクエスト数を、時刻の早い順に返す。\nfunc PerMinute(entries []Entry) []Bucket {\n◆ PerMinute が「分」の数字だけで集計していて、別の時の同じ分が混ざるため\n\tcounts := make(map[int]int)\n\tstart := make(map[int]time.Time)\n\tfor _, e := range entries {\n\t\tk := e.Time.Minute()\n\t\tcounts[k]++\n\t\tif _, ok := start[k]; !ok {\n\t\t\tstart[k] = e.Time.Truncate(time.Minute)\n\t\t}\n\t}\n\tbuckets := make([]Bucket, 0, len(counts))\n\tfor k, n := range counts {\n\t\tbuckets = append(buckets, Bucket{Start: start[k], Count: n})\n\t}\n\tsort.Slice(buckets, func(i, j int) bool { return buckets[i].Start.Before(buckets[j].Start) })\n\treturn buckets\n}\n\n// PathCount はパスごとのリクエスト数。\ntype PathCount struct {\n\tPath  string\n\tCount int\n}\n\n// TopPaths はリクエストの多いパスを上位 n 件返す。同数ならパスの辞書順。\nfunc TopPaths(entries []Entry, n int) []PathCount {\n\tcounts := make(map[string]int)\n\tfor _, e := range entries {\n\t\tcounts[e.Path]++\n\t}\n\tout := make([]PathCount, 0, len(counts))\n\tfor p, c := range counts {\n\t\tout = append(out, PathCount{p, c})\n\t}\n\tsort.Slice(out, func(i, j int) bool {\n\t\tif out[i].Count != out[j].Count {\n\t\t\treturn out[i].Count > out[j].Count\n\t\t}\n\t\treturn out[i].Path < out[j].Path\n\t})\n\tif len(out) > n {\n\t\tout = out[:n]\n\t}\n\treturn out\n}\n",
+    "options": {
+     "lineNumbers": 0
+    },
+    "reveal": 82,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#1d3a5c",
+       "light": {
+        "backgroundColor": "#cfe3fb"
+       }
+      },
+      "ranges": [
+       {
+        "line": 81
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#0b61a4",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 80
+       }
+      ]
+     },
+     {
+      "opts": {
+       "before": {
+        "color": {
+         "id": "editorLineNumber.foreground"
+        }
+       }
+      },
+      "ranges": [
+       {
+        "line": 0,
+        "before": "  1  "
+       },
+       {
+        "line": 1,
+        "before": "  2  "
+       },
+       {
+        "line": 2,
+        "before": "  3  "
+       },
+       {
+        "line": 3,
+        "before": "  4  "
+       },
+       {
+        "line": 4,
+        "before": "  5  "
+       },
+       {
+        "line": 5,
+        "before": "  6  "
+       },
+       {
+        "line": 6,
+        "before": "  7  "
+       },
+       {
+        "line": 7,
+        "before": "  8  "
+       },
+       {
+        "line": 8,
+        "before": "  9  "
+       },
+       {
+        "line": 9,
+        "before": " 10  "
+       },
+       {
+        "line": 10,
+        "before": " 11  "
+       },
+       {
+        "line": 11,
+        "before": " 12  "
+       },
+       {
+        "line": 12,
+        "before": " 13  "
+       },
+       {
+        "line": 13,
+        "before": " 14  "
+       },
+       {
+        "line": 14,
+        "before": " 15  "
+       },
+       {
+        "line": 15,
+        "before": " 16  "
+       },
+       {
+        "line": 16,
+        "before": " 17  "
+       },
+       {
+        "line": 17,
+        "before": " 18  "
+       },
+       {
+        "line": 18,
+        "before": " 19  "
+       },
+       {
+        "line": 19,
+        "before": " 20  "
+       },
+       {
+        "line": 20,
+        "before": " 21  "
+       },
+       {
+        "line": 21,
+        "before": " 22  "
+       },
+       {
+        "line": 22,
+        "before": " 23  "
+       },
+       {
+        "line": 23,
+        "before": " 24  "
+       },
+       {
+        "line": 24,
+        "before": " 25  "
+       },
+       {
+        "line": 25,
+        "before": " 26  "
+       },
+       {
+        "line": 26,
+        "before": " 27  "
+       },
+       {
+        "line": 27,
+        "before": " 28  "
+       },
+       {
+        "line": 28,
+        "before": " 29  "
+       },
+       {
+        "line": 29,
+        "before": " 30  "
+       },
+       {
+        "line": 30,
+        "before": " 31  "
+       },
+       {
+        "line": 31,
+        "before": " 32  "
+       },
+       {
+        "line": 32,
+        "before": " 33  "
+       },
+       {
+        "line": 33,
+        "before": " 34  "
+       },
+       {
+        "line": 34,
+        "before": " 35  "
+       },
+       {
+        "line": 35,
+        "before": " 36  "
+       },
+       {
+        "line": 36,
+        "before": " 37  "
+       },
+       {
+        "line": 37,
+        "before": " 38  "
+       },
+       {
+        "line": 38,
+        "before": " 39  "
+       },
+       {
+        "line": 39,
+        "before": " 40  "
+       },
+       {
+        "line": 40,
+        "before": " 41  "
+       },
+       {
+        "line": 41,
+        "before": " 42  "
+       },
+       {
+        "line": 42,
+        "before": " 43  "
+       },
+       {
+        "line": 43,
+        "before": " 44  "
+       },
+       {
+        "line": 44,
+        "before": " 45  "
+       },
+       {
+        "line": 45,
+        "before": " 46  "
+       },
+       {
+        "line": 46,
+        "before": " 47  "
+       },
+       {
+        "line": 47,
+        "before": " 48  "
+       },
+       {
+        "line": 48,
+        "before": " 49  "
+       },
+       {
+        "line": 49,
+        "before": " 50  "
+       },
+       {
+        "line": 50,
+        "before": " 51  "
+       },
+       {
+        "line": 51,
+        "before": " 52  "
+       },
+       {
+        "line": 52,
+        "before": " 53  "
+       },
+       {
+        "line": 53,
+        "before": " 54  "
+       },
+       {
+        "line": 54,
+        "before": " 55  "
+       },
+       {
+        "line": 55,
+        "before": " 56  "
+       },
+       {
+        "line": 56,
+        "before": " 57  "
+       },
+       {
+        "line": 57,
+        "before": " 58  "
+       },
+       {
+        "line": 58,
+        "before": " 59  "
+       },
+       {
+        "line": 59,
+        "before": " 60  "
+       },
+       {
+        "line": 60,
+        "before": " 61  "
+       },
+       {
+        "line": 61,
+        "before": " 62  "
+       },
+       {
+        "line": 62,
+        "before": " 63  "
+       },
+       {
+        "line": 63,
+        "before": " 64  "
+       },
+       {
+        "line": 64,
+        "before": " 65  "
+       },
+       {
+        "line": 65,
+        "before": " 66  "
+       },
+       {
+        "line": 66,
+        "before": " 67  "
+       },
+       {
+        "line": 67,
+        "before": " 68  "
+       },
+       {
+        "line": 68,
+        "before": " 69  "
+       },
+       {
+        "line": 69,
+        "before": " 70  "
+       },
+       {
+        "line": 70,
+        "before": " 71  "
+       },
+       {
+        "line": 71,
+        "before": " 72  "
+       },
+       {
+        "line": 72,
+        "before": " 73  "
+       },
+       {
+        "line": 73,
+        "before": " 74  "
+       },
+       {
+        "line": 74,
+        "before": " 75  "
+       },
+       {
+        "line": 75,
+        "before": " 76  "
+       },
+       {
+        "line": 76,
+        "before": " 77  "
+       },
+       {
+        "line": 77,
+        "before": " 78  "
+       },
+       {
+        "line": 78,
+        "before": " 79  "
+       },
+       {
+        "line": 79,
+        "before": " 80  "
+       },
+       {
+        "line": 80,
+        "before": "     "
+       },
+       {
+        "line": 81,
+        "before": " 81  "
+       },
+       {
+        "line": 82,
+        "before": " 82  "
+       },
+       {
+        "line": 83,
+        "before": " 83  "
+       },
+       {
+        "line": 84,
+        "before": " 84  "
+       },
+       {
+        "line": 85,
+        "before": " 85  "
+       },
+       {
+        "line": 86,
+        "before": " 86  "
+       },
+       {
+        "line": 87,
+        "before": " 87  "
+       },
+       {
+        "line": 88,
+        "before": " 88  "
+       },
+       {
+        "line": 89,
+        "before": " 89  "
+       },
+       {
+        "line": 90,
+        "before": " 90  "
+       },
+       {
+        "line": 91,
+        "before": " 91  "
+       },
+       {
+        "line": 92,
+        "before": " 92  "
+       },
+       {
+        "line": 93,
+        "before": " 93  "
+       },
+       {
+        "line": 94,
+        "before": " 94  "
+       },
+       {
+        "line": 95,
+        "before": " 95  "
+       },
+       {
+        "line": 96,
+        "before": " 96  "
+       },
+       {
+        "line": 97,
+        "before": " 97  "
+       },
+       {
+        "line": 98,
+        "before": " 98  "
+       },
+       {
+        "line": 99,
+        "before": " 99  "
+       },
+       {
+        "line": 100,
+        "before": "100  "
+       },
+       {
+        "line": 101,
+        "before": "101  "
+       },
+       {
+        "line": 102,
+        "before": "102  "
+       },
+       {
+        "line": 103,
+        "before": "103  "
+       },
+       {
+        "line": 104,
+        "before": "104  "
+       },
+       {
+        "line": 105,
+        "before": "105  "
+       },
+       {
+        "line": 106,
+        "before": "106  "
+       },
+       {
+        "line": 107,
+        "before": "107  "
+       },
+       {
+        "line": 108,
+        "before": "108  "
+       },
+       {
+        "line": 109,
+        "before": "109  "
+       },
+       {
+        "line": 110,
+        "before": "110  "
+       },
+       {
+        "line": 111,
+        "before": "111  "
+       },
+       {
+        "line": 112,
+        "before": "112  "
+       },
+       {
+        "line": 113,
+        "before": "113  "
+       },
+       {
+        "line": 114,
+        "before": "114  "
+       },
+       {
+        "line": 115,
+        "before": "115  "
+       },
+       {
+        "line": 116,
+        "before": "116  "
+       },
+       {
+        "line": 117,
+        "before": "117  "
+       },
+       {
+        "line": 118,
+        "before": "118  "
+       },
+       {
+        "line": 119,
+        "before": "119  "
+       },
+       {
+        "line": 120,
+        "before": "120  "
+       },
+       {
+        "line": 121,
+        "before": "121  "
+       },
+       {
+        "line": 122,
+        "before": "122  "
+       },
+       {
+        "line": 123,
+        "before": "123  "
+       },
+       {
+        "line": 124,
+        "before": "124  "
+       },
+       {
+        "line": 125,
+        "before": "125  "
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  entry.go:29",
+    "description": "秒からミリ秒への倍率が間違っていて 1.5s が 150ms になっているため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  stats.go:45",
+    "description": "Merge の平均が件数を無視した単純平均になっているため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  stats.go:81-89",
+    "description": "PerMinute が「分」の数字だけで集計していて、別の時の同じ分が混ざるため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  replace  entry.go:29",
+    "description": "1秒は1000ミリ秒なので",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "5  replace  stats.go:45-47",
+    "description": "件数で重み付けしないと全体の平均にならず、空の集計を混ぜると平均が半分になってしまうため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "6  外部変更  stats.go:1-126",
+    "description": "srwr の外でファイルが変わった",
+    "color": "charts.purple",
+    "kind": "external"
+   },
+   {
+    "label": "7  replace  stats.go:83-86",
+    "description": "分の先頭時刻そのものをキーにすれば、10:59 と 11:59 のような別の時が混ざらないため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "8  select  stats.go:87-90",
+    "description": "start マップを消したので、バケットを作るループもキーの時刻を使うように直す必要があるため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "9  replace  stats.go:87-90",
+    "description": "キー自体が分の先頭時刻になったので、それをそのまま Start に使えるため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "10  録画後  entry.go:1-100",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   },
+   {
+    "label": "11  録画後  stats.go:1-121",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) 戻る",
+    "visible": true
+   },
+   {
+    "text": "進む $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "3/11",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0949-external",
+  "quickPick": {
+   "placeHolder": "再生するテープを選ぶ",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9操作 · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7操作 · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10操作 · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 3,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0949-external/entry.go",
+    "column": 1,
+    "text": "package accesslog\n\nimport (\n\t\"errors\"\n\t\"fmt\"\n\t\"strconv\"\n\t\"strings\"\n\t\"time\"\n)\n\nconst maxLineLen = 4096 // これより長い行は壊れた行として扱う\n\n// Entry はアクセスログの1行。\ntype Entry struct {\n\tTime      time.Time\n\tIP        string\n\tMethod    string\n\tPath      string // クエリを除いたパス\n\tQuery     string\n\tStatus    int\n\tBytes     int\n\tLatencyMS float64 // 応答時間（ミリ秒）\n}\n\n// ErrTooLong は行が maxLineLen を超えたときのエラー。\nvar ErrTooLong = errors.New(\"accesslog: line too long\")\n\n// msPerUnit は応答時間の単位を、ミリ秒に直すための倍率。\n◆ 1秒は1000ミリ秒なので\nvar msPerUnit = map[string]float64{\"us\": 0.001, \"ms\": 1, \"s\": 1000}\n\n// parseLatency は \"35ms\"、\"1.5s\"、\"500us\" のような応答時間をミリ秒にする。\nfunc parseLatency(s string) (float64, error) {\n\tfor _, unit := range []string{\"us\", \"ms\", \"s\"} {\n\t\tif !strings.HasSuffix(s, unit) {\n\t\t\tcontinue\n\t\t}\n\t\tv, err := strconv.ParseFloat(strings.TrimSuffix(s, unit), 64)\n\t\tif err != nil || v < 0 {\n\t\t\treturn 0, fmt.Errorf(\"accesslog: bad latency %q\", s)\n\t\t}\n\t\treturn v * msPerUnit[unit], nil\n\t}\n\treturn 0, fmt.Errorf(\"accesslog: unknown latency unit %q\", s)\n}\n\n// ParseLine は1行をパースする。形式は次のとおり。\n//\n//\t時刻(RFC3339) IP メソッド パス[?クエリ] ステータス バイト数 応答時間\n//\n// バイト数が \"-\" のときは 0 とする。時刻は UTC にそろえる。\nfunc ParseLine(line string) (Entry, error) {\n\tif len(line) > maxLineLen {\n\t\treturn Entry{}, ErrTooLong\n\t}\n\tf := strings.Fields(line)\n\tif len(f) != 7 {\n\t\treturn Entry{}, fmt.Errorf(\"accesslog: want 7 fields, got %d\", len(f))\n\t}\n\tt, err := time.Parse(time.RFC3339, f[0])\n\tif err != nil {\n\t\treturn Entry{}, fmt.Errorf(\"accesslog: bad time: %w\", err)\n\t}\n\tstatus, err := strconv.Atoi(f[4])\n\tif err != nil || status < 100 || status > 599 {\n\t\treturn Entry{}, fmt.Errorf(\"accesslog: bad status %q\", f[4])\n\t}\n\tn := 0\n\tif f[5] != \"-\" {\n\t\tif n, err = strconv.Atoi(f[5]); err != nil || n < 0 {\n\t\t\treturn Entry{}, fmt.Errorf(\"accesslog: bad bytes %q\", f[5])\n\t\t}\n\t}\n\tms, err := parseLatency(f[6])\n\tif err != nil {\n\t\treturn Entry{}, err\n\t}\n\tpath, query, _ := strings.Cut(f[3], \"?\")\n\treturn Entry{\n\t\tTime: t.UTC(), IP: f[1], Method: f[2], Path: path, Query: query,\n\t\tStatus: status, Bytes: n, LatencyMS: ms,\n\t}, nil\n}\n\n// ParseAll は複数行をパースする。空行と # で始まる行は読み飛ばし、\n// 壊れた行は捨てて bad に数える。\nfunc ParseAll(text string) (entries []Entry, bad int) {\n\tfor _, line := range strings.Split(text, \"\\n\") {\n\t\tline = strings.TrimSpace(line)\n\t\tif line == \"\" || strings.HasPrefix(line, \"#\") {\n\t\t\tcontinue\n\t\t}\n\t\te, err := ParseLine(line)\n\t\tif err != nil {\n\t\t\tbad++\n\t\t\tcontinue\n\t\t}\n\t\tentries = append(entries, e)\n\t}\n\treturn entries, bad\n}\n",
+    "options": {
+     "lineNumbers": 0
+    },
+    "reveal": 30,
+    "decorations": [
+     {
+      "opts": {
+       "before": {
+        "color": {
+         "id": "editorLineNumber.foreground"
+        }
+       }
+      },
+      "ranges": [
+       {
+        "line": 0,
+        "before": "  1  "
+       },
+       {
+        "line": 1,
+        "before": "  2  "
+       },
+       {
+        "line": 2,
+        "before": "  3  "
+       },
+       {
+        "line": 3,
+        "before": "  4  "
+       },
+       {
+        "line": 4,
+        "before": "  5  "
+       },
+       {
+        "line": 5,
+        "before": "  6  "
+       },
+       {
+        "line": 6,
+        "before": "  7  "
+       },
+       {
+        "line": 7,
+        "before": "  8  "
+       },
+       {
+        "line": 8,
+        "before": "  9  "
+       },
+       {
+        "line": 9,
+        "before": " 10  "
+       },
+       {
+        "line": 10,
+        "before": " 11  "
+       },
+       {
+        "line": 11,
+        "before": " 12  "
+       },
+       {
+        "line": 12,
+        "before": " 13  "
+       },
+       {
+        "line": 13,
+        "before": " 14  "
+       },
+       {
+        "line": 14,
+        "before": " 15  "
+       },
+       {
+        "line": 15,
+        "before": " 16  "
+       },
+       {
+        "line": 16,
+        "before": " 17  "
+       },
+       {
+        "line": 17,
+        "before": " 18  "
+       },
+       {
+        "line": 18,
+        "before": " 19  "
+       },
+       {
+        "line": 19,
+        "before": " 20  "
+       },
+       {
+        "line": 20,
+        "before": " 21  "
+       },
+       {
+        "line": 21,
+        "before": " 22  "
+       },
+       {
+        "line": 22,
+        "before": " 23  "
+       },
+       {
+        "line": 23,
+        "before": " 24  "
+       },
+       {
+        "line": 24,
+        "before": " 25  "
+       },
+       {
+        "line": 25,
+        "before": " 26  "
+       },
+       {
+        "line": 26,
+        "before": " 27  "
+       },
+       {
+        "line": 27,
+        "before": " 28  "
+       },
+       {
+        "line": 28,
+        "before": "     "
+       },
+       {
+        "line": 29,
+        "before": " 29  "
+       },
+       {
+        "line": 30,
+        "before": " 30  "
+       },
+       {
+        "line": 31,
+        "before": " 31  "
+       },
+       {
+        "line": 32,
+        "before": " 32  "
+       },
+       {
+        "line": 33,
+        "before": " 33  "
+       },
+       {
+        "line": 34,
+        "before": " 34  "
+       },
+       {
+        "line": 35,
+        "before": " 35  "
+       },
+       {
+        "line": 36,
+        "before": " 36  "
+       },
+       {
+        "line": 37,
+        "before": " 37  "
+       },
+       {
+        "line": 38,
+        "before": " 38  "
+       },
+       {
+        "line": 39,
+        "before": " 39  "
+       },
+       {
+        "line": 40,
+        "before": " 40  "
+       },
+       {
+        "line": 41,
+        "before": " 41  "
+       },
+       {
+        "line": 42,
+        "before": " 42  "
+       },
+       {
+        "line": 43,
+        "before": " 43  "
+       },
+       {
+        "line": 44,
+        "before": " 44  "
+       },
+       {
+        "line": 45,
+        "before": " 45  "
+       },
+       {
+        "line": 46,
+        "before": " 46  "
+       },
+       {
+        "line": 47,
+        "before": " 47  "
+       },
+       {
+        "line": 48,
+        "before": " 48  "
+       },
+       {
+        "line": 49,
+        "before": " 49  "
+       },
+       {
+        "line": 50,
+        "before": " 50  "
+       },
+       {
+        "line": 51,
+        "before": " 51  "
+       },
+       {
+        "line": 52,
+        "before": " 52  "
+       },
+       {
+        "line": 53,
+        "before": " 53  "
+       },
+       {
+        "line": 54,
+        "before": " 54  "
+       },
+       {
+        "line": 55,
+        "before": " 55  "
+       },
+       {
+        "line": 56,
+        "before": " 56  "
+       },
+       {
+        "line": 57,
+        "before": " 57  "
+       },
+       {
+        "line": 58,
+        "before": " 58  "
+       },
+       {
+        "line": 59,
+        "before": " 59  "
+       },
+       {
+        "line": 60,
+        "before": " 60  "
+       },
+       {
+        "line": 61,
+        "before": " 61  "
+       },
+       {
+        "line": 62,
+        "before": " 62  "
+       },
+       {
+        "line": 63,
+        "before": " 63  "
+       },
+       {
+        "line": 64,
+        "before": " 64  "
+       },
+       {
+        "line": 65,
+        "before": " 65  "
+       },
+       {
+        "line": 66,
+        "before": " 66  "
+       },
+       {
+        "line": 67,
+        "before": " 67  "
+       },
+       {
+        "line": 68,
+        "before": " 68  "
+       },
+       {
+        "line": 69,
+        "before": " 69  "
+       },
+       {
+        "line": 70,
+        "before": " 70  "
+       },
+       {
+        "line": 71,
+        "before": " 71  "
+       },
+       {
+        "line": 72,
+        "before": " 72  "
+       },
+       {
+        "line": 73,
+        "before": " 73  "
+       },
+       {
+        "line": 74,
+        "before": " 74  "
+       },
+       {
+        "line": 75,
+        "before": " 75  "
+       },
+       {
+        "line": 76,
+        "before": " 76  "
+       },
+       {
+        "line": 77,
+        "before": " 77  "
+       },
+       {
+        "line": 78,
+        "before": " 78  "
+       },
+       {
+        "line": 79,
+        "before": " 79  "
+       },
+       {
+        "line": 80,
+        "before": " 80  "
+       },
+       {
+        "line": 81,
+        "before": " 81  "
+       },
+       {
+        "line": 82,
+        "before": " 82  "
+       },
+       {
+        "line": 83,
+        "before": " 83  "
+       },
+       {
+        "line": 84,
+        "before": " 84  "
+       },
+       {
+        "line": 85,
+        "before": " 85  "
+       },
+       {
+        "line": 86,
+        "before": " 86  "
+       },
+       {
+        "line": 87,
+        "before": " 87  "
+       },
+       {
+        "line": 88,
+        "before": " 88  "
+       },
+       {
+        "line": 89,
+        "before": " 89  "
+       },
+       {
+        "line": 90,
+        "before": " 90  "
+       },
+       {
+        "line": 91,
+        "before": " 91  "
+       },
+       {
+        "line": 92,
+        "before": " 92  "
+       },
+       {
+        "line": 93,
+        "before": " 93  "
+       },
+       {
+        "line": 94,
+        "before": " 94  "
+       },
+       {
+        "line": 95,
+        "before": " 95  "
+       },
+       {
+        "line": 96,
+        "before": " 96  "
+       },
+       {
+        "line": 97,
+        "before": " 97  "
+       },
+       {
+        "line": 98,
+        "before": " 98  "
+       },
+       {
+        "line": 99,
+        "before": " 99  "
+       },
+       {
+        "line": 100,
+        "before": "100  "
+       },
+       {
+        "line": 101,
+        "before": "101  "
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#583c27",
+       "light": {
+        "backgroundColor": "#fde3c8"
+       }
+      },
+      "ranges": [
+       {
+        "line": 29
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#b45f06",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 28
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  entry.go:29",
+    "description": "秒からミリ秒への倍率が間違っていて 1.5s が 150ms になっているため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  stats.go:45",
+    "description": "Merge の平均が件数を無視した単純平均になっているため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  stats.go:81-89",
+    "description": "PerMinute が「分」の数字だけで集計していて、別の時の同じ分が混ざるため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  replace  entry.go:29",
+    "description": "1秒は1000ミリ秒なので",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "5  replace  stats.go:45-47",
+    "description": "件数で重み付けしないと全体の平均にならず、空の集計を混ぜると平均が半分になってしまうため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "6  外部変更  stats.go:1-126",
+    "description": "srwr の外でファイルが変わった",
+    "color": "charts.purple",
+    "kind": "external"
+   },
+   {
+    "label": "7  replace  stats.go:83-86",
+    "description": "分の先頭時刻そのものをキーにすれば、10:59 と 11:59 のような別の時が混ざらないため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "8  select  stats.go:87-90",
+    "description": "start マップを消したので、バケットを作るループもキーの時刻を使うように直す必要があるため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "9  replace  stats.go:87-90",
+    "description": "キー自体が分の先頭時刻になったので、それをそのまま Start に使えるため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "10  録画後  entry.go:1-100",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   },
+   {
+    "label": "11  録画後  stats.go:1-121",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) 戻る",
+    "visible": true
+   },
+   {
+    "text": "進む $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "4/11",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0949-external",
+  "quickPick": {
+   "placeHolder": "再生するテープを選ぶ",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9操作 · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7操作 · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10操作 · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 4,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0949-external/stats.go",
+    "column": 1,
+    "text": "package accesslog\n\nimport (\n\t\"math\"\n\t\"sort\"\n\t\"time\"\n)\n\n// Summary は複数のエントリをまとめた集計。\ntype Summary struct {\n\tCount  int\n\tErrors int // ステータスが 400 以上の件数\n\tBytes  int\n\tAvgMS  float64\n\tMaxMS  float64\n}\n\n// Summarize はエントリを集計する。\nfunc Summarize(entries []Entry) Summary {\n\ts := Summary{Count: len(entries)}\n\tif s.Count == 0 {\n\t\treturn s\n\t}\n\tsum := 0.0\n\tfor _, e := range entries {\n\t\tif e.Status >= 400 {\n\t\t\ts.Errors++\n\t\t}\n\t\ts.Bytes += e.Bytes\n\t\tsum += e.LatencyMS\n\t\ts.MaxMS = math.Max(s.MaxMS, e.LatencyMS)\n\t}\n\ts.AvgMS = sum / float64(s.Count)\n\treturn s\n}\n\n// Merge は別々に集計した2つの Summary を1つにまとめる（ログを分割して処理するとき用）。\nfunc Merge(a, b Summary) Summary {\n\tout := Summary{\n\t\tCount:  a.Count + b.Count,\n\t\tErrors: a.Errors + b.Errors,\n\t\tBytes:  a.Bytes + b.Bytes,\n\t\tMaxMS:  math.Max(a.MaxMS, b.MaxMS),\n\t}\n◆ 件数で重み付けしないと全体の平均にならず、空の集計を混ぜると平均が半分になってしまうため\n\tif out.Count > 0 {\n\t\tout.AvgMS = (a.AvgMS*float64(a.Count) + b.AvgMS*float64(b.Count)) / float64(out.Count)\n\t}\n\treturn out\n}\n\n// ErrorRate はエラーの割合（パーセント）を返す。件数が 0 なら 0。\nfunc (s Summary) ErrorRate() float64 {\n\tif s.Count == 0 {\n\t\treturn 0\n\t}\n\treturn float64(s.Errors) * 100 / float64(s.Count)\n}\n\n// Percentile は応答時間の p パーセンタイル（最近順位法）を返す。\n// 空のときは 0。エントリの並びは変えない。\nfunc Percentile(entries []Entry, p float64) float64 {\n\tif len(entries) == 0 {\n\t\treturn 0\n\t}\n\tms := make([]float64, len(entries))\n\tfor i, e := range entries {\n\t\tms[i] = e.LatencyMS\n\t}\n\tsort.Float64s(ms)\n\trank := int(math.Ceil(p / 100 * float64(len(ms))))\n\trank = min(max(rank, 1), len(ms))\n\treturn ms[rank-1]\n}\n\n// Bucket は1分ぶんのリクエスト数。\ntype Bucket struct {\n\tStart time.Time // 分の先頭\n\tCount int\n}\n\n// PerMinute は分ごとのリクエスト数を、時刻の早い順に返す。\nfunc PerMinute(entries []Entry) []Bucket {\n\tcounts := make(map[int]int)\n\tstart := make(map[int]time.Time)\n\tfor _, e := range entries {\n\t\tk := e.Time.Minute()\n\t\tcounts[k]++\n\t\tif _, ok := start[k]; !ok {\n\t\t\tstart[k] = e.Time.Truncate(time.Minute)\n\t\t}\n\t}\n\tbuckets := make([]Bucket, 0, len(counts))\n\tfor k, n := range counts {\n\t\tbuckets = append(buckets, Bucket{Start: start[k], Count: n})\n\t}\n\tsort.Slice(buckets, func(i, j int) bool { return buckets[i].Start.Before(buckets[j].Start) })\n\treturn buckets\n}\n\n// PathCount はパスごとのリクエスト数。\ntype PathCount struct {\n\tPath  string\n\tCount int\n}\n\n// TopPaths はリクエストの多いパスを上位 n 件返す。同数ならパスの辞書順。\nfunc TopPaths(entries []Entry, n int) []PathCount {\n\tcounts := make(map[string]int)\n\tfor _, e := range entries {\n\t\tcounts[e.Path]++\n\t}\n\tout := make([]PathCount, 0, len(counts))\n\tfor p, c := range counts {\n\t\tout = append(out, PathCount{p, c})\n\t}\n\tsort.Slice(out, func(i, j int) bool {\n\t\tif out[i].Count != out[j].Count {\n\t\t\treturn out[i].Count > out[j].Count\n\t\t}\n\t\treturn out[i].Path < out[j].Path\n\t})\n\tif len(out) > n {\n\t\tout = out[:n]\n\t}\n\treturn out\n}\n",
+    "options": {
+     "lineNumbers": 0
+    },
+    "reveal": 46,
+    "decorations": [
+     {
+      "opts": {
+       "before": {
+        "color": {
+         "id": "editorLineNumber.foreground"
+        }
+       }
+      },
+      "ranges": [
+       {
+        "line": 0,
+        "before": "  1  "
+       },
+       {
+        "line": 1,
+        "before": "  2  "
+       },
+       {
+        "line": 2,
+        "before": "  3  "
+       },
+       {
+        "line": 3,
+        "before": "  4  "
+       },
+       {
+        "line": 4,
+        "before": "  5  "
+       },
+       {
+        "line": 5,
+        "before": "  6  "
+       },
+       {
+        "line": 6,
+        "before": "  7  "
+       },
+       {
+        "line": 7,
+        "before": "  8  "
+       },
+       {
+        "line": 8,
+        "before": "  9  "
+       },
+       {
+        "line": 9,
+        "before": " 10  "
+       },
+       {
+        "line": 10,
+        "before": " 11  "
+       },
+       {
+        "line": 11,
+        "before": " 12  "
+       },
+       {
+        "line": 12,
+        "before": " 13  "
+       },
+       {
+        "line": 13,
+        "before": " 14  "
+       },
+       {
+        "line": 14,
+        "before": " 15  "
+       },
+       {
+        "line": 15,
+        "before": " 16  "
+       },
+       {
+        "line": 16,
+        "before": " 17  "
+       },
+       {
+        "line": 17,
+        "before": " 18  "
+       },
+       {
+        "line": 18,
+        "before": " 19  "
+       },
+       {
+        "line": 19,
+        "before": " 20  "
+       },
+       {
+        "line": 20,
+        "before": " 21  "
+       },
+       {
+        "line": 21,
+        "before": " 22  "
+       },
+       {
+        "line": 22,
+        "before": " 23  "
+       },
+       {
+        "line": 23,
+        "before": " 24  "
+       },
+       {
+        "line": 24,
+        "before": " 25  "
+       },
+       {
+        "line": 25,
+        "before": " 26  "
+       },
+       {
+        "line": 26,
+        "before": " 27  "
+       },
+       {
+        "line": 27,
+        "before": " 28  "
+       },
+       {
+        "line": 28,
+        "before": " 29  "
+       },
+       {
+        "line": 29,
+        "before": " 30  "
+       },
+       {
+        "line": 30,
+        "before": " 31  "
+       },
+       {
+        "line": 31,
+        "before": " 32  "
+       },
+       {
+        "line": 32,
+        "before": " 33  "
+       },
+       {
+        "line": 33,
+        "before": " 34  "
+       },
+       {
+        "line": 34,
+        "before": " 35  "
+       },
+       {
+        "line": 35,
+        "before": " 36  "
+       },
+       {
+        "line": 36,
+        "before": " 37  "
+       },
+       {
+        "line": 37,
+        "before": " 38  "
+       },
+       {
+        "line": 38,
+        "before": " 39  "
+       },
+       {
+        "line": 39,
+        "before": " 40  "
+       },
+       {
+        "line": 40,
+        "before": " 41  "
+       },
+       {
+        "line": 41,
+        "before": " 42  "
+       },
+       {
+        "line": 42,
+        "before": " 43  "
+       },
+       {
+        "line": 43,
+        "before": " 44  "
+       },
+       {
+        "line": 44,
+        "before": "     "
+       },
+       {
+        "line": 45,
+        "before": " 45  "
+       },
+       {
+        "line": 46,
+        "before": " 46  "
+       },
+       {
+        "line": 47,
+        "before": " 47  "
+       },
+       {
+        "line": 48,
+        "before": " 48  "
+       },
+       {
+        "line": 49,
+        "before": " 49  "
+       },
+       {
+        "line": 50,
+        "before": " 50  "
+       },
+       {
+        "line": 51,
+        "before": " 51  "
+       },
+       {
+        "line": 52,
+        "before": " 52  "
+       },
+       {
+        "line": 53,
+        "before": " 53  "
+       },
+       {
+        "line": 54,
+        "before": " 54  "
+       },
+       {
+        "line": 55,
+        "before": " 55  "
+       },
+       {
+        "line": 56,
+        "before": " 56  "
+       },
+       {
+        "line": 57,
+        "before": " 57  "
+       },
+       {
+        "line": 58,
+        "before": " 58  "
+       },
+       {
+        "line": 59,
+        "before": " 59  "
+       },
+       {
+        "line": 60,
+        "before": " 60  "
+       },
+       {
+        "line": 61,
+        "before": " 61  "
+       },
+       {
+        "line": 62,
+        "before": " 62  "
+       },
+       {
+        "line": 63,
+        "before": " 63  "
+       },
+       {
+        "line": 64,
+        "before": " 64  "
+       },
+       {
+        "line": 65,
+        "before": " 65  "
+       },
+       {
+        "line": 66,
+        "before": " 66  "
+       },
+       {
+        "line": 67,
+        "before": " 67  "
+       },
+       {
+        "line": 68,
+        "before": " 68  "
+       },
+       {
+        "line": 69,
+        "before": " 69  "
+       },
+       {
+        "line": 70,
+        "before": " 70  "
+       },
+       {
+        "line": 71,
+        "before": " 71  "
+       },
+       {
+        "line": 72,
+        "before": " 72  "
+       },
+       {
+        "line": 73,
+        "before": " 73  "
+       },
+       {
+        "line": 74,
+        "before": " 74  "
+       },
+       {
+        "line": 75,
+        "before": " 75  "
+       },
+       {
+        "line": 76,
+        "before": " 76  "
+       },
+       {
+        "line": 77,
+        "before": " 77  "
+       },
+       {
+        "line": 78,
+        "before": " 78  "
+       },
+       {
+        "line": 79,
+        "before": " 79  "
+       },
+       {
+        "line": 80,
+        "before": " 80  "
+       },
+       {
+        "line": 81,
+        "before": " 81  "
+       },
+       {
+        "line": 82,
+        "before": " 82  "
+       },
+       {
+        "line": 83,
+        "before": " 83  "
+       },
+       {
+        "line": 84,
+        "before": " 84  "
+       },
+       {
+        "line": 85,
+        "before": " 85  "
+       },
+       {
+        "line": 86,
+        "before": " 86  "
+       },
+       {
+        "line": 87,
+        "before": " 87  "
+       },
+       {
+        "line": 88,
+        "before": " 88  "
+       },
+       {
+        "line": 89,
+        "before": " 89  "
+       },
+       {
+        "line": 90,
+        "before": " 90  "
+       },
+       {
+        "line": 91,
+        "before": " 91  "
+       },
+       {
+        "line": 92,
+        "before": " 92  "
+       },
+       {
+        "line": 93,
+        "before": " 93  "
+       },
+       {
+        "line": 94,
+        "before": " 94  "
+       },
+       {
+        "line": 95,
+        "before": " 95  "
+       },
+       {
+        "line": 96,
+        "before": " 96  "
+       },
+       {
+        "line": 97,
+        "before": " 97  "
+       },
+       {
+        "line": 98,
+        "before": " 98  "
+       },
+       {
+        "line": 99,
+        "before": " 99  "
+       },
+       {
+        "line": 100,
+        "before": "100  "
+       },
+       {
+        "line": 101,
+        "before": "101  "
+       },
+       {
+        "line": 102,
+        "before": "102  "
+       },
+       {
+        "line": 103,
+        "before": "103  "
+       },
+       {
+        "line": 104,
+        "before": "104  "
+       },
+       {
+        "line": 105,
+        "before": "105  "
+       },
+       {
+        "line": 106,
+        "before": "106  "
+       },
+       {
+        "line": 107,
+        "before": "107  "
+       },
+       {
+        "line": 108,
+        "before": "108  "
+       },
+       {
+        "line": 109,
+        "before": "109  "
+       },
+       {
+        "line": 110,
+        "before": "110  "
+       },
+       {
+        "line": 111,
+        "before": "111  "
+       },
+       {
+        "line": 112,
+        "before": "112  "
+       },
+       {
+        "line": 113,
+        "before": "113  "
+       },
+       {
+        "line": 114,
+        "before": "114  "
+       },
+       {
+        "line": 115,
+        "before": "115  "
+       },
+       {
+        "line": 116,
+        "before": "116  "
+       },
+       {
+        "line": 117,
+        "before": "117  "
+       },
+       {
+        "line": 118,
+        "before": "118  "
+       },
+       {
+        "line": 119,
+        "before": "119  "
+       },
+       {
+        "line": 120,
+        "before": "120  "
+       },
+       {
+        "line": 121,
+        "before": "121  "
+       },
+       {
+        "line": 122,
+        "before": "122  "
+       },
+       {
+        "line": 123,
+        "before": "123  "
+       },
+       {
+        "line": 124,
+        "before": "124  "
+       },
+       {
+        "line": 125,
+        "before": "125  "
+       },
+       {
+        "line": 126,
+        "before": "126  "
+       },
+       {
+        "line": 127,
+        "before": "127  "
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#583c27",
+       "light": {
+        "backgroundColor": "#fde3c8"
+       }
+      },
+      "ranges": [
+       {
+        "line": 45
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#b45f06",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 44
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  entry.go:29",
+    "description": "秒からミリ秒への倍率が間違っていて 1.5s が 150ms になっているため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  stats.go:45",
+    "description": "Merge の平均が件数を無視した単純平均になっているため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  stats.go:81-89",
+    "description": "PerMinute が「分」の数字だけで集計していて、別の時の同じ分が混ざるため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  replace  entry.go:29",
+    "description": "1秒は1000ミリ秒なので",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "5  replace  stats.go:45-47",
+    "description": "件数で重み付けしないと全体の平均にならず、空の集計を混ぜると平均が半分になってしまうため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "6  外部変更  stats.go:1-126",
+    "description": "srwr の外でファイルが変わった",
+    "color": "charts.purple",
+    "kind": "external"
+   },
+   {
+    "label": "7  replace  stats.go:83-86",
+    "description": "分の先頭時刻そのものをキーにすれば、10:59 と 11:59 のような別の時が混ざらないため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "8  select  stats.go:87-90",
+    "description": "start マップを消したので、バケットを作るループもキーの時刻を使うように直す必要があるため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "9  replace  stats.go:87-90",
+    "description": "キー自体が分の先頭時刻になったので、それをそのまま Start に使えるため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "10  録画後  entry.go:1-100",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   },
+   {
+    "label": "11  録画後  stats.go:1-121",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) 戻る",
+    "visible": true
+   },
+   {
+    "text": "進む $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "5/11",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0949-external",
+  "quickPick": {
+   "placeHolder": "再生するテープを選ぶ",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9操作 · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7操作 · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10操作 · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 5,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0949-external/diff5/前 ⚠ srwrの外で変更：stats.go?diff=5&side=before",
+    "column": 1,
+    "text": "package accesslog\n\nimport (\n\t\"math\"\n\t\"sort\"\n\t\"time\"\n)\n\n// Summary は複数のエントリをまとめた集計。\ntype Summary struct {\n\tCount  int\n\tErrors int // ステータスが 400 以上の件数\n\tBytes  int\n\tAvgMS  float64\n\tMaxMS  float64\n}\n\n// Summarize はエントリを集計する。\nfunc Summarize(entries []Entry) Summary {\n\ts := Summary{Count: len(entries)}\n\tif s.Count == 0 {\n\t\treturn s\n\t}\n\tsum := 0.0\n\tfor _, e := range entries {\n\t\tif e.Status >= 400 {\n\t\t\ts.Errors++\n\t\t}\n\t\ts.Bytes += e.Bytes\n\t\tsum += e.LatencyMS\n\t\ts.MaxMS = math.Max(s.MaxMS, e.LatencyMS)\n\t}\n\ts.AvgMS = sum / float64(s.Count)\n\treturn s\n}\n\n// Merge は別々に集計した2つの Summary を1つにまとめる（ログを分割して処理するとき用）。\nfunc Merge(a, b Summary) Summary {\n\tout := Summary{\n\t\tCount:  a.Count + b.Count,\n\t\tErrors: a.Errors + b.Errors,\n\t\tBytes:  a.Bytes + b.Bytes,\n\t\tMaxMS:  math.Max(a.MaxMS, b.MaxMS),\n\t}\n\tif out.Count > 0 {\n\t\tout.AvgMS = (a.AvgMS*float64(a.Count) + b.AvgMS*float64(b.Count)) / float64(out.Count)\n\t}\n\treturn out\n}\n\n// ErrorRate はエラーの割合（パーセント）を返す。件数が 0 なら 0。\nfunc (s Summary) ErrorRate() float64 {\n\tif s.Count == 0 {\n\t\treturn 0\n\t}\n\treturn float64(s.Errors) * 100 / float64(s.Count)\n}\n\n// Percentile は応答時間の p パーセンタイル（最近順位法）を返す。\n// 空のときは 0。エントリの並びは変えない。\nfunc Percentile(entries []Entry, p float64) float64 {\n\tif len(entries) == 0 {\n\t\treturn 0\n\t}\n\tms := make([]float64, len(entries))\n\tfor i, e := range entries {\n\t\tms[i] = e.LatencyMS\n\t}\n\tsort.Float64s(ms)\n\trank := int(math.Ceil(p / 100 * float64(len(ms))))\n\trank = min(max(rank, 1), len(ms))\n\treturn ms[rank-1]\n}\n\n// Bucket は1分ぶんのリクエスト数。\ntype Bucket struct {\n\tStart time.Time // 分の先頭\n\tCount int\n}\n\n// PerMinute は分ごとのリクエスト数を、時刻の早い順に返す。\nfunc PerMinute(entries []Entry) []Bucket {\n\tcounts := make(map[int]int)\n\tstart := make(map[int]time.Time)\n\tfor _, e := range entries {\n\t\tk := e.Time.Minute()\n\t\tcounts[k]++\n\t\tif _, ok := start[k]; !ok {\n\t\t\tstart[k] = e.Time.Truncate(time.Minute)\n\t\t}\n\t}\n\tbuckets := make([]Bucket, 0, len(counts))\n\tfor k, n := range counts {\n\t\tbuckets = append(buckets, Bucket{Start: start[k], Count: n})\n\t}\n\tsort.Slice(buckets, func(i, j int) bool { return buckets[i].Start.Before(buckets[j].Start) })\n\treturn buckets\n}\n\n// PathCount はパスごとのリクエスト数。\ntype PathCount struct {\n\tPath  string\n\tCount int\n}\n\n// TopPaths はリクエストの多いパスを上位 n 件返す。同数ならパスの辞書順。\nfunc TopPaths(entries []Entry, n int) []PathCount {\n\tcounts := make(map[string]int)\n\tfor _, e := range entries {\n\t\tcounts[e.Path]++\n\t}\n\tout := make([]PathCount, 0, len(counts))\n\tfor p, c := range counts {\n\t\tout = append(out, PathCount{p, c})\n\t}\n\tsort.Slice(out, func(i, j int) bool {\n\t\tif out[i].Count != out[j].Count {\n\t\t\treturn out[i].Count > out[j].Count\n\t\t}\n\t\treturn out[i].Path < out[j].Path\n\t})\n\tif len(out) > n {\n\t\tout = out[:n]\n\t}\n\treturn out\n}\n",
+    "options": {
+     "lineNumbers": 1
+    },
+    "reveal": 12,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#1d3a5c",
+       "light": {
+        "backgroundColor": "#cfe3fb"
+       }
+      },
+      "ranges": [
+       {
+        "line": 23
+       },
+       {
+        "line": 29
+       },
+       {
+        "line": 32
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "uri": "srwr-replay:/20260930-0949-external/diff5/後 stats.go?diff=5&side=after",
+    "column": 2,
+    "text": "package accesslog\n\nimport (\n\t\"math\"\n\t\"sort\"\n\t\"time\"\n)\n\n// Summary は複数のエントリをまとめた集計。\ntype Summary struct {\n\tCount  int\n\tErrors int // ステータスが 400 以上の件数\n\tBytes  int\n\tAvgMS  float64\n\tMaxMS  float64\n}\n\n// Summarize はエントリを集計する。\nfunc Summarize(entries []Entry) Summary {\n\ts := Summary{Count: len(entries)}\n\tif s.Count == 0 {\n\t\treturn s\n\t}\n\ttotalMS := 0.0\n\tfor _, e := range entries {\n\t\tif e.Status >= 400 {\n\t\t\ts.Errors++\n\t\t}\n\t\ts.Bytes += e.Bytes\n\t\ttotalMS += e.LatencyMS\n\t\ts.MaxMS = math.Max(s.MaxMS, e.LatencyMS)\n\t}\n\ts.AvgMS = totalMS / float64(s.Count)\n\treturn s\n}\n\n// Merge は別々に集計した2つの Summary を1つにまとめる（ログを分割して処理するとき用）。\nfunc Merge(a, b Summary) Summary {\n\tout := Summary{\n\t\tCount:  a.Count + b.Count,\n\t\tErrors: a.Errors + b.Errors,\n\t\tBytes:  a.Bytes + b.Bytes,\n\t\tMaxMS:  math.Max(a.MaxMS, b.MaxMS),\n\t}\n\tif out.Count > 0 {\n\t\tout.AvgMS = (a.AvgMS*float64(a.Count) + b.AvgMS*float64(b.Count)) / float64(out.Count)\n\t}\n\treturn out\n}\n\n// ErrorRate はエラーの割合（パーセント）を返す。件数が 0 なら 0。\nfunc (s Summary) ErrorRate() float64 {\n\tif s.Count == 0 {\n\t\treturn 0\n\t}\n\treturn float64(s.Errors) * 100 / float64(s.Count)\n}\n\n// Percentile は応答時間の p パーセンタイル（最近順位法）を返す。\n// 空のときは 0。エントリの並びは変えない。\nfunc Percentile(entries []Entry, p float64) float64 {\n\tif len(entries) == 0 {\n\t\treturn 0\n\t}\n\tms := make([]float64, len(entries))\n\tfor i, e := range entries {\n\t\tms[i] = e.LatencyMS\n\t}\n\tsort.Float64s(ms)\n\trank := int(math.Ceil(p / 100 * float64(len(ms))))\n\trank = min(max(rank, 1), len(ms))\n\treturn ms[rank-1]\n}\n\n// Bucket は1分ぶんのリクエスト数。\ntype Bucket struct {\n\tStart time.Time // 分の先頭\n\tCount int\n}\n\n// PerMinute は分ごとのリクエスト数を、時刻の早い順に返す。\nfunc PerMinute(entries []Entry) []Bucket {\n\tcounts := make(map[int]int)\n\tstart := make(map[int]time.Time)\n\tfor _, e := range entries {\n\t\tk := e.Time.Minute()\n\t\tcounts[k]++\n\t\tif _, ok := start[k]; !ok {\n\t\t\tstart[k] = e.Time.Truncate(time.Minute)\n\t\t}\n\t}\n\tbuckets := make([]Bucket, 0, len(counts))\n\tfor k, n := range counts {\n\t\tbuckets = append(buckets, Bucket{Start: start[k], Count: n})\n\t}\n\tsort.Slice(buckets, func(i, j int) bool { return buckets[i].Start.Before(buckets[j].Start) })\n\treturn buckets\n}\n\n// PathCount はパスごとのリクエスト数。\ntype PathCount struct {\n\tPath  string\n\tCount int\n}\n\n// TopPaths はリクエストの多いパスを上位 n 件返す。同数ならパスの辞書順。\nfunc TopPaths(entries []Entry, n int) []PathCount {\n\tcounts := make(map[string]int)\n\tfor _, e := range entries {\n\t\tcounts[e.Path]++\n\t}\n\tout := make([]PathCount, 0, len(counts))\n\tfor p, c := range counts {\n\t\tout = append(out, PathCount{p, c})\n\t}\n\tsort.Slice(out, func(i, j int) bool {\n\t\tif out[i].Count != out[j].Count {\n\t\t\treturn out[i].Count > out[j].Count\n\t\t}\n\t\treturn out[i].Path < out[j].Path\n\t})\n\tif len(out) > n {\n\t\tout = out[:n]\n\t}\n\treturn out\n}\n",
+    "options": {
+     "lineNumbers": 1
+    },
+    "reveal": 12,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#583c27",
+       "light": {
+        "backgroundColor": "#fde3c8"
+       }
+      },
+      "ranges": [
+       {
+        "line": 23
+       },
+       {
+        "line": 29
+       },
+       {
+        "line": 32
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  entry.go:29",
+    "description": "秒からミリ秒への倍率が間違っていて 1.5s が 150ms になっているため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  stats.go:45",
+    "description": "Merge の平均が件数を無視した単純平均になっているため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  stats.go:81-89",
+    "description": "PerMinute が「分」の数字だけで集計していて、別の時の同じ分が混ざるため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  replace  entry.go:29",
+    "description": "1秒は1000ミリ秒なので",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "5  replace  stats.go:45-47",
+    "description": "件数で重み付けしないと全体の平均にならず、空の集計を混ぜると平均が半分になってしまうため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "6  外部変更  stats.go:1-126",
+    "description": "srwr の外でファイルが変わった",
+    "color": "charts.purple",
+    "kind": "external"
+   },
+   {
+    "label": "7  replace  stats.go:83-86",
+    "description": "分の先頭時刻そのものをキーにすれば、10:59 と 11:59 のような別の時が混ざらないため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "8  select  stats.go:87-90",
+    "description": "start マップを消したので、バケットを作るループもキーの時刻を使うように直す必要があるため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "9  replace  stats.go:87-90",
+    "description": "キー自体が分の先頭時刻になったので、それをそのまま Start に使えるため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "10  録画後  entry.go:1-100",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   },
+   {
+    "label": "11  録画後  stats.go:1-121",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) 戻る",
+    "visible": true
+   },
+   {
+    "text": "進む $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "6/11",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0949-external",
+  "quickPick": {
+   "placeHolder": "再生するテープを選ぶ",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9操作 · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7操作 · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10操作 · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 6,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0949-external/stats.go",
+    "column": 1,
+    "text": "package accesslog\n\nimport (\n\t\"math\"\n\t\"sort\"\n\t\"time\"\n)\n\n// Summary は複数のエントリをまとめた集計。\ntype Summary struct {\n\tCount  int\n\tErrors int // ステータスが 400 以上の件数\n\tBytes  int\n\tAvgMS  float64\n\tMaxMS  float64\n}\n\n// Summarize はエントリを集計する。\nfunc Summarize(entries []Entry) Summary {\n\ts := Summary{Count: len(entries)}\n\tif s.Count == 0 {\n\t\treturn s\n\t}\n\ttotalMS := 0.0\n\tfor _, e := range entries {\n\t\tif e.Status >= 400 {\n\t\t\ts.Errors++\n\t\t}\n\t\ts.Bytes += e.Bytes\n\t\ttotalMS += e.LatencyMS\n\t\ts.MaxMS = math.Max(s.MaxMS, e.LatencyMS)\n\t}\n\ts.AvgMS = totalMS / float64(s.Count)\n\treturn s\n}\n\n// Merge は別々に集計した2つの Summary を1つにまとめる（ログを分割して処理するとき用）。\nfunc Merge(a, b Summary) Summary {\n\tout := Summary{\n\t\tCount:  a.Count + b.Count,\n\t\tErrors: a.Errors + b.Errors,\n\t\tBytes:  a.Bytes + b.Bytes,\n\t\tMaxMS:  math.Max(a.MaxMS, b.MaxMS),\n\t}\n\tif out.Count > 0 {\n\t\tout.AvgMS = (a.AvgMS*float64(a.Count) + b.AvgMS*float64(b.Count)) / float64(out.Count)\n\t}\n\treturn out\n}\n\n// ErrorRate はエラーの割合（パーセント）を返す。件数が 0 なら 0。\nfunc (s Summary) ErrorRate() float64 {\n\tif s.Count == 0 {\n\t\treturn 0\n\t}\n\treturn float64(s.Errors) * 100 / float64(s.Count)\n}\n\n// Percentile は応答時間の p パーセンタイル（最近順位法）を返す。\n// 空のときは 0。エントリの並びは変えない。\nfunc Percentile(entries []Entry, p float64) float64 {\n\tif len(entries) == 0 {\n\t\treturn 0\n\t}\n\tms := make([]float64, len(entries))\n\tfor i, e := range entries {\n\t\tms[i] = e.LatencyMS\n\t}\n\tsort.Float64s(ms)\n\trank := int(math.Ceil(p / 100 * float64(len(ms))))\n\trank = min(max(rank, 1), len(ms))\n\treturn ms[rank-1]\n}\n\n// Bucket は1分ぶんのリクエスト数。\ntype Bucket struct {\n\tStart time.Time // 分の先頭\n\tCount int\n}\n\n// PerMinute は分ごとのリクエスト数を、時刻の早い順に返す。\nfunc PerMinute(entries []Entry) []Bucket {\n◆ 分の先頭時刻そのものをキーにすれば、10:59 と 11:59 のような別の時が混ざらないため\n\tcounts := make(map[time.Time]int)\n\tfor _, e := range entries {\n\t\tcounts[e.Time.Truncate(time.Minute)]++\n\t}\n\tbuckets := make([]Bucket, 0, len(counts))\n\tfor k, n := range counts {\n\t\tbuckets = append(buckets, Bucket{Start: start[k], Count: n})\n\t}\n\tsort.Slice(buckets, func(i, j int) bool { return buckets[i].Start.Before(buckets[j].Start) })\n\treturn buckets\n}\n\n// PathCount はパスごとのリクエスト数。\ntype PathCount struct {\n\tPath  string\n\tCount int\n}\n\n// TopPaths はリクエストの多いパスを上位 n 件返す。同数ならパスの辞書順。\nfunc TopPaths(entries []Entry, n int) []PathCount {\n\tcounts := make(map[string]int)\n\tfor _, e := range entries {\n\t\tcounts[e.Path]++\n\t}\n\tout := make([]PathCount, 0, len(counts))\n\tfor p, c := range counts {\n\t\tout = append(out, PathCount{p, c})\n\t}\n\tsort.Slice(out, func(i, j int) bool {\n\t\tif out[i].Count != out[j].Count {\n\t\t\treturn out[i].Count > out[j].Count\n\t\t}\n\t\treturn out[i].Path < out[j].Path\n\t})\n\tif len(out) > n {\n\t\tout = out[:n]\n\t}\n\treturn out\n}\n",
+    "options": {
+     "lineNumbers": 0
+    },
+    "reveal": 84,
+    "decorations": [
+     {
+      "opts": {
+       "before": {
+        "color": {
+         "id": "editorLineNumber.foreground"
+        }
+       }
+      },
+      "ranges": [
+       {
+        "line": 0,
+        "before": "  1  "
+       },
+       {
+        "line": 1,
+        "before": "  2  "
+       },
+       {
+        "line": 2,
+        "before": "  3  "
+       },
+       {
+        "line": 3,
+        "before": "  4  "
+       },
+       {
+        "line": 4,
+        "before": "  5  "
+       },
+       {
+        "line": 5,
+        "before": "  6  "
+       },
+       {
+        "line": 6,
+        "before": "  7  "
+       },
+       {
+        "line": 7,
+        "before": "  8  "
+       },
+       {
+        "line": 8,
+        "before": "  9  "
+       },
+       {
+        "line": 9,
+        "before": " 10  "
+       },
+       {
+        "line": 10,
+        "before": " 11  "
+       },
+       {
+        "line": 11,
+        "before": " 12  "
+       },
+       {
+        "line": 12,
+        "before": " 13  "
+       },
+       {
+        "line": 13,
+        "before": " 14  "
+       },
+       {
+        "line": 14,
+        "before": " 15  "
+       },
+       {
+        "line": 15,
+        "before": " 16  "
+       },
+       {
+        "line": 16,
+        "before": " 17  "
+       },
+       {
+        "line": 17,
+        "before": " 18  "
+       },
+       {
+        "line": 18,
+        "before": " 19  "
+       },
+       {
+        "line": 19,
+        "before": " 20  "
+       },
+       {
+        "line": 20,
+        "before": " 21  "
+       },
+       {
+        "line": 21,
+        "before": " 22  "
+       },
+       {
+        "line": 22,
+        "before": " 23  "
+       },
+       {
+        "line": 23,
+        "before": " 24  "
+       },
+       {
+        "line": 24,
+        "before": " 25  "
+       },
+       {
+        "line": 25,
+        "before": " 26  "
+       },
+       {
+        "line": 26,
+        "before": " 27  "
+       },
+       {
+        "line": 27,
+        "before": " 28  "
+       },
+       {
+        "line": 28,
+        "before": " 29  "
+       },
+       {
+        "line": 29,
+        "before": " 30  "
+       },
+       {
+        "line": 30,
+        "before": " 31  "
+       },
+       {
+        "line": 31,
+        "before": " 32  "
+       },
+       {
+        "line": 32,
+        "before": " 33  "
+       },
+       {
+        "line": 33,
+        "before": " 34  "
+       },
+       {
+        "line": 34,
+        "before": " 35  "
+       },
+       {
+        "line": 35,
+        "before": " 36  "
+       },
+       {
+        "line": 36,
+        "before": " 37  "
+       },
+       {
+        "line": 37,
+        "before": " 38  "
+       },
+       {
+        "line": 38,
+        "before": " 39  "
+       },
+       {
+        "line": 39,
+        "before": " 40  "
+       },
+       {
+        "line": 40,
+        "before": " 41  "
+       },
+       {
+        "line": 41,
+        "before": " 42  "
+       },
+       {
+        "line": 42,
+        "before": " 43  "
+       },
+       {
+        "line": 43,
+        "before": " 44  "
+       },
+       {
+        "line": 44,
+        "before": " 45  "
+       },
+       {
+        "line": 45,
+        "before": " 46  "
+       },
+       {
+        "line": 46,
+        "before": " 47  "
+       },
+       {
+        "line": 47,
+        "before": " 48  "
+       },
+       {
+        "line": 48,
+        "before": " 49  "
+       },
+       {
+        "line": 49,
+        "before": " 50  "
+       },
+       {
+        "line": 50,
+        "before": " 51  "
+       },
+       {
+        "line": 51,
+        "before": " 52  "
+       },
+       {
+        "line": 52,
+        "before": " 53  "
+       },
+       {
+        "line": 53,
+        "before": " 54  "
+       },
+       {
+        "line": 54,
+        "before": " 55  "
+       },
+       {
+        "line": 55,
+        "before": " 56  "
+       },
+       {
+        "line": 56,
+        "before": " 57  "
+       },
+       {
+        "line": 57,
+        "before": " 58  "
+       },
+       {
+        "line": 58,
+        "before": " 59  "
+       },
+       {
+        "line": 59,
+        "before": " 60  "
+       },
+       {
+        "line": 60,
+        "before": " 61  "
+       },
+       {
+        "line": 61,
+        "before": " 62  "
+       },
+       {
+        "line": 62,
+        "before": " 63  "
+       },
+       {
+        "line": 63,
+        "before": " 64  "
+       },
+       {
+        "line": 64,
+        "before": " 65  "
+       },
+       {
+        "line": 65,
+        "before": " 66  "
+       },
+       {
+        "line": 66,
+        "before": " 67  "
+       },
+       {
+        "line": 67,
+        "before": " 68  "
+       },
+       {
+        "line": 68,
+        "before": " 69  "
+       },
+       {
+        "line": 69,
+        "before": " 70  "
+       },
+       {
+        "line": 70,
+        "before": " 71  "
+       },
+       {
+        "line": 71,
+        "before": " 72  "
+       },
+       {
+        "line": 72,
+        "before": " 73  "
+       },
+       {
+        "line": 73,
+        "before": " 74  "
+       },
+       {
+        "line": 74,
+        "before": " 75  "
+       },
+       {
+        "line": 75,
+        "before": " 76  "
+       },
+       {
+        "line": 76,
+        "before": " 77  "
+       },
+       {
+        "line": 77,
+        "before": " 78  "
+       },
+       {
+        "line": 78,
+        "before": " 79  "
+       },
+       {
+        "line": 79,
+        "before": " 80  "
+       },
+       {
+        "line": 80,
+        "before": " 81  "
+       },
+       {
+        "line": 81,
+        "before": " 82  "
+       },
+       {
+        "line": 82,
+        "before": "     "
+       },
+       {
+        "line": 83,
+        "before": " 83  "
+       },
+       {
+        "line": 84,
+        "before": " 84  "
+       },
+       {
+        "line": 85,
+        "before": " 85  "
+       },
+       {
+        "line": 86,
+        "before": " 86  "
+       },
+       {
+        "line": 87,
+        "before": " 87  "
+       },
+       {
+        "line": 88,
+        "before": " 88  "
+       },
+       {
+        "line": 89,
+        "before": " 89  "
+       },
+       {
+        "line": 90,
+        "before": " 90  "
+       },
+       {
+        "line": 91,
+        "before": " 91  "
+       },
+       {
+        "line": 92,
+        "before": " 92  "
+       },
+       {
+        "line": 93,
+        "before": " 93  "
+       },
+       {
+        "line": 94,
+        "before": " 94  "
+       },
+       {
+        "line": 95,
+        "before": " 95  "
+       },
+       {
+        "line": 96,
+        "before": " 96  "
+       },
+       {
+        "line": 97,
+        "before": " 97  "
+       },
+       {
+        "line": 98,
+        "before": " 98  "
+       },
+       {
+        "line": 99,
+        "before": " 99  "
+       },
+       {
+        "line": 100,
+        "before": "100  "
+       },
+       {
+        "line": 101,
+        "before": "101  "
+       },
+       {
+        "line": 102,
+        "before": "102  "
+       },
+       {
+        "line": 103,
+        "before": "103  "
+       },
+       {
+        "line": 104,
+        "before": "104  "
+       },
+       {
+        "line": 105,
+        "before": "105  "
+       },
+       {
+        "line": 106,
+        "before": "106  "
+       },
+       {
+        "line": 107,
+        "before": "107  "
+       },
+       {
+        "line": 108,
+        "before": "108  "
+       },
+       {
+        "line": 109,
+        "before": "109  "
+       },
+       {
+        "line": 110,
+        "before": "110  "
+       },
+       {
+        "line": 111,
+        "before": "111  "
+       },
+       {
+        "line": 112,
+        "before": "112  "
+       },
+       {
+        "line": 113,
+        "before": "113  "
+       },
+       {
+        "line": 114,
+        "before": "114  "
+       },
+       {
+        "line": 115,
+        "before": "115  "
+       },
+       {
+        "line": 116,
+        "before": "116  "
+       },
+       {
+        "line": 117,
+        "before": "117  "
+       },
+       {
+        "line": 118,
+        "before": "118  "
+       },
+       {
+        "line": 119,
+        "before": "119  "
+       },
+       {
+        "line": 120,
+        "before": "120  "
+       },
+       {
+        "line": 121,
+        "before": "121  "
+       },
+       {
+        "line": 122,
+        "before": "122  "
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#583c27",
+       "light": {
+        "backgroundColor": "#fde3c8"
+       }
+      },
+      "ranges": [
+       {
+        "line": 83
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#b45f06",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 82
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  entry.go:29",
+    "description": "秒からミリ秒への倍率が間違っていて 1.5s が 150ms になっているため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  stats.go:45",
+    "description": "Merge の平均が件数を無視した単純平均になっているため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  stats.go:81-89",
+    "description": "PerMinute が「分」の数字だけで集計していて、別の時の同じ分が混ざるため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  replace  entry.go:29",
+    "description": "1秒は1000ミリ秒なので",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "5  replace  stats.go:45-47",
+    "description": "件数で重み付けしないと全体の平均にならず、空の集計を混ぜると平均が半分になってしまうため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "6  外部変更  stats.go:1-126",
+    "description": "srwr の外でファイルが変わった",
+    "color": "charts.purple",
+    "kind": "external"
+   },
+   {
+    "label": "7  replace  stats.go:83-86",
+    "description": "分の先頭時刻そのものをキーにすれば、10:59 と 11:59 のような別の時が混ざらないため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "8  select  stats.go:87-90",
+    "description": "start マップを消したので、バケットを作るループもキーの時刻を使うように直す必要があるため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "9  replace  stats.go:87-90",
+    "description": "キー自体が分の先頭時刻になったので、それをそのまま Start に使えるため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "10  録画後  entry.go:1-100",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   },
+   {
+    "label": "11  録画後  stats.go:1-121",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) 戻る",
+    "visible": true
+   },
+   {
+    "text": "進む $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "7/11",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0949-external",
+  "quickPick": {
+   "placeHolder": "再生するテープを選ぶ",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9操作 · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7操作 · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10操作 · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 7,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0949-external/stats.go",
+    "column": 1,
+    "text": "package accesslog\n\nimport (\n\t\"math\"\n\t\"sort\"\n\t\"time\"\n)\n\n// Summary は複数のエントリをまとめた集計。\ntype Summary struct {\n\tCount  int\n\tErrors int // ステータスが 400 以上の件数\n\tBytes  int\n\tAvgMS  float64\n\tMaxMS  float64\n}\n\n// Summarize はエントリを集計する。\nfunc Summarize(entries []Entry) Summary {\n\ts := Summary{Count: len(entries)}\n\tif s.Count == 0 {\n\t\treturn s\n\t}\n\ttotalMS := 0.0\n\tfor _, e := range entries {\n\t\tif e.Status >= 400 {\n\t\t\ts.Errors++\n\t\t}\n\t\ts.Bytes += e.Bytes\n\t\ttotalMS += e.LatencyMS\n\t\ts.MaxMS = math.Max(s.MaxMS, e.LatencyMS)\n\t}\n\ts.AvgMS = totalMS / float64(s.Count)\n\treturn s\n}\n\n// Merge は別々に集計した2つの Summary を1つにまとめる（ログを分割して処理するとき用）。\nfunc Merge(a, b Summary) Summary {\n\tout := Summary{\n\t\tCount:  a.Count + b.Count,\n\t\tErrors: a.Errors + b.Errors,\n\t\tBytes:  a.Bytes + b.Bytes,\n\t\tMaxMS:  math.Max(a.MaxMS, b.MaxMS),\n\t}\n\tif out.Count > 0 {\n\t\tout.AvgMS = (a.AvgMS*float64(a.Count) + b.AvgMS*float64(b.Count)) / float64(out.Count)\n\t}\n\treturn out\n}\n\n// ErrorRate はエラーの割合（パーセント）を返す。件数が 0 なら 0。\nfunc (s Summary) ErrorRate() float64 {\n\tif s.Count == 0 {\n\t\treturn 0\n\t}\n\treturn float64(s.Errors) * 100 / float64(s.Count)\n}\n\n// Percentile は応答時間の p パーセンタイル（最近順位法）を返す。\n// 空のときは 0。エントリの並びは変えない。\nfunc Percentile(entries []Entry, p float64) float64 {\n\tif len(entries) == 0 {\n\t\treturn 0\n\t}\n\tms := make([]float64, len(entries))\n\tfor i, e := range entries {\n\t\tms[i] = e.LatencyMS\n\t}\n\tsort.Float64s(ms)\n\trank := int(math.Ceil(p / 100 * float64(len(ms))))\n\trank = min(max(rank, 1), len(ms))\n\treturn ms[rank-1]\n}\n\n// Bucket は1分ぶんのリクエスト数。\ntype Bucket struct {\n\tStart time.Time // 分の先頭\n\tCount int\n}\n\n// PerMinute は分ごとのリクエスト数を、時刻の早い順に返す。\nfunc PerMinute(entries []Entry) []Bucket {\n\tcounts := make(map[time.Time]int)\n\tfor _, e := range entries {\n\t\tcounts[e.Time.Truncate(time.Minute)]++\n\t}\n◆ start マップを消したので、バケットを作るループもキーの時刻を使うように直す必要があるため\n\tbuckets := make([]Bucket, 0, len(counts))\n\tfor k, n := range counts {\n\t\tbuckets = append(buckets, Bucket{Start: start[k], Count: n})\n\t}\n\tsort.Slice(buckets, func(i, j int) bool { return buckets[i].Start.Before(buckets[j].Start) })\n\treturn buckets\n}\n\n// PathCount はパスごとのリクエスト数。\ntype PathCount struct {\n\tPath  string\n\tCount int\n}\n\n// TopPaths はリクエストの多いパスを上位 n 件返す。同数ならパスの辞書順。\nfunc TopPaths(entries []Entry, n int) []PathCount {\n\tcounts := make(map[string]int)\n\tfor _, e := range entries {\n\t\tcounts[e.Path]++\n\t}\n\tout := make([]PathCount, 0, len(counts))\n\tfor p, c := range counts {\n\t\tout = append(out, PathCount{p, c})\n\t}\n\tsort.Slice(out, func(i, j int) bool {\n\t\tif out[i].Count != out[j].Count {\n\t\t\treturn out[i].Count > out[j].Count\n\t\t}\n\t\treturn out[i].Path < out[j].Path\n\t})\n\tif len(out) > n {\n\t\tout = out[:n]\n\t}\n\treturn out\n}\n",
+    "options": {
+     "lineNumbers": 0
+    },
+    "reveal": 88,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#1d3a5c",
+       "light": {
+        "backgroundColor": "#cfe3fb"
+       }
+      },
+      "ranges": [
+       {
+        "line": 87
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#0b61a4",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 86
+       }
+      ]
+     },
+     {
+      "opts": {
+       "before": {
+        "color": {
+         "id": "editorLineNumber.foreground"
+        }
+       }
+      },
+      "ranges": [
+       {
+        "line": 0,
+        "before": "  1  "
+       },
+       {
+        "line": 1,
+        "before": "  2  "
+       },
+       {
+        "line": 2,
+        "before": "  3  "
+       },
+       {
+        "line": 3,
+        "before": "  4  "
+       },
+       {
+        "line": 4,
+        "before": "  5  "
+       },
+       {
+        "line": 5,
+        "before": "  6  "
+       },
+       {
+        "line": 6,
+        "before": "  7  "
+       },
+       {
+        "line": 7,
+        "before": "  8  "
+       },
+       {
+        "line": 8,
+        "before": "  9  "
+       },
+       {
+        "line": 9,
+        "before": " 10  "
+       },
+       {
+        "line": 10,
+        "before": " 11  "
+       },
+       {
+        "line": 11,
+        "before": " 12  "
+       },
+       {
+        "line": 12,
+        "before": " 13  "
+       },
+       {
+        "line": 13,
+        "before": " 14  "
+       },
+       {
+        "line": 14,
+        "before": " 15  "
+       },
+       {
+        "line": 15,
+        "before": " 16  "
+       },
+       {
+        "line": 16,
+        "before": " 17  "
+       },
+       {
+        "line": 17,
+        "before": " 18  "
+       },
+       {
+        "line": 18,
+        "before": " 19  "
+       },
+       {
+        "line": 19,
+        "before": " 20  "
+       },
+       {
+        "line": 20,
+        "before": " 21  "
+       },
+       {
+        "line": 21,
+        "before": " 22  "
+       },
+       {
+        "line": 22,
+        "before": " 23  "
+       },
+       {
+        "line": 23,
+        "before": " 24  "
+       },
+       {
+        "line": 24,
+        "before": " 25  "
+       },
+       {
+        "line": 25,
+        "before": " 26  "
+       },
+       {
+        "line": 26,
+        "before": " 27  "
+       },
+       {
+        "line": 27,
+        "before": " 28  "
+       },
+       {
+        "line": 28,
+        "before": " 29  "
+       },
+       {
+        "line": 29,
+        "before": " 30  "
+       },
+       {
+        "line": 30,
+        "before": " 31  "
+       },
+       {
+        "line": 31,
+        "before": " 32  "
+       },
+       {
+        "line": 32,
+        "before": " 33  "
+       },
+       {
+        "line": 33,
+        "before": " 34  "
+       },
+       {
+        "line": 34,
+        "before": " 35  "
+       },
+       {
+        "line": 35,
+        "before": " 36  "
+       },
+       {
+        "line": 36,
+        "before": " 37  "
+       },
+       {
+        "line": 37,
+        "before": " 38  "
+       },
+       {
+        "line": 38,
+        "before": " 39  "
+       },
+       {
+        "line": 39,
+        "before": " 40  "
+       },
+       {
+        "line": 40,
+        "before": " 41  "
+       },
+       {
+        "line": 41,
+        "before": " 42  "
+       },
+       {
+        "line": 42,
+        "before": " 43  "
+       },
+       {
+        "line": 43,
+        "before": " 44  "
+       },
+       {
+        "line": 44,
+        "before": " 45  "
+       },
+       {
+        "line": 45,
+        "before": " 46  "
+       },
+       {
+        "line": 46,
+        "before": " 47  "
+       },
+       {
+        "line": 47,
+        "before": " 48  "
+       },
+       {
+        "line": 48,
+        "before": " 49  "
+       },
+       {
+        "line": 49,
+        "before": " 50  "
+       },
+       {
+        "line": 50,
+        "before": " 51  "
+       },
+       {
+        "line": 51,
+        "before": " 52  "
+       },
+       {
+        "line": 52,
+        "before": " 53  "
+       },
+       {
+        "line": 53,
+        "before": " 54  "
+       },
+       {
+        "line": 54,
+        "before": " 55  "
+       },
+       {
+        "line": 55,
+        "before": " 56  "
+       },
+       {
+        "line": 56,
+        "before": " 57  "
+       },
+       {
+        "line": 57,
+        "before": " 58  "
+       },
+       {
+        "line": 58,
+        "before": " 59  "
+       },
+       {
+        "line": 59,
+        "before": " 60  "
+       },
+       {
+        "line": 60,
+        "before": " 61  "
+       },
+       {
+        "line": 61,
+        "before": " 62  "
+       },
+       {
+        "line": 62,
+        "before": " 63  "
+       },
+       {
+        "line": 63,
+        "before": " 64  "
+       },
+       {
+        "line": 64,
+        "before": " 65  "
+       },
+       {
+        "line": 65,
+        "before": " 66  "
+       },
+       {
+        "line": 66,
+        "before": " 67  "
+       },
+       {
+        "line": 67,
+        "before": " 68  "
+       },
+       {
+        "line": 68,
+        "before": " 69  "
+       },
+       {
+        "line": 69,
+        "before": " 70  "
+       },
+       {
+        "line": 70,
+        "before": " 71  "
+       },
+       {
+        "line": 71,
+        "before": " 72  "
+       },
+       {
+        "line": 72,
+        "before": " 73  "
+       },
+       {
+        "line": 73,
+        "before": " 74  "
+       },
+       {
+        "line": 74,
+        "before": " 75  "
+       },
+       {
+        "line": 75,
+        "before": " 76  "
+       },
+       {
+        "line": 76,
+        "before": " 77  "
+       },
+       {
+        "line": 77,
+        "before": " 78  "
+       },
+       {
+        "line": 78,
+        "before": " 79  "
+       },
+       {
+        "line": 79,
+        "before": " 80  "
+       },
+       {
+        "line": 80,
+        "before": " 81  "
+       },
+       {
+        "line": 81,
+        "before": " 82  "
+       },
+       {
+        "line": 82,
+        "before": " 83  "
+       },
+       {
+        "line": 83,
+        "before": " 84  "
+       },
+       {
+        "line": 84,
+        "before": " 85  "
+       },
+       {
+        "line": 85,
+        "before": " 86  "
+       },
+       {
+        "line": 86,
+        "before": "     "
+       },
+       {
+        "line": 87,
+        "before": " 87  "
+       },
+       {
+        "line": 88,
+        "before": " 88  "
+       },
+       {
+        "line": 89,
+        "before": " 89  "
+       },
+       {
+        "line": 90,
+        "before": " 90  "
+       },
+       {
+        "line": 91,
+        "before": " 91  "
+       },
+       {
+        "line": 92,
+        "before": " 92  "
+       },
+       {
+        "line": 93,
+        "before": " 93  "
+       },
+       {
+        "line": 94,
+        "before": " 94  "
+       },
+       {
+        "line": 95,
+        "before": " 95  "
+       },
+       {
+        "line": 96,
+        "before": " 96  "
+       },
+       {
+        "line": 97,
+        "before": " 97  "
+       },
+       {
+        "line": 98,
+        "before": " 98  "
+       },
+       {
+        "line": 99,
+        "before": " 99  "
+       },
+       {
+        "line": 100,
+        "before": "100  "
+       },
+       {
+        "line": 101,
+        "before": "101  "
+       },
+       {
+        "line": 102,
+        "before": "102  "
+       },
+       {
+        "line": 103,
+        "before": "103  "
+       },
+       {
+        "line": 104,
+        "before": "104  "
+       },
+       {
+        "line": 105,
+        "before": "105  "
+       },
+       {
+        "line": 106,
+        "before": "106  "
+       },
+       {
+        "line": 107,
+        "before": "107  "
+       },
+       {
+        "line": 108,
+        "before": "108  "
+       },
+       {
+        "line": 109,
+        "before": "109  "
+       },
+       {
+        "line": 110,
+        "before": "110  "
+       },
+       {
+        "line": 111,
+        "before": "111  "
+       },
+       {
+        "line": 112,
+        "before": "112  "
+       },
+       {
+        "line": 113,
+        "before": "113  "
+       },
+       {
+        "line": 114,
+        "before": "114  "
+       },
+       {
+        "line": 115,
+        "before": "115  "
+       },
+       {
+        "line": 116,
+        "before": "116  "
+       },
+       {
+        "line": 117,
+        "before": "117  "
+       },
+       {
+        "line": 118,
+        "before": "118  "
+       },
+       {
+        "line": 119,
+        "before": "119  "
+       },
+       {
+        "line": 120,
+        "before": "120  "
+       },
+       {
+        "line": 121,
+        "before": "121  "
+       },
+       {
+        "line": 122,
+        "before": "122  "
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  entry.go:29",
+    "description": "秒からミリ秒への倍率が間違っていて 1.5s が 150ms になっているため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  stats.go:45",
+    "description": "Merge の平均が件数を無視した単純平均になっているため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  stats.go:81-89",
+    "description": "PerMinute が「分」の数字だけで集計していて、別の時の同じ分が混ざるため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  replace  entry.go:29",
+    "description": "1秒は1000ミリ秒なので",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "5  replace  stats.go:45-47",
+    "description": "件数で重み付けしないと全体の平均にならず、空の集計を混ぜると平均が半分になってしまうため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "6  外部変更  stats.go:1-126",
+    "description": "srwr の外でファイルが変わった",
+    "color": "charts.purple",
+    "kind": "external"
+   },
+   {
+    "label": "7  replace  stats.go:83-86",
+    "description": "分の先頭時刻そのものをキーにすれば、10:59 と 11:59 のような別の時が混ざらないため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "8  select  stats.go:87-90",
+    "description": "start マップを消したので、バケットを作るループもキーの時刻を使うように直す必要があるため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "9  replace  stats.go:87-90",
+    "description": "キー自体が分の先頭時刻になったので、それをそのまま Start に使えるため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "10  録画後  entry.go:1-100",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   },
+   {
+    "label": "11  録画後  stats.go:1-121",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) 戻る",
+    "visible": true
+   },
+   {
+    "text": "進む $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "8/11",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0949-external",
+  "quickPick": {
+   "placeHolder": "再生するテープを選ぶ",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9操作 · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7操作 · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10操作 · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 8,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0949-external/stats.go",
+    "column": 1,
+    "text": "package accesslog\n\nimport (\n\t\"math\"\n\t\"sort\"\n\t\"time\"\n)\n\n// Summary は複数のエントリをまとめた集計。\ntype Summary struct {\n\tCount  int\n\tErrors int // ステータスが 400 以上の件数\n\tBytes  int\n\tAvgMS  float64\n\tMaxMS  float64\n}\n\n// Summarize はエントリを集計する。\nfunc Summarize(entries []Entry) Summary {\n\ts := Summary{Count: len(entries)}\n\tif s.Count == 0 {\n\t\treturn s\n\t}\n\ttotalMS := 0.0\n\tfor _, e := range entries {\n\t\tif e.Status >= 400 {\n\t\t\ts.Errors++\n\t\t}\n\t\ts.Bytes += e.Bytes\n\t\ttotalMS += e.LatencyMS\n\t\ts.MaxMS = math.Max(s.MaxMS, e.LatencyMS)\n\t}\n\ts.AvgMS = totalMS / float64(s.Count)\n\treturn s\n}\n\n// Merge は別々に集計した2つの Summary を1つにまとめる（ログを分割して処理するとき用）。\nfunc Merge(a, b Summary) Summary {\n\tout := Summary{\n\t\tCount:  a.Count + b.Count,\n\t\tErrors: a.Errors + b.Errors,\n\t\tBytes:  a.Bytes + b.Bytes,\n\t\tMaxMS:  math.Max(a.MaxMS, b.MaxMS),\n\t}\n\tif out.Count > 0 {\n\t\tout.AvgMS = (a.AvgMS*float64(a.Count) + b.AvgMS*float64(b.Count)) / float64(out.Count)\n\t}\n\treturn out\n}\n\n// ErrorRate はエラーの割合（パーセント）を返す。件数が 0 なら 0。\nfunc (s Summary) ErrorRate() float64 {\n\tif s.Count == 0 {\n\t\treturn 0\n\t}\n\treturn float64(s.Errors) * 100 / float64(s.Count)\n}\n\n// Percentile は応答時間の p パーセンタイル（最近順位法）を返す。\n// 空のときは 0。エントリの並びは変えない。\nfunc Percentile(entries []Entry, p float64) float64 {\n\tif len(entries) == 0 {\n\t\treturn 0\n\t}\n\tms := make([]float64, len(entries))\n\tfor i, e := range entries {\n\t\tms[i] = e.LatencyMS\n\t}\n\tsort.Float64s(ms)\n\trank := int(math.Ceil(p / 100 * float64(len(ms))))\n\trank = min(max(rank, 1), len(ms))\n\treturn ms[rank-1]\n}\n\n// Bucket は1分ぶんのリクエスト数。\ntype Bucket struct {\n\tStart time.Time // 分の先頭\n\tCount int\n}\n\n// PerMinute は分ごとのリクエスト数を、時刻の早い順に返す。\nfunc PerMinute(entries []Entry) []Bucket {\n\tcounts := make(map[time.Time]int)\n\tfor _, e := range entries {\n\t\tcounts[e.Time.Truncate(time.Minute)]++\n\t}\n◆ キー自体が分の先頭時刻になったので、それをそのまま Start に使えるため\n\tbuckets := make([]Bucket, 0, len(counts))\n\tfor k, n := range counts {\n\t\tbuckets = append(buckets, Bucket{Start: k, Count: n})\n\t}\n\tsort.Slice(buckets, func(i, j int) bool { return buckets[i].Start.Before(buckets[j].Start) })\n\treturn buckets\n}\n\n// PathCount はパスごとのリクエスト数。\ntype PathCount struct {\n\tPath  string\n\tCount int\n}\n\n// TopPaths はリクエストの多いパスを上位 n 件返す。同数ならパスの辞書順。\nfunc TopPaths(entries []Entry, n int) []PathCount {\n\tcounts := make(map[string]int)\n\tfor _, e := range entries {\n\t\tcounts[e.Path]++\n\t}\n\tout := make([]PathCount, 0, len(counts))\n\tfor p, c := range counts {\n\t\tout = append(out, PathCount{p, c})\n\t}\n\tsort.Slice(out, func(i, j int) bool {\n\t\tif out[i].Count != out[j].Count {\n\t\t\treturn out[i].Count > out[j].Count\n\t\t}\n\t\treturn out[i].Path < out[j].Path\n\t})\n\tif len(out) > n {\n\t\tout = out[:n]\n\t}\n\treturn out\n}\n",
+    "options": {
+     "lineNumbers": 0
+    },
+    "reveal": 88,
+    "decorations": [
+     {
+      "opts": {
+       "before": {
+        "color": {
+         "id": "editorLineNumber.foreground"
+        }
+       }
+      },
+      "ranges": [
+       {
+        "line": 0,
+        "before": "  1  "
+       },
+       {
+        "line": 1,
+        "before": "  2  "
+       },
+       {
+        "line": 2,
+        "before": "  3  "
+       },
+       {
+        "line": 3,
+        "before": "  4  "
+       },
+       {
+        "line": 4,
+        "before": "  5  "
+       },
+       {
+        "line": 5,
+        "before": "  6  "
+       },
+       {
+        "line": 6,
+        "before": "  7  "
+       },
+       {
+        "line": 7,
+        "before": "  8  "
+       },
+       {
+        "line": 8,
+        "before": "  9  "
+       },
+       {
+        "line": 9,
+        "before": " 10  "
+       },
+       {
+        "line": 10,
+        "before": " 11  "
+       },
+       {
+        "line": 11,
+        "before": " 12  "
+       },
+       {
+        "line": 12,
+        "before": " 13  "
+       },
+       {
+        "line": 13,
+        "before": " 14  "
+       },
+       {
+        "line": 14,
+        "before": " 15  "
+       },
+       {
+        "line": 15,
+        "before": " 16  "
+       },
+       {
+        "line": 16,
+        "before": " 17  "
+       },
+       {
+        "line": 17,
+        "before": " 18  "
+       },
+       {
+        "line": 18,
+        "before": " 19  "
+       },
+       {
+        "line": 19,
+        "before": " 20  "
+       },
+       {
+        "line": 20,
+        "before": " 21  "
+       },
+       {
+        "line": 21,
+        "before": " 22  "
+       },
+       {
+        "line": 22,
+        "before": " 23  "
+       },
+       {
+        "line": 23,
+        "before": " 24  "
+       },
+       {
+        "line": 24,
+        "before": " 25  "
+       },
+       {
+        "line": 25,
+        "before": " 26  "
+       },
+       {
+        "line": 26,
+        "before": " 27  "
+       },
+       {
+        "line": 27,
+        "before": " 28  "
+       },
+       {
+        "line": 28,
+        "before": " 29  "
+       },
+       {
+        "line": 29,
+        "before": " 30  "
+       },
+       {
+        "line": 30,
+        "before": " 31  "
+       },
+       {
+        "line": 31,
+        "before": " 32  "
+       },
+       {
+        "line": 32,
+        "before": " 33  "
+       },
+       {
+        "line": 33,
+        "before": " 34  "
+       },
+       {
+        "line": 34,
+        "before": " 35  "
+       },
+       {
+        "line": 35,
+        "before": " 36  "
+       },
+       {
+        "line": 36,
+        "before": " 37  "
+       },
+       {
+        "line": 37,
+        "before": " 38  "
+       },
+       {
+        "line": 38,
+        "before": " 39  "
+       },
+       {
+        "line": 39,
+        "before": " 40  "
+       },
+       {
+        "line": 40,
+        "before": " 41  "
+       },
+       {
+        "line": 41,
+        "before": " 42  "
+       },
+       {
+        "line": 42,
+        "before": " 43  "
+       },
+       {
+        "line": 43,
+        "before": " 44  "
+       },
+       {
+        "line": 44,
+        "before": " 45  "
+       },
+       {
+        "line": 45,
+        "before": " 46  "
+       },
+       {
+        "line": 46,
+        "before": " 47  "
+       },
+       {
+        "line": 47,
+        "before": " 48  "
+       },
+       {
+        "line": 48,
+        "before": " 49  "
+       },
+       {
+        "line": 49,
+        "before": " 50  "
+       },
+       {
+        "line": 50,
+        "before": " 51  "
+       },
+       {
+        "line": 51,
+        "before": " 52  "
+       },
+       {
+        "line": 52,
+        "before": " 53  "
+       },
+       {
+        "line": 53,
+        "before": " 54  "
+       },
+       {
+        "line": 54,
+        "before": " 55  "
+       },
+       {
+        "line": 55,
+        "before": " 56  "
+       },
+       {
+        "line": 56,
+        "before": " 57  "
+       },
+       {
+        "line": 57,
+        "before": " 58  "
+       },
+       {
+        "line": 58,
+        "before": " 59  "
+       },
+       {
+        "line": 59,
+        "before": " 60  "
+       },
+       {
+        "line": 60,
+        "before": " 61  "
+       },
+       {
+        "line": 61,
+        "before": " 62  "
+       },
+       {
+        "line": 62,
+        "before": " 63  "
+       },
+       {
+        "line": 63,
+        "before": " 64  "
+       },
+       {
+        "line": 64,
+        "before": " 65  "
+       },
+       {
+        "line": 65,
+        "before": " 66  "
+       },
+       {
+        "line": 66,
+        "before": " 67  "
+       },
+       {
+        "line": 67,
+        "before": " 68  "
+       },
+       {
+        "line": 68,
+        "before": " 69  "
+       },
+       {
+        "line": 69,
+        "before": " 70  "
+       },
+       {
+        "line": 70,
+        "before": " 71  "
+       },
+       {
+        "line": 71,
+        "before": " 72  "
+       },
+       {
+        "line": 72,
+        "before": " 73  "
+       },
+       {
+        "line": 73,
+        "before": " 74  "
+       },
+       {
+        "line": 74,
+        "before": " 75  "
+       },
+       {
+        "line": 75,
+        "before": " 76  "
+       },
+       {
+        "line": 76,
+        "before": " 77  "
+       },
+       {
+        "line": 77,
+        "before": " 78  "
+       },
+       {
+        "line": 78,
+        "before": " 79  "
+       },
+       {
+        "line": 79,
+        "before": " 80  "
+       },
+       {
+        "line": 80,
+        "before": " 81  "
+       },
+       {
+        "line": 81,
+        "before": " 82  "
+       },
+       {
+        "line": 82,
+        "before": " 83  "
+       },
+       {
+        "line": 83,
+        "before": " 84  "
+       },
+       {
+        "line": 84,
+        "before": " 85  "
+       },
+       {
+        "line": 85,
+        "before": " 86  "
+       },
+       {
+        "line": 86,
+        "before": "     "
+       },
+       {
+        "line": 87,
+        "before": " 87  "
+       },
+       {
+        "line": 88,
+        "before": " 88  "
+       },
+       {
+        "line": 89,
+        "before": " 89  "
+       },
+       {
+        "line": 90,
+        "before": " 90  "
+       },
+       {
+        "line": 91,
+        "before": " 91  "
+       },
+       {
+        "line": 92,
+        "before": " 92  "
+       },
+       {
+        "line": 93,
+        "before": " 93  "
+       },
+       {
+        "line": 94,
+        "before": " 94  "
+       },
+       {
+        "line": 95,
+        "before": " 95  "
+       },
+       {
+        "line": 96,
+        "before": " 96  "
+       },
+       {
+        "line": 97,
+        "before": " 97  "
+       },
+       {
+        "line": 98,
+        "before": " 98  "
+       },
+       {
+        "line": 99,
+        "before": " 99  "
+       },
+       {
+        "line": 100,
+        "before": "100  "
+       },
+       {
+        "line": 101,
+        "before": "101  "
+       },
+       {
+        "line": 102,
+        "before": "102  "
+       },
+       {
+        "line": 103,
+        "before": "103  "
+       },
+       {
+        "line": 104,
+        "before": "104  "
+       },
+       {
+        "line": 105,
+        "before": "105  "
+       },
+       {
+        "line": 106,
+        "before": "106  "
+       },
+       {
+        "line": 107,
+        "before": "107  "
+       },
+       {
+        "line": 108,
+        "before": "108  "
+       },
+       {
+        "line": 109,
+        "before": "109  "
+       },
+       {
+        "line": 110,
+        "before": "110  "
+       },
+       {
+        "line": 111,
+        "before": "111  "
+       },
+       {
+        "line": 112,
+        "before": "112  "
+       },
+       {
+        "line": 113,
+        "before": "113  "
+       },
+       {
+        "line": 114,
+        "before": "114  "
+       },
+       {
+        "line": 115,
+        "before": "115  "
+       },
+       {
+        "line": 116,
+        "before": "116  "
+       },
+       {
+        "line": 117,
+        "before": "117  "
+       },
+       {
+        "line": 118,
+        "before": "118  "
+       },
+       {
+        "line": 119,
+        "before": "119  "
+       },
+       {
+        "line": 120,
+        "before": "120  "
+       },
+       {
+        "line": 121,
+        "before": "121  "
+       },
+       {
+        "line": 122,
+        "before": "122  "
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#583c27",
+       "light": {
+        "backgroundColor": "#fde3c8"
+       }
+      },
+      "ranges": [
+       {
+        "line": 87
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#b45f06",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 86
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  entry.go:29",
+    "description": "秒からミリ秒への倍率が間違っていて 1.5s が 150ms になっているため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  stats.go:45",
+    "description": "Merge の平均が件数を無視した単純平均になっているため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  stats.go:81-89",
+    "description": "PerMinute が「分」の数字だけで集計していて、別の時の同じ分が混ざるため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  replace  entry.go:29",
+    "description": "1秒は1000ミリ秒なので",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "5  replace  stats.go:45-47",
+    "description": "件数で重み付けしないと全体の平均にならず、空の集計を混ぜると平均が半分になってしまうため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "6  外部変更  stats.go:1-126",
+    "description": "srwr の外でファイルが変わった",
+    "color": "charts.purple",
+    "kind": "external"
+   },
+   {
+    "label": "7  replace  stats.go:83-86",
+    "description": "分の先頭時刻そのものをキーにすれば、10:59 と 11:59 のような別の時が混ざらないため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "8  select  stats.go:87-90",
+    "description": "start マップを消したので、バケットを作るループもキーの時刻を使うように直す必要があるため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "9  replace  stats.go:87-90",
+    "description": "キー自体が分の先頭時刻になったので、それをそのまま Start に使えるため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "10  録画後  entry.go:1-100",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   },
+   {
+    "label": "11  録画後  stats.go:1-121",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) 戻る",
+    "visible": true
+   },
+   {
+    "text": "進む $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "9/11",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0949-external",
+  "quickPick": {
+   "placeHolder": "再生するテープを選ぶ",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9操作 · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7操作 · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10操作 · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 9,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0949-external/diff9/前 ⚠ 録画のあとで変更（今のファイルとの差分）：entry.go?diff=9&side=before",
+    "column": 1,
+    "text": "package accesslog\n\nimport (\n\t\"errors\"\n\t\"fmt\"\n\t\"strconv\"\n\t\"strings\"\n\t\"time\"\n)\n\nconst maxLineLen = 4096 // これより長い行は壊れた行として扱う\n\n// Entry はアクセスログの1行。\ntype Entry struct {\n\tTime      time.Time\n\tIP        string\n\tMethod    string\n\tPath      string // クエリを除いたパス\n\tQuery     string\n\tStatus    int\n\tBytes     int\n\tLatencyMS float64 // 応答時間（ミリ秒）\n}\n\n// ErrTooLong は行が maxLineLen を超えたときのエラー。\nvar ErrTooLong = errors.New(\"accesslog: line too long\")\n\n// msPerUnit は応答時間の単位を、ミリ秒に直すための倍率。\nvar msPerUnit = map[string]float64{\"us\": 0.001, \"ms\": 1, \"s\": 1000}\n\n// parseLatency は \"35ms\"、\"1.5s\"、\"500us\" のような応答時間をミリ秒にする。\nfunc parseLatency(s string) (float64, error) {\n\tfor _, unit := range []string{\"us\", \"ms\", \"s\"} {\n\t\tif !strings.HasSuffix(s, unit) {\n\t\t\tcontinue\n\t\t}\n\t\tv, err := strconv.ParseFloat(strings.TrimSuffix(s, unit), 64)\n\t\tif err != nil || v < 0 {\n\t\t\treturn 0, fmt.Errorf(\"accesslog: bad latency %q\", s)\n\t\t}\n\t\treturn v * msPerUnit[unit], nil\n\t}\n\treturn 0, fmt.Errorf(\"accesslog: unknown latency unit %q\", s)\n}\n\n// ParseLine は1行をパースする。形式は次のとおり。\n//\n//\t時刻(RFC3339) IP メソッド パス[?クエリ] ステータス バイト数 応答時間\n//\n// バイト数が \"-\" のときは 0 とする。時刻は UTC にそろえる。\nfunc ParseLine(line string) (Entry, error) {\n\tif len(line) > maxLineLen {\n\t\treturn Entry{}, ErrTooLong\n\t}\n\tf := strings.Fields(line)\n\tif len(f) != 7 {\n\t\treturn Entry{}, fmt.Errorf(\"accesslog: want 7 fields, got %d\", len(f))\n\t}\n\tt, err := time.Parse(time.RFC3339, f[0])\n\tif err != nil {\n\t\treturn Entry{}, fmt.Errorf(\"accesslog: bad time: %w\", err)\n\t}\n\tstatus, err := strconv.Atoi(f[4])\n\tif err != nil || status < 100 || status > 599 {\n\t\treturn Entry{}, fmt.Errorf(\"accesslog: bad status %q\", f[4])\n\t}\n\tn := 0\n\tif f[5] != \"-\" {\n\t\tif n, err = strconv.Atoi(f[5]); err != nil || n < 0 {\n\t\t\treturn Entry{}, fmt.Errorf(\"accesslog: bad bytes %q\", f[5])\n\t\t}\n\t}\n\tms, err := parseLatency(f[6])\n\tif err != nil {\n\t\treturn Entry{}, err\n\t}\n\tpath, query, _ := strings.Cut(f[3], \"?\")\n\treturn Entry{\n\t\tTime: t.UTC(), IP: f[1], Method: f[2], Path: path, Query: query,\n\t\tStatus: status, Bytes: n, LatencyMS: ms,\n\t}, nil\n}\n\n// ParseAll は複数行をパースする。空行と # で始まる行は読み飛ばし、\n// 壊れた行は捨てて bad に数える。\nfunc ParseAll(text string) (entries []Entry, bad int) {\n\tfor _, line := range strings.Split(text, \"\\n\") {\n\t\tline = strings.TrimSpace(line)\n\t\tif line == \"\" || strings.HasPrefix(line, \"#\") {\n\t\t\tcontinue\n\t\t}\n\t\te, err := ParseLine(line)\n\t\tif err != nil {\n\t\t\tbad++\n\t\t\tcontinue\n\t\t}\n\t\tentries = append(entries, e)\n\t}\n\treturn entries, bad\n}\n",
+    "options": {
+     "lineNumbers": 1
+    },
+    "reveal": 1,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#1d3a5c",
+       "light": {
+        "backgroundColor": "#cfe3fb"
+       }
+      },
+      "ranges": [
+       {
+        "line": 10
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "uri": "srwr-replay:/20260930-0949-external/diff9/後 entry.go?diff=9&side=after",
+    "column": 2,
+    "text": "package accesslog\n\nimport (\n\t\"errors\"\n\t\"fmt\"\n\t\"strconv\"\n\t\"strings\"\n\t\"time\"\n)\n\nconst maxLineLen = 8192 // これより長い行は壊れた行として扱う\n\n// Entry はアクセスログの1行。\ntype Entry struct {\n\tTime      time.Time\n\tIP        string\n\tMethod    string\n\tPath      string // クエリを除いたパス\n\tQuery     string\n\tStatus    int\n\tBytes     int\n\tLatencyMS float64 // 応答時間（ミリ秒）\n}\n\n// ErrTooLong は行が maxLineLen を超えたときのエラー。\nvar ErrTooLong = errors.New(\"accesslog: line too long\")\n\n// msPerUnit は応答時間の単位を、ミリ秒に直すための倍率。\nvar msPerUnit = map[string]float64{\"us\": 0.001, \"ms\": 1, \"s\": 1000}\n\n// parseLatency は \"35ms\"、\"1.5s\"、\"500us\" のような応答時間をミリ秒にする。\nfunc parseLatency(s string) (float64, error) {\n\tfor _, unit := range []string{\"us\", \"ms\", \"s\"} {\n\t\tif !strings.HasSuffix(s, unit) {\n\t\t\tcontinue\n\t\t}\n\t\tv, err := strconv.ParseFloat(strings.TrimSuffix(s, unit), 64)\n\t\tif err != nil || v < 0 {\n\t\t\treturn 0, fmt.Errorf(\"accesslog: bad latency %q\", s)\n\t\t}\n\t\treturn v * msPerUnit[unit], nil\n\t}\n\treturn 0, fmt.Errorf(\"accesslog: unknown latency unit %q\", s)\n}\n\n// ParseLine は1行をパースする。形式は次のとおり。\n//\n//\t時刻(RFC3339) IP メソッド パス[?クエリ] ステータス バイト数 応答時間\n//\n// バイト数が \"-\" のときは 0 とする。時刻は UTC にそろえる。\nfunc ParseLine(line string) (Entry, error) {\n\tif len(line) > maxLineLen {\n\t\treturn Entry{}, ErrTooLong\n\t}\n\tf := strings.Fields(line)\n\tif len(f) != 7 {\n\t\treturn Entry{}, fmt.Errorf(\"accesslog: want 7 fields, got %d\", len(f))\n\t}\n\tt, err := time.Parse(time.RFC3339, f[0])\n\tif err != nil {\n\t\treturn Entry{}, fmt.Errorf(\"accesslog: bad time: %w\", err)\n\t}\n\tstatus, err := strconv.Atoi(f[4])\n\tif err != nil || status < 100 || status > 599 {\n\t\treturn Entry{}, fmt.Errorf(\"accesslog: bad status %q\", f[4])\n\t}\n\tn := 0\n\tif f[5] != \"-\" {\n\t\tif n, err = strconv.Atoi(f[5]); err != nil || n < 0 {\n\t\t\treturn Entry{}, fmt.Errorf(\"accesslog: bad bytes %q\", f[5])\n\t\t}\n\t}\n\tms, err := parseLatency(f[6])\n\tif err != nil {\n\t\treturn Entry{}, err\n\t}\n\tpath, query, _ := strings.Cut(f[3], \"?\")\n\treturn Entry{\n\t\tTime: t.UTC(), IP: f[1], Method: f[2], Path: path, Query: query,\n\t\tStatus: status, Bytes: n, LatencyMS: ms,\n\t}, nil\n}\n\n// ParseAll は複数行をパースする。空行と # で始まる行は読み飛ばし、\n// 壊れた行は捨てて bad に数える。\nfunc ParseAll(text string) (entries []Entry, bad int) {\n\tfor _, line := range strings.Split(text, \"\\n\") {\n\t\tline = strings.TrimSpace(line)\n\t\tif line == \"\" || strings.HasPrefix(line, \"#\") {\n\t\t\tcontinue\n\t\t}\n\t\te, err := ParseLine(line)\n\t\tif err != nil {\n\t\t\tbad++\n\t\t\tcontinue\n\t\t}\n\t\tentries = append(entries, e)\n\t}\n\treturn entries, bad\n}\n",
+    "options": {
+     "lineNumbers": 1
+    },
+    "reveal": 1,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#583c27",
+       "light": {
+        "backgroundColor": "#fde3c8"
+       }
+      },
+      "ranges": [
+       {
+        "line": 10
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  entry.go:29",
+    "description": "秒からミリ秒への倍率が間違っていて 1.5s が 150ms になっているため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  stats.go:45",
+    "description": "Merge の平均が件数を無視した単純平均になっているため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  stats.go:81-89",
+    "description": "PerMinute が「分」の数字だけで集計していて、別の時の同じ分が混ざるため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  replace  entry.go:29",
+    "description": "1秒は1000ミリ秒なので",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "5  replace  stats.go:45-47",
+    "description": "件数で重み付けしないと全体の平均にならず、空の集計を混ぜると平均が半分になってしまうため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "6  外部変更  stats.go:1-126",
+    "description": "srwr の外でファイルが変わった",
+    "color": "charts.purple",
+    "kind": "external"
+   },
+   {
+    "label": "7  replace  stats.go:83-86",
+    "description": "分の先頭時刻そのものをキーにすれば、10:59 と 11:59 のような別の時が混ざらないため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "8  select  stats.go:87-90",
+    "description": "start マップを消したので、バケットを作るループもキーの時刻を使うように直す必要があるため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "9  replace  stats.go:87-90",
+    "description": "キー自体が分の先頭時刻になったので、それをそのまま Start に使えるため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "10  録画後  entry.go:1-100",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   },
+   {
+    "label": "11  録画後  stats.go:1-121",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) 戻る",
+    "visible": true
+   },
+   {
+    "text": "進む $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "10/11",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0949-external",
+  "quickPick": {
+   "placeHolder": "再生するテープを選ぶ",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9操作 · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7操作 · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10操作 · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 10,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0949-external/diff10/前 ⚠ 録画のあとで変更（今のファイルとの差分）：stats.go?diff=10&side=before",
+    "column": 1,
+    "text": "package accesslog\n\nimport (\n\t\"math\"\n\t\"sort\"\n\t\"time\"\n)\n\n// Summary は複数のエントリをまとめた集計。\ntype Summary struct {\n\tCount  int\n\tErrors int // ステータスが 400 以上の件数\n\tBytes  int\n\tAvgMS  float64\n\tMaxMS  float64\n}\n\n// Summarize はエントリを集計する。\nfunc Summarize(entries []Entry) Summary {\n\ts := Summary{Count: len(entries)}\n\tif s.Count == 0 {\n\t\treturn s\n\t}\n\ttotalMS := 0.0\n\tfor _, e := range entries {\n\t\tif e.Status >= 400 {\n\t\t\ts.Errors++\n\t\t}\n\t\ts.Bytes += e.Bytes\n\t\ttotalMS += e.LatencyMS\n\t\ts.MaxMS = math.Max(s.MaxMS, e.LatencyMS)\n\t}\n\ts.AvgMS = totalMS / float64(s.Count)\n\treturn s\n}\n\n// Merge は別々に集計した2つの Summary を1つにまとめる（ログを分割して処理するとき用）。\nfunc Merge(a, b Summary) Summary {\n\tout := Summary{\n\t\tCount:  a.Count + b.Count,\n\t\tErrors: a.Errors + b.Errors,\n\t\tBytes:  a.Bytes + b.Bytes,\n\t\tMaxMS:  math.Max(a.MaxMS, b.MaxMS),\n\t}\n\tif out.Count > 0 {\n\t\tout.AvgMS = (a.AvgMS*float64(a.Count) + b.AvgMS*float64(b.Count)) / float64(out.Count)\n\t}\n\treturn out\n}\n\n// ErrorRate はエラーの割合（パーセント）を返す。件数が 0 なら 0。\nfunc (s Summary) ErrorRate() float64 {\n\tif s.Count == 0 {\n\t\treturn 0\n\t}\n\treturn float64(s.Errors) * 100 / float64(s.Count)\n}\n\n// Percentile は応答時間の p パーセンタイル（最近順位法）を返す。\n// 空のときは 0。エントリの並びは変えない。\nfunc Percentile(entries []Entry, p float64) float64 {\n\tif len(entries) == 0 {\n\t\treturn 0\n\t}\n\tms := make([]float64, len(entries))\n\tfor i, e := range entries {\n\t\tms[i] = e.LatencyMS\n\t}\n\tsort.Float64s(ms)\n\trank := int(math.Ceil(p / 100 * float64(len(ms))))\n\trank = min(max(rank, 1), len(ms))\n\treturn ms[rank-1]\n}\n\n// Bucket は1分ぶんのリクエスト数。\ntype Bucket struct {\n\tStart time.Time // 分の先頭\n\tCount int\n}\n\n// PerMinute は分ごとのリクエスト数を、時刻の早い順に返す。\nfunc PerMinute(entries []Entry) []Bucket {\n\tcounts := make(map[time.Time]int)\n\tfor _, e := range entries {\n\t\tcounts[e.Time.Truncate(time.Minute)]++\n\t}\n\tbuckets := make([]Bucket, 0, len(counts))\n\tfor k, n := range counts {\n\t\tbuckets = append(buckets, Bucket{Start: k, Count: n})\n\t}\n\tsort.Slice(buckets, func(i, j int) bool { return buckets[i].Start.Before(buckets[j].Start) })\n\treturn buckets\n}\n\n// PathCount はパスごとのリクエスト数。\ntype PathCount struct {\n\tPath  string\n\tCount int\n}\n\n// TopPaths はリクエストの多いパスを上位 n 件返す。同数ならパスの辞書順。\nfunc TopPaths(entries []Entry, n int) []PathCount {\n\tcounts := make(map[string]int)\n\tfor _, e := range entries {\n\t\tcounts[e.Path]++\n\t}\n\tout := make([]PathCount, 0, len(counts))\n\tfor p, c := range counts {\n\t\tout = append(out, PathCount{p, c})\n\t}\n\tsort.Slice(out, func(i, j int) bool {\n\t\tif out[i].Count != out[j].Count {\n\t\t\treturn out[i].Count > out[j].Count\n\t\t}\n\t\treturn out[i].Path < out[j].Path\n\t})\n\tif len(out) > n {\n\t\tout = out[:n]\n\t}\n\treturn out\n}\n",
+    "options": {
+     "lineNumbers": 1
+    },
+    "reveal": 47,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#1d3a5c",
+       "light": {
+        "backgroundColor": "#cfe3fb"
+       }
+      },
+      "ranges": [
+       {
+        "line": 58
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "uri": "srwr-replay:/20260930-0949-external/diff10/後 stats.go?diff=10&side=after",
+    "column": 2,
+    "text": "package accesslog\n\nimport (\n\t\"math\"\n\t\"sort\"\n\t\"time\"\n)\n\n// Summary は複数のエントリをまとめた集計。\ntype Summary struct {\n\tCount  int\n\tErrors int // ステータスが 400 以上の件数\n\tBytes  int\n\tAvgMS  float64\n\tMaxMS  float64\n}\n\n// Summarize はエントリを集計する。\nfunc Summarize(entries []Entry) Summary {\n\ts := Summary{Count: len(entries)}\n\tif s.Count == 0 {\n\t\treturn s\n\t}\n\ttotalMS := 0.0\n\tfor _, e := range entries {\n\t\tif e.Status >= 400 {\n\t\t\ts.Errors++\n\t\t}\n\t\ts.Bytes += e.Bytes\n\t\ttotalMS += e.LatencyMS\n\t\ts.MaxMS = math.Max(s.MaxMS, e.LatencyMS)\n\t}\n\ts.AvgMS = totalMS / float64(s.Count)\n\treturn s\n}\n\n// Merge は別々に集計した2つの Summary を1つにまとめる（ログを分割して処理するとき用）。\nfunc Merge(a, b Summary) Summary {\n\tout := Summary{\n\t\tCount:  a.Count + b.Count,\n\t\tErrors: a.Errors + b.Errors,\n\t\tBytes:  a.Bytes + b.Bytes,\n\t\tMaxMS:  math.Max(a.MaxMS, b.MaxMS),\n\t}\n\tif out.Count > 0 {\n\t\tout.AvgMS = (a.AvgMS*float64(a.Count) + b.AvgMS*float64(b.Count)) / float64(out.Count)\n\t}\n\treturn out\n}\n\n// ErrorRate はエラーの割合（パーセント）を返す。件数が 0 なら 0。\nfunc (s Summary) ErrorRate() float64 {\n\tif s.Count == 0 {\n\t\treturn 0\n\t}\n\treturn float64(s.Errors) * 100 / float64(s.Count)\n}\n\n// Percentile は応答時間の p パーセンタイル（nearest-rank 法）を返す。\n// 空のときは 0。エントリの並びは変えない。\nfunc Percentile(entries []Entry, p float64) float64 {\n\tif len(entries) == 0 {\n\t\treturn 0\n\t}\n\tms := make([]float64, len(entries))\n\tfor i, e := range entries {\n\t\tms[i] = e.LatencyMS\n\t}\n\tsort.Float64s(ms)\n\trank := int(math.Ceil(p / 100 * float64(len(ms))))\n\trank = min(max(rank, 1), len(ms))\n\treturn ms[rank-1]\n}\n\n// Bucket は1分ぶんのリクエスト数。\ntype Bucket struct {\n\tStart time.Time // 分の先頭\n\tCount int\n}\n\n// PerMinute は分ごとのリクエスト数を、時刻の早い順に返す。\nfunc PerMinute(entries []Entry) []Bucket {\n\tcounts := make(map[time.Time]int)\n\tfor _, e := range entries {\n\t\tcounts[e.Time.Truncate(time.Minute)]++\n\t}\n\tbuckets := make([]Bucket, 0, len(counts))\n\tfor k, n := range counts {\n\t\tbuckets = append(buckets, Bucket{Start: k, Count: n})\n\t}\n\tsort.Slice(buckets, func(i, j int) bool { return buckets[i].Start.Before(buckets[j].Start) })\n\treturn buckets\n}\n\n// PathCount はパスごとのリクエスト数。\ntype PathCount struct {\n\tPath  string\n\tCount int\n}\n\n// TopPaths はリクエストの多いパスを上位 n 件返す。同数ならパスの辞書順。\nfunc TopPaths(entries []Entry, n int) []PathCount {\n\tcounts := make(map[string]int)\n\tfor _, e := range entries {\n\t\tcounts[e.Path]++\n\t}\n\tout := make([]PathCount, 0, len(counts))\n\tfor p, c := range counts {\n\t\tout = append(out, PathCount{p, c})\n\t}\n\tsort.Slice(out, func(i, j int) bool {\n\t\tif out[i].Count != out[j].Count {\n\t\t\treturn out[i].Count > out[j].Count\n\t\t}\n\t\treturn out[i].Path < out[j].Path\n\t})\n\tif len(out) > n {\n\t\tout = out[:n]\n\t}\n\treturn out\n}\n",
+    "options": {
+     "lineNumbers": 1
+    },
+    "reveal": 47,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#583c27",
+       "light": {
+        "backgroundColor": "#fde3c8"
+       }
+      },
+      "ranges": [
+       {
+        "line": 58
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  entry.go:29",
+    "description": "秒からミリ秒への倍率が間違っていて 1.5s が 150ms になっているため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  stats.go:45",
+    "description": "Merge の平均が件数を無視した単純平均になっているため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  stats.go:81-89",
+    "description": "PerMinute が「分」の数字だけで集計していて、別の時の同じ分が混ざるため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  replace  entry.go:29",
+    "description": "1秒は1000ミリ秒なので",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "5  replace  stats.go:45-47",
+    "description": "件数で重み付けしないと全体の平均にならず、空の集計を混ぜると平均が半分になってしまうため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "6  外部変更  stats.go:1-126",
+    "description": "srwr の外でファイルが変わった",
+    "color": "charts.purple",
+    "kind": "external"
+   },
+   {
+    "label": "7  replace  stats.go:83-86",
+    "description": "分の先頭時刻そのものをキーにすれば、10:59 と 11:59 のような別の時が混ざらないため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "8  select  stats.go:87-90",
+    "description": "start マップを消したので、バケットを作るループもキーの時刻を使うように直す必要があるため",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "9  replace  stats.go:87-90",
+    "description": "キー自体が分の先頭時刻になったので、それをそのまま Start に使えるため",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "10  録画後  entry.go:1-100",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   },
+   {
+    "label": "11  録画後  stats.go:1-121",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) 戻る",
+    "visible": true
+   },
+   {
+    "text": "進む $(chevron-right)",
+    "color": "rgba(255, 255, 255, 0.4)",
+    "visible": true
+   },
+   {
+    "text": "11/11",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0949-external",
+  "quickPick": {
+   "placeHolder": "再生するテープを選ぶ",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9操作 · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7操作 · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10操作 · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ }
+]

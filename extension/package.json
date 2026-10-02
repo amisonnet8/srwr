@@ -1,0 +1,65 @@
+{
+  "name": "srwr-view",
+  "displayName": "srwr-view",
+  "description": "AI の操作（srwr のテープ）を、理由と一緒にコマ送りで見る",
+  "version": "0.1.0",
+  "publisher": "amisonnet8",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/amisonnet8/srwr" },
+  "engines": { "vscode": "^1.90.0" },
+  "categories": ["Other"],
+  "main": "./out/src/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      { "command": "srwr.openTape", "title": "srwr: テープを開く", "icon": "$(folder-opened)" },
+      { "command": "srwr.closeTape", "title": "srwr: 閉じる（テープ・ライブ）", "icon": "$(close)" },
+      { "command": "srwr.stepForward", "title": "srwr: 進む" },
+      { "command": "srwr.stepBack", "title": "srwr: 戻る" },
+      { "command": "srwr.goto", "title": "srwr: この操作へ移動" },
+      { "command": "srwr.liveStart", "title": "srwr: ライブ視聴を開始", "icon": "$(broadcast)" },
+      { "command": "srwr.liveStop", "title": "srwr: ライブ視聴を停止" },
+      { "command": "srwr.liveLatest", "title": "srwr: LIVE に戻る" }
+    ],
+    "viewsContainers": {
+      "activitybar": [{ "id": "srwr", "title": "srwr", "icon": "media/srwr.svg" }]
+    },
+    "views": {
+      "srwr": [{ "id": "srwr.ops", "name": "操作一覧" }]
+    },
+    "viewsWelcome": [
+      {
+        "view": "srwr.ops",
+        "contents": "テープが開かれていません。\n[テープを開く](command:srwr.openTape)\n[ライブ視聴を開始](command:srwr.liveStart)",
+        "when": "!srwr.hasTape"
+      }
+    ],
+    "menus": {
+      "commandPalette": [{ "command": "srwr.goto", "when": "false" }],
+      "view/title": [
+        { "command": "srwr.openTape", "when": "view == srwr.ops", "group": "navigation@1" },
+        { "command": "srwr.liveStart", "when": "view == srwr.ops", "group": "navigation@2" },
+        { "command": "srwr.closeTape", "when": "view == srwr.ops && srwr.hasTape", "group": "navigation@3" }
+      ]
+    },
+    "configuration": {
+      "title": "srwr",
+      "properties": {
+        "srwr.path": {
+          "type": "string",
+          "default": "srwr",
+          "description": "srwr のバイナリ（表示サーバー）の場所。既定の「srwr」は、PATH から探す。見つからないときは、絶対パスを指定する。"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "test": "node --test --require ./out/test/setup.js \"out/test/*.test.js\""
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.90.0",
+    "typescript": "^5.6.0"
+  }
+}

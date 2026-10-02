@@ -22,6 +22,9 @@
 - 標準の diff 画面は、色を替えられないので使わない。左右2つのエディタに、自前の色を付ける
 - テープごとに作業場を分けない。拡張は開いた作業場の `.srwr/tapes/` しか一覧に出さないので、取り違える。固定テープは `extension/test/fixtures/ui-check/` の1つの作業場に3本
 
+- **コマの移動は1つずつ順に処理し、古い移動は飛ばす**（`ReplaySession.goto`）。移動のたびに世代番号を増やすだけだと、古い移動が、新しい移動の後始末のあとで右のエディタを開いてしまう。右のタブを閉じるかは、フラグでなく、毎回タブを調べて決める（R4 で見つけた。`view.test.ts` の「quick successive steps」）
+- 画面の更新を待つテストは、`sleep` でなく、`activate` が返す `settled()`（ライブの描画が追いついたら解決する）か、`until(条件)` で待つ
+
 ## 構成
 
 - TypeScript（`strict: true`）。ビルドは `tsc` のみ。バンドラーは使わない
@@ -36,5 +39,6 @@
 - `qsoku ext-build`（コンパイルだけ）、`qsoku ext`（`bin/srwr` をビルドしてから、コンパイル＋テスト）。`extension/` の `.ts` を編集すると、`.claude/hooks/build.sh` が `qsoku ext-build` を自動で呼ぶ
 - `npm test` は `node:test`。偽の `vscode`（`test/fakevscode.ts`）、偽のサーバー（`test/fakeserver.ts`。golden から答える）、本物の `bin/srwr` との通し（`test/server.test.ts`）
 - **画面の取得**：偽の `vscode` の上で、全コマの見せる内容（文書・装飾・一覧・バー）を JSON に取り、基準と比べる（R4。最初の基準は `handoff/checklist/captured/all_*.json`・`live_*.json`）
+- **偽の `vscode` の画面の取得**（`test/capture.ts`、基準は `test/baseline/`）：装飾の並びは、「最初に塗られた順」（`handoff/checklist/captured` の取り方と同じ）。本物の `bin/srwr` を動かすので、先に `qsoku bin`（`qsoku ext` は先に作る）。基準を更新するときは、理由を書いて人間の了承をもらう
 - 人間に見てもらうのは、実物の VSCode でしか分からないことだけ（`handoff/checklist/CHECKLIST.md` 4-2）。`qsoku ui-open vscode <テープ>` の1コマンドで開けるようにしてから頼む
 - 拡張を F5 で起動する設定は、ルートの `.vscode/launch.json`。`outFiles` は `extension/out/src/**/*.js`

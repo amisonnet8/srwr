@@ -28,6 +28,10 @@ ext-build: (cd //; if [ -f extension/package.json ]; then cd extension && { [ -d
 # Builds bin/srwr first: the extension's tests talk to the real display server.
 ext: (cd //; if [ -f extension/package.json ]; then qsoku bin && cd extension && { [ -d node_modules ] || qsoku ext-deps; } && npm run compile && npm test; else echo 'extension/package.json does not exist yet; skipped'; fi)
 
+# Opens the fixed workspace in a real VSCode with the extension installed, for a person to look at (.claude/rules/working-with-human.md).
+# qsoku ui-open vscode <why-basic|external|no-why|live>
+ui-open: (cd //; qsoku bin && qsoku ext-build && go run ./tools/ui-check open "$@")
+
 # Vim client tests (vim/test/test_*.vim) in a headless Vim. Each test ends with
 # qall! on success or cquit on failure. -c 'cquit 2' and </dev/null keep a test that
 # errors halfway from waiting for input in Ex mode. Skipped while vim/test/ does not exist yet.

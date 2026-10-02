@@ -58,6 +58,7 @@
 - **`git fetch`・`git pull`と`gh pr create`には`github.com`・`api.github.com`への許可が要る**
 - **拡張の`npm ci`・`npm install`（`qsoku ext-deps`）には`registry.npmjs.org`への許可と、`~/.npm`への書き込みが要る**（どちらも`.claude/settings.json`に入れてある）
 - **`srwr view` は `os.UserCacheDir()`（`~/.cache/srwr`）に書く。** サンドボックスでは `~/.cache` が読み取り専用なので、テストでは `XDG_CACHE_HOME` を一時ディレクトリに向ける
+- **`.vscode/` はダミーのデバイスファイルで、サンドボックスの中からは作れない**（`mkdir` が「ファイルが存在します」）。`.vscode/launch.json` のように `.vscode/` に置くものは、内容を作業用ディレクトリに作り、`mkdir -p .vscode && cp …` を人間に頼む（`.claude/rules/working-with-human.md` 2章の形）
 - **許可リストに無いものに当たったら、自分で回り道を探し続けない。** `.claude/rules/working-with-human.md` 2章の形で、何をどこに足すかを短く頼む
 - **サンドボックスの書き込み保護が、作業ディレクトリ直下に`.bashrc`・`.gitconfig`などのダミーファイルを出現させることがある。** `git status`に大量の未追跡ファイルとして見えて驚くが、実害はない（未追跡のままなのでコミットには影響しない）。これはサンドボックス内のBashからだけ見える見かけ上のファイル（`/dev/null`のbind mount）で、サンドボックスの外の人間側には存在しない。`.gitignore`はルート直下のドットファイルを許可リスト方式にしてあり、`git add -A`で混ざらない
 

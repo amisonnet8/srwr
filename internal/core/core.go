@@ -1,0 +1,239 @@
+// Package core is what select and replace mean: checking a range, correcting line numbers,
+// matching content, noticing changes made outside srwr, and writing the file and the tape.
+// It knows nothing of MCP; srwr mcp and srwr hook both come in through here.
+package core
+
+import (
+	"errors"
+	"fmt"
+	"strings"
+
+	"github.com/amisonnet8/srwr/internal/session"
+	"github.com/amisonnet8/srwr/internal/tape"
+	"github.com/amisonnet8/srwr/internal/token"
+)
+
+// Core works on one workspace.
+type Core struct {
+	WS *session.Workspace
+}
+
+// SelectInput is the input of select.
+type SelectInput struct {
+	File      string
+	StartLine int
+	EndLine   int
+	Why       string
+}
+
+// SelectResult is what select returns: a token for the range and the lines in it.
+type SelectResult struct {
+	Selection string
+	Lines     []string
+}
+
+// ReplaceInput is the input of replace.
+type ReplaceInput struct {
+	Selection string
+	NewText   string
+	Why       string
+}
+
+// ReplaceResult is what replace returns: a token for the new range, and where it is.
+type ReplaceResult struct {
+	Selection string
+	StartLine int
+	EndLine   int
+}
+
+// run runs fn with the workspace lock. fn returns a *Error for a failure the client is told about;
+// anything else is an internal error.
+func (c *Core) run(fn func(tx *session.Tx) error) *Error {
+	var cerr *Error
+	err := c.WS.Do(func(tx *session.Tx) error {
+		err := fn(tx)
+		if errors.As(err, &cerr) {
+			return nil // the lock is released as usual; the client gets the error
+		}
+		return err
+	})
+	if cerr != nil {
+		return cerr
+	}
+	if err != nil {
+		return internal(err)
+	}
+	return nil
+}
+
+// Select declares the range a client is looking at and returns a token to edit it with.
+func (c *Core) Select(in SelectInput) (*SelectResult, *Error) {
+	if err := checkWhy(in.Why); err != nil {
+		return nil, err
+	}
+	rel, cerr := cleanPath(in.File)
+	if cerr != nil {
+		return nil, cerr
+	}
+	var res *SelectResult
+	cerr = c.run(func(tx *session.Tx) error {
+		var err error
+		res, err = c.selectIn(tx, rel, in)
+		return err
+	})
+	if cerr != nil {
+		return nil, cerr
+	}
+	return res, nil
+}
+
+func (c *Core) selectIn(tx *session.Tx, rel string, in SelectInput) (*SelectResult, error) {
+	t, cerr := c.readTarget(rel)
+	if cerr != nil {
+		return nil, cerr
+	}
+	if err := c.observeTarget(tx, rel, "select", t); err != nil {
+		return nil, err
+	}
+
+	n := len(tape.Lines(t.text))
+	if in.StartLine < 1 || in.StartLine > n+1 || in.EndLine < in.StartLine-1 || in.EndLine > n {
+		return nil, &Error{
+			Code:    CodeInvalidRange,
+			Message: fmt.Sprintf("%s は %d 行。startLine=%d endLine=%d は範囲外", rel, n, in.StartLine, in.EndLine),
+			Actual:  map[string]int{"lineCount": n},
+		}
+	}
+
+	sel := token.Encode(token.Token{
+		Seq:       uint64(tx.NextSeq()), //nolint:gosec // NextSeq is at least 1
+		StartLine: uint64(in.StartLine),
+		EndLine:   uint64(in.EndLine), //nolint:gosec // checked above: at least StartLine-1, so 0 or more
+		FileHash:  token.Hash4(rel),
+		TextHash:  token.Hash4(tape.RangeText(t.text, in.StartLine, in.EndLine)),
+	}, tx.TapeID(), tx.Key())
+
+	err := tx.Append(tape.Event{
+		Type: tape.TypeSelect, Seq: tx.NextSeq(), File: rel, StartLine: in.StartLine, EndLine: in.EndLine,
+		Why: &in.Why, Selection: &sel, Source: tape.SourceMCP,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &SelectResult{Selection: sel, Lines: rangeLines(t.text, in.StartLine, in.EndLine)}, nil
+}
+
+// Replace puts new text in the range a token stands for.
+func (c *Core) Replace(in ReplaceInput) (*ReplaceResult, *Error) {
+	if strings.TrimSpace(in.Selection) == "" {
+		return nil, newError(CodeInvalidInput, "selection が空です")
+	}
+	if err := checkWhy(in.Why); err != nil {
+		return nil, err
+	}
+	if strings.ContainsRune(in.NewText, '\r') {
+		return nil, newError(CodeInvalidInput, "newText に CR を含めることはできません（改行は LF だけ）")
+	}
+	var res *ReplaceResult
+	cerr := c.run(func(tx *session.Tx) error {
+		var err error
+		res, err = c.replaceIn(tx, in)
+		return err
+	})
+	if cerr != nil {
+		return nil, cerr
+	}
+	return res, nil
+}
+
+func (c *Core) replaceIn(tx *session.Tx, in ReplaceInput) (*ReplaceResult, error) {
+	tok, err := token.Decode(in.Selection, tx.TapeID(), tx.Key())
+	if err != nil {
+		return nil, newError(CodeInvalidSelection, "範囲トークンが不正です。書き換えられたか、別のセッションで発行されたものです。select し直してください")
+	}
+	rel, ok := findFile(tx.State(), tok.FileHash)
+	if !ok {
+		return nil, newError(CodeInvalidSelection, "範囲トークンのファイルがテープにありません。select し直してください")
+	}
+	t, cerr := c.readTarget(rel)
+	if cerr != nil {
+		return nil, cerr
+	}
+	if err := c.observeTarget(tx, rel, "replace", t); err != nil {
+		return nil, err
+	}
+
+	a, b, ok := Correct(tx.State().Replaces, rel, int(tok.Seq), int(tok.StartLine), int(tok.EndLine)) //nolint:gosec // line numbers and seq are far below the int range
+	if !ok {
+		return nil, &Error{
+			Code:    CodeSelectionStale,
+			Message: "select 後に、その範囲と重なる編集があった。select し直してください",
+			Actual:  rangeLines(t.text, a, b),
+		}
+	}
+	n := len(tape.Lines(t.text))
+	oldText := tape.RangeText(t.text, a, b)
+	if a < 1 || b > n || b < a-1 || token.Hash4(oldText) != tok.TextHash {
+		return nil, &Error{
+			Code:    CodeSelectionMismatch,
+			Message: "行番号を補正しても、範囲の内容が select したときと違う（srwr の外で変更された可能性がある）。内容を確認して select し直してください",
+			Actual:  rangeLines(t.text, a, b),
+		}
+	}
+
+	newLines := tape.Lines(in.NewText)
+	newText := tape.SpliceLines(t.text, a, b, newLines)
+	newEnd := a + len(newLines) - 1
+
+	// The file first, then the tape: if we die in between, the next call finds the file
+	// different from the tape and records it as external.
+	if err := writeFile(t.real, newText); err != nil {
+		return nil, err
+	}
+	sel := token.Encode(token.Token{
+		Seq:       uint64(tx.NextSeq()), //nolint:gosec // NextSeq is at least 1
+		StartLine: uint64(a),
+		EndLine:   uint64(newEnd),
+		FileHash:  tok.FileHash,
+		TextHash:  token.Hash4(tape.RangeText(newText, a, newEnd)),
+	}, tx.TapeID(), tx.Key())
+	err = tx.Append(tape.Event{
+		Type: tape.TypeReplace, Seq: tx.NextSeq(), File: rel, From: &in.Selection,
+		StartLine: a, EndLine: b, OldText: oldText, NewText: strings.Join(newLines, "\n"),
+		NewStartLine: a, NewEndLine: newEnd, Selection: &sel, Why: &in.Why,
+		FileShaBefore: tape.Sha(t.text), FileShaAfter: tape.Sha(newText), Source: tape.SourceMCP,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &ReplaceResult{Selection: sel, StartLine: a, EndLine: newEnd}, nil
+}
+
+// observeTarget records what Observe finds. For a file that is gone it then reports file_not_found.
+func (c *Core) observeTarget(tx *session.Tx, rel, detectedBy string, t target) error {
+	if !t.exists {
+		if err := Observe(tx, rel, detectedBy, nil); err != nil {
+			return err
+		}
+		return newError(CodeFileNotFound, "%s が見つからない", rel)
+	}
+	return Observe(tx, rel, detectedBy, &t.text)
+}
+
+// findFile finds the file a token is about: the one of the tape whose path has the token's hash.
+func findFile(st *tape.State, fileHash [4]byte) (string, bool) {
+	found := ""
+	for name := range st.Files {
+		if token.Hash4(name) == fileHash && (found == "" || name < found) {
+			found = name
+		}
+	}
+	return found, found != ""
+}
+
+func checkWhy(why string) *Error {
+	if strings.TrimSpace(why) == "" {
+		return newError(CodeInvalidInput, "why は必須です（空白だけも不可）。なぜこうするのかを1文で書いてください")
+	}
+	return nil
+}

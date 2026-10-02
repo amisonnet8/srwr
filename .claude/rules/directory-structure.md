@@ -81,7 +81,6 @@
 
 ## 各ファイル・ディレクトリの補足
 
-- **`internal/doc.go`**: `package`宣言だけのプレースホルダー。Goのパッケージが1つも無いと`qsoku vet`・`lint`・`unit`が失敗するので置いてある。**R0 で `internal/docs` を足したら消す**
 - **`extension/test/fixtures/ui-check/go.mod`**（`module uicheck`）：**消さない。** 消すと、中の `.go` がルートのモジュールに入り、`qsoku build`・`vet`・`unit` が「found packages …」で失敗する
 - **`extension/test/fixtures/`・`golden/`**: 最初から置いてある（`handoff/checklist/` からの写し）。書き換えない
 - **`handoff/`**: `.gitignore` 済み。clone したときは無いので、前のリポジトリの `next-space/handoff/` を置く。中は書き換えない（例外は `.claude/rules/documentation.md`）

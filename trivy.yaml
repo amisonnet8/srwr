@@ -1,0 +1,31 @@
+# Trivy configuration (qsoku trivy, .claude/rules/testing.md).
+# Usage: trivy fs --config trivy.yaml .
+#
+# Scans the Go module dependencies for known vulnerabilities (CVE) and for
+# licenses that cannot be combined with this project's MIT license.
+
+scan:
+  scanners:
+    - vuln
+    - license
+
+# Fail (exit code 1) on HIGH and CRITICAL findings.
+#
+# License findings get their severity from Trivy's default classification:
+#   forbidden  -> CRITICAL  (e.g. AGPL)
+#   restricted -> HIGH      (e.g. GPL, LGPL)
+#   reciprocal -> MEDIUM    (e.g. MPL-2.0; file-level copyleft, allowed)
+#   notice     -> LOW       (e.g. MIT, BSD, Apache-2.0; allowed)
+# So GPL-family licenses fail the check and permissive ones pass.
+# Override the classification in the `license:` section below only after
+# deciding it explicitly and recording why.
+severity:
+  - HIGH
+  - CRITICAL
+
+exit-code: 1
+
+license:
+  # Report only licenses of dependencies, not full-text detection over every
+  # file in the repository.
+  full: false

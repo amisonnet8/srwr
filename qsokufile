@@ -1,0 +1,47 @@
+# Entry points for building and checking this project (.claude/rules/testing.md).
+# qsoku always runs these with sh, so every entry works the same no matter which
+# shell called it.
+
+build: (cd //; go build ./...)
+
+# Rewrite files with the formatters enabled in .golangci.yaml.
+fmt: (cd //; golangci-lint fmt)
+
+vet: (cd //; go vet ./...)
+
+# Also reports files that the formatters would change.
+lint: (cd //; golangci-lint run)
+
+unit: (cd //; go test ./...)
+
+# Go only (vet, lint, unit). CI runs this on three OSes.
+go-check: qsoku vet && qsoku lint && qsoku unit
+
+# Type-checks and lints for the other OSes CI runs on (Windows, macOS). A Unix-only call such as
+# syscall.Flock only fails there. Tests cannot run on another OS; CI does that.
+cross: (cd //; for os in windows darwin; do echo "== GOOS=$os"; GOOS=$os go vet ./... && GOOS=$os golangci-lint run || exit 1; done)
+
+# The VSCode extension (srwr-view, extension/). Skipped while extension/package.json does not exist
+# yet (extension/test/ already holds the fixtures and golden data).
+ext-deps: (cd //; cd extension && if [ -f package-lock.json ]; then npm ci; else npm install; fi)
+ext-build: (cd //; if [ -f extension/package.json ]; then cd extension && { [ -d node_modules ] || qsoku ext-deps; } && npm run compile; else echo 'extension/package.json does not exist yet; skipped'; fi)
+# Builds bin/srwr first: the extension's tests talk to the real display server.
+ext: (cd //; if [ -f extension/package.json ]; then qsoku bin && cd extension && { [ -d node_modules ] || qsoku ext-deps; } && npm run compile && npm test; else echo 'extension/package.json does not exist yet; skipped'; fi)
+
+# Vim client tests (vim/test/test_*.vim) in a headless Vim. Each test ends with
+# qall! on success or cquit on failure. -c 'cquit 2' and </dev/null keep a test that
+# errors halfway from waiting for input in Ex mode. Skipped while vim/test/ does not exist yet.
+vim-test: (cd //; if [ -d vim/test ]; then rc=0; for t in vim/test/test_*.vim; do [ -e "$t" ] || continue; echo "== $t"; vim -Nu NONE -i NONE -Es -V1 -S "$t" -c 'cquit 2' </dev/null || rc=1; done; [ "$rc" -eq 0 ]; else echo 'vim/test/ does not exist yet; skipped'; fi)
+
+# Everything to pass at each stopping point: Go, the other OSes, the extension and the Vim client.
+check: qsoku go-check && qsoku cross && qsoku ext && qsoku vim-test
+
+# -race needs cgo, which the container turns off (.devcontainer/devcontainer.json).
+race: (cd //; CGO_ENABLED=1 go test -race -count=1 ./...)
+
+# Builds bin/srwr for this machine (ignored by git).
+bin: (cd //; go build -o bin/srwr ./cmd/srwr)
+
+trivy: (cd //; trivy fs --config trivy.yaml .)
+
+shellcheck: (cd //; git ls-files '*.sh' '*.bash' | xargs -r shellcheck)

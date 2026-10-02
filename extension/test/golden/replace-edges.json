@@ -1,0 +1,204 @@
+{
+  "name": "replace-edges",
+  "tapeText": "{\"v\":1,\"seq\":1,\"ts\":\"2026-09-29T03:00:01.000Z\",\"type\":\"snapshot\",\"file\":\"a.go\",\"text\":\"a\\nb\\nc\\n\"}\n{\"v\":1,\"seq\":2,\"ts\":\"2026-09-29T03:00:02.000Z\",\"type\":\"snapshot\",\"file\":\"empty.txt\",\"text\":\"\"}\n{\"v\":1,\"seq\":3,\"ts\":\"2026-09-29T03:00:03.000Z\",\"type\":\"select\",\"file\":\"a.go\",\"startLine\":4,\"endLine\":3,\"why\":\"末尾に挿入する位置\",\"selection\":\"sel_1\"}\n{\"v\":1,\"seq\":4,\"ts\":\"2026-09-29T03:00:04.000Z\",\"type\":\"replace\",\"file\":\"a.go\",\"from\":\"sel_1\",\"startLine\":4,\"endLine\":3,\"oldText\":\"\",\"newText\":\"d\",\"newStartLine\":4,\"newEndLine\":4,\"selection\":\"sel_2\",\"why\":\"追記\"}\n{\"v\":1,\"seq\":5,\"ts\":\"2026-09-29T03:00:05.000Z\",\"type\":\"select\",\"file\":\"a.go\",\"startLine\":1,\"endLine\":1,\"why\":\"先頭を見る\",\"selection\":\"sel_3\"}\n{\"v\":1,\"seq\":6,\"ts\":\"2026-09-29T03:00:06.000Z\",\"type\":\"replace\",\"file\":\"a.go\",\"from\":\"sel_3\",\"startLine\":1,\"endLine\":1,\"oldText\":\"a\",\"newText\":\"\",\"newStartLine\":1,\"newEndLine\":0,\"selection\":\"sel_4\",\"why\":\"先頭行を消す\"}\n{\"v\":1,\"seq\":7,\"ts\":\"2026-09-29T03:00:07.000Z\",\"type\":\"replace\",\"file\":\"a.go\",\"from\":\"sel_4\",\"startLine\":1,\"endLine\":2,\"oldText\":\"b\\nc\",\"newText\":\"B\\nC\\nC2\",\"newStartLine\":1,\"newEndLine\":3,\"selection\":\"sel_5\",\"why\":\"系譜の孫\"}\n{\"v\":1,\"seq\":8,\"ts\":\"2026-09-29T03:00:08.000Z\",\"type\":\"replace\",\"file\":\"a.go\",\"from\":\"sel_unknown\",\"startLine\":2,\"endLine\":2,\"oldText\":\"C\",\"newText\":\"x\",\"newStartLine\":2,\"newEndLine\":2,\"selection\":\"sel_6\",\"why\":\"親が見つからない\"}\n{\"v\":1,\"seq\":9,\"ts\":\"2026-09-29T03:00:09.000Z\",\"type\":\"replace\",\"file\":\"empty.txt\",\"from\":null,\"startLine\":1,\"endLine\":0,\"oldText\":\"\",\"newText\":\"first\",\"newStartLine\":1,\"newEndLine\":1,\"selection\":\"sel_7\",\"why\":\"空のファイルに書く\"}\n{\"v\":1,\"seq\":10,\"ts\":\"2026-09-29T03:00:10.000Z\",\"type\":\"select\",\"file\":\"a.go\",\"startLine\":2,\"endLine\":1,\"why\":null,\"selection\":null}\n",
+  "current": {
+    "kind": "none"
+  },
+  "jumpThreshold": 30,
+  "frames": [
+    {
+      "index": 0,
+      "seq": 3,
+      "ts": 1790650803000,
+      "file": "a.go",
+      "before": "a\nb\nc\n",
+      "kind": "select",
+      "after": "a\nb\nc\n",
+      "range": {
+        "start": 4,
+        "end": 3
+      },
+      "why": "末尾に挿入する位置",
+      "selection": "sel_1",
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 1,
+      "seq": 4,
+      "ts": 1790650804000,
+      "file": "a.go",
+      "before": "a\nb\nc\n",
+      "kind": "replace",
+      "after": "a\nb\nc\nd\n",
+      "range": {
+        "start": 4,
+        "end": 4
+      },
+      "oldRange": {
+        "start": 4,
+        "end": 3
+      },
+      "why": "追記",
+      "selection": "sel_2",
+      "from": "sel_1",
+      "parent": 0
+    },
+    {
+      "index": 2,
+      "seq": 5,
+      "ts": 1790650805000,
+      "file": "a.go",
+      "before": "a\nb\nc\nd\n",
+      "kind": "select",
+      "after": "a\nb\nc\nd\n",
+      "range": {
+        "start": 1,
+        "end": 1
+      },
+      "why": "先頭を見る",
+      "selection": "sel_3",
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 3,
+      "seq": 6,
+      "ts": 1790650806000,
+      "file": "a.go",
+      "before": "a\nb\nc\nd\n",
+      "kind": "replace",
+      "after": "b\nc\nd\n",
+      "range": {
+        "start": 1,
+        "end": 0
+      },
+      "oldRange": {
+        "start": 1,
+        "end": 1
+      },
+      "why": "先頭行を消す",
+      "selection": "sel_4",
+      "from": "sel_3",
+      "parent": 2
+    },
+    {
+      "index": 4,
+      "seq": 7,
+      "ts": 1790650807000,
+      "file": "a.go",
+      "before": "b\nc\nd\n",
+      "kind": "replace",
+      "after": "B\nC\nC2\nd\n",
+      "range": {
+        "start": 1,
+        "end": 3
+      },
+      "oldRange": {
+        "start": 1,
+        "end": 2
+      },
+      "why": "系譜の孫",
+      "selection": "sel_5",
+      "from": "sel_4",
+      "parent": 3
+    },
+    {
+      "index": 5,
+      "seq": 8,
+      "ts": 1790650808000,
+      "file": "a.go",
+      "before": "B\nC\nC2\nd\n",
+      "kind": "replace",
+      "after": "B\nx\nC2\nd\n",
+      "range": {
+        "start": 2,
+        "end": 2
+      },
+      "oldRange": {
+        "start": 2,
+        "end": 2
+      },
+      "why": "親が見つからない",
+      "selection": "sel_6",
+      "from": "sel_unknown",
+      "parent": null
+    },
+    {
+      "index": 6,
+      "seq": 9,
+      "ts": 1790650809000,
+      "file": "empty.txt",
+      "before": "",
+      "kind": "replace",
+      "after": "first\n",
+      "range": {
+        "start": 1,
+        "end": 1
+      },
+      "oldRange": {
+        "start": 1,
+        "end": 0
+      },
+      "why": "空のファイルに書く",
+      "selection": "sel_7",
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 7,
+      "seq": 10,
+      "ts": 1790650810000,
+      "file": "a.go",
+      "before": "B\nx\nC2\nd\n",
+      "kind": "select",
+      "after": "B\nx\nC2\nd\n",
+      "range": {
+        "start": 2,
+        "end": 1
+      },
+      "why": null,
+      "selection": null,
+      "from": null,
+      "parent": null
+    }
+  ],
+  "jumpLabels": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    "↷ empty.txtへ",
+    "↷ a.goへ"
+  ],
+  "files": [
+    "a.go",
+    "empty.txt"
+  ],
+  "contentAt": {
+    "a.go": [
+      "a\nb\nc\n",
+      "a\nb\nc\n",
+      "a\nb\nc\nd\n",
+      "a\nb\nc\nd\n",
+      "b\nc\nd\n",
+      "B\nC\nC2\nd\n",
+      "B\nx\nC2\nd\n",
+      "B\nx\nC2\nd\n",
+      "B\nx\nC2\nd\n"
+    ],
+    "empty.txt": [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "first\n",
+      "first\n"
+    ]
+  }
+}

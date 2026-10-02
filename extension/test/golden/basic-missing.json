@@ -1,0 +1,286 @@
+{
+  "name": "basic-missing",
+  "tape": "basic.tape.jsonl",
+  "current": {
+    "kind": "missing"
+  },
+  "jumpThreshold": 30,
+  "frames": [
+    {
+      "index": 0,
+      "seq": 2,
+      "ts": 1790648406000,
+      "file": "main.go",
+      "before": "L1\nL2\nL3\nL4\nL5\nL6\nL7\nL8\n",
+      "kind": "select",
+      "after": "L1\nL2\nL3\nL4\nL5\nL6\nL7\nL8\n",
+      "range": {
+        "start": 2,
+        "end": 3
+      },
+      "why": "L2 と L3 を確認",
+      "selection": "sel_041040S8EFVSMX6TE9TNAJET",
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 1,
+      "seq": 3,
+      "ts": 1790648408000,
+      "file": "main.go",
+      "before": "L1\nL2\nL3\nL4\nL5\nL6\nL7\nL8\n",
+      "kind": "replace",
+      "after": "L1\nX\nY\nZ\nL4\nL5\nL6\nL7\nL8\n",
+      "range": {
+        "start": 2,
+        "end": 4
+      },
+      "oldRange": {
+        "start": 2,
+        "end": 3
+      },
+      "why": "3行に書き換える",
+      "selection": "sel_041G4118EFVSN1ZM4RWXTPY8",
+      "from": "sel_041040S8EFVSMX6TE9TNAJET",
+      "parent": 0
+    },
+    {
+      "index": 2,
+      "seq": 4,
+      "ts": 1790648410000,
+      "file": "main.go",
+      "before": "L1\nX\nY\nZ\nL4\nL5\nL6\nL7\nL8\n",
+      "kind": "replace",
+      "after": "L1\nL4\nL5\nL6\nL7\nL8\n",
+      "range": {
+        "start": 2,
+        "end": 1
+      },
+      "oldRange": {
+        "start": 2,
+        "end": 4
+      },
+      "why": "1行目を消す",
+      "selection": "sel_04204098EFVSNRXGRH172GQZ",
+      "from": "sel_041G4118EFVSN1ZM4RWXTPY8",
+      "parent": 1
+    },
+    {
+      "index": 3,
+      "seq": 5,
+      "ts": 1790648412000,
+      "file": "main.go",
+      "before": "L1\nL4\nL5\nL6\nL7\nL8\n",
+      "kind": "replace",
+      "after": "L1\nback\nL4\nL5\nL6\nL7\nL8\n",
+      "range": {
+        "start": 2,
+        "end": 2
+      },
+      "oldRange": {
+        "start": 2,
+        "end": 1
+      },
+      "why": "消した位置に挿入する",
+      "selection": "sel_042G40H8EFVSMF284D33P9CZ",
+      "from": "sel_04204098EFVSNRXGRH172GQZ",
+      "parent": 2
+    },
+    {
+      "index": 4,
+      "seq": 7,
+      "ts": 1790648416000,
+      "file": "util.go",
+      "before": "u1\nu2\nu3\nu4\nu5\n",
+      "kind": "select",
+      "after": "u1\nu2\nu3\nu4\nu5\n",
+      "range": {
+        "start": 1,
+        "end": 2
+      },
+      "why": "util を確認",
+      "selection": "sel_043G20HTE45BDJDBYRYADAM5",
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 5,
+      "seq": 8,
+      "ts": 1790648418000,
+      "file": "util.go",
+      "before": "u1\nu2\nu3\nu4\nu5\n",
+      "kind": "replace",
+      "after": "u1\nu2\nu3\nu3\nu4\nu5\n",
+      "range": {
+        "start": 1,
+        "end": 3
+      },
+      "oldRange": {
+        "start": 1,
+        "end": 2
+      },
+      "why": "1行足す",
+      "selection": "sel_044020STE45BDW2G85Q8RS0K",
+      "from": "sel_043G20HTE45BDJDBYRYADAM5",
+      "parent": 4
+    },
+    {
+      "index": 6,
+      "seq": 9,
+      "ts": 1790648420000,
+      "file": "main.go",
+      "before": "L1\nback\nL4\nL5\nL6\nL7\nL8\n",
+      "kind": "external",
+      "after": "// external\nL1\nback\nL4\nL5\nL6\nL7\nL8\n",
+      "range": {
+        "start": 1,
+        "end": 8
+      },
+      "why": null,
+      "selection": null,
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 7,
+      "seq": 11,
+      "ts": 1790648424000,
+      "file": "main.go",
+      "before": "// external\nL1\nback\nL4\nL5\nL6\nL7\nL8\n",
+      "kind": "select",
+      "after": "// external\nL1\nback\nL4\nL5\nL6\nL7\nL8\n",
+      "range": {
+        "start": 5,
+        "end": 5
+      },
+      "why": "外部変更のあとを確認",
+      "selection": "sel_045GA198EFVSNDDXS9RHWDHM",
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 8,
+      "seq": 12,
+      "ts": 1790648426000,
+      "file": "main.go",
+      "before": "// external\nL1\nback\nL4\nL5\nL6\nL7\nL8\n",
+      "kind": "replace",
+      "after": "// external\nL1\nback\nL4\nafter external\nL6\nL7\nL8\n",
+      "range": {
+        "start": 5,
+        "end": 5
+      },
+      "oldRange": {
+        "start": 5,
+        "end": 5
+      },
+      "why": "外部変更のあとに直す",
+      "selection": "sel_0460A198EFVSM2KBPJE3YQBP",
+      "from": "sel_045GA198EFVSNDDXS9RHWDHM",
+      "parent": 7
+    },
+    {
+      "index": 9,
+      "seq": 13,
+      "ts": 1790648428000,
+      "file": "util.go",
+      "before": "u1\nu2\nu3\nu3\nu4\nu5\n",
+      "kind": "select",
+      "after": "u1\nu2\nu3\nu3\nu4\nu5\n",
+      "range": {
+        "start": 4,
+        "end": 4
+      },
+      "why": "util に戻る",
+      "selection": "sel_046G811TE45BC08Y77QRKVMD",
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 10,
+      "kind": "final",
+      "seq": 13,
+      "ts": 1790648428000,
+      "file": "main.go",
+      "before": "// external\nL1\nback\nL4\nafter external\nL6\nL7\nL8\n",
+      "after": "",
+      "range": {
+        "start": 1,
+        "end": 0
+      },
+      "why": null,
+      "selection": null,
+      "from": null,
+      "parent": null,
+      "deleted": true
+    },
+    {
+      "index": 11,
+      "kind": "final",
+      "seq": 13,
+      "ts": 1790648428000,
+      "file": "util.go",
+      "before": "u1\nu2\nu3\nu3\nu4\nu5\n",
+      "after": "",
+      "range": {
+        "start": 1,
+        "end": 0
+      },
+      "why": null,
+      "selection": null,
+      "from": null,
+      "parent": null,
+      "deleted": true
+    }
+  ],
+  "jumpLabels": [
+    null,
+    null,
+    null,
+    null,
+    "↷ util.goへ",
+    null,
+    null,
+    null,
+    null,
+    "↷ util.goへ",
+    null,
+    null
+  ],
+  "files": [
+    "main.go",
+    "util.go"
+  ],
+  "contentAt": {
+    "main.go": [
+      "L1\nL2\nL3\nL4\nL5\nL6\nL7\nL8\n",
+      "L1\nL2\nL3\nL4\nL5\nL6\nL7\nL8\n",
+      "L1\nX\nY\nZ\nL4\nL5\nL6\nL7\nL8\n",
+      "L1\nL4\nL5\nL6\nL7\nL8\n",
+      "L1\nback\nL4\nL5\nL6\nL7\nL8\n",
+      "L1\nback\nL4\nL5\nL6\nL7\nL8\n",
+      "L1\nback\nL4\nL5\nL6\nL7\nL8\n",
+      "// external\nL1\nback\nL4\nL5\nL6\nL7\nL8\n",
+      "// external\nL1\nback\nL4\nL5\nL6\nL7\nL8\n",
+      "// external\nL1\nback\nL4\nafter external\nL6\nL7\nL8\n",
+      "// external\nL1\nback\nL4\nafter external\nL6\nL7\nL8\n",
+      "",
+      ""
+    ],
+    "util.go": [
+      "u1\nu2\nu3\nu4\nu5\n",
+      "u1\nu2\nu3\nu4\nu5\n",
+      "u1\nu2\nu3\nu4\nu5\n",
+      "u1\nu2\nu3\nu4\nu5\n",
+      "u1\nu2\nu3\nu4\nu5\n",
+      "u1\nu2\nu3\nu4\nu5\n",
+      "u1\nu2\nu3\nu3\nu4\nu5\n",
+      "u1\nu2\nu3\nu3\nu4\nu5\n",
+      "u1\nu2\nu3\nu3\nu4\nu5\n",
+      "u1\nu2\nu3\nu3\nu4\nu5\n",
+      "u1\nu2\nu3\nu3\nu4\nu5\n",
+      "u1\nu2\nu3\nu3\nu4\nu5\n",
+      ""
+    ]
+  }
+}

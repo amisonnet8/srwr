@@ -1,0 +1,202 @@
+{
+  "name": "external-text-changed",
+  "tape": "external-text.tape.jsonl",
+  "current": {
+    "kind": "files",
+    "files": {
+      "main.go": "// 外で追加\nL1\nA\nB\nZ\nL5\nL6\nL7\nL8\n// 外で末尾に\n// もう一度\n// 録画のあと\n"
+    }
+  },
+  "jumpThreshold": 30,
+  "frames": [
+    {
+      "index": 0,
+      "seq": 2,
+      "ts": 1790648400000,
+      "file": "main.go",
+      "before": "L1\nL2\nL3\nL4\nL5\nL6\nL7\nL8\n",
+      "kind": "select",
+      "after": "L1\nL2\nL3\nL4\nL5\nL6\nL7\nL8\n",
+      "range": {
+        "start": 2,
+        "end": 3
+      },
+      "why": "見る理由",
+      "selection": "sel_041040S8EFVSMX6TE9TZQ3BB",
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 1,
+      "seq": 3,
+      "ts": 1790648400000,
+      "file": "main.go",
+      "before": "L1\nL2\nL3\nL4\nL5\nL6\nL7\nL8\n",
+      "kind": "replace",
+      "after": "L1\nA\nB\nL4\nL5\nL6\nL7\nL8\n",
+      "range": {
+        "start": 2,
+        "end": 3
+      },
+      "oldRange": {
+        "start": 2,
+        "end": 3
+      },
+      "why": "変える理由",
+      "selection": "sel_041G40S8EFVSM8THK91RATQB",
+      "from": "sel_041040S8EFVSMX6TE9TZQ3BB",
+      "parent": 0
+    },
+    {
+      "index": 2,
+      "seq": 4,
+      "ts": 1790648400000,
+      "file": "main.go",
+      "before": "L1\nA\nB\nL4\nL5\nL6\nL7\nL8\n",
+      "kind": "external",
+      "after": "// 外で追加\nL1\nA\nB\nL4\nL5\nL6\nL7\nL8\n",
+      "range": {
+        "start": 1,
+        "end": 9
+      },
+      "why": null,
+      "selection": null,
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 3,
+      "seq": 6,
+      "ts": 1790648400000,
+      "file": "main.go",
+      "before": "// 外で追加\nL1\nA\nB\nL4\nL5\nL6\nL7\nL8\n",
+      "kind": "select",
+      "after": "// 外で追加\nL1\nA\nB\nL4\nL5\nL6\nL7\nL8\n",
+      "range": {
+        "start": 4,
+        "end": 4
+      },
+      "why": "見る理由",
+      "selection": "sel_04308118EFVSNQVYE3JJ8NJY",
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 4,
+      "seq": 7,
+      "ts": 1790648400000,
+      "file": "main.go",
+      "before": "// 外で追加\nL1\nA\nB\nL4\nL5\nL6\nL7\nL8\n",
+      "kind": "external",
+      "after": "// 外で追加\nL1\nA\nB\nL4\nL5\nL6\nL7\nL8\n// 外で末尾に\n",
+      "range": {
+        "start": 1,
+        "end": 10
+      },
+      "why": null,
+      "selection": null,
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 5,
+      "seq": 9,
+      "ts": 1790648400000,
+      "file": "main.go",
+      "before": "// 外で追加\nL1\nA\nB\nL4\nL5\nL6\nL7\nL8\n// 外で末尾に\n",
+      "kind": "select",
+      "after": "// 外で追加\nL1\nA\nB\nL4\nL5\nL6\nL7\nL8\n// 外で末尾に\n",
+      "range": {
+        "start": 5,
+        "end": 5
+      },
+      "why": "見る理由",
+      "selection": "sel_044GA198EFVSMJJTJZ35293P",
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 6,
+      "seq": 10,
+      "ts": 1790648400000,
+      "file": "main.go",
+      "before": "// 外で追加\nL1\nA\nB\nL4\nL5\nL6\nL7\nL8\n// 外で末尾に\n",
+      "kind": "external",
+      "after": "// 外で追加\nL1\nA\nB\nL4\nL5\nL6\nL7\nL8\n// 外で末尾に\n// もう一度\n",
+      "range": {
+        "start": 1,
+        "end": 11
+      },
+      "why": null,
+      "selection": null,
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 7,
+      "seq": 12,
+      "ts": 1790648400000,
+      "file": "main.go",
+      "before": "// 外で追加\nL1\nA\nB\nL4\nL5\nL6\nL7\nL8\n// 外で末尾に\n// もう一度\n",
+      "kind": "replace",
+      "after": "// 外で追加\nL1\nA\nB\nZ\nL5\nL6\nL7\nL8\n// 外で末尾に\n// もう一度\n",
+      "range": {
+        "start": 5,
+        "end": 5
+      },
+      "oldRange": {
+        "start": 5,
+        "end": 5
+      },
+      "why": "変える理由",
+      "selection": "sel_0460A198EFVSNEZEQP3WAX3M",
+      "from": "sel_044GA198EFVSMJJTJZ35293P",
+      "parent": 5
+    },
+    {
+      "index": 8,
+      "kind": "final",
+      "seq": 12,
+      "ts": 1790648400000,
+      "file": "main.go",
+      "before": "// 外で追加\nL1\nA\nB\nZ\nL5\nL6\nL7\nL8\n// 外で末尾に\n// もう一度\n",
+      "after": "// 外で追加\nL1\nA\nB\nZ\nL5\nL6\nL7\nL8\n// 外で末尾に\n// もう一度\n// 録画のあと\n",
+      "range": {
+        "start": 1,
+        "end": 12
+      },
+      "why": null,
+      "selection": null,
+      "from": null,
+      "parent": null
+    }
+  ],
+  "jumpLabels": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "files": [
+    "main.go"
+  ],
+  "contentAt": {
+    "main.go": [
+      "L1\nL2\nL3\nL4\nL5\nL6\nL7\nL8\n",
+      "L1\nL2\nL3\nL4\nL5\nL6\nL7\nL8\n",
+      "L1\nA\nB\nL4\nL5\nL6\nL7\nL8\n",
+      "// 外で追加\nL1\nA\nB\nL4\nL5\nL6\nL7\nL8\n",
+      "// 外で追加\nL1\nA\nB\nL4\nL5\nL6\nL7\nL8\n",
+      "// 外で追加\nL1\nA\nB\nL4\nL5\nL6\nL7\nL8\n// 外で末尾に\n",
+      "// 外で追加\nL1\nA\nB\nL4\nL5\nL6\nL7\nL8\n// 外で末尾に\n",
+      "// 外で追加\nL1\nA\nB\nL4\nL5\nL6\nL7\nL8\n// 外で末尾に\n// もう一度\n",
+      "// 外で追加\nL1\nA\nB\nZ\nL5\nL6\nL7\nL8\n// 外で末尾に\n// もう一度\n",
+      "// 外で追加\nL1\nA\nB\nZ\nL5\nL6\nL7\nL8\n// 外で末尾に\n// もう一度\n// 録画のあと\n"
+    ]
+  }
+}

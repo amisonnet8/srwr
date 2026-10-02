@@ -1,0 +1,18 @@
+{
+  "files": {
+    "main.go": "// external\nL1\nback\nL4\nafter external\nL6\nL7\nL8\n",
+    "util.go": "u1\nu2\nu3\nu3\nu4\nu5\n"
+  },
+  "kinds": [
+    "select",
+    "replace",
+    "replace",
+    "replace",
+    "select",
+    "replace",
+    "external",
+    "select",
+    "replace",
+    "select"
+  ]
+}

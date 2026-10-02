@@ -1,0 +1,41 @@
+# Build artifacts (keep binaries out of the repository).
+/bin/
+/dist/
+*.exe
+*.test
+*.out
+
+# VSCode extension (srwr-view): dependencies, compiled output, packages.
+/extension/node_modules/
+/extension/out/
+*.vsix
+
+# Hand-over material from the previous repository: read locally, never committed
+# (.claude/rules/directory-structure.md). Removed at R12.
+/handoff/
+
+# Results of qsoku ui-check (the baselines are committed; the results are not).
+/ui-check-result/
+
+# Allowlist for dot entries in the repository root (and .claude/): ignore all
+# of them, then re-include only what is tracked. This also covers the dummy
+# /dev/null files that the Bash sandbox leaves in the working directory
+# (.claude/rules/testing.md). A new tracked dot entry needs a "!" line here.
+/.*
+!/.gitignore
+!/.gitattributes
+!/.golangci.yaml
+!/.mcp.json
+!/.devcontainer/
+!/.github/
+!/.mtqg/
+# Only to launch the extension with F5 (.claude/rules/directory-structure.md).
+!/.vscode/
+
+# .claude/: only the shared files (settings.local.json stays personal)
+!/.claude/
+/.claude/*
+!/.claude/settings.json
+!/.claude/rules/
+!/.claude/skills/
+!/.claude/hooks/

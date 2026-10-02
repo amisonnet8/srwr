@@ -1,0 +1,58 @@
+{
+  "name": "legacy-external-two-snapshots",
+  "tapeText": "{\"v\":1,\"seq\":1,\"ts\":\"2026-09-29T03:00:01.000Z\",\"type\":\"snapshot\",\"file\":\"a.go\",\"text\":\"1\\n\"}\n{\"v\":1,\"seq\":2,\"ts\":\"2026-09-29T03:00:02.000Z\",\"type\":\"external\",\"file\":\"a.go\",\"expectedSha\":\"e\",\"actualSha\":\"a\"}\n{\"v\":1,\"seq\":3,\"ts\":\"2026-09-29T03:00:03.000Z\",\"type\":\"snapshot\",\"file\":\"a.go\",\"text\":\"X\\n\"}\n{\"v\":1,\"seq\":4,\"ts\":\"2026-09-29T03:00:04.000Z\",\"type\":\"snapshot\",\"file\":\"a.go\",\"text\":\"Y\\n\"}\n{\"v\":1,\"seq\":5,\"ts\":\"2026-09-29T03:00:05.000Z\",\"type\":\"select\",\"file\":\"a.go\",\"startLine\":1,\"endLine\":1,\"why\":\"見る\",\"selection\":\"sel_1\"}\n",
+  "current": {
+    "kind": "none"
+  },
+  "jumpThreshold": 30,
+  "frames": [
+    {
+      "index": 0,
+      "seq": 2,
+      "ts": 1790650802000,
+      "file": "a.go",
+      "before": "1\n",
+      "kind": "external",
+      "after": "X\n",
+      "range": {
+        "start": 1,
+        "end": 1
+      },
+      "why": null,
+      "selection": null,
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 1,
+      "seq": 5,
+      "ts": 1790650805000,
+      "file": "a.go",
+      "before": "Y\n",
+      "kind": "select",
+      "after": "Y\n",
+      "range": {
+        "start": 1,
+        "end": 1
+      },
+      "why": "見る",
+      "selection": "sel_1",
+      "from": null,
+      "parent": null
+    }
+  ],
+  "jumpLabels": [
+    null,
+    null
+  ],
+  "files": [
+    "a.go"
+  ],
+  "contentAt": {
+    "a.go": [
+      "1\n",
+      "X\n",
+      "Y\n"
+    ]
+  }
+}

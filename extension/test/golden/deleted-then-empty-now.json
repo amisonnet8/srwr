@@ -1,0 +1,109 @@
+{
+  "name": "deleted-then-empty-now",
+  "tapeText": "{\"v\":1,\"seq\":1,\"ts\":\"2026-09-29T03:00:01.000Z\",\"type\":\"snapshot\",\"file\":\"a.go\",\"text\":\"old\\n\"}\n{\"v\":1,\"seq\":2,\"ts\":\"2026-09-29T03:00:02.000Z\",\"type\":\"external\",\"file\":\"a.go\",\"expectedSha\":\"e\",\"actualSha\":\"a\",\"deleted\":true,\"text\":null}\n{\"v\":1,\"seq\":3,\"ts\":\"2026-09-29T03:00:03.000Z\",\"type\":\"select\",\"file\":\"b.go\",\"startLine\":1,\"endLine\":1,\"why\":\"別のファイル\",\"selection\":null}\n",
+  "current": {
+    "kind": "files",
+    "files": {
+      "a.go": ""
+    }
+  },
+  "jumpThreshold": 30,
+  "frames": [
+    {
+      "index": 0,
+      "seq": 2,
+      "ts": 1790650802000,
+      "file": "a.go",
+      "before": "old\n",
+      "kind": "external",
+      "after": "",
+      "range": {
+        "start": 1,
+        "end": 0
+      },
+      "why": null,
+      "selection": null,
+      "from": null,
+      "parent": null,
+      "deleted": true
+    },
+    {
+      "index": 1,
+      "seq": 3,
+      "ts": 1790650803000,
+      "file": "b.go",
+      "before": "",
+      "kind": "select",
+      "after": "",
+      "range": {
+        "start": 1,
+        "end": 1
+      },
+      "why": "別のファイル",
+      "selection": null,
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 2,
+      "kind": "final",
+      "seq": 3,
+      "ts": 1790650803000,
+      "file": "a.go",
+      "before": "",
+      "after": "",
+      "range": {
+        "start": 1,
+        "end": 0
+      },
+      "why": null,
+      "selection": null,
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 3,
+      "kind": "final",
+      "seq": 3,
+      "ts": 1790650803000,
+      "file": "b.go",
+      "before": "",
+      "after": "",
+      "range": {
+        "start": 1,
+        "end": 0
+      },
+      "why": null,
+      "selection": null,
+      "from": null,
+      "parent": null,
+      "deleted": true
+    }
+  ],
+  "jumpLabels": [
+    null,
+    "↷ b.goへ",
+    null,
+    null
+  ],
+  "files": [
+    "a.go",
+    "b.go"
+  ],
+  "contentAt": {
+    "a.go": [
+      "old\n",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "b.go": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ]
+  }
+}

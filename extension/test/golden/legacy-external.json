@@ -1,0 +1,80 @@
+{
+  "name": "legacy-external",
+  "tapeText": "{\"v\":1,\"seq\":1,\"ts\":\"2026-09-29T03:00:01.000Z\",\"type\":\"snapshot\",\"file\":\"a.go\",\"text\":\"1\\n2\\n3\\n\"}\n{\"v\":1,\"seq\":2,\"ts\":\"2026-09-29T03:00:02.000Z\",\"type\":\"select\",\"file\":\"a.go\",\"startLine\":1,\"endLine\":1,\"why\":\"見る\",\"selection\":\"sel_1\"}\n{\"v\":1,\"seq\":3,\"ts\":\"2026-09-29T03:00:03.000Z\",\"type\":\"external\",\"file\":\"a.go\",\"expectedSha\":\"e\",\"actualSha\":\"a\"}\n{\"v\":1,\"seq\":4,\"ts\":\"2026-09-29T03:00:04.000Z\",\"type\":\"snapshot\",\"file\":\"a.go\",\"text\":\"1\\nX\\n3\\n4\\n\"}\n{\"v\":1,\"seq\":5,\"ts\":\"2026-09-29T03:00:05.000Z\",\"type\":\"select\",\"file\":\"a.go\",\"startLine\":4,\"endLine\":4,\"why\":\"続き\",\"selection\":\"sel_2\"}\n",
+  "current": {
+    "kind": "files",
+    "files": {
+      "a.go": "1\nX\n3\n4\n"
+    }
+  },
+  "jumpThreshold": 30,
+  "frames": [
+    {
+      "index": 0,
+      "seq": 2,
+      "ts": 1790650802000,
+      "file": "a.go",
+      "before": "1\n2\n3\n",
+      "kind": "select",
+      "after": "1\n2\n3\n",
+      "range": {
+        "start": 1,
+        "end": 1
+      },
+      "why": "見る",
+      "selection": "sel_1",
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 1,
+      "seq": 3,
+      "ts": 1790650803000,
+      "file": "a.go",
+      "before": "1\n2\n3\n",
+      "kind": "external",
+      "after": "1\nX\n3\n4\n",
+      "range": {
+        "start": 1,
+        "end": 4
+      },
+      "why": null,
+      "selection": null,
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 2,
+      "seq": 5,
+      "ts": 1790650805000,
+      "file": "a.go",
+      "before": "1\nX\n3\n4\n",
+      "kind": "select",
+      "after": "1\nX\n3\n4\n",
+      "range": {
+        "start": 4,
+        "end": 4
+      },
+      "why": "続き",
+      "selection": "sel_2",
+      "from": null,
+      "parent": null
+    }
+  ],
+  "jumpLabels": [
+    null,
+    null,
+    null
+  ],
+  "files": [
+    "a.go"
+  ],
+  "contentAt": {
+    "a.go": [
+      "1\n2\n3\n",
+      "1\n2\n3\n",
+      "1\nX\n3\n4\n",
+      "1\nX\n3\n4\n"
+    ]
+  }
+}

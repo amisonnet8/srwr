@@ -1,0 +1,33 @@
+# golangci-lint v2 configuration (.claude/rules/testing.md).
+# Check this file with: golangci-lint config verify
+version: "2"
+
+linters:
+  # errcheck, govet, ineffassign, staticcheck, unused
+  default: standard
+  enable:
+    - gosec
+    - misspell
+    - nolintlint
+    - nilerr
+    - unconvert
+    - usestdlibvars
+
+  settings:
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+
+    misspell:
+      locale: US
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    gofmt:
+      simplify: true
+    goimports:
+      local-prefixes:
+        - github.com/amisonnet8/srwr

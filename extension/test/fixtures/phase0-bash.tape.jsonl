@@ -1,0 +1,9 @@
+{"v":1,"type":"header","session":"abcd","startedAt":"2026-09-29T19:31:55.068+09:00","author":{"kind":"ai","name":"claude"}}
+{"v":1,"seq":1,"ts":"2026-09-29T19:31:55.068+09:00","type":"snapshot","file":"sub/y.go","fileHash":"b69f8ce5","text":"p\nq\n","sha":"sha256:7fdf2c7063df2727546ba40cc987bdf88c0d98c31a10f7a731d04c1b5b60e513"}
+{"v":1,"seq":2,"ts":"2026-09-29T19:31:55.068+09:00","type":"select","file":"sub/y.go","startLine":1,"endLine":2,"why":null,"selection":null}
+{"v":1,"seq":3,"ts":"2026-09-29T19:31:55.068+09:00","type":"snapshot","file":"x.go","fileHash":"dab0d58c","text":"a\nb\nc\nd\ne\n","sha":"sha256:86dc03602dcf385217216784784a8ecf20e6400decc3208170b12fcb0afb6698"}
+{"v":1,"seq":4,"ts":"2026-09-29T19:31:55.068+09:00","type":"select","file":"x.go","startLine":2,"endLine":3,"why":null,"selection":null}
+{"v":1,"seq":5,"ts":"2026-09-29T19:31:55.072+09:00","type":"select","file":"x.go","startLine":3,"endLine":3,"why":null,"selection":null}
+{"v":1,"seq":6,"ts":"2026-09-29T19:31:55.072+09:00","type":"select","file":"sub/y.go","startLine":1,"endLine":1,"why":null,"selection":null}
+{"v":1,"seq":7,"ts":"2026-09-29T19:31:55.076+09:00","type":"external","file":"x.go","expectedSha":"sha256:86dc03602dcf385217216784784a8ecf20e6400decc3208170b12fcb0afb6698","actualSha":"sha256:fc2cb6ca39dab25edd3324c7310cd450d3546f7dcf649453cdf88226698d56ae"}
+{"v":1,"seq":8,"ts":"2026-09-29T19:31:55.076+09:00","type":"snapshot","file":"x.go","fileHash":"dab0d58c","text":"a\nb\nC\nd\ne\n","sha":"sha256:fc2cb6ca39dab25edd3324c7310cd450d3546f7dcf649453cdf88226698d56ae"}

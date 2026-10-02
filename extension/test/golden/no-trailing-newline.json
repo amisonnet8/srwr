@@ -1,0 +1,65 @@
+{
+  "name": "no-trailing-newline",
+  "tapeText": "{\"v\":1,\"seq\":1,\"ts\":\"2026-09-29T03:00:01.000Z\",\"type\":\"snapshot\",\"file\":\"n.txt\",\"text\":\"one\\ntwo\\nthree\"}\n{\"v\":1,\"seq\":2,\"ts\":\"2026-09-29T03:00:02.000Z\",\"type\":\"select\",\"file\":\"n.txt\",\"startLine\":3,\"endLine\":3,\"why\":\"最後の行\",\"selection\":\"sel_1\"}\n{\"v\":1,\"seq\":3,\"ts\":\"2026-09-29T03:00:03.000Z\",\"type\":\"replace\",\"file\":\"n.txt\",\"from\":\"sel_1\",\"startLine\":3,\"endLine\":3,\"oldText\":\"three\",\"newText\":\"THREE\",\"newStartLine\":3,\"newEndLine\":3,\"selection\":\"sel_2\",\"why\":\"大文字にする\"}\n",
+  "current": {
+    "kind": "files",
+    "files": {
+      "n.txt": "one\ntwo\nTHREE"
+    }
+  },
+  "jumpThreshold": 30,
+  "frames": [
+    {
+      "index": 0,
+      "seq": 2,
+      "ts": 1790650802000,
+      "file": "n.txt",
+      "before": "one\ntwo\nthree",
+      "kind": "select",
+      "after": "one\ntwo\nthree",
+      "range": {
+        "start": 3,
+        "end": 3
+      },
+      "why": "最後の行",
+      "selection": "sel_1",
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 1,
+      "seq": 3,
+      "ts": 1790650803000,
+      "file": "n.txt",
+      "before": "one\ntwo\nthree",
+      "kind": "replace",
+      "after": "one\ntwo\nTHREE",
+      "range": {
+        "start": 3,
+        "end": 3
+      },
+      "oldRange": {
+        "start": 3,
+        "end": 3
+      },
+      "why": "大文字にする",
+      "selection": "sel_2",
+      "from": "sel_1",
+      "parent": 0
+    }
+  ],
+  "jumpLabels": [
+    null,
+    null
+  ],
+  "files": [
+    "n.txt"
+  ],
+  "contentAt": {
+    "n.txt": [
+      "one\ntwo\nthree",
+      "one\ntwo\nthree",
+      "one\ntwo\nTHREE"
+    ]
+  }
+}

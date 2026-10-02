@@ -1,0 +1,13 @@
+{
+ "files": {
+  "x.go": "a\nb\nC\nd\ne\n",
+  "sub/y.go": "p\nq\n"
+ },
+ "kinds": [
+  "select",
+  "select",
+  "select",
+  "select",
+  "external"
+ ]
+}

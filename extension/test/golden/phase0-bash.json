@@ -1,0 +1,124 @@
+{
+  "name": "phase0-bash",
+  "tape": "phase0-bash.tape.jsonl",
+  "current": {
+    "kind": "none"
+  },
+  "jumpThreshold": 30,
+  "frames": [
+    {
+      "index": 0,
+      "seq": 2,
+      "ts": 1790677915068,
+      "file": "sub/y.go",
+      "before": "p\nq\n",
+      "kind": "select",
+      "after": "p\nq\n",
+      "range": {
+        "start": 1,
+        "end": 2
+      },
+      "why": null,
+      "selection": null,
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 1,
+      "seq": 4,
+      "ts": 1790677915068,
+      "file": "x.go",
+      "before": "a\nb\nc\nd\ne\n",
+      "kind": "select",
+      "after": "a\nb\nc\nd\ne\n",
+      "range": {
+        "start": 2,
+        "end": 3
+      },
+      "why": null,
+      "selection": null,
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 2,
+      "seq": 5,
+      "ts": 1790677915072,
+      "file": "x.go",
+      "before": "a\nb\nc\nd\ne\n",
+      "kind": "select",
+      "after": "a\nb\nc\nd\ne\n",
+      "range": {
+        "start": 3,
+        "end": 3
+      },
+      "why": null,
+      "selection": null,
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 3,
+      "seq": 6,
+      "ts": 1790677915072,
+      "file": "sub/y.go",
+      "before": "p\nq\n",
+      "kind": "select",
+      "after": "p\nq\n",
+      "range": {
+        "start": 1,
+        "end": 1
+      },
+      "why": null,
+      "selection": null,
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 4,
+      "seq": 7,
+      "ts": 1790677915076,
+      "file": "x.go",
+      "before": "a\nb\nc\nd\ne\n",
+      "kind": "external",
+      "after": "a\nb\nC\nd\ne\n",
+      "range": {
+        "start": 1,
+        "end": 5
+      },
+      "why": null,
+      "selection": null,
+      "from": null,
+      "parent": null
+    }
+  ],
+  "jumpLabels": [
+    null,
+    "↷ x.goへ",
+    null,
+    "↷ y.goへ",
+    null
+  ],
+  "files": [
+    "sub/y.go",
+    "x.go"
+  ],
+  "contentAt": {
+    "sub/y.go": [
+      "p\nq\n",
+      "p\nq\n",
+      "p\nq\n",
+      "p\nq\n",
+      "p\nq\n",
+      "p\nq\n"
+    ],
+    "x.go": [
+      "a\nb\nc\nd\ne\n",
+      "a\nb\nc\nd\ne\n",
+      "a\nb\nc\nd\ne\n",
+      "a\nb\nc\nd\ne\n",
+      "a\nb\nc\nd\ne\n",
+      "a\nb\nC\nd\ne\n"
+    ]
+  }
+}

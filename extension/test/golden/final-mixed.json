@@ -1,0 +1,138 @@
+{
+  "name": "final-mixed",
+  "tapeText": "{\"v\":1,\"seq\":1,\"ts\":\"2026-09-29T03:00:01.000Z\",\"type\":\"snapshot\",\"file\":\"same.go\",\"text\":\"s\\n\"}\n{\"v\":1,\"seq\":2,\"ts\":\"2026-09-29T03:00:02.000Z\",\"type\":\"snapshot\",\"file\":\"changed.go\",\"text\":\"c\\n\"}\n{\"v\":1,\"seq\":3,\"ts\":\"2026-09-29T03:00:03.000Z\",\"type\":\"snapshot\",\"file\":\"gone.go\",\"text\":\"g\\n\"}\n{\"v\":1,\"seq\":4,\"ts\":\"2026-09-29T03:00:04.000Z\",\"type\":\"select\",\"file\":\"same.go\",\"startLine\":1,\"endLine\":1,\"why\":\"見る\",\"selection\":\"sel_1\"}\n{\"v\":1,\"seq\":5,\"ts\":\"2026-09-29T03:00:05.000Z\",\"type\":\"select\",\"file\":\"changed.go\",\"startLine\":1,\"endLine\":1,\"why\":\"見る\",\"selection\":\"sel_2\"}\n{\"v\":1,\"seq\":6,\"ts\":\"2026-09-29T03:00:06.000Z\",\"type\":\"select\",\"file\":\"gone.go\",\"startLine\":1,\"endLine\":1,\"why\":\"見る\",\"selection\":\"sel_3\"}\n",
+  "current": {
+    "kind": "files",
+    "files": {
+      "same.go": "s\n",
+      "changed.go": "c2\n"
+    }
+  },
+  "jumpThreshold": 30,
+  "frames": [
+    {
+      "index": 0,
+      "seq": 4,
+      "ts": 1790650804000,
+      "file": "same.go",
+      "before": "s\n",
+      "kind": "select",
+      "after": "s\n",
+      "range": {
+        "start": 1,
+        "end": 1
+      },
+      "why": "見る",
+      "selection": "sel_1",
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 1,
+      "seq": 5,
+      "ts": 1790650805000,
+      "file": "changed.go",
+      "before": "c\n",
+      "kind": "select",
+      "after": "c\n",
+      "range": {
+        "start": 1,
+        "end": 1
+      },
+      "why": "見る",
+      "selection": "sel_2",
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 2,
+      "seq": 6,
+      "ts": 1790650806000,
+      "file": "gone.go",
+      "before": "g\n",
+      "kind": "select",
+      "after": "g\n",
+      "range": {
+        "start": 1,
+        "end": 1
+      },
+      "why": "見る",
+      "selection": "sel_3",
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 3,
+      "kind": "final",
+      "seq": 6,
+      "ts": 1790650806000,
+      "file": "changed.go",
+      "before": "c\n",
+      "after": "c2\n",
+      "range": {
+        "start": 1,
+        "end": 1
+      },
+      "why": null,
+      "selection": null,
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 4,
+      "kind": "final",
+      "seq": 6,
+      "ts": 1790650806000,
+      "file": "gone.go",
+      "before": "g\n",
+      "after": "",
+      "range": {
+        "start": 1,
+        "end": 0
+      },
+      "why": null,
+      "selection": null,
+      "from": null,
+      "parent": null,
+      "deleted": true
+    }
+  ],
+  "jumpLabels": [
+    null,
+    "↷ changed.goへ",
+    "↷ gone.goへ",
+    null,
+    null
+  ],
+  "files": [
+    "same.go",
+    "changed.go",
+    "gone.go"
+  ],
+  "contentAt": {
+    "same.go": [
+      "s\n",
+      "s\n",
+      "s\n",
+      "s\n",
+      "s\n",
+      "s\n"
+    ],
+    "changed.go": [
+      "c\n",
+      "c\n",
+      "c\n",
+      "c\n",
+      "c2\n",
+      "c2\n"
+    ],
+    "gone.go": [
+      "g\n",
+      "g\n",
+      "g\n",
+      "g\n",
+      "g\n",
+      ""
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+{
+ "files": {
+  "main.go": "// 外で追加\nL1\nA\nB\nZ\nL5\nL6\nL7\nL8\n// 外で末尾に\n// もう一度\n"
+ },
+ "kinds": [
+  "select",
+  "replace",
+  "external",
+  "select",
+  "external",
+  "select",
+  "external",
+  "replace"
+ ]
+}

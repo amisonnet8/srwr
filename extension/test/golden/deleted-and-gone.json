@@ -1,0 +1,59 @@
+{
+  "name": "deleted-and-gone",
+  "tapeText": "{\"v\":1,\"seq\":1,\"ts\":\"2026-09-29T03:00:01.000Z\",\"type\":\"snapshot\",\"file\":\"a.go\",\"text\":\"old\\n\"}\n{\"v\":1,\"seq\":2,\"ts\":\"2026-09-29T03:00:02.000Z\",\"type\":\"select\",\"file\":\"a.go\",\"startLine\":1,\"endLine\":1,\"why\":\"見る\",\"selection\":\"sel_1\"}\n{\"v\":1,\"seq\":3,\"ts\":\"2026-09-29T03:00:03.000Z\",\"type\":\"external\",\"file\":\"a.go\",\"expectedSha\":\"e\",\"actualSha\":\"a\",\"deleted\":true,\"text\":null}\n",
+  "current": {
+    "kind": "missing"
+  },
+  "jumpThreshold": 30,
+  "frames": [
+    {
+      "index": 0,
+      "seq": 2,
+      "ts": 1790650802000,
+      "file": "a.go",
+      "before": "old\n",
+      "kind": "select",
+      "after": "old\n",
+      "range": {
+        "start": 1,
+        "end": 1
+      },
+      "why": "見る",
+      "selection": "sel_1",
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 1,
+      "seq": 3,
+      "ts": 1790650803000,
+      "file": "a.go",
+      "before": "old\n",
+      "kind": "external",
+      "after": "",
+      "range": {
+        "start": 1,
+        "end": 0
+      },
+      "why": null,
+      "selection": null,
+      "from": null,
+      "parent": null,
+      "deleted": true
+    }
+  ],
+  "jumpLabels": [
+    null,
+    null
+  ],
+  "files": [
+    "a.go"
+  ],
+  "contentAt": {
+    "a.go": [
+      "old\n",
+      "old\n",
+      ""
+    ]
+  }
+}

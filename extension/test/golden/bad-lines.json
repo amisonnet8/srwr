@@ -1,0 +1,77 @@
+{
+  "name": "bad-lines",
+  "tapeText": "not json\n{\"v\":1,\"type\":\"header\",\"session\":\"x\",\"startedAt\":\"2026-09-29T03:00:00.000Z\"}\n{\"v\":1,\"seq\":1,\"ts\":\"2026-09-29T03:00:01.000Z\",\"type\":\"snapshot\",\"file\":\"a.go\",\"text\":\"1\\n2\\n3\\n\"}\n{\"v\":1,\"seq\":9,\"ts\":\"2026-09-29T03:00:09.000Z\",\"type\":\"foo\",\"file\":\"a.go\"}\n{\"v\":1,\"seq\":10,\"ts\":\"2026-09-29T03:00:10.000Z\",\"type\":\"select\",\"file\":\"a.go\",\"why\":\"範囲なし\"}\n{\"v\":1,\"seq\":11,\"ts\":\"yesterday\",\"type\":\"select\",\"file\":\"a.go\",\"startLine\":1,\"endLine\":2,\"why\":\"ts が読めない\",\"selection\":\"sel_a\"}\n{\"v\":1,\"seq\":12,\"ts\":\"2026-09-29T03:00:12.000Z\",\"type\":\"select\",\"startLine\":1,\"endLine\":1,\"why\":\"file なし\"}\n{\"v\":1,\"seq\":13,\"ts\":\"2026-09-29T03:00:13.000Z\",\"type\":\"select\",\"file\":\"a.go\",\"startLine\":3,\"endLine\":3,\"why\":5,\"selection\":7}\n{\"v\":1,\"seq\":14,\"ts\":\"later\",\"type\":\"select\",\"file\":\"a.go\",\"startLine\":1,\"endLine\":1,\"why\":\"ts が読めない（前のコマがある）\",\"selection\":null}\n",
+  "current": {
+    "kind": "none"
+  },
+  "jumpThreshold": 30,
+  "frames": [
+    {
+      "index": 0,
+      "seq": 11,
+      "ts": 0,
+      "file": "a.go",
+      "before": "1\n2\n3\n",
+      "kind": "select",
+      "after": "1\n2\n3\n",
+      "range": {
+        "start": 1,
+        "end": 2
+      },
+      "why": "ts が読めない",
+      "selection": "sel_a",
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 1,
+      "seq": 13,
+      "ts": 1790650813000,
+      "file": "a.go",
+      "before": "1\n2\n3\n",
+      "kind": "select",
+      "after": "1\n2\n3\n",
+      "range": {
+        "start": 3,
+        "end": 3
+      },
+      "why": null,
+      "selection": null,
+      "from": null,
+      "parent": null
+    },
+    {
+      "index": 2,
+      "seq": 14,
+      "ts": 1790650813000,
+      "file": "a.go",
+      "before": "1\n2\n3\n",
+      "kind": "select",
+      "after": "1\n2\n3\n",
+      "range": {
+        "start": 1,
+        "end": 1
+      },
+      "why": "ts が読めない（前のコマがある）",
+      "selection": null,
+      "from": null,
+      "parent": null
+    }
+  ],
+  "jumpLabels": [
+    null,
+    null,
+    null
+  ],
+  "files": [
+    "a.go"
+  ],
+  "contentAt": {
+    "a.go": [
+      "1\n2\n3\n",
+      "1\n2\n3\n",
+      "1\n2\n3\n",
+      "1\n2\n3\n"
+    ]
+  }
+}

@@ -143,9 +143,12 @@ func TestTapesList(t *testing.T) {
 		t.Fatalf("tapes = %v, want %v (newest first; only tapes with operations)", ids, want)
 	}
 	b := list.Tapes[1]
-	if b.StartedAt != "2026-10-02T10:00:00.000+09:00" || b.Ops != 2 || !slices.Equal(b.Files, []string{"a.go"}) ||
-		b.UpdatedAt != "2026-10-01T17:06:21.026+09:00" {
+	if b.StartedAt != "2026-10-02T10:00:00.000+09:00" || b.Ops != 2 || !slices.Equal(b.Files, []string{"a.go"}) {
 		t.Errorf("entry = %+v", b)
+	}
+	// updatedAt is written in the time zone of the machine, so compare the moment, not the text.
+	if at, err := time.Parse(time.RFC3339, b.UpdatedAt); err != nil || !at.Equal(mod) || !strings.Contains(b.UpdatedAt, ".026") {
+		t.Errorf("updatedAt = %q (%v), want the moment %s with milliseconds", b.UpdatedAt, err, mod.Format(time.RFC3339Nano))
 	}
 	if f := list.Tapes[0]; f.StartedAt != "" || f.Ops != 1 || !slices.Equal(f.Files, []string{"b.go"}) {
 		t.Errorf("a tape without a header: %+v", f)

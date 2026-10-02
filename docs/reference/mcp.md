@@ -99,12 +99,14 @@ MCP の応答では `isError: true` になり、本文は次の JSON。
 
 `replace` を受け取ると、srwr は次の順で処理する。
 
-1. srwr の外で起きたファイルの変更を検知する（あれば [`external`](tape.md#external) として記録）
-2. トークンの復号と検証（失敗は `invalid_selection`）
-3. ファイルの特定
+1. トークンの復号と検証（失敗は `invalid_selection`）
+2. ファイルの特定
+3. srwr の外で起きたファイルの変更を検知する（あれば [`external`](tape.md#external) として記録）
 4. 行番号の補正（重なる編集があれば `selection_stale`）
 5. 内容の照合（一致しなければ `selection_mismatch`）
 6. **先に実ファイルを書き、そのあとテープに追記する**
+
+検知するファイルをトークンから知るので、復号が先になる。偽のトークンでは、外部変更を記録しない。`select` は、検知 → 範囲の検査（`invalid_range`）→ 記録の順。
 
 途中で落ちても、次に srwr が触れたとき、実ファイルとの食い違いが `external` として見える。
 

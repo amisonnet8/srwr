@@ -8,7 +8,7 @@
 - GitHub Releases に、Linux・macOS・Windows（amd64・arm64）のビルド済みバイナリを置く。**リリースの作成は人間が行う**（`gh release create` は deny）
 - **cgo は使わない**（`CGO_ENABLED=0`）。どの OS でも単一のバイナリで動くようにする。ロック（flock）など OS に依存する処理は、ビルドタグで OS ごとに分け、cgo なしで書く
 - 外部依存を足さない（`.claude/rules/go-code.md`）
-- **バージョン**：`srwr --version` は `runtime/debug.ReadBuildInfo()` のモジュールのバージョンを出す（`go install …@vX.Y.Z` で入れたときにタグが入る）。取れないとき（手元のビルド）は `(devel)`
+- **バージョン**：`srwr --version` は `runtime/debug.ReadBuildInfo()` のモジュールのバージョンを出す（`go install …@vX.Y.Z` で入れたときにタグが入る）。取れないとき（`go test` のバイナリなど）は `(devel)`。Go 1.24 以降は、リポジトリで `go build` したバイナリにも `v0.0.0-<日時>-<コミット>+dirty` の形のバージョンが入る
 - テープの `header.tool.version` にも、同じバージョンを書く
 - ビルド済みバイナリはリポジトリにコミットしない（`/bin/`・`/dist/` は `.gitignore` 済み）
 

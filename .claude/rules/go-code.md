@@ -18,10 +18,17 @@
 - 処理の中で、プロセスのメモリに状態を持たない。状態（最後の seq、ファイルの内容、replace の列）は、テープから読み足したものだけから取る（別のプロセスが書いた分が抜けるため）
 - **ファイルを共有して作るもの（鍵 `.srwr/key`、`.srwr/active`）は、一時ファイルに全部書いてから置く。** 前のリポジトリで、2つの `srwr mcp` が同時に起動して、書きかけの鍵を読んで起動に失敗した。鍵は `link`（先に置いた方が勝つ）、`active` は `rename`
 - トークンの HMAC に入れるのは、テープID 全体。短いID ではない
+- **同じプロセスの goroutine 同士は、flock のほかに `sync.Mutex` で守る。** race detector は flock による順序を知らないので、`Workspace` が持つ読み足しの状態を2つの goroutine が順に触ると、flock だけでは race と報告される
+- Windows の flock は、標準ライブラリに無いので `syscall.NewLazyDLL("kernel32.dll")` の `LockFileEx`・`UnlockFileEx` を呼ぶ（外部依存も cgo も要らない）。手元では型検査（`qsoku cross`）までで、動くのは CI の Windows が初めて
 - flock は OS ごとにビルドタグで分け（`//go:build unix` と `//go:build windows`）、cgo を使わない。**手元でも `qsoku cross` を通す**（前は Windows の CI で初めて落ちた）
 - 表示サーバー（`viewserver`・`timeline`）はテープを**読むだけ**。ロックを取らず、書き込み途中の最後の行は保留する
 - 表示サーバーが「今のファイル」を読むのは、最後の差分のときだけ。**テープに書かれたパスは信用しない**（共有されたテープが任意のファイルを読ませないよう、作業場の外を指すパス・シンボリックリンクは「存在しない」として扱う）。`tapeId` も裸の名前だけを受ける
 - サーバーからの通知（ライブ）を書く goroutine は、接続が終わるときに必ず止めて待つ。通知は、その要求への返事を書いたあとに始める
+
+## テープを読む・行を数える
+
+- **`json.Unmarshal` は `null` をエラーにせず、ゼロ値を入れる。** `"why":null` が空文字列として読めてしまうので、`internal/tape` の `has()` で欠落として扱う
+- **`newText` は「行を `\n` でつないだもの」で、末尾の空行が分からなくなる**（`["a",""]` と `["a"]` は、`Lines` で読み直すと同じ）。行の数は `newStartLine`・`newEndLine` から取る（`tape.NewLines`）。`Splice` に `newText` を渡す前に、行に分けておく（`SpliceLines`）
 
 ## エラー
 

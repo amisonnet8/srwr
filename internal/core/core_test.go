@@ -575,7 +575,11 @@ func TestSymlinkOutsideTheWorkspace(t *testing.T) {
 	if err := os.Symlink(outside, filepath.Join(e.root, "linkdir")); err != nil {
 		t.Fatal(err)
 	}
-	for _, rel := range []string{"link.txt", "linkdir/secret.txt"} {
+	// A link to the parent of the workspace itself.
+	if err := os.Symlink(filepath.Dir(e.root), filepath.Join(e.root, "up")); err != nil {
+		t.Fatal(err)
+	}
+	for _, rel := range []string{"link.txt", "linkdir/secret.txt", "linkdir", "up"} {
 		_, err := e.c.Select(SelectInput{File: rel, StartLine: 1, EndLine: 1, Why: "w"})
 		wantCode(t, err, CodeInvalidRange)
 	}

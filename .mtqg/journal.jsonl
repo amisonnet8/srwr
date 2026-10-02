@@ -20,3 +20,5 @@
 {"id":"616099b3fddd48988d423d7831ef4cd0","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-02T20:03:48Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"c2df9e205d4c4c658dcdb08c5535aad5","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-02T20:03:48Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"e312690515074c628dbd8f5f72b4ecd6","op":"create","type":"memo","text":"R0: internal/docs はテストだけのパッケージ。相対リンク（見出しのアンカー含む）、docs/ のパス、docs/ から handoff/・dev/ を参照しないことを検査する。README.md・dev/・CLAUDE.md・.claude/rules も対象。リンクを壊して落ちることを確認済み。R2・R3 で examples/ の照合をここに足す。","v":1,"ts":"2026-10-02T20:03:48Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"681fe60a24bb4fe7a4dd67fcbe951c02","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-02T20:06:55Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"7e83388969e44309af2b162cf53bdc29","op":"create","type":"memo","text":"R0 完了：push 後の CI（3OS の check）が通ったことを人間が確認した。","v":1,"ts":"2026-10-02T20:06:55Z","author":{"kind":"ai","name":"claude-code"}}

@@ -1,5 +1,7 @@
 package tape
 
+import "strings"
+
 // File is what the tape knows about one file.
 type File struct {
 	Text    string
@@ -40,7 +42,7 @@ func (s *State) Apply(e Event) {
 			f = &File{}
 			s.Files[e.File] = f
 		}
-		f.Text = Splice(f.Text, e.StartLine, e.EndLine, e.NewText)
+		f.Text = SpliceLines(f.Text, e.StartLine, e.EndLine, NewLines(e))
 		s.Replaces = append(s.Replaces, e)
 	case TypeExternal:
 		switch {
@@ -51,6 +53,24 @@ func (s *State) Apply(e Event) {
 		}
 		// The old format has no text: the snapshot that follows gives the new content.
 	}
+}
+
+// NewLines returns the lines a replace wrote. NewText is the lines joined by "\n", which cannot say
+// by itself whether it ends in a blank line, so the count comes from newStartLine and newEndLine.
+// A tape without those, or whose count does not fit NewText (an old one that ends the text with
+// a newline), is read the way mcp.md counts the lines of newText.
+func NewLines(e Event) []string {
+	if e.NewStartLine == 0 && e.NewEndLine == 0 {
+		return Lines(e.NewText)
+	}
+	n := e.NewEndLine - e.NewStartLine + 1
+	if n <= 0 {
+		return nil
+	}
+	if parts := strings.Split(e.NewText, "\n"); len(parts) == n {
+		return parts
+	}
+	return Lines(e.NewText)
 }
 
 func deref(s *string) string {

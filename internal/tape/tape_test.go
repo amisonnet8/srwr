@@ -377,3 +377,28 @@ func TestStateCollectsReplaces(t *testing.T) {
 		t.Errorf("Replaces = %d, LastSeq = %d; want 5 and 13", len(st.Replaces), st.LastSeq)
 	}
 }
+
+func TestValidID(t *testing.T) {
+	tests := map[string]bool{
+		"20261001-1706-1795": true,
+		"a_b.c-D":            true,
+		"":                   false,
+		".":                  false,
+		"..":                 false,
+		".hidden":            false,
+		"a/b":                false,
+		`a\b`:                false,
+		"../x":               false,
+		"a b":                false,
+		"a\x00b":             false,
+		"テープ":                false,
+	}
+	for id, want := range tests {
+		if got := ValidID(id); got != want {
+			t.Errorf("ValidID(%q) = %v, want %v", id, got, want)
+		}
+	}
+	if got := FileName("x"); got != "x.tape.jsonl" {
+		t.Errorf("FileName = %q", got)
+	}
+}

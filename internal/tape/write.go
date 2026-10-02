@@ -101,6 +101,11 @@ func Append(path string, e Event) error {
 	if err != nil {
 		return err
 	}
+	return AppendLine(path, line)
+}
+
+// AppendLine writes an already marshaled line (Marshal) with a single write call.
+func AppendLine(path string, line []byte) error {
 	f, err := os.OpenFile(path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0o600) //nolint:gosec // the tape path is built by the caller from the workspace
 	if err != nil {
 		return err

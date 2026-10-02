@@ -28,6 +28,12 @@ func RangeText(text string, start, end int) string {
 // start-1 = end inserts before line start; an empty newText deletes the range.
 // Whether the text ends with a newline is kept, except that a text that was empty gets one.
 func Splice(text string, start, end int, newText string) string {
+	return SpliceLines(text, start, end, Lines(newText))
+}
+
+// SpliceLines is Splice with the new lines already split. A caller that knows how many lines it
+// writes uses this, because Lines cannot tell a blank last line from the end of the text.
+func SpliceLines(text string, start, end int, newLines []string) string {
 	lines := Lines(text)
 	start = max(start, 1)
 	start = min(start, len(lines)+1)
@@ -35,7 +41,7 @@ func Splice(text string, start, end int, newText string) string {
 
 	out := make([]string, 0, len(lines)+1)
 	out = append(out, lines[:start-1]...)
-	out = append(out, Lines(newText)...)
+	out = append(out, newLines...)
 	out = append(out, lines[end:]...)
 	if len(out) == 0 {
 		return ""

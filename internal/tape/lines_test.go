@@ -86,3 +86,59 @@ func TestSplice(t *testing.T) {
 		})
 	}
 }
+
+func TestSpliceLines(t *testing.T) {
+	tests := []struct {
+		name       string
+		text       string
+		start, end int
+		lines      []string
+		want       string
+	}{
+		{"blank last line", "a\nb\n", 2, 2, []string{"x", ""}, "a\nx\n\n"},
+		{"one blank line", "a\nb\n", 2, 2, []string{""}, "a\n\n"},
+		{"two blank lines", "a\nb\n", 1, 1, []string{"", ""}, "\n\nb\n"},
+		{"no lines deletes", "a\nb\n", 2, 2, nil, "a\n"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := SpliceLines(tt.text, tt.start, tt.end, tt.lines); got != tt.want {
+				t.Errorf("SpliceLines = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNewLines(t *testing.T) {
+	tests := []struct {
+		name string
+		e    Event
+		want []string
+	}{
+		{"deletion", Event{NewText: "", NewStartLine: 3, NewEndLine: 2}, nil},
+		{"one blank line", Event{NewText: "", NewStartLine: 3, NewEndLine: 3}, []string{""}},
+		{"ends in a blank line", Event{NewText: "a\n", NewStartLine: 3, NewEndLine: 4}, []string{"a", ""}},
+		{"two blank lines", Event{NewText: "\n", NewStartLine: 1, NewEndLine: 2}, []string{"", ""}},
+		{"plain", Event{NewText: "a\nb", NewStartLine: 1, NewEndLine: 2}, []string{"a", "b"}},
+		{"old tape: text ends with a newline", Event{NewText: "a\n", NewStartLine: 1, NewEndLine: 1}, []string{"a"}},
+		{"old tape: no new range", Event{NewText: "a\nb\n"}, []string{"a", "b"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NewLines(tt.e); !slices.Equal(got, tt.want) {
+				t.Errorf("NewLines = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestStateKeepsBlankLines(t *testing.T) {
+	st := Build([]Event{
+		{Type: TypeSnapshot, Seq: 1, File: "a.go", Text: Str("a\nb\n")},
+		{Type: TypeReplace, Seq: 2, File: "a.go", StartLine: 2, EndLine: 2, NewText: "x\n", NewStartLine: 2, NewEndLine: 3},
+		{Type: TypeReplace, Seq: 3, File: "a.go", StartLine: 1, EndLine: 0, NewText: "", NewStartLine: 1, NewEndLine: 1},
+	})
+	if got, want := st.Files["a.go"].Text, "\na\nx\n\n"; got != want {
+		t.Errorf("text = %q, want %q", got, want)
+	}
+}

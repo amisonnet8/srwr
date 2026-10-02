@@ -128,3 +128,4 @@
 {"id":"0a74c4e6918f4ba89877127a0407fa49","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-02T23:58:14Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"16a00be8a6f14994815bf847a6c56a64","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-02T23:58:14Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"897ad95547b84d749de4b3a72ff927a5","op":"create","type":"memo","text":"R4: 偽のvscodeに『エディタ設定の引き継ぎ(列ごと)』『最初に塗った順の装飾リスト』を入れた。後者が前の実装の基準(captured)と一致する条件。壊して確かめ27か所中、最初に生き残った3つ(行番号の明示・古い移動の読み飛ばし・桁数)はテストを足して全て落ちる。launch.json は .vscode がサンドボックスのダミーで作れず人間に頼む。","v":1,"ts":"2026-10-02T23:58:14Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"85a50c07286b47e982c7384ec3bd5f98","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-02T23:58:19Z","author":{"kind":"ai","name":"claude-code"}}

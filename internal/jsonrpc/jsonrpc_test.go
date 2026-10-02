@@ -149,3 +149,71 @@ func TestServeReturnsReadError(t *testing.T) {
 		t.Error("Serve should return a read error")
 	}
 }
+
+type afterResult struct{ after func() bool }
+
+func (a afterResult) After() bool { return a.after() }
+
+func TestAfterwardRunsAfterTheResponseIsWritten(t *testing.T) {
+	var out bytes.Buffer
+	var seenAtAfter string
+	h := func(req Request) (any, *Error) {
+		switch req.Method {
+		case "start":
+			return afterResult{after: func() bool { seenAtAfter = out.String(); return false }}, nil
+		case "fail":
+			return nil, &Error{Code: InvalidParams, Message: "bad"}
+		}
+		return struct{}{}, nil
+	}
+	in := `{"jsonrpc":"2.0","id":1,"method":"start"}` + "\n" + `{"jsonrpc":"2.0","id":2,"method":"other"}` + "\n"
+	if err := Serve(strings.NewReader(in), NewWriter(&out), h); err != nil {
+		t.Fatal(err)
+	}
+	if want := `{"jsonrpc":"2.0","id":1,"result":{}}` + "\n"; seenAtAfter != want {
+		t.Errorf("when After ran, the output was %q, want %q (the response is written first)", seenAtAfter, want)
+	}
+	if n := strings.Count(out.String(), "\n"); n != 2 {
+		t.Errorf("%d lines written, want 2", n)
+	}
+}
+
+func TestAfterwardCanEndServe(t *testing.T) {
+	var out bytes.Buffer
+	h := func(req Request) (any, *Error) {
+		if req.Method == "shutdown" {
+			return afterResult{after: func() bool { return true }}, nil
+		}
+		return struct{}{}, nil
+	}
+	in := `{"jsonrpc":"2.0","id":1,"method":"shutdown"}` + "\n" + `{"jsonrpc":"2.0","id":2,"method":"late"}` + "\n"
+	if err := Serve(strings.NewReader(in), NewWriter(&out), h); err != nil {
+		t.Fatal(err)
+	}
+	if want := `{"jsonrpc":"2.0","id":1,"result":{}}` + "\n"; out.String() != want {
+		t.Errorf("output = %q, want only the response to shutdown", out.String())
+	}
+}
+
+func TestAfterwardIsNotRunForAnError(t *testing.T) {
+	ran := false
+	h := func(Request) (any, *Error) {
+		return afterResult{after: func() bool { ran = true; return true }}, &Error{Code: InvalidParams, Message: "bad"}
+	}
+	if err := Serve(strings.NewReader(`{"jsonrpc":"2.0","id":1,"method":"x"}`+"\n"), NewWriter(io.Discard), h); err != nil {
+		t.Fatal(err)
+	}
+	if ran {
+		t.Error("After ran although the request failed")
+	}
+}
+
+func TestNotify(t *testing.T) {
+	var buf bytes.Buffer
+	if err := NewWriter(&buf).Notify("live/frame", map[string]int{"n": 1}); err != nil {
+		t.Fatal(err)
+	}
+	if want := `{"jsonrpc":"2.0","method":"live/frame","params":{"n":1}}` + "\n"; buf.String() != want {
+		t.Errorf("got %q, want %q", buf.String(), want)
+	}
+}

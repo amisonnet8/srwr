@@ -11,25 +11,25 @@
 ## リプレイ
 
 ```jsonrpc
-→ {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"client":"vim","protocolVersion":1,"options":{"jumpLabels":true,"jumpThresholdLines":30,"diffFrames":true}}}
+→ {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"client":"vim","protocolVersion":1,"options":{"diffFrames":true}}}
 ← {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":1,"serverVersion":"(devel)"}}
 → {"jsonrpc":"2.0","id":2,"method":"tapes/list","params":{}}
 ← {"jsonrpc":"2.0","id":2,"result":{"tapes":[{"tapeId":"20261001-1706-1795","startedAt":"2026-10-01T17:06:15.381+09:00","updatedAt":"2026-10-01T17:06:21.026+09:00","ops":2,"files":["cmd/main.go"]}]}}
 → {"jsonrpc":"2.0","id":3,"method":"tape/open","params":{"tapeId":"20261001-1706-1795"}}
-← {"jsonrpc":"2.0","id":3,"result":{"frames":[{"index":0,"kind":"select","seq":2,"ts":1790841975381,"file":"cmd/main.go","range":{"start":3,"end":5},"why":"main に初期化の呼び出しを足せるか確認する","selection":"sel_041061E48KVH3K24RN324MN2","from":null,"parent":null,"jumpLabel":null},{"index":1,"kind":"replace","seq":3,"ts":1790841975384,"file":"cmd/main.go","range":{"start":3,"end":6},"oldRange":{"start":3,"end":5},"why":"run の前に設定の読み込みが要るので setup を呼ぶ","selection":"sel_041G61P48KVH3AYWAY6Q99GP","from":"sel_041061E48KVH3K24RN324MN2","parent":0,"jumpLabel":null}],"tapeId":"20261001-1706-1795"}}
+← {"jsonrpc":"2.0","id":3,"result":{"frames":[{"index":0,"kind":"select","seq":2,"ts":1790841975381,"file":"cmd/main.go","range":{"start":3,"end":5},"why":"main に初期化の呼び出しを足せるか確認する","selection":"sel_041061E48KVH3K24RN324MN2","from":null,"parent":null},{"index":1,"kind":"replace","seq":3,"ts":1790841975384,"file":"cmd/main.go","range":{"start":3,"end":6},"oldRange":{"start":3,"end":5},"why":"run の前に設定の読み込みが要るので setup を呼ぶ","selection":"sel_041G61P48KVH3AYWAY6Q99GP","from":"sel_041061E48KVH3K24RN324MN2","parent":0}],"tapeId":"20261001-1706-1795"}}
 → {"jsonrpc":"2.0","id":4,"method":"frame/state","params":{"tapeId":"20261001-1706-1795","index":1}}
 ← {"jsonrpc":"2.0","id":4,"result":{"after":"package main\n\nfunc main() {\n\tsetup()\n\trun()\n}\n","before":"package main\n\nfunc main() {\n\trun()\n}\n","content":"package main\n\nfunc main() {\n\tsetup()\n\trun()\n}\n"}}
 → {"jsonrpc":"2.0","id":5,"method":"tape/close","params":{"tapeId":"20261001-1706-1795"}}
 ← {"jsonrpc":"2.0","id":5,"result":{}}
 ```
 
-- `initialize`（id 1）：クライアントの種類と、設定（ジャンプラベル、差分のコマ）を渡す。これより前の要求は `not_initialized`
+- `initialize`（id 1）：クライアントの種類と、設定（差分のコマ）を渡す。これより前の要求は `not_initialized`
 - `tapes/list`（id 2）：操作を1つ以上持つテープの一覧
 - `tape/open`（id 3）：**コマの列**。2つのコマが返る。`replace` のコマ（`index` 1）は、`oldRange`（変更前の3〜5行目）と `range`（変更後の3〜6行目）を持ち、`parent` が `select` のコマ（`index` 0）を指す。実ファイルが、テープの最後の内容と同じなので、`final`（最後の差分）のコマは付かない
 - `frame/state`（id 4）：`index` 1 のコマの、変更前（`before`）と変更後（`after`）の全文と、そのコマを終えた時点のファイルの内容（`content`）。クライアントは、コマを移るたびにこれを取り、バッファの内容を差し替える
 - `tape/close`（id 5）：閉じる
 
-コマの形（`why` の行に使うフィールド、ジャンプラベルなど）は [protocol.md](../reference/protocol.md)、見せ方は [vscode.md](../reference/vscode.md)。
+コマの形（`why` の行に使うフィールドなど）は [protocol.md](../reference/protocol.md)、見せ方は [vscode.md](../reference/vscode.md)。
 
 ## エラー
 

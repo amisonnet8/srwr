@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"runtime/debug"
 
 	"github.com/amisonnet8/srwr/internal/core"
 	"github.com/amisonnet8/srwr/internal/mcp"
 	"github.com/amisonnet8/srwr/internal/session"
+	"github.com/amisonnet8/srwr/internal/viewserver"
 )
 
 const usage = `srwr: AI に select / replace の2コマンドだけでファイルを編集させ、操作をテープに記録する
@@ -25,11 +27,11 @@ const usage = `srwr: AI に select / replace の2コマンドだけでファイ�
   srwr --version                 バージョン
   srwr --help                    この説明
 
-まだ使えるのは mcp だけです。
+まだ使えるのは mcp と view-server だけです。
 `
 
 // notYet are the subcommands that exist in docs/reference/cli.md and are made in later stages.
-var notYet = map[string]bool{"hook": true, "view-server": true, "view": true, "init": true, "tapes": true}
+var notYet = map[string]bool{"hook": true, "view": true, "init": true, "tapes": true}
 
 // Run runs srwr with the arguments (without the program name) and returns the exit code.
 func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
@@ -46,6 +48,8 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		return 0
 	case cmd == "mcp":
 		return runMCP(args[1:], stdin, stdout, stderr)
+	case cmd == "view-server":
+		return runViewServer(args[1:], stdin, stdout, stderr)
 	case notYet[cmd]:
 		_, _ = fmt.Fprintf(stderr, "srwr %s: まだ実装されていません\n", cmd)
 		return 2
@@ -64,23 +68,49 @@ func Version() string {
 	return "(devel)"
 }
 
-func runMCP(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
-	fs := flag.NewFlagSet("srwr mcp", flag.ContinueOnError)
+// workspaceArg reads --root and checks that it is a directory. It returns the code to exit with if it is not.
+func workspaceArg(name string, args []string, stderr io.Writer) (root string, code int) {
+	fs := flag.NewFlagSet("srwr "+name, flag.ContinueOnError)
 	fs.SetOutput(stderr)
-	root := fs.String("root", ".", "作業場のディレクトリ")
+	r := fs.String("root", ".", "作業場のディレクトリ")
 	if err := fs.Parse(args); err != nil {
-		return 2
+		return "", 2
 	}
 	if fs.NArg() > 0 {
-		_, _ = fmt.Fprintf(stderr, "srwr mcp: 余分な引数 %q\n", fs.Arg(0))
-		return 2
+		_, _ = fmt.Fprintf(stderr, "srwr %s: 余分な引数 %q\n", name, fs.Arg(0))
+		return "", 2
 	}
-	if info, err := os.Stat(*root); err != nil || !info.IsDir() {
-		_, _ = fmt.Fprintf(stderr, "srwr mcp: 作業場 %q がディレクトリとして開けません\n", *root)
+	if info, err := os.Stat(*r); err != nil || !info.IsDir() {
+		_, _ = fmt.Fprintf(stderr, "srwr %s: 作業場 %q がディレクトリとして開けません\n", name, *r)
+		return "", 1
+	}
+	return *r, 0
+}
+
+func runViewServer(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	root, code := workspaceArg("view-server", args, stderr)
+	if code != 0 {
+		return code
+	}
+	abs, err := filepath.Abs(root)
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, "srwr view-server: %v\n", err)
 		return 1
 	}
+	if err := (&viewserver.Server{Root: abs, Version: Version()}).Serve(stdin, stdout); err != nil {
+		_, _ = fmt.Fprintf(stderr, "srwr view-server: %v\n", err)
+		return 1
+	}
+	return 0
+}
 
-	ws, err := session.Open(*root, session.Options{Version: Version()})
+func runMCP(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	root, code := workspaceArg("mcp", args, stderr)
+	if code != 0 {
+		return code
+	}
+
+	ws, err := session.Open(root, session.Options{Version: Version()})
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "srwr mcp: %v\n", err)
 		return 1

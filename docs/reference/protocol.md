@@ -10,7 +10,7 @@
 | **コマの列の組み立て** | **描画**（範囲の色、`why` の行、diff 画面、サイドバー、ステータス） |
 | 各コマの時点の**文書の内容** | `why` の行を文書に差し込む |
 | 差分のコマの変更前・変更後、最後の差分（今のファイルとの比較） | コマ送り、キー操作 |
-| ジャンプラベルの判定（VSCode・Vim は使わない） | 設定（ジャンプラベル、差分のコマ）をサーバーに渡す（VSCode・Vim は、固定の値を送る） |
+| 設定（差分のコマを出すか）を受ける | 設定（差分のコマ）をサーバーに渡す（VSCode・Vim は、固定の値を送る） |
 | ライブ：今のテープを見張り、追記されたコマを通知する | ライブ：通知を受けて描く |
 
 ## 流れ
@@ -37,7 +37,7 @@
 
 | メソッド | 種類 | 引数 → 結果 |
 |---|---|---|
-| `initialize` | 要求 | `{client:"vscode"\|"vim", protocolVersion:1, options:{jumpLabels, jumpThresholdLines, diffFrames}}` → `{serverVersion, protocolVersion:1}`。`options` の既定は `true`・`30`・`true` |
+| `initialize` | 要求 | `{client:"vscode"\|"vim", protocolVersion:1, options:{diffFrames}}` → `{serverVersion, protocolVersion:1}`。`options` の既定は `diffFrames` が `true`。知らない `options` は無視する |
 | `tapes/list` | 要求 | `{}` → `{tapes:[TapeInfo…]}`。操作を1つ以上持つテープだけを、新しい順に（ファイル名の逆順）。読めないテープは載せない |
 | `tape/open` | 要求 | `{tapeId, withText?:false}` → `{tapeId, frames:[Frame…]}`。コマの列。`diffFrames` が真なら、作業場の今のファイルと比べた**最後の差分**（`final`）を末尾に含む。同じ `tapeId` をもう一度開くと、読み直す |
 | `frame/state` | 要求 | `{tapeId, index, file?}` → `{before, after, content}`。`index` のコマの変更前・変更後（`index` が −1 のときは両方 `""`）。`content` は `file`（省略時はそのコマのファイル）の、そのコマを終えた時点の内容。どのコマも触れていないファイルは `null` |
@@ -57,8 +57,8 @@
 
 | 種類（`kind`） | 元になるもの | 持つ情報（要点） |
 |---|---|---|
-| `select` | テープの `select`（`source` が `mcp` でも `hook` でも） | ファイル、範囲、`why`（`null` のことがある）、`seq`、系譜（`selection`）、ジャンプラベル |
-| `replace` | テープの `replace` | ファイル、変更前後の範囲とテキスト、`why`（`null` のことがある）、`seq`、系譜（`from`→`selection`）、ジャンプラベル |
+| `select` | テープの `select`（`source` が `mcp` でも `hook` でも） | ファイル、範囲、`why`（`null` のことがある）、`seq`、系譜（`selection`） |
+| `replace` | テープの `replace` | ファイル、変更前後の範囲とテキスト、`why`（`null` のことがある）、`seq`、系譜（`from`→`selection`） |
 | `external` | テープの `external` | ファイル、変更前（直前の内容）と変更後（`text`）、削除されたか |
 | `final` | テープの最後の内容と、今のファイルの比較 | ファイル、変更前（テープの最後）と変更後（今のファイル）、今は存在しないか |
 
@@ -75,13 +75,12 @@ Frame のフィールド：
 | `why`・`selection`・`from` | 文字列または `null` |
 | `parent` | 系譜の親（`from` が指すコマの `index`）、なければ `null` |
 | `deleted` | 差分のコマだけ。変更後にファイルが存在しない（そのときだけ `true`。それ以外は出さない） |
-| `jumpLabel` | ジャンプラベル（「↷ 42行下へ」など）または `null`。`jumpLabels` が偽なら常に `null` |
 | `before`・`after` | **`withText` が真のときだけ**。変更前・変更後の全文。ふだんは `frame/state` で取る（大きいテープで、全コマが全文を持たないため） |
 
 - ライブのコマ（`live/start`・`live/frame`）に、最後の差分は含まれない（`external` はテープに書かれたものが出る）
-- **ジャンプラベルと最後の差分は、サーバーが決める。** クライアントは出すだけ
+- **最後の差分は、サーバーが決める。** クライアントは出すだけ
 - テープの項目が増えても（`source`・`tool`・`vcs` など）、クライアントは使わなくてよい
-- **VSCode・Vim が使うフィールド**は、`index`・`kind`・`file`・`range`・`why`・`before`・`after`・`deleted` だけ。`seq`・`ts`・`selection`・`from`・`parent`・`oldRange`・`jumpLabel` は使わない。ライブでも本文（`before`・`after`）を使うので、`live/start` に `withText: true` を渡す
+- **VSCode・Vim が使うフィールド**は、`index`・`kind`・`file`・`range`・`why`・`before`・`after`・`deleted` だけ。`seq`・`ts`・`selection`・`from`・`parent`・`oldRange` は使わない。ライブでも本文（`before`・`after`）を使うので、`live/start` に `withText: true` を渡す
 
 ## サーバーの振る舞い
 

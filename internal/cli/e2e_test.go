@@ -383,3 +383,85 @@ func TestRootDefaultsToTheCurrentDirectory(t *testing.T) {
 		t.Error("the tape is not in the current directory")
 	}
 }
+
+// viewer is a running srwr view-server.
+func startViewer(t *testing.T, root string) *client {
+	t.Helper()
+	cmd := exec.Command(binary(t), "view-server", "--root", root) //nolint:gosec // the binary was built by this test
+	in, err := cmd.StdinPipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, err := cmd.StdoutPipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cmd.Stderr = os.Stderr
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	c := &client{t: t, cmd: cmd, in: in, out: bufio.NewReader(out)}
+	t.Cleanup(c.stop)
+	return c
+}
+
+// The display server reads the tape that srwr mcp wrote.
+func TestViewServerShowsWhatMCPWrote(t *testing.T) {
+	root := t.TempDir()
+	write(t, root, "main.go", "package main\n\nfunc main() {\n\trun()\n}\n")
+	m := startClient(t, root)
+	m.initialize()
+	tok := m.mustSelect("main.go", 3, 5)
+	m.mustReplace(tok, "func main() {\n\tsetup()\n\trun()\n}")
+
+	v := startViewer(t, root)
+	var init struct{ Result struct{ ProtocolVersion int } }
+	if err := json.Unmarshal([]byte(v.request("initialize", `{"client":"vim","protocolVersion":1}`)), &init); err != nil || init.Result.ProtocolVersion != 1 {
+		t.Fatalf("initialize: %+v %v", init, err)
+	}
+
+	var list struct {
+		Result struct {
+			Tapes []struct {
+				TapeID string
+				Ops    int
+				Files  []string
+			}
+		}
+	}
+	if err := json.Unmarshal([]byte(v.request("tapes/list", `{}`)), &list); err != nil || len(list.Result.Tapes) != 1 {
+		t.Fatalf("tapes/list: %+v %v", list, err)
+	}
+	ti := list.Result.Tapes[0]
+	if ti.Ops != 2 || !slices.Equal(ti.Files, []string{"main.go"}) {
+		t.Errorf("tape = %+v", ti)
+	}
+
+	var opened struct {
+		Result struct {
+			Frames []struct {
+				Kind          string
+				Before, After string
+				Range         struct{ Start, End int }
+				Why           string
+			}
+		}
+	}
+	line := v.request("tape/open", fmt.Sprintf(`{"tapeId":%q,"withText":true}`, ti.TapeID))
+	if err := json.Unmarshal([]byte(line), &opened); err != nil || len(opened.Result.Frames) != 2 {
+		t.Fatalf("tape/open: %s %v", line, err)
+	}
+	f := opened.Result.Frames[1]
+	if f.Kind != "replace" || f.Why != "変える" || f.Range.Start != 3 || f.Range.End != 6 ||
+		f.Before != "package main\n\nfunc main() {\n\trun()\n}\n" || f.After != "package main\n\nfunc main() {\n\tsetup()\n\trun()\n}\n" {
+		t.Errorf("frame = %+v", f)
+	}
+
+	if got := v.request("shutdown", `{}`); !strings.Contains(got, `"result":{}`) {
+		t.Errorf("shutdown: %s", got)
+	}
+	// It ends by itself after the response.
+	if err := v.cmd.Wait(); err != nil {
+		t.Errorf("view-server exited with %v", err)
+	}
+}

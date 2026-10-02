@@ -35,7 +35,7 @@
 │   ├── src/                ← server（通信）・present・replay・live・controls・sidebar・extension
 │   ├── test/
 │   │   ├── fixtures/       ← 実物のテープ。ui-check/ は固定テープ3本の作業場。**書き換えない**（最初からある）
-│   │   └── golden/         ← コマの列の正解（23本）。**書き換えない**（最初からある）
+│   │   └── golden/         ← コマの列の正解（22本）。**書き換えない**（最初からある）
 │   ├── package.json
 │   └── tsconfig.json
 ├── vim/                    ← srwr-view.vim（Vim9 script）（R5）

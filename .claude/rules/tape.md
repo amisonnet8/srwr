@@ -40,7 +40,7 @@ srwr には、形式の約束が2つある。
 | 正解 | 何の答えか | 使う段階 |
 |---|---|---|
 | `extension/test/fixtures/*.expected.json` | テープを読んだ結果（最後のファイルの内容と、コマの種類の並び） | R1 |
-| `extension/test/golden/*.json`（23本） | コマの列（変更前・変更後つき）、`files`、`contentAt`、最後の差分。境界ケースは本文ごと埋め込み（`golden/README.md`） | R3・R4 |
+| `extension/test/golden/*.json`（22本） | コマの列（変更前・変更後つき）、`files`、`contentAt`、最後の差分。境界ケースは本文ごと埋め込み（`golden/README.md`） | R3・R4 |
 | `handoff/checklist/captured/` | 前の実装が見せた内容（VSCode の全コマ・ライブ、Vim の色の実測値） | R4・R5（最初の基準） |
 
 - **正解は書き換えない。** 食い違えば実装を直す。正解が誤りだと考えるときは、重要な判断として聞く（UI の見え方が変わるため）

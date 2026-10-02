@@ -26,7 +26,9 @@ func TestRun(t *testing.T) {
 		{"--version", []string{"--version"}, 0, "srwr (devel)", ""},
 		{"unknown command", []string{"frobnicate"}, 2, "", `知らないコマンド "frobnicate"`},
 		{"hook is not made yet", []string{"hook"}, 2, "", "まだ実装されていません"},
-		{"view-server is not made yet", []string{"view-server"}, 2, "", "まだ実装されていません"},
+		{"view is not made yet", []string{"view"}, 2, "", "まだ実装されていません"},
+		{"view-server with a root that is missing", []string{"view-server", "--root", "/no/such/dir/at/all"}, 1, "", "ディレクトリとして開けません"},
+		{"view-server with a stray argument", []string{"view-server", "x"}, 2, "", "余分な引数"},
 		{"mcp with an unknown flag", []string{"mcp", "--nope"}, 2, "", "nope"},
 		{"mcp with a stray argument", []string{"mcp", "x"}, 2, "", "余分な引数"},
 		{"mcp with a root that is missing", []string{"mcp", "--root", "/no/such/dir/at/all"}, 1, "", "ディレクトリとして開けません"},
@@ -44,6 +46,15 @@ func TestRun(t *testing.T) {
 func TestMCPEndsWhenInputEnds(t *testing.T) {
 	code, stdout, _ := run([]string{"mcp", "--root", t.TempDir()}, `{"jsonrpc":"2.0","id":1,"method":"ping"}`+"\n")
 	if code != 0 || strings.TrimSpace(stdout) != `{"jsonrpc":"2.0","id":1,"result":{}}` {
+		t.Errorf("code = %d, stdout = %q", code, stdout)
+	}
+}
+
+func TestViewServerEndsWhenInputEnds(t *testing.T) {
+	code, stdout, _ := run([]string{"view-server", "--root", t.TempDir()},
+		`{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"client":"vim","protocolVersion":1}}`+"\n"+
+			`{"jsonrpc":"2.0","id":2,"method":"tapes/list","params":{}}`+"\n")
+	if code != 0 || !strings.Contains(stdout, `"tapes":[]`) {
 		t.Errorf("code = %d, stdout = %q", code, stdout)
 	}
 }

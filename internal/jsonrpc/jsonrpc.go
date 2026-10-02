@@ -48,6 +48,13 @@ type Response struct {
 	Error   *Error          `json:"error,omitempty"`
 }
 
+// Afterward is implemented by a result that needs something done once its response has been
+// written: starting to send notifications that must come after the response, or ending the
+// connection. After returns true to end Serve.
+type Afterward interface {
+	After() (stop bool)
+}
+
 // Handler answers one request. It is called one request at a time, in the order they arrive.
 // The result must not be nil unless the error is set.
 type Handler func(req Request) (any, *Error)
@@ -76,6 +83,15 @@ func (w *Writer) Write(v any) error {
 	return err
 }
 
+// Notify writes a notification: a message without an ID, to which the client does not reply.
+func (w *Writer) Notify(method string, params any) error {
+	return w.Write(struct {
+		JSONRPC string `json:"jsonrpc"`
+		Method  string `json:"method"`
+		Params  any    `json:"params"`
+	}{"2.0", method, params})
+}
+
 // Serve reads requests from r until it ends and answers each one through out.
 // It returns nil when r ends, and an error only when reading or writing fails.
 func Serve(r io.Reader, out *Writer, h Handler) error {
@@ -83,8 +99,12 @@ func Serve(r io.Reader, out *Writer, h Handler) error {
 	for {
 		// ReadBytes has no limit on the length of a line, which a request with a whole file in it needs.
 		line, readErr := br.ReadBytes('\n')
-		if err := handleLine(bytes.TrimSpace(line), out, h); err != nil {
+		stop, err := handleLine(bytes.TrimSpace(line), out, h)
+		if err != nil {
 			return err
+		}
+		if stop {
+			return nil
 		}
 		if readErr != nil {
 			if errors.Is(readErr, io.EOF) {
@@ -95,26 +115,32 @@ func Serve(r io.Reader, out *Writer, h Handler) error {
 	}
 }
 
-func handleLine(line []byte, out *Writer, h Handler) error {
+func handleLine(line []byte, out *Writer, h Handler) (stop bool, err error) {
 	if len(line) == 0 {
-		return nil
+		return false, nil
 	}
 	if line[0] == '[' {
 		// Batches are not supported (they were dropped from MCP in 2025-06-18).
-		return reply(out, nil, nil, &Error{Code: InvalidRequest, Message: "batch requests are not supported"})
+		return false, reply(out, nil, nil, &Error{Code: InvalidRequest, Message: "batch requests are not supported"})
 	}
 	var req Request
 	if err := json.Unmarshal(line, &req); err != nil {
-		return reply(out, nil, nil, &Error{Code: ParseError, Message: "parse error: " + err.Error()})
+		return false, reply(out, nil, nil, &Error{Code: ParseError, Message: "parse error: " + err.Error()})
 	}
 	if req.JSONRPC != "2.0" || req.Method == "" {
-		return reply(out, req.ID, nil, &Error{Code: InvalidRequest, Message: "not a JSON-RPC 2.0 request"})
+		return false, reply(out, req.ID, nil, &Error{Code: InvalidRequest, Message: "not a JSON-RPC 2.0 request"})
 	}
 	result, rpcErr := h(req)
 	if req.IsNotification() {
-		return nil
+		return false, nil
 	}
-	return reply(out, req.ID, result, rpcErr)
+	if err := reply(out, req.ID, result, rpcErr); err != nil {
+		return false, err
+	}
+	if after, ok := result.(Afterward); ok && rpcErr == nil {
+		return after.After(), nil
+	}
+	return false, nil
 }
 
 func reply(out *Writer, id json.RawMessage, result any, rpcErr *Error) error {

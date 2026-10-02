@@ -11,11 +11,13 @@ import (
 	"github.com/amisonnet8/srwr/internal/core"
 	"github.com/amisonnet8/srwr/internal/mcp"
 	"github.com/amisonnet8/srwr/internal/session"
+	"github.com/amisonnet8/srwr/internal/viewserver"
 )
 
 var (
 	tokenRe   = regexp.MustCompile(`sel_[0-9A-Za-z]+`)
-	versionRe = regexp.MustCompile(`"version":"[^"]*"`)
+	versionRe = regexp.MustCompile(`"(version|serverVersion)":"[^"]*"`)
+	updatedRe = regexp.MustCompile(`"updatedAt":"[^"]*"`)
 )
 
 // codeBlocks returns the contents of the fenced code blocks of a document that start with the given language.
@@ -42,9 +44,11 @@ func codeBlocks(t *testing.T, path, lang string) [][]string {
 	return blocks
 }
 
-// normalize hides what changes from run to run: the tokens and the version.
+// normalize hides what changes from run to run: the tokens, the versions and the time a tape file was last written.
 func normalize(s string) string {
-	return versionRe.ReplaceAllString(tokenRe.ReplaceAllString(s, "sel_TOKEN"), `"version":"VERSION"`)
+	s = tokenRe.ReplaceAllString(s, "sel_TOKEN")
+	s = updatedRe.ReplaceAllString(s, `"updatedAt":"TIME"`)
+	return versionRe.ReplaceAllString(s, `"$1":"VERSION"`)
 }
 
 // TestSelectReplaceExample runs the exchange in docs/examples/select-replace.md against the real
@@ -129,5 +133,55 @@ func TestSelectReplaceExample(t *testing.T) {
 		if got, want := string(b), strings.Join(goBlocks[1], "\n")+"\n"; got != want {
 			t.Errorf("file after the example:\n%s\nthe document says:\n%s", got, want)
 		}
+	}
+}
+
+// TestProtocolSessionExample runs the exchanges in docs/examples/protocol-session.md against the real
+// display server. Each block is a connection of its own, on the workspace in testdata/demo, which
+// is the tape that the exchange in select-replace.md leaves (made by the real core, run with a fixed clock).
+func TestProtocolSessionExample(t *testing.T) {
+	blocks := codeBlocks(t, filepath.Join("..", "..", "docs", "examples", "protocol-session.md"), "jsonrpc")
+	if len(blocks) < 2 {
+		t.Fatalf("found %d jsonrpc blocks, want at least 2", len(blocks))
+	}
+	root, err := filepath.Abs(filepath.Join("testdata", "demo"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	checked := 0
+	for n, block := range blocks {
+		var requests, expected []string
+		for _, line := range block {
+			switch {
+			case strings.HasPrefix(line, "→ "):
+				requests = append(requests, strings.TrimPrefix(line, "→ "))
+			case strings.HasPrefix(line, "← "):
+				expected = append(expected, strings.TrimPrefix(line, "← "))
+			}
+		}
+		var out bytes.Buffer
+		srv := &viewserver.Server{Root: root, Version: "test"}
+		if err := srv.Serve(strings.NewReader(strings.Join(requests, "\n")+"\n"), &out); err != nil {
+			t.Fatalf("block %d: %v", n, err)
+		}
+		var got []string
+		for l := range strings.SplitSeq(out.String(), "\n") {
+			if l != "" {
+				got = append(got, l)
+			}
+		}
+		if len(got) != len(expected) {
+			t.Fatalf("block %d: the server gave %d responses, the document shows %d\n%q", n, len(got), len(expected), got)
+		}
+		for i := range got {
+			if normalize(got[i]) != normalize(expected[i]) {
+				t.Errorf("block %d, response %d differs from the document\n got %s\nwant %s", n, i, normalize(got[i]), normalize(expected[i]))
+			}
+			checked++
+		}
+	}
+	if checked < 8 {
+		t.Errorf("only %d responses were checked", checked)
 	}
 }

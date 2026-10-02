@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760" role="img" aria-label="srwr-view テープを開く（クイックピック）">
+<rect width="1280" height="760" fill="#1e1e1e"/>
+<rect width="1280" height="30" fill="#252526"/>
+<text x="640.0" y="20" text-anchor="middle" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">srwr-view テープを開く（クイックピック）</text>
+<rect y="30" width="48" height="708" fill="#333333"/>
+<rect x="0" y="36" width="2" height="36" fill="#ffffff"/>
+<g transform="translate(12.0,42)" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="8" cy="12" r="2.5"/><circle cx="16" cy="12" r="2.5"/><path d="M6 18l1.5-3M18 18l-1.5-3"/></g>
+<rect x="48" y="30" width="300" height="708" fill="#252526"/>
+<text x="68" y="54" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11">SRWR</text>
+<rect x="48" y="66" width="300" height="22" fill="#2d2d2d"/>
+<text x="68" y="82" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11" font-weight="bold">操作一覧</text>
+<g transform="translate(293,73)" color="#cccccc" fill="none" stroke="#cccccc" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5v8h11l2-6h-9l-1.5-2h-4z M3.5 6.5h9" /></g>
+<g transform="translate(315,73)" color="#cccccc" fill="none" stroke="#cccccc" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="1.4" fill="currentColor" stroke="none"/><path d="M5.2 5.2a4 4 0 0 0 0 5.6 M10.8 5.2a4 4 0 0 1 0 5.6 M3.3 3.3a6.7 6.7 0 0 0 0 9.4 M12.7 3.3a6.7 6.7 0 0 1 0 9.4"/></g>
+<rect x="348" y="30" width="932" height="708" fill="#1e1e1e"/>
+<rect y="738" width="1280" height="22" fill="#007acc"/>
+<rect x="340.0" y="34" width="600" height="178" rx="4" fill="#252526" stroke="#3c3c3c"/>
+<rect x="346.0" y="40" width="588" height="26" fill="#1e1e1e" stroke="#007acc"/>
+<text x="354.0" y="58" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">再生するテープを選ぶ</text>
+<rect x="342.0" y="72" width="596" height="42" fill="#04395e" fill-opacity="1"/>
+<text x="354.0" y="89" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">2026-09-30 09:49:46</text>
+<text x="508.6" y="89" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">9操作 · entry.go, stats.go</text>
+<text x="354.0" y="107" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11">20260930-0949-external.tape.jsonl</text>
+<text x="354.0" y="133" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">2026-09-30 00:54:08</text>
+<text x="508.6" y="133" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">7操作 · text.go, parse.go</text>
+<text x="354.0" y="151" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11">20260930-0054-why-basic.tape.jsonl</text>
+<text x="354.0" y="177" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">2026-09-30 00:53:32</text>
+<text x="508.6" y="177" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">10操作 · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go</text>
+<text x="354.0" y="195" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11">20260930-0053-no-why.tape.jsonl</text>
+</svg>

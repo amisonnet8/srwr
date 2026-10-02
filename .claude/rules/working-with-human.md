@@ -97,6 +97,7 @@
 | `images/` | 見てほしい画像（dark と light）。**確定済みの画面は `handoff/design/images/` から写す。** 新しい画面・変える画面だけ、案を SVG で描く（描き方は `handoff/design/DESIGN.md` 12章：Vim は 140桁×50行の端末、VSCode は VSCode 風） |
 | `index.html` | `README.md` の要点と画像を、1枚に並べたページ（外部の読み込みなし。ブラウザで開くだけで見える） |
 
+- **`index.html` は、本物の HTML で書き、画像（SVG）を埋め込んだ1ファイルにする。** 画像を相対パスで参照すると、開く環境によって出ない。`README.md` の Markdown を `<pre>` に流し込まない（R4 で2回やり直した）
 - 人間には、2章の形の短い依頼で `dev/review/<段階>/index.html` を開いてもらい、`AskUserQuestion` で「了承／直す」を選んでもらう
 - **了承されてから実装する。** 了承の内容は `mtqg q add`（質問と回答）に残す。「直す」なら直して出し直す
 - 確定済みのデザイン（`handoff/README.md`）は、ゲートでも変えない。変えるのは新しい画面だけ。決まった新しい画面は、`handoff/design/DESIGN.md`・`images/`・`handoff/ui/UI.md` と、`docs/reference/vscode.md`・`vim.md` に足す

@@ -91,7 +91,7 @@ func runIn(dir, binDir string, name string, args ...string) (string, error) {
 	return out.String(), err
 }
 
-func fileExists(p string) bool { _, err := os.Stat(p); return err == nil } //nolint:gosec // a path of this tool
+func fileExists(p string) bool { _, err := os.Stat(p); return err == nil }
 
 func fileText(workspace, rel string) string {
 	b, _ := os.ReadFile(filepath.Join(workspace, filepath.FromSlash(rel))) //nolint:gosec // a file of the workspace of this tool

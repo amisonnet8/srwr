@@ -276,3 +276,5 @@
 {"id":"cf1503684c804086bc1e03a51e6c90ee","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T09:16:22Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"f163d04d1efb4264b6cf621b969cae67","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T09:16:22Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"939a20f67b57408bb5c1b4a2d2e77972","op":"create","type":"memo","text":"R10: 実装完了。internal/vcs（Detect）、session.Options.VCS。壊して確かめる10か所：生き残りは --git-dir の事前確認と sha の形の確認（どちらも同じ意味の余計な処理なので消した）、fsmonitor の無効化は専用テストで検出。人間の確認はなし","v":1,"ts":"2026-10-03T09:16:22Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"087197b27d734b30a10baa00715d5629","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T09:20:53Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"8000c1a3ed6e444d98f21478537756a8","op":"create","type":"memo","text":"R10 完了（CI 通過）。次は R10.5（言語・時間対応、UIゲート）。「R10.5開始」の合図まで着手しない","v":1,"ts":"2026-10-03T09:20:53Z","author":{"kind":"ai","name":"claude-code"}}

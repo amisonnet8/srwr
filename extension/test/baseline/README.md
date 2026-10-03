@@ -5,3 +5,5 @@
 - 最初の基準は、前の実装が取った記録（`handoff/checklist/captured/`）の写し。**書き換えない。** 食い違えば実装を直す
 - 違いが正しい変更によるものなら、理由を書き、人間の了承をもらってから更新する（`.claude/rules/working-with-human.md`）
 - `all_*.json`：録画（`why-basic`・`external`・`no-why`）の全コマ。`live_*.json`：ライブの各段階
+
+- 2026-10-03 `qsoku ui-accept`（版 d552e26）：replay-long-why dark、replay-long-why light、replay-long-why-narrow dark、vscode long_why を、人間が OK を付けた画面に差し替えた

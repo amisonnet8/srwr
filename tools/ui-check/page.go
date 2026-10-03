@@ -123,7 +123,7 @@ func writeCapture(b *strings.Builder, set string, c CaptureResult) {
 	}
 	if c.Status == statusNew && len(c.Frames) > 0 && c.Frames[0].Got == "" {
 		// No picture of the extension: what it shows is compared as text, and how it looks is judged in a real VSCode.
-		fmt.Fprintf(b, "<p>%d コマ。画像はありません（拡張の画面は文章で比べています）。見た目は実物の VSCode で見ます：<code>qsoku ui-open vscode %s</code></p>\n", len(c.Frames), tapeOf(c.Name))
+		fmt.Fprintf(b, "<p>%d コマ。画像はありません（拡張の画面は文章で比べています）。見た目は、実物の VSCode で次のとおりに見ます。</p>\n%s", len(c.Frames), vscodeSteps(tapeOf(c.Name), c.Name))
 		return
 	}
 	for i, f := range c.Frames {
@@ -192,8 +192,34 @@ func lookSteps(r *Report) []string {
 		if c.Status != statusNew && c.Status != statusDiff {
 			continue
 		}
-		cmd := "qsoku ui-open vscode " + tapeOf(c.Name)
-		steps = append(steps, fmt.Sprintf("ターミナルで <code>%s</code> と打って Enter を押す（日本語入力は切る）。画面に出る手順に従い、「VSCode・%s」を見る：%s", cmd, html.EscapeString(c.Name), html.EscapeString(tapes[tapeOf(c.Name)].Look)))
+		steps = append(steps, fmt.Sprintf("実物の VSCode で「VSCode・%s」を見る。手順：\n%s", html.EscapeString(c.Name), vscodeSteps(tapeOf(c.Name), c.Name)))
 	}
 	return steps
+}
+
+// vscodeSteps are the steps to look at a tape in a real VSCode, written out in full (HTML, an ordered list).
+func vscodeSteps(tape, _ string) string {
+	t := tapes[tape]
+	look := html.EscapeString(t.Look)
+	steps := []string{
+		fmt.Sprintf("日本語入力を切り、ターミナルで <code>qsoku ui-open vscode %s</code> と打って Enter を押す。新しい VSCode が開く（数十秒かかることがある）", tape),
+		fmt.Sprintf("開いた VSCode で、左端のカセットのアイコンを押し、「テープを開く」を選ぶ。出てきた一覧から「%s」を選ぶ", html.EscapeString(t.Started)),
+		"1 コマ目が開く。見る：" + look,
+		"下のバーの「進む」を押して次のコマへ進み、同じように見る。「戻る」で戻れる",
+	}
+	if tape == "live" {
+		steps = []string{
+			fmt.Sprintf("日本語入力を切り、ターミナルで <code>qsoku ui-open vscode %s</code> と打って Enter を押す。新しい VSCode が開く", tape),
+			"開いた VSCode で、左端のカセットのアイコンを押し、「ライブ視聴を開始」を押す",
+			"ターミナルに戻り、Enter を押す。3 秒ごとに 1 コマずつ追記される",
+			"見る：" + look,
+		}
+	}
+	var b strings.Builder
+	b.WriteString("<ol>\n")
+	for _, s := range steps {
+		fmt.Fprintf(&b, "<li>%s</li>\n", s)
+	}
+	b.WriteString("</ol>\n")
+	return b.String()
 }

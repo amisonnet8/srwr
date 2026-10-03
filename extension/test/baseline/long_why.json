@@ -1,0 +1,290 @@
+[
+ {
+  "frame": 0,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260101-0000-long-why/a.go",
+    "column": 1,
+    "text": "package main\n\n◆ これは折り返しの確認のための、とても長い理由です。幅を超えると何行かに分かれ、2行目からは字下げさ\n  れて、全文が読めるはずです。さらに続けて、三行目にも届くようにします。\nfunc main() {}\n",
+    "options": {
+     "lineNumbers": 0
+    },
+    "reveal": 5,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#1d3a5c",
+       "light": {
+        "backgroundColor": "#cfe3fb"
+       }
+      },
+      "ranges": [
+       {
+        "line": 4
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#0b61a4",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 2
+       },
+       {
+        "line": 3
+       }
+      ]
+     },
+     {
+      "opts": {
+       "before": {
+        "color": {
+         "id": "editorLineNumber.foreground"
+        }
+       }
+      },
+      "ranges": [
+       {
+        "line": 0,
+        "before": "1  "
+       },
+       {
+        "line": 1,
+        "before": "2  "
+       },
+       {
+        "line": 2,
+        "before": "   "
+       },
+       {
+        "line": 3,
+        "before": "   "
+       },
+       {
+        "line": 4,
+        "before": "3  "
+       },
+       {
+        "line": 5,
+        "before": "4  "
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  a.go:3",
+    "description": "これは折り返しの確認のための、とても長い理由です。幅を超えると何行かに分かれ、2行目からは字下げされて、全文が読めるはずです。さらに続けて、三行目にも届くようにします。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  replace  a.go:3-5",
+    "description": "置き換えの理由も長くします。橙の理由の行が、幅を超えたときに何行かに分かれ、2行目からは字下げされ、全文が読めて、範囲がその直下に見えることを確かめるための文です。",
+    "color": "charts.orange",
+    "kind": "replace"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) 戻る",
+    "color": "rgba(255, 255, 255, 0.4)",
+    "visible": true
+   },
+   {
+    "text": "進む $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "1/2",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260101-0000-long-why",
+  "quickPick": {
+   "placeHolder": "再生するテープを選ぶ",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9操作 · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7操作 · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10操作 · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    },
+    {
+     "label": "2026-10-03 13:52:04",
+     "description": "2操作 · a.go",
+     "detail": "20260101-0000-long-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 1,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260101-0000-long-why/a.go",
+    "column": 1,
+    "text": "package main\n\n◆ 置き換えの理由も長くします。橙の理由の行が、幅を超えたときに何行かに分かれ、2行目からは字下げされ\n  、全文が読めて、範囲がその直下に見えることを確かめるための文です。\nfunc main() {\n\tprintln(\"hi\")\n}\n",
+    "options": {
+     "lineNumbers": 0
+    },
+    "reveal": 5,
+    "decorations": [
+     {
+      "opts": {
+       "before": {
+        "color": {
+         "id": "editorLineNumber.foreground"
+        }
+       }
+      },
+      "ranges": [
+       {
+        "line": 0,
+        "before": "1  "
+       },
+       {
+        "line": 1,
+        "before": "2  "
+       },
+       {
+        "line": 2,
+        "before": "   "
+       },
+       {
+        "line": 3,
+        "before": "   "
+       },
+       {
+        "line": 4,
+        "before": "3  "
+       },
+       {
+        "line": 5,
+        "before": "4  "
+       },
+       {
+        "line": 6,
+        "before": "5  "
+       },
+       {
+        "line": 7,
+        "before": "6  "
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#583c27",
+       "light": {
+        "backgroundColor": "#fde3c8"
+       }
+      },
+      "ranges": [
+       {
+        "line": 4
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#b45f06",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 2
+       },
+       {
+        "line": 3
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  a.go:3",
+    "description": "これは折り返しの確認のための、とても長い理由です。幅を超えると何行かに分かれ、2行目からは字下げされて、全文が読めるはずです。さらに続けて、三行目にも届くようにします。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  replace  a.go:3-5",
+    "description": "置き換えの理由も長くします。橙の理由の行が、幅を超えたときに何行かに分かれ、2行目からは字下げされ、全文が読めて、範囲がその直下に見えることを確かめるための文です。",
+    "color": "charts.orange",
+    "kind": "replace"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) 戻る",
+    "visible": true
+   },
+   {
+    "text": "進む $(chevron-right)",
+    "color": "rgba(255, 255, 255, 0.4)",
+    "visible": true
+   },
+   {
+    "text": "2/2",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260101-0000-long-why",
+  "quickPick": {
+   "placeHolder": "再生するテープを選ぶ",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9操作 · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7操作 · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10操作 · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    },
+    {
+     "label": "2026-10-03 13:52:04",
+     "description": "2操作 · a.go",
+     "detail": "20260101-0000-long-why.tape.jsonl"
+    }
+   ]
+  }
+ }
+]

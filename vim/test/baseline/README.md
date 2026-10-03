@@ -14,3 +14,5 @@
 | `live-external` の 2コマ目（外部変更） | 一番下のステータス行を比べない（`skip`） | 同じ決定2。右のウィンドウは幅が狭く、画像は切れた古い表示 |
 | 全部の一覧の行 | 丸を番号の前に移した（`● 番号 種類 ファイル:範囲`） | 人間の決定：VSCode の一覧と同じ並びにする。画像は「番号 丸 …」（`DotFirst`。最初の5セルを並べ替えるだけ） |
 | `replay-no-why` の 3〜7コマ目 | 範囲が窓いっぱい（47行）に塗られている | 範囲が窓より長いコマ。画像は、塗り終わる前に取られたらしく、塗りが無い。範囲は塗る（`docs/reference/vim.md` 3） |
+
+- 2026-10-03 `qsoku ui-accept`（版 d552e26）：replay-long-why dark、replay-long-why light、replay-long-why-narrow dark、vscode long_why を、人間が OK を付けた画面に差し替えた

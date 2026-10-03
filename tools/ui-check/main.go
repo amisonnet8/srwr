@@ -114,9 +114,11 @@ func openVSCode(root, name string, out io.Writer) error {
 	if _, err := exec.LookPath("code"); err != nil {
 		return fmt.Errorf("the code command was not found. Open %s in VSCode by hand and install %s", workspace, vsix)
 	}
+	_, _ = fmt.Fprintf(out, "▶ 拡張を VSCode に入れる（接続先：%s）\n", ipcInUse())
 	if err := command(root, out, "code", "--install-extension", vsix, "--force"); err != nil {
 		return fmt.Errorf("installing the extension: %w", err)
 	}
+	_, _ = fmt.Fprintf(out, "▶ 作業場を VSCode の新しい窓で開く：%s\n", workspace)
 	if err := command(root, out, "code", "-n", workspace); err != nil {
 		return fmt.Errorf("opening VSCode: %w", err)
 	}
@@ -158,6 +160,15 @@ func liveIPC(dir, current string) string {
 		}
 	}
 	return ""
+}
+
+// ipcInUse is the socket `code` is given, for the person to read when no window comes up.
+func ipcInUse() string {
+	current := os.Getenv("VSCODE_IPC_HOOK_CLI")
+	if p := liveIPC(os.TempDir(), current); p != "" {
+		return p + "（端末のものは使えないので、答えるものを探した）"
+	}
+	return current
 }
 
 func command(dir string, out io.Writer, name string, args ...string) error {

@@ -8,6 +8,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
+	"strings"
+	"time"
 )
 
 // longWhyTape is the tape qsoku ui-check makes on the spot: a select and a replace with a why too long for one row, made by
@@ -68,7 +71,7 @@ func makeLongWhyTape(bin, extra string) error {
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(filepath.Join(extra, ".srwr", "tapes", longWhyTape+".tape.jsonl"), tape, 0o600); err != nil { //nolint:gosec // the directory of this run
+	if err := os.WriteFile(filepath.Join(extra, ".srwr", "tapes", longWhyTape+".tape.jsonl"), fixTimes(tape), 0o600); err != nil { //nolint:gosec // the directory of this run
 		return err
 	}
 	// The file as the replace left it, so that the tape has no frame for a change after the recording.
@@ -166,4 +169,21 @@ func (c *mcpClient) tool(name string, args map[string]any) (map[string]any, erro
 func (c *mcpClient) close() error {
 	_ = c.in.Close()
 	return c.cmd.Wait()
+}
+
+var timeField = regexp.MustCompile(`"(startedAt|ts)":"[^"]*"`)
+
+// fixTimes gives the events fixed times, one second apart from the newest day of the fixed tapes on: the screens of the extension
+// show the time of the tape (the list of tapes), which must not change from one run to the next. It is the only thing changed.
+func fixTimes(tape []byte) []byte {
+	n := 0
+	return timeField.ReplaceAllFunc(tape, func(m []byte) []byte {
+		key := strings.Split(string(m), `"`)[1]
+		t := time.Date(2026, 10, 3, 0, 0, n, 0, time.FixedZone("JST", 9*3600))
+		if key == "ts" {
+			n++
+			t = t.Add(time.Second)
+		}
+		return []byte(fmt.Sprintf(`"%s":"%s"`, key, t.Format("2006-01-02T15:04:05.000-07:00")))
+	})
 }

@@ -73,8 +73,8 @@ func renderPage(r *Report) string {
 		res   []CaptureResult
 	}{{"Vim", r.Vim}, {"VSCode（拡張）", r.VSCode}} {
 		for _, c := range set.res {
-			if c.Status == statusSame {
-				continue
+			if c.Status == statusSame || (c.Status == statusNew && set.title != "Vim") {
+				continue // the extension has no pictures; a new screen of it is looked at in a real VSCode (the steps below)
 			}
 			if !shown {
 				b.WriteString("<h2>基準と違うコマ・新しいコマ</h2>\n")
@@ -84,7 +84,11 @@ func renderPage(r *Report) string {
 		}
 	}
 	if !shown {
-		b.WriteString(`<p>どの画面も基準と同じです。</p>` + "\n")
+		if r.NewCount() > 0 {
+			b.WriteString(`<p>画像で見るものはありません。下の「人間が見ること」のとおりにしてください。</p>` + "\n")
+		} else {
+			b.WriteString(`<p>どの画面も基準と同じです。</p>` + "\n")
+		}
 	}
 
 	b.WriteString(`<h2>人間が見ること</h2>`)
@@ -120,11 +124,6 @@ func writeCapture(b *strings.Builder, set string, c CaptureResult) {
 		fmt.Fprintf(b, `<h3 class="new">%s・%s：新しい画面（基準がありません。OK なら今の画面が基準になります）</h3>`+"\n", html.EscapeString(set), html.EscapeString(c.Name))
 	default:
 		fmt.Fprintf(b, `<h3 class="ng">%s・%s：基準と違う</h3>`+"\n", html.EscapeString(set), html.EscapeString(c.Name))
-	}
-	if c.Status == statusNew && len(c.Frames) > 0 && c.Frames[0].Got == "" {
-		// No picture of the extension: what it shows is compared as text, and how it looks is judged in a real VSCode.
-		fmt.Fprintf(b, "<p>%d コマ。画像はありません（拡張の画面は文章で比べています）。見た目は、実物の VSCode で次のとおりに見ます。</p>\n%s", len(c.Frames), vscodeSteps(tapeOf(c.Name), c.Name))
-		return
 	}
 	for i, f := range c.Frames {
 		if i >= maxFramesShown {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -230,5 +231,36 @@ func TestVerifyLongWhy(t *testing.T) {
 		if _, p := verifyLongWhy(g, why); len(p) == 0 {
 			t.Errorf("%s was accepted", name)
 		}
+	}
+}
+
+func TestLongWhyTapeHasTheSameTimesEveryRun(t *testing.T) {
+	bin, err := filepath.Abs("../../bin/srwr")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(bin); err != nil {
+		t.Skip("bin/srwr is not built (qsoku bin)")
+	}
+	var made [2]string
+	for i := range made {
+		extra := t.TempDir()
+		if err := makeLongWhyTape(bin, extra); err != nil {
+			t.Fatal(err)
+		}
+		b, err := os.ReadFile(filepath.Join(extra, ".srwr", "tapes", longWhyTape+".tape.jsonl")) //nolint:gosec // a path in a temporary directory
+		if err != nil {
+			t.Fatal(err)
+		}
+		made[i] = string(b)
+		time.Sleep(1100 * time.Millisecond)
+	}
+	// The events differ by the selection tokens (they hold the tape's id and the time they were made); the times are the same.
+	times := func(s string) []string { return regexp.MustCompile(`"(?:startedAt|ts)":"[^"]*"`).FindAllString(s, -1) }
+	if a, b := times(made[0]), times(made[1]); len(a) < 4 || strings.Join(a, ",") != strings.Join(b, ",") {
+		t.Errorf("times differ between runs:\n%v\n%v", a, b)
+	}
+	if !strings.Contains(made[0], `"startedAt":"2026-10-03T00:00:00.000+09:00"`) {
+		t.Errorf("the header time is not the fixed one: %s", strings.SplitN(made[0], "\n", 2)[0])
 	}
 }

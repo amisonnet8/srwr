@@ -7,3 +7,5 @@
 - `all_*.json`：録画（`why-basic`・`external`・`no-why`）の全コマ。`live_*.json`：ライブの各段階
 
 - 2026-10-03 `qsoku ui-accept`（版 d552e26）：replay-long-why dark、replay-long-why light、replay-long-why-narrow dark、vscode long_why を、人間が OK を付けた画面に差し替えた
+
+- 2026-10-03 `qsoku ui-accept`（版 b7e5e90-dirty）：vscode long_why を、人間が OK を付けた画面に差し替えた

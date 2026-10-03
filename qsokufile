@@ -28,7 +28,7 @@ ext-build: (cd //; if [ -f extension/package.json ]; then cd extension && { [ -d
 # Builds bin/srwr first: the extension's tests talk to the real display server.
 ext: (cd //; if [ -f extension/package.json ]; then qsoku bin && cd extension && { [ -d node_modules ] || qsoku ext-deps; } && npm run compile && npm test; else echo 'extension/package.json does not exist yet; skipped'; fi)
 
-# Runs every check of the UI (the tests behind each item of handoff/checklist/CHECKLIST.md 2章, the screens of the Vim client and of
+# Runs every check of the UI (the tests behind each check of tools/ui-check/checks.go, the screens of the Vim client and of
 # the extension against their baselines, the tape of a long why made on the spot) and makes the page to look at:
 # ui-check-result/latest/index.html. Exit code 1 when a check failed or a screen differs. VIM_BIN names another Vim.
 ui-check: (cd //; qsoku bin && qsoku ext-build && go run ./tools/ui-check run)

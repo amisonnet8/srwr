@@ -12,7 +12,7 @@ import (
 	"github.com/amisonnet8/srwr/internal/uicheck"
 )
 
-// The items of handoff/checklist/CHECKLIST.md 2章 that a machine decides. If an item is dropped from the table, nobody checks it.
+// The checks that a machine decides. If an item is dropped from the table, nobody checks it.
 var checklistItems = []string{"起動と一覧", "select・replace の表示", "行番号", "理由なしのコマ", "長い理由の折り返し", "差分のコマ", "操作一覧",
 	"下のバー", "コマ送りの操作", "ライブ", "ダーク・ライト", "後始末", "失敗の案内", "既知の不具合（2件）"}
 

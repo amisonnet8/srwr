@@ -61,7 +61,6 @@
 ├── docs/images/            ← README の画像（バナーは手書き、デモ・VSCode の絵は `qsoku readme-media` で作る。コミットする）
 ├── docs/                   ← 外部向けの文書（正本）。英語が `名前.md`、日本語版が `名前_ja.md`。reference/・design/・examples/（`select-replace.md`・`protocol-session.md`・`hook.md`。`internal/docs` が本物と照合する。`internal/docs/testdata/demo-en/`（英語・UTC のテープ）と `demo/`（日本語・古い `+09:00` のテープ）が protocol-session の題材）
 ├── dev/                    ← 開発のうちうち。roadmap.md、publish.md（公開の手順）、review/<段階>/（UIゲートの資料）
-├── handoff/                ← 引き継ぎ資料。**git に入れない（.gitignore）。読むだけ。R14 で消す**
 ├── .vscode/launch.json     ← 拡張を F5 で起動するためだけに置く（R4）
 ├── .devcontainer/          ← 開発環境（devcontainer.json、postCreate.sh）
 ├── .claude/                ← rules/（ルール）、hooks/、settings.json（人間が管理する）
@@ -91,19 +90,18 @@
 - `vim/embed.go` は Go のパッケージ（`go:embed` は親ディレクトリを参照できないので、埋め込む側を `vim/` に置く）。`internal/cli` の `view` がこれを使う
 
 ### 確認の自動化
-- 画面の取得・比較・確認ページの生成は `tools/ui-check/`（Go で書く。シェルスクリプトは最小限）。`qsoku ui-check`・`ui-live`・`ui-open` から呼ぶ。今あるのは `run`（`qsoku ui-check`）・`live`（`ui-live`）・`accept`（`ui-accept`）・`hook-try`（`qsoku hook-try`。R7 の確認）・`init-try`（`qsoku init-try`。R9 の確認）・`readme`（`qsoku readme-media`。README の画像）・`dist-try`（`qsoku dist-try`。R13 の確認）・`open vscode|vim`（`ui-open`。作業場づくり、VSCode／Vim を開く、ライブの追記）と `vim-baseline`（承認した Vim の画像から基準を作る。一度だけ）。画面の取得は、Vim が `internal/uicheck` の `CaptureVim`（`vim/screen_test.go` も同じ部品を使う）、VSCode が `extension/test/capture.ts`（`node --require ./out/test/setup.js out/test/capture.js <出力先> [<追加の作業場>]`）。比較・描画は `internal/uicheck`（`CompareBaseline`・`CompareShots`・`Grid.SVG`）
+- 画面の取得・比較・確認ページの生成は `tools/ui-check/`（Go で書く。シェルスクリプトは最小限）。`qsoku ui-check`・`ui-live`・`ui-open` から呼ぶ。今あるのは `run`（`qsoku ui-check`）・`live`（`ui-live`）・`accept`（`ui-accept`）・`hook-try`（`qsoku hook-try`。R7 の確認）・`init-try`（`qsoku init-try`。R9 の確認）・`readme`（`qsoku readme-media`。README の画像）・`dist-try`（`qsoku dist-try`。R13 の確認）・`open vscode|vim`（`ui-open`。作業場づくり、VSCode／Vim を開く、ライブの追記）。画面の取得は、Vim が `internal/uicheck` の `CaptureVim`（`vim/screen_test.go` も同じ部品を使う）、VSCode が `extension/test/capture.ts`（`node --require ./out/test/setup.js out/test/capture.js <出力先> [<追加の作業場>]`）。比較・描画は `internal/uicheck`（`CompareBaseline`・`CompareShots`・`Grid.SVG`）
 - 基準（前回 OK だった画面の記録）はリポジトリに入れる。結果（`ui-check-result/`）は入れない
 
 ## 各ファイル・ディレクトリの補足
 
 - **`extension/test/fixtures/ui-check/go.mod`**（`module uicheck`）：**消さない。** 消すと、中の `.go` がルートのモジュールに入り、`qsoku build`・`vet`・`unit` が「found packages …」で失敗する
-- **`extension/test/fixtures/`・`golden/`**: 最初から置いてある（`handoff/checklist/` からの写し）。書き換えない
-- **`handoff/`**: `.gitignore` 済み。clone したときは無いので、前のリポジトリの `next-space/handoff/` を置く。中は書き換えない（例外は `.claude/rules/documentation.md`）
+- **`extension/test/fixtures/`・`golden/`**: 最初から置いてある（前の実装の資料からの写し）。書き換えない
 - **`extension/`・`vim/`**: `package.json`・`vim/test/` が無いあいだは、`qsoku ext`・`ext-build`・`vim-test` が「skipped」と出して成功する（`qsokufile`）
 - **`.vscode/launch.json`**: **例外として置く。** VSCode の設定は原則 `devcontainer.json` にまとめるが、拡張を F5 で起動する設定は `devcontainer.json` に書けないため。`launch.json`（と、必要なら `tasks.json`）以外は置かない。`.gitignore` で `!/.vscode/` として戻してある
 - **`go.sum`**: コミットする。srwr は外部依存ゼロなので、空か無いことがある
 - **`extension/package-lock.json`**: コミットする（`npm ci` のため）
-- **`.mtqg/`**: コミットされる。中のファイルは直接編集せず、すべて`mtqg`のコマンド経由で書く（`.claude/rules/mtqg-usage.md`）。`.mtqg/.local/`はコミットされない。前のリポジトリの記録は `handoff/reference/project-state/`
+- **`.mtqg/`**: コミットされる。中のファイルは直接編集せず、すべて`mtqg`のコマンド経由で書く（`.claude/rules/mtqg-usage.md`）。`.mtqg/.local/`はコミットされない。
 - **`.mcp.json`**: `mtqg mcp`（MCPサーバー）の配線。srwr の開発で srwr 自身を使うかは決めていない
 - **`.srwr/`**: この開発リポジトリの直下では作らない（`.gitignore` の `/.*` で無視される）。`srwr` を動かすテストは `t.TempDir()` の中で行う
 - **`.gitattributes`**: `* text=auto eol=lf`。Windowsランナーでの改行コード変換による誤検知を防ぐ。`.mtqg/`の中の`.gitattributes`は`mtqg init`が置くもので、別物

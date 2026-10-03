@@ -2,9 +2,9 @@
 
 ## UI は確定している
 
-- **見た目と振る舞いは確定している**（`docs/reference/vscode.md`、`handoff/design/DESIGN.md`・`images/vscode/`、`handoff/ui/UI.md`）。色（select は青 `#0b61a4`、replace は橙 `#b45f06`、差分のコマの丸は紫）、理由の行、差分（左右2つのエディタ、前＝青・後＝橙で変わった行だけ）、コマ送りだけ、平らな操作一覧、下のバー（戻る・進む・位置）、ライブ（録画と同じ画面、「LIVE に戻る（新着 N）」）を、勝手に変えない
-- **足さない。** 自動再生、ジャンプラベル、削除・挿入の線、親子の一覧、見た目の設定、実ファイルを開く機能は、評価者がやめると決めた（`handoff/ui/UI.md` 1章）
-- 細かい値（色・文言・位置）は `handoff/design/CODE.md`・`handoff/ui/CODE.md` に、前の実装の写しがある。迷ったらそれに合わせる
+- **見た目と振る舞いは確定している**（`docs/reference/vscode.md`と、基準 `extension/test/baseline/`）。色（select は青 `#0b61a4`、replace は橙 `#b45f06`、差分のコマの丸は紫）、理由の行、差分（左右2つのエディタ、前＝青・後＝橙で変わった行だけ）、コマ送りだけ、平らな操作一覧、下のバー（戻る・進む・位置）、ライブ（録画と同じ画面、「LIVE に戻る（新着 N）」）を、勝手に変えない
+- **足さない。** 自動再生、ジャンプラベル、削除・挿入の線、親子の一覧、見た目の設定、実ファイルを開く機能は、評価者がやめると決めた
+- 細かい値（色・文言・位置）は `docs/reference/vscode.md` と、今の実装・基準に合わせる
 - 新しい画面が要るときだけ、UIゲート（`.claude/rules/working-with-human.md` 4章）
 - Vim（`docs/reference/vim.md`）は同じ見え方を目指す。VSCode 側の見た目を、Vim に合わせて変えない
 
@@ -12,7 +12,7 @@
 
 - テープの読み込みとコマの列の組み立ては Go の表示サーバー（`srwr view-server`）がする（`docs/reference/protocol.md`）。拡張は描くだけ
 - 表示の部品は `present`（色）・`replay`（録画。仮想ドキュメント、差分の左右2つのエディタ）・`live`（録画の画面を包んで、追いかけと新着を数える）・`controls`（下のバー）・`sidebar`（操作一覧）・`extension`。表示サーバーと話す部品は `server.ts`（`vscode` を import しない）
-- 拡張が使うコマのフィールドは `index`・`kind`・`file`・`range`・`why`・`before`・`after`・`deleted` だけ（`handoff/ui/UI.md` 3章）
+- 拡張が使うコマのフィールドは `index`・`kind`・`file`・`range`・`why`・`before`・`after`・`deleted` だけ（`docs/reference/protocol.md`）
 - 拡張は `srwr` のバイナリを起動して話す。場所は設定 `srwr.path`（開発では環境変数 `SRWR_PATH`）。見つからないとき・バージョンが合わないときは、分かる文言で案内する
 
 ## 落とし穴（前のリポジトリで踏んだ）
@@ -48,7 +48,7 @@
 
 - `qsoku ext-build`（コンパイルだけ）、`qsoku ext`（`bin/srwr` をビルドしてから、コンパイル＋テスト）。`extension/` の `.ts` を編集すると、`.claude/hooks/build.sh` が `qsoku ext-build` を自動で呼ぶ
 - `npm test` は `node:test`。偽の `vscode`（`test/fakevscode.ts`）、偽のサーバー（`test/fakeserver.ts`。golden から答える）、本物の `bin/srwr` との通し（`test/server.test.ts`）
-- **画面の取得**：偽の `vscode` の上で、全コマの見せる内容（文書・装飾・一覧・バー）を JSON に取り、基準と比べる（R4。最初の基準は `handoff/checklist/captured/all_*.json`・`live_*.json`）
-- **偽の `vscode` の画面の取得**（`test/capture.ts`、基準は `test/baseline/`。`qsoku ui-check` は `node --require ./out/test/setup.js out/test/capture.js <出力先> [<追加の作業場>]` で取り、Go（`internal/uicheck/shots.go`）で比べる）：装飾の並びは、「最初に塗られた順」（`handoff/checklist/captured` の取り方と同じ）。本物の `bin/srwr` を動かすので、先に `qsoku bin`（`qsoku ext` は先に作る）。基準を更新するときは、理由を書いて人間の了承をもらう
-- 人間に見てもらうのは、実物の VSCode でしか分からないことだけ（`handoff/checklist/CHECKLIST.md` 4-2）。`qsoku ui-open vscode <テープ>` の1コマンドで開けるようにしてから頼む
+- **画面の取得**：偽の `vscode` の上で、全コマの見せる内容（文書・装飾・一覧・バー）を JSON に取り、基準と比べる（R4。`ja/` の最初の基準は前の実装が取った記録の写し）
+- **偽の `vscode` の画面の取得**（`test/capture.ts`、基準は `test/baseline/`。`qsoku ui-check` は `node --require ./out/test/setup.js out/test/capture.js <出力先> [<追加の作業場>]` で取り、Go（`internal/uicheck/shots.go`）で比べる）：装飾の並びは、「最初に塗られた順」（前の実装の取り方と同じ）。本物の `bin/srwr` を動かすので、先に `qsoku bin`（`qsoku ext` は先に作る）。基準を更新するときは、理由を書いて人間の了承をもらう
+- 人間に見てもらうのは、実物の VSCode でしか分からないことだけ。`qsoku ui-open vscode <テープ>` の1コマンドで開けるようにしてから頼む
 - 拡張を F5 で起動する設定は、ルートの `.vscode/launch.json`。`outFiles` は `extension/out/src/**/*.js`

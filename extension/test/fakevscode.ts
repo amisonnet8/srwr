@@ -382,7 +382,7 @@ export const commands = {
 
 export type Disposable = { dispose(): void };
 
-// --- what is on the screen, in the shape of handoff/checklist/captured ---
+// --- what is on the screen, in the shape of test/baseline ---
 
 export interface ScreenTab {
   uri: string;

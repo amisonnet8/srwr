@@ -10,7 +10,7 @@ export interface LineRange {
   end: number; // end < start is an empty range
 }
 
-// Only the fields the editor uses (handoff/ui/UI.md 3-1). Unknown fields are ignored.
+// Only the fields the editor uses (docs/reference/protocol.md). Unknown fields are ignored.
 export interface Frame {
   index: number;
   kind: FrameKind;

@@ -13,7 +13,7 @@
 
 1. **`dev/roadmap.md`** — 段階（R0〜R14）。**この順に進める**。今どこかは `mtqg context`
 2. **`docs/README.md` → `docs/design/overview.md`** — 何を作るか。正本は `docs/reference/`
-3. **`handoff/README.md`** — 確定したデザイン（`design/`）、UI の振る舞い（`ui/`）、確認の方針（`checklist/`）、前の決まりと落とし穴（`reference/`）。**読むだけ。git に入れない。デザインは変えない・足さない**
+3. **`docs/reference/vscode.md`・`vim.md`** — 確定した画面の仕様（見た目と振る舞い）。**変えない・足さない**。承認した画面は基準（`extension/test/baseline/`・`vim/test/baseline/`）がテストで守る
 4. **`.claude/rules/working-with-human.md`** — 人間とのやり取り（下の3原則の詳細）
 
 ### 人間とのやり取りの3原則（必ず守る）
@@ -25,7 +25,7 @@
 ### 進め方の要点
 
 - **動くものを小さく作る。** 段階ごとに完了条件を実際に動かして確かめる。先回りして作らない
-- **正解データに合わせる。** `extension/test/golden/`・`extension/test/fixtures/`・`handoff/checklist/captured/` は書き換えない。食い違えば実装を直す
+- **正解データに合わせる。** `extension/test/golden/`・`extension/test/fixtures/`・画面の基準（`extension/test/baseline/`・`vim/test/baseline/`）は書き換えない。食い違えば実装を直す
 - 進捗は mtqg の todo。**最初のセッションで、`dev/roadmap.md` の段階を `mtqg t add` で立てる**（段階ごとに1件。中のタスクは着手前に足す）
 - 仕様と実装がずれたら `.claude/rules/documentation.md`
 

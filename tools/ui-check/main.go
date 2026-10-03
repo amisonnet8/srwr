@@ -4,7 +4,6 @@
 // `ui-check hook-try` (qsoku hook-try), `ui-check init-try` (qsoku init-try) and `ui-check dist-try` (qsoku dist-try) are the
 // human checks of R7, R9 and R13.
 // `ui-check open <vscode|vim> <why-basic|external|no-why|live>` is called by `qsoku ui-open`.
-// `ui-check vim-baseline <images> <out>` makes vim/test/baseline/ja from the approved Vim images (done once, at R5).
 package main
 
 import (
@@ -77,9 +76,6 @@ func run(args []string, out io.Writer) error {
 			}
 			return errors.New("usage: ui-check accept [ng <note>]")
 		}
-	}
-	if len(args) == 3 && args[0] == "vim-baseline" {
-		return makeVimBaseline(args[1], args[2])
 	}
 	if len(args) != 3 || args[0] != "open" || (args[1] != "vscode" && args[1] != "vim") {
 		return errors.New("usage: ui-check open <vscode|vim> <why-basic|external|no-why|long-why|live>")

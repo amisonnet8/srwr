@@ -20,7 +20,7 @@
 - **セッション・ロック・鍵**に関わる変更は `qsoku race` も通す
 - **`internal/cli` の e2e テスト**は、本物の `srwr` を `go build` して、`srwr mcp` を複数のプロセスで動かす（`go test -short` では飛ばす）。セッションの30分は固定なので、間が空いた状態は、テープの日時を書き換えて作る（書き換えた日時を短くして、動いているサーバーに「テープが差し替わった」と分からせる）
 - **拡張**：`qsoku ext`（`.claude/rules/extension.md`）。**Vim**：`qsoku vim-test`（画面なしの Vim のテストと、疑似端末の画面の比較）と、最も古い Vim の `qsoku vim-oldest`（`.claude/rules/vim.md`）
-- **見た目**：自動で確かめられることはテストにし、人間には実物でしか分からないことだけを、1コマンドで見せる（`.claude/rules/working-with-human.md` 3章、`handoff/checklist/CHECKLIST.md`）。固定テープに無い場面は、本物の `srwr mcp` でテープを作るところまで自動にする
+- **見た目**：自動で確かめられることはテストにし、人間には実物でしか分からないことだけを、1コマンドで見せる（`.claude/rules/working-with-human.md` 3章）。固定テープに無い場面は、本物の `srwr mcp` でテープを作るところまで自動にする
 - **Claude Code での通しの確認**（R7・R9）は、この開発リポジトリではなく、一時的な作業場で行う。この開発リポジトリの `.claude/settings.json` を srwr 用に書き換えない
 
 ## 壊して確かめる（mutation-check）

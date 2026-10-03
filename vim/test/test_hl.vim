@@ -3,7 +3,7 @@ import './helpers.vim' as t
 t.Setup()
 import autoload 'srwr/hl.vim'
 
-# The measured values of the previous implementation (vim/test/baseline/hl_*.json, from handoff/checklist/captured).
+# The measured values of the previous implementation (vim/test/baseline/hl_*.json, taken from the previous implementation).
 def Measured(theme: string): dict<any>
   return json_decode(join(readfile(t.Root() .. '/vim/test/baseline/hl_' .. theme .. '.json'), "\n"))
 enddef

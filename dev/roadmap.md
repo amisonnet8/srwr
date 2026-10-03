@@ -200,9 +200,9 @@ R10 までは、確認者が日本語の方が得意なので、日本語で作�
 
 ## R14：片付け
 
-- [ ] `handoff/` の中で、まだリポジトリに取り込んでいない決まり・落とし穴が無いか確かめる
-- [ ] `handoff/` を消す（了承をもらってから）
-- [ ] `docs/` の最終確認（`internal/docs` のテスト）
+- [x] `handoff/` の中で、まだリポジトリに取り込んでいない決まり・落とし穴が無いか確かめる（固定データ・golden・基準は全部写してあり、画面の仕様は `docs/reference/` にある。残りは前のリポジトリに原本がある）
+- [x] `handoff/` を消す（了承：承認した画像も残さず消す）。`handoff/` を読むコメント・ルール・`vim-baseline` を直した
+- [x] `docs/` の最終確認（`internal/docs` のテスト、導入の手順・未定・`protocolVersion` を読み直した）
 
 ---
 
@@ -216,4 +216,4 @@ R10 までは、確認者が日本語の方が得意なので、日本語で作�
 | 2つの `srwr mcp` が同時に鍵を作ると、書きかけを読んで起動に失敗した（前は直した） | R2 のテストで最初から押さえる | mtqg `e0168981fb` |
 | Windows で `syscall.Flock` がビルドできない（前は CI で初めて見つかった） | R2 から `qsoku cross` で押さえる | `.claude/rules/testing.md` |
 
-前の記録の全体は `handoff/reference/project-state/`（`mtqg-context.md`・`mtqg-journal.jsonl`）。このリポジトリの mtqg は新しく始める。
+前の記録の全体は、前のリポジトリ（`next-space/handoff/reference/project-state/`）にある。このリポジトリの mtqg は新しく始めた。

@@ -1,4 +1,4 @@
-// Captures what the screen shows for every frame, in the shape of baseline/*.json (the shape of handoff/checklist/captured):
+// Captures what the screen shows for every frame, in the shape of baseline/*.json (the shape of the first baseline, taken from the previous implementation):
 // the real extension and the real bin/srwr, on the fake vscode, in a copy of the fixed workspace.
 import fs from "node:fs";
 import path from "node:path";

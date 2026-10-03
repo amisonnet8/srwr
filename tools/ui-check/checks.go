@@ -14,8 +14,7 @@ import (
 	"strings"
 )
 
-// A check is an item of handoff/checklist/CHECKLIST.md 2章 ("何を自動にして、何を人間が見るか"), the items that are decided by a
-// machine. Each is decided by the tests it names; it passes when every one of them ran and passed. A name that no test has
+// A check is an item of the UI that is decided by a machine. Each is decided by the tests it names; it passes when every one of them ran and passed. A name that no test has
 // fails the check (a renamed test must not silently stop checking).
 type check struct {
 	Name  string

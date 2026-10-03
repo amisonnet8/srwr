@@ -1,6 +1,7 @@
 # Build artifacts (keep binaries out of the repository).
 /bin/
 /dist/
+/ui-check
 *.exe
 *.test
 *.out
@@ -9,10 +10,6 @@
 /extension/node_modules/
 /extension/out/
 *.vsix
-
-# Hand-over material from the previous repository: read locally, never committed
-# (.claude/rules/directory-structure.md). Removed at R14.
-/handoff/
 
 # Results of qsoku ui-check (the baselines are committed; the results are not).
 /ui-check-result/

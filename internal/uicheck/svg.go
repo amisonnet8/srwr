@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-// The approved images (handoff/design/images/vim) were drawn from real screens: a rectangle for each run of cells with
+// The approved images were drawn from real screens: a rectangle for each run of cells with
 // a background and a <text> for each character, 9.6 by 20 units a cell.
 const (
 	cellW = 9.6

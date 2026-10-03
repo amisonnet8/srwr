@@ -180,8 +180,8 @@ R10 までは、確認者が日本語の方が得意なので、日本語で作�
 
 ## R12：README
 
-- [ ] ルートの `README.md`（導入：`srwr` を先に入れる、VSCode と Vim での見方、共有前の注意）。英語を基準に `README_ja.md` を付ける。冒頭の1文は GitHub の Description と同じ
-- [ ] `extension/README.md`（英語と `_ja`）。対応する表示サーバーの `protocolVersion` を書く
+- [x] ルートの `README.md`（導入：`srwr` を先に入れる、VSCode と Vim での見方、共有前の注意）。英語を基準に `README_ja.md` を付ける。冒頭の1文は GitHub の Description と同じ
+- [x] `extension/README.md`（英語と `_ja`）。対応する表示サーバーの `protocolVersion` を書く
 
 **完了条件**：書いた手順どおりに、新しい環境で導入できる。リンク切れが無い（`internal/docs`）。
 

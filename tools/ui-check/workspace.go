@@ -23,6 +23,18 @@ var tapes = map[string]struct {
 	"long-why": {longWhyTape, "一覧の一番上（20260101-0000-long-why.tape.jsonl）", "2コマ。select（青）と replace（橙）の理由の行が、複数行に折り返され、2行目以降が字下げされ、全文が読めて、行番号は理由の行だけ空白。範囲がその直下に見えるか"},
 }
 
+// liveLook is what to look at in the live view, which is fed by feedLive and has no tape to pick (the words are those of the
+// English screen).
+const liveLook = "追っている間は下のバーに「● LIVE」が出て、画面がちらつかず、すぐ最新のコマに替わる。コマ送りの「Back」で古いコマへ戻ると、画面は動かず、橙の背景で「Back to LIVE (N new)」が出て、N が増える。それを押すと最新へ戻る"
+
+// lookOf is what to look at in a tape of the page.
+func lookOf(tape string) string {
+	if tape == "live" {
+		return liveLook
+	}
+	return tapes[tape].Look
+}
+
 // addLongWhy makes the tape of a long why with the real `srwr mcp` and puts it, and the file it changed, in the workspace.
 func addLongWhy(bin, workspace string) error {
 	extra, err := os.MkdirTemp("", "srwr-ui-extra-")

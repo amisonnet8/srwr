@@ -183,20 +183,23 @@ func lookSteps(r *Report) []string {
 			theme = "light"
 		}
 		if c.Status == statusNew {
-			steps = append(steps, fmt.Sprintf("上の画像「Vim・%s」を見る：%s", html.EscapeString(c.Name), html.EscapeString(tapes[tapeOf(c.Name)].Look)))
+			steps = append(steps, fmt.Sprintf("上の画像「Vim・%s」を見る：%s", html.EscapeString(c.Name), html.EscapeString(lookOf(tapeOf(c.Name)))))
 		} else {
 			steps = append(steps, fmt.Sprintf("上の画像「Vim・%s」を見る：右の「今」の赤枠の部分が、意図した変更か（色が読めるかも見る。%s の背景）", html.EscapeString(c.Name), theme))
 		}
 	}
+	seen := map[string]bool{}
 	for _, c := range r.VSCode {
 		if c.Status != statusNew && c.Status != statusDiff {
 			continue
 		}
 		// A real VSCode is looked at for the two tapes that show every part of the screen (the diff frames, the list, the picker, the
 		// bar; the live bar). The other captures are the same texts, which the machine compares.
-		if t := tapeOf(c.Name); t != "external" && t != "live" {
+		t := tapeOf(c.Name)
+		if (t != "external" && t != "live") || seen[t] {
 			continue
 		}
+		seen[t] = true
 		steps = append(steps, fmt.Sprintf("実物の VSCode で「VSCode・%s」を見る。手順：\n%s", html.EscapeString(c.Name), vscodeSteps(tapeOf(c.Name), c.Name)))
 	}
 	return steps
@@ -205,7 +208,7 @@ func lookSteps(r *Report) []string {
 // vscodeSteps are the steps to look at a tape in a real VSCode, written out in full (HTML, an ordered list).
 func vscodeSteps(tape, _ string) string {
 	t := tapes[tape]
-	look := html.EscapeString(t.Look)
+	look := html.EscapeString(lookOf(tape))
 	steps := []string{
 		fmt.Sprintf("日本語入力を切り、ターミナルで <code>qsoku ui-open vscode %s</code> と打って Enter を押す。新しい VSCode が開く（数十秒かかることがある）", tape),
 		fmt.Sprintf("開いた VSCode で、左端のカセットのアイコンを押し、「Open a tape」を選ぶ（VSCode の表示は英語）。出てきた一覧から「%s」を選ぶ", html.EscapeString(t.Started)),

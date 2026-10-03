@@ -46,8 +46,17 @@ var vimGuide = map[string][]string{
 // vimNote comes after the steps of every tape.
 const vimNote = `
 ・キーは、日本語入力（IME）を切って、半角英数で押します（IME が入っていると、]] や : が Vim に届きません）
-・light（白い背景）で見るときは、名前の後ろに -light を付けて、もう一度動かします。例：qsoku ui-open vim why-basic-light
+・色は、承認した画像と同じ（dark は暗い背景、light は白い背景）で開きます。端末の色には関わりません
+・light で見るときは、名前の後ろに -light を付けて動かします。例：qsoku ui-open vim why-basic-light
 `
+
+// vimInit is what Vim is told to start with: the colors the approved images were drawn with (vim/test/screen/capture.vim).
+func vimInit(light bool) string {
+	if light {
+		return "set nocompatible termguicolors background=light | syntax on | filetype plugin on | highlight Normal guifg=#1f2328 guibg=#ffffff"
+	}
+	return "set nocompatible termguicolors background=dark | syntax on | filetype plugin on | highlight Normal guifg=#d4d4d4 guibg=#1e1e1e"
+}
 
 // splitLight splits "why-basic-light" into the tape and whether Vim is told to use a light background.
 func splitLight(name string) (base string, light bool) {
@@ -73,7 +82,7 @@ func openVim(root, name string, out io.Writer) error {
 	}
 	_, _ = fmt.Fprint(out, vimNote)
 	if light {
-		_, _ = fmt.Fprintln(out, "（この Vim は、light の背景で開きます）")
+		_, _ = fmt.Fprintln(out, "（この Vim は、light（白い背景）で開きます）")
 	}
 	_, _ = fmt.Fprint(out, "\n読んだら Enter を押してください（Vim が開きます）: ")
 	_, _ = bufio.NewReader(os.Stdin).ReadString('\n')
@@ -87,10 +96,9 @@ func openVim(root, name string, out io.Writer) error {
 	cmd := exec.Command(bin, args...) //nolint:gosec // the binary this repository built
 	cmd.Dir = workspace
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
-	if light {
-		// VIMINIT is read instead of the vimrc: a plain Vim, whose colors are the ones of the images.
-		cmd.Env = append(os.Environ(), "VIMINIT=set background=light")
-	}
+	// VIMINIT is read instead of the vimrc: a plain Vim whose Normal colors are the ones of the images (and of the screen
+	// tests), whatever the colors of the person's terminal and vimrc are.
+	cmd.Env = append(os.Environ(), "VIMINIT="+vimInit(light))
 	if name == "live" {
 		return runLiveVim(cmd, workspace, fixture)
 	}

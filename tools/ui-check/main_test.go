@@ -147,3 +147,13 @@ func TestSplitLight(t *testing.T) {
 		}
 	}
 }
+
+func TestVimInitIsThePlainColorsOfTheImages(t *testing.T) {
+	dark, light := vimInit(false), vimInit(true)
+	if !strings.Contains(dark, "background=dark") || !strings.Contains(dark, "guibg=#1e1e1e") || !strings.Contains(dark, "guifg=#d4d4d4") {
+		t.Errorf("dark = %q", dark)
+	}
+	if !strings.Contains(light, "background=light") || !strings.Contains(light, "guibg=#ffffff") || !strings.Contains(light, "guifg=#1f2328") {
+		t.Errorf("light = %q", light)
+	}
+}

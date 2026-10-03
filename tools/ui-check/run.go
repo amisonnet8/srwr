@@ -317,7 +317,7 @@ func captureVimOne(root, bin, dir, extra string, sc screenRun, theme string, rep
 			}
 		}
 	}
-	old, err := os.ReadFile(filepath.Join(root, target)) //nolint:gosec // a path under the repository
+	old, err := readBaseline(root, target)
 	if os.IsNotExist(err) {
 		res.Status = statusNew
 		for i, g := range got.Grids {
@@ -397,7 +397,7 @@ func captureVSCode(root, dir, extra string, haveLong, liveOnly bool) []CaptureRe
 			out = append(out, res)
 			continue
 		}
-		old, rerr := os.ReadFile(filepath.Join(root, res.Target)) //nolint:gosec // a path under the repository
+		old, rerr := readBaseline(root, res.Target)
 		if os.IsNotExist(rerr) {
 			res.Status = statusNew
 			for i, s := range got {
@@ -433,4 +433,13 @@ func shotLabel(s uicheck.Shot, i int) string {
 		return l
 	}
 	return fmt.Sprintf("frame %d", i+1)
+}
+
+// readBaseline reads a baseline file. SRWR_UI_CHECK_NO_BASELINE=<part of a file name> makes the baselines whose path has that
+// part look as if they did not exist, to see the page of a new screen again without touching the baselines (nothing is written).
+func readBaseline(root, target string) ([]byte, error) {
+	if part := os.Getenv("SRWR_UI_CHECK_NO_BASELINE"); part != "" && strings.Contains(target, part) {
+		return nil, os.ErrNotExist
+	}
+	return os.ReadFile(filepath.Join(root, target)) //nolint:gosec // a path under the repository
 }

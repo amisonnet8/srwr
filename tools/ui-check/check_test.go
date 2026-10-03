@@ -394,3 +394,23 @@ func TestAddLongWhyPutsTheTapeAndFileInTheWorkspace(t *testing.T) {
 		}
 	}
 }
+
+func TestReadBaselineCanPretendOneIsMissing(t *testing.T) {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, "b"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "b", "long_why.json"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if b, err := readBaseline(root, "b/long_why.json"); err != nil || string(b) != "x" {
+		t.Fatalf("%q %v", b, err)
+	}
+	t.Setenv("SRWR_UI_CHECK_NO_BASELINE", "long")
+	if _, err := readBaseline(root, "b/long_why.json"); !os.IsNotExist(err) {
+		t.Errorf("the baseline was read: %v", err)
+	}
+	if _, err := readBaseline(root, "b/other.json"); !os.IsNotExist(err) {
+		t.Errorf("a missing file should be missing: %v", err)
+	}
+}

@@ -351,3 +351,29 @@ func TestLaunchArgsWithARealVim(t *testing.T) {
 		t.Errorf("Vim answered %q, want the commands to exist and g:srwr_path to be the binary", got)
 	}
 }
+
+// Many processes extract at once, over and over: whoever is second must not take away what the first has finished.
+func TestExtractVimTogetherManyTimes(t *testing.T) {
+	for round := range 40 {
+		base := filepath.Join(t.TempDir(), "vim")
+		var wg sync.WaitGroup
+		dirs := make([]string, 16)
+		errs := make([]error, 16)
+		for i := range dirs {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				dirs[i], errs[i] = extractVim(base, "v1")
+			}()
+		}
+		wg.Wait()
+		for i := range dirs {
+			if errs[i] != nil || dirs[i] != dirs[0] {
+				t.Fatalf("round %d, %d: %s (%v), want %s", round, i, dirs[i], errs[i], dirs[0])
+			}
+		}
+		if _, err := os.Stat(filepath.Join(dirs[0], ".complete")); err != nil {
+			t.Fatalf("round %d: %v", round, err)
+		}
+	}
+}

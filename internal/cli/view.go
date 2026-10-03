@@ -268,18 +268,31 @@ func extractVim(base, version string) (string, error) {
 	if err := os.WriteFile(filepath.Join(tmp, ".complete"), nil, 0o600); err != nil {
 		return "", err
 	}
-	// A directory left half-written by an older srwr has no .complete; it goes away first.
-	if _, err := os.Stat(dir); err == nil {
-		_ = os.RemoveAll(dir)
-	}
-	if err := os.Rename(tmp, dir); err != nil {
-		// Someone else wrote it at the same time. Theirs is the same files.
-		if _, serr := os.Stat(filepath.Join(dir, ".complete")); serr == nil {
+	// Another srwr may have finished while this one wrote: theirs are the same files, and must not be taken away.
+	complete := func() bool { _, err := os.Stat(filepath.Join(dir, ".complete")); return err == nil }
+	var err2 error
+	for try := 0; try < 50; try++ {
+		if complete() {
 			return dir, nil
 		}
-		return "", err
+		// A directory without .complete (left by something that died) is moved out of the way, not deleted in place: on
+		// Windows a directory that is being renamed into place by another srwr cannot be removed.
+		if _, err := os.Stat(dir); err == nil {
+			trash := filepath.Join(base, ".trash-"+filepath.Base(tmp))
+			if os.Rename(dir, trash) == nil {
+				_ = os.RemoveAll(trash)
+			}
+		}
+		if err2 = os.Rename(tmp, dir); err2 == nil {
+			return dir, nil
+		}
+		// Someone else is putting theirs in place at the same time (on Windows the rename says "Access is denied").
+		time.Sleep(20 * time.Millisecond)
 	}
-	return dir, nil
+	if complete() {
+		return dir, nil
+	}
+	return "", err2
 }
 
 var unsafeName = regexp.MustCompile(`[^0-9A-Za-z._+-]`)

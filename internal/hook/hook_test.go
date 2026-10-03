@@ -238,7 +238,11 @@ func TestOtherCallsAreLeftAlone(t *testing.T) {
 	for _, tool := range []string{"Write", "MultiEdit", "NotebookEdit", "Glob", "WebFetch", "Task", "mcp__srwr__select"} {
 		e.call(tool, map[string]any{"file_path": filepath.Join(e.root, "f.txt"), "content": "x"}, nil)
 	}
-	pre := `{"hook_event_name":"PreToolUse","cwd":"` + e.root + `","tool_name":"Read","tool_input":{"file_path":"` + filepath.Join(e.root, "f.txt") + `"}}`
+	preJSON, err := json.Marshal(map[string]any{"hook_event_name": "PreToolUse", "cwd": e.root, "tool_name": "Read", "tool_input": map[string]any{"file_path": filepath.Join(e.root, "f.txt")}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pre := string(preJSON)
 	if _, err := Run(strings.NewReader(pre), e.c); err != nil {
 		t.Fatal(err)
 	}

@@ -110,10 +110,7 @@ VSCode で見るなら、拡張 **srwr-view** も入れます（拡張は `srwr`
 | **ターミナル** | `srwr tapes` でプロジェクトのテープを一覧します |
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: light)" srcset="docs/images/vscode_light.svg">
-    <img alt="VSCode の srwr-view：置き換えた行の上に橙の理由の行、左に操作一覧、下にバー" src="docs/images/vscode_dark.svg" width="900">
-  </picture>
+  <img alt="VSCode の srwr-view：置き換えた行の上に橙の理由の行、左に操作一覧、下にバー" src="docs/images/vscode_dark.svg" width="900">
   <br>
   <sub>VSCode の srwr-view。青が <code>select</code>、橙が <code>replace</code>、紫が外からの変更です。</sub>
 </p>

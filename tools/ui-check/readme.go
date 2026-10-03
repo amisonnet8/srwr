@@ -161,7 +161,7 @@ func runReadme(root string, out io.Writer) error {
 	}
 	media := filepath.Join(root, "extension", "media", "readme")
 	jobs := []pngJob{
-		{filepath.Join(images, "vscode_light.svg"), filepath.Join(media, "replay.png"), "2"},
+		{filepath.Join(images, "vscode_dark.svg"), filepath.Join(media, "replay.png"), "2"},
 		{filepath.Join(images, "banner.svg"), filepath.Join(media, "banner.png"), "1"},
 	}
 	if err := renderPNGs(jobs, out); err != nil {

@@ -110,10 +110,7 @@ To view in VSCode, install the extension **srwr-view** as well (it does not cont
 | **Terminal** | `srwr tapes` lists the tapes of the project |
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: light)" srcset="docs/images/vscode_light.svg">
-    <img alt="srwr-view in VSCode: an orange reason line above the replaced lines, the operations list on the left, the bottom bar" src="docs/images/vscode_dark.svg" width="900">
-  </picture>
+  <img alt="srwr-view in VSCode: an orange reason line above the replaced lines, the operations list on the left, the bottom bar" src="docs/images/vscode_dark.svg" width="900">
   <br>
   <sub>srwr-view in VSCode. Blue is a <code>select</code>, orange is a <code>replace</code>, purple is a change from outside.</sub>
 </p>

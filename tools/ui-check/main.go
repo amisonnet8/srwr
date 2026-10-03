@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 )
@@ -112,10 +113,11 @@ func openVSCode(root, name string, out io.Writer) error {
 	if _, err := exec.LookPath("code"); err != nil {
 		return fmt.Errorf("the code command was not found. Open %s in VSCode by hand and install %s", workspace, vsix)
 	}
-	if err := command(root, out, "code", "--install-extension", vsix, "--force"); err != nil {
+	install, open := vscodeArgs(base, vsix, workspace)
+	if err := command(root, out, "code", install...); err != nil {
 		return fmt.Errorf("installing the extension: %w", err)
 	}
-	if err := command(root, out, "code", "-n", "--locale", "en", workspace); err != nil {
+	if err := command(root, out, "code", open...); err != nil {
 		return fmt.Errorf("opening VSCode: %w", err)
 	}
 	guide(out, name, workspace)
@@ -127,6 +129,16 @@ func openVSCode(root, name string, out io.Writer) error {
 		_, _ = bufio.NewReader(os.Stdin).ReadString('\n')
 	}
 	return feedLive(workspace, fixture, wait, 3*time.Second, out)
+}
+
+// vscodeArgs are the arguments of `code` that install the extension and open the workspace. VSCode gets a user data directory and
+// an extensions directory of its own, so it is a new instance with no language pack: its screen is English, whatever the display
+// language of the person's VSCode is (a --locale given to a VSCode that is already running is ignored).
+func vscodeArgs(base, vsix, workspace string) (install, open []string) {
+	own := []string{"--user-data-dir", filepath.Join(base, "vscode-user"), "--extensions-dir", filepath.Join(base, "vscode-extensions")}
+	install = append(slices.Clone(own), "--install-extension", vsix, "--force")
+	open = append(slices.Clone(own), "-n", "--locale", "en", workspace)
+	return install, open
 }
 
 func command(dir string, out io.Writer, name string, args ...string) error {

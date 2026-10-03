@@ -33,6 +33,7 @@
 - テープ選びの時刻は `src/times.ts` の `localStamp`（その機械の時間帯）。テストの `setup.ts` は `TZ=Asia/Tokyo` に固定する（固定テープは `+09:00`）。時間帯の振る舞いは `english.test.ts` が `process.env.TZ` を替えて確かめる
 - 偽の `vscode` の言語は `state.language`。`reset()` が環境変数 `SRWR_TEST_LANG`（既定 `en`）で決める。`view.test.ts`・`live.test.ts` は日本語の文言を確かめるので `ja` にし、英語は `english.test.ts`
 - 画面の基準は `test/baseline/{ja,en}/`。`capture.test.ts` が両方を比べる
+- **実物の VSCode で英語を見せるには、専用の `--user-data-dir`・`--extensions-dir` で新しい VSCode を開く**（`tools/ui-check` の `vscodeArgs`）。`--locale en` だけでは、すでに動いている日本語の VSCode に無視され、拡張も日本語で出た（R10.5 の確認で見つかった）
 
 ## 構成
 

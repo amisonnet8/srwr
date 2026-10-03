@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -262,5 +263,20 @@ func TestLongWhyTapeHasTheSameTimesEveryRun(t *testing.T) {
 	}
 	if !strings.Contains(made[0], `"startedAt":"2026-10-03T00:00:00.000+09:00"`) {
 		t.Errorf("the header time is not the fixed one: %s", strings.SplitN(made[0], "\n", 2)[0])
+	}
+}
+
+func TestVSCodeIsOpenedWithItsOwnProfileInEnglish(t *testing.T) {
+	install, open := vscodeArgs("/b", "/b/x.vsix", "/b/ws")
+	for name, args := range map[string][]string{"install": install, "open": open} {
+		if !slices.Contains(args, "--user-data-dir") || !slices.Contains(args, "--extensions-dir") {
+			t.Errorf("%s: %v has no profile of its own (a VSCode in Japanese would show the extension in Japanese)", name, args)
+		}
+	}
+	if !slices.Contains(install, "--install-extension") || !slices.Contains(open, "--locale") || open[len(open)-1] != "/b/ws" {
+		t.Errorf("install %v, open %v", install, open)
+	}
+	if i := slices.Index(open, "--extensions-dir"); i < 0 || open[i+1] != install[slices.Index(install, "--extensions-dir")+1] {
+		t.Errorf("the extension is installed where VSCode does not look: %v %v", install, open)
 	}
 }

@@ -1,6 +1,6 @@
 # select → replace の例
 
-[English](select-replace.md)
+*[English](select-replace.md) | **日本語***
 
 **読者**：srwr を使う人。AI が `srwr mcp` に何を送り、何が返るかを、実際のやり取りで見る。ツールの決まりは [mcp.md](../reference/mcp_ja.md)。
 

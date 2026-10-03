@@ -1,6 +1,6 @@
 # 範囲トークン
 
-[English](token.md)
+*[English](token.md) | **日本語***
 
 **読者**：srwr を開発する人。この文書は単独で読むものではない。[mcp.md](../reference/mcp_ja.md)（`select` が返す `sel_…`）と [tape.md](../reference/tape_ja.md)（`from`・`selection`）から、詳細を知りたいときにリンクで来る。
 

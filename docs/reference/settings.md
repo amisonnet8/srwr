@@ -1,6 +1,6 @@
 # Settings
 
-[日本語](settings_ja.md)
+*[日本語](settings_ja.md) | **English***
 
 **Readers**: people who use srwr. A list of what the user can set (and what cannot be set).
 

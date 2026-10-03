@@ -1,6 +1,6 @@
 # VSCode (srwr-view)
 
-[日本語](vscode_ja.md)
+*[日本語](vscode_ja.md) | **English***
 
 **Readers**: people who view tapes in VSCode.
 

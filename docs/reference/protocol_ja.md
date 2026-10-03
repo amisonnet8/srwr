@@ -1,6 +1,6 @@
 # 表示サーバーのプロトコル
 
-[English](protocol.md)
+*[English](protocol.md) | **日本語***
 
 **読者**：srwr の表示を、新しいエディタ（IDE）に対応させたい人。VSCode と Vim は、この約束だけでテープを再生している。
 

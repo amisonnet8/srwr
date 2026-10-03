@@ -1,6 +1,6 @@
 # The protocol of the view server
 
-[日本語](protocol_ja.md)
+*[日本語](protocol_ja.md) | **English***
 
 **Readers**: people who want to make srwr's display work in a new editor (IDE). VSCode and Vim replay tapes with this promise alone.
 

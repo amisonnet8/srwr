@@ -1,6 +1,6 @@
 # 設定の一覧
 
-[English](settings.md)
+*[English](settings.md) | **日本語***
 
 **読者**：srwr を使う人。利用者が設定できるもの（と、設定できないもの）の一覧。
 

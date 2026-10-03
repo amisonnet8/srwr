@@ -1,6 +1,6 @@
 # Design decisions and their reasons
 
-[日本語](decisions_ja.md)
+*[日本語](decisions_ja.md) | **English***
 
 **Readers**: people who want to know how srwr is built, and people who join the development. Read this when you want to know "why is it like this". The rules themselves are in [reference/](../reference/cli.md); the reasons for the selection token are in [token.md](token.md).
 

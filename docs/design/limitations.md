@@ -1,6 +1,6 @@
 # Limits and open points
 
-[日本語](limitations_ja.md)
+*[日本語](limitations_ja.md) | **English***
 
 **Readers**: people who use srwr, and people who join the development. Trade-offs of the design, what is not decided, and candidates to add.
 

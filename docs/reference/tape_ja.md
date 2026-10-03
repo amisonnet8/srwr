@@ -1,6 +1,6 @@
 # テープ
 
-[English](tape.md)
+*[English](tape.md) | **日本語***
 
 **読者**：テープを共有する人、テープを読む道具を作る人。再生の仕方は [vscode.md](vscode_ja.md)・[vim.md](vim_ja.md)。
 

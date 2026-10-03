@@ -1,6 +1,6 @@
 # The tape
 
-[日本語](tape_ja.md)
+*[日本語](tape_ja.md) | **English***
 
 **Readers**: people who share tapes, and people who make tools that read tapes. For how to replay, see [vscode.md](vscode.md) and [vim.md](vim.md).
 

@@ -1,6 +1,6 @@
 # Vim (srwr-view.vim)
 
-[日本語](vim_ja.md)
+*[日本語](vim_ja.md) | **English***
 
 **Readers**: people who view tapes in Vim in a terminal.
 

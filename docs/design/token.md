@@ -1,6 +1,6 @@
 # The selection token
 
-[日本語](token_ja.md)
+*[日本語](token_ja.md) | **English***
 
 **Readers**: people who develop srwr. This document is not meant to be read alone. You come here by a link from [mcp.md](../reference/mcp.md) (the `sel_…` that `select` returns) and [tape.md](../reference/tape.md) (`from`, `selection`) when you want the details.
 

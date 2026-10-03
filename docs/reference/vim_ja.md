@@ -1,6 +1,6 @@
 # Vim（srwr-view.vim）
 
-[English](vim.md)
+*[English](vim.md) | **日本語***
 
 **読者**：ターミナルの Vim でテープを見る人。
 

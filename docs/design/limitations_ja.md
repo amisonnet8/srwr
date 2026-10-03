@@ -1,6 +1,6 @@
 # 制限と未定事項
 
-[English](limitations.md)
+*[English](limitations.md) | **日本語***
 
 **読者**：srwr を使う人、開発に加わる人。設計上の割り切り、決めていないこと、追加の候補。
 

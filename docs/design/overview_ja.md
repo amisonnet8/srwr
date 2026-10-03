@@ -1,6 +1,6 @@
 # srwr の設計の全体像
 
-[English](overview.md)
+*[English](overview.md) | **日本語***
 
 **読者**：srwr の作りを知りたい人、開発に加わる人。使い方は [reference/](../reference/cli_ja.md)、判断の理由は [decisions.md](decisions_ja.md)。
 

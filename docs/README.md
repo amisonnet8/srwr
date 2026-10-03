@@ -1,6 +1,6 @@
 # srwr documentation
 
-[日本語](README_ja.md)
+*[日本語](README_ja.md) | **English***
 
 srwr lets an AI agent edit files with just two commands, `select` and `replace`, records the operations on a **tape**, and **replays them frame by frame** in an editor.
 

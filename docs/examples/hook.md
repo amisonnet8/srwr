@@ -1,6 +1,6 @@
 # An example of the hook
 
-[日本語](hook_ja.md)
+*[日本語](hook_ja.md) | **English***
 
 **Readers**: people who use srwr, and people who register the hook of Claude Code. See, in real output, what `srwr hook` reads from the JSON that Claude Code hands over and what it writes on the tape. The rules are in [cli.md](../reference/cli.md), and the shape of the tape is in [tape.md](../reference/tape.md).
 

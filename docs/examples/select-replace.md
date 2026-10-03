@@ -1,6 +1,6 @@
 # An example of select → replace
 
-[日本語](select-replace_ja.md)
+*[日本語](select-replace_ja.md) | **English***
 
 **Readers**: people who use srwr. See, in a real exchange, what the AI sends to `srwr mcp` and what comes back. The rules of the tools are in [mcp.md](../reference/mcp.md).
 

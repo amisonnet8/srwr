@@ -1,6 +1,6 @@
 # The command line (srwr)
 
-[日本語](cli_ja.md)
+*[日本語](cli_ja.md) | **English***
 
 **Readers**: people who use srwr.
 

@@ -1,6 +1,6 @@
 # コマンドライン（srwr）
 
-[English](cli.md)
+*[English](cli.md) | **日本語***
 
 **読者**：srwr を使う人。
 

@@ -1,6 +1,6 @@
 # 表示サーバーとのやり取りの例
 
-[English](protocol-session.md)
+*[English](protocol-session.md) | **日本語***
 
 **読者**：srwr の表示を、新しいエディタに対応させたい人。クライアントが `srwr view-server` と、どんなやり取りをするかを、実際の出力で見る。決まりは [protocol.md](../reference/protocol_ja.md)。
 

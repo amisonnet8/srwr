@@ -1,6 +1,6 @@
 # VSCode（srwr-view）
 
-[English](vscode.md)
+*[English](vscode.md) | **日本語***
 
 **読者**：VSCode でテープを見る人。
 

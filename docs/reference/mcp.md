@@ -1,6 +1,6 @@
 # MCP tools (select, replace)
 
-[日本語](mcp_ja.md)
+*[日本語](mcp_ja.md) | **English***
 
 **Readers**: people who use srwr. For people who want to know what the AI is made to do and what errors come back.
 

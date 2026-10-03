@@ -1,6 +1,6 @@
 # srwr のドキュメント
 
-[English](README.md)
+*[English](README.md) | **日本語***
 
 srwr は、AI エージェントに `select` / `replace` の2コマンドだけでファイルを編集させ、その操作を**テープ**に記録し、エディタで**コマ送りで再生**する道具。
 

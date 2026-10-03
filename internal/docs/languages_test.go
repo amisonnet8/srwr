@@ -37,8 +37,12 @@ func languageProblems(root string) []string {
 			continue
 		}
 		lines := strings.Split(string(b), "\n")
-		if len(lines) < 3 || !strings.Contains(lines[2], "]("+filepath.Base(other)+")") {
-			problems = append(problems, f+": the third line must link to "+filepath.Base(other))
+		want := "*[日本語](" + filepath.Base(other) + ") | **English***"
+		if ja {
+			want = "*[English](" + filepath.Base(other) + ") | **日本語***"
+		}
+		if len(lines) < 3 || lines[2] != want {
+			problems = append(problems, f+": the third line must be the language switch "+want)
 		}
 		if ja {
 			continue
@@ -77,13 +81,13 @@ func TestLanguageProblems(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	write("docs/a.md", "# A\n\n[日本語](a_ja.md)\n\nplain `行` text\n\n```\n日本語 in a code block\n```\n")
-	write("docs/a_ja.md", "# あ\n\n[English](a.md)\n")
-	write("docs/b.md", "# B\n\n[日本語](b_ja.md)\n\nこれは日本語\n")
+	write("docs/a.md", "# A\n\n*[日本語](a_ja.md) | **English***\n\nplain `行` text\n\n```\n日本語 in a code block\n```\n")
+	write("docs/a_ja.md", "# あ\n\n*[English](a.md) | **日本語***\n")
+	write("docs/b.md", "# B\n\n*[日本語](b_ja.md) | **English***\n\nこれは日本語\n")
 	write("docs/b_ja.md", "# び\n\nno link\n")
-	write("docs/c.md", "# C\n\n[日本語](c_ja.md)\n")
+	write("docs/c.md", "# C\n\n*[日本語](c_ja.md) | **English***\n")
 	got := strings.Join(languageProblems(root), "\n")
-	for _, want := range []string{"docs/b.md:5: Japanese in an English document", "docs/b_ja.md: the third line must link to b.md", "docs/c.md: no c_ja.md next to it"} {
+	for _, want := range []string{"docs/b.md:5: Japanese in an English document", "docs/b_ja.md: the third line must be the language switch", "docs/c.md: no c_ja.md next to it"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("missing %q in:\n%s", want, got)
 		}

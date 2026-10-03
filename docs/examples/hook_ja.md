@@ -1,6 +1,6 @@
 # hook の例
 
-[English](hook.md)
+*[English](hook.md) | **日本語***
 
 **読者**：srwr を使う人、Claude Code の hook を登録する人。`srwr hook` が、Claude Code が渡す JSON から何を読み、テープに何を書くかを、実際の出力で見る。決まりは [cli.md](../reference/cli_ja.md)、テープの形は [tape.md](../reference/tape_ja.md)。
 

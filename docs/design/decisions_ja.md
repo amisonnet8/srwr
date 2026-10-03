@@ -1,6 +1,6 @@
 # 設計上の判断と理由
 
-[English](decisions.md)
+*[English](decisions.md) | **日本語***
 
 **読者**：srwr の作りを知りたい人、開発に加わる人。「なぜそうなっているか」を知りたいとき。決まりそのものは [reference/](../reference/cli_ja.md)、範囲トークンの理由は [token.md](token_ja.md)。
 

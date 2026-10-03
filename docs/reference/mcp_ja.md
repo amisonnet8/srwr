@@ -1,6 +1,6 @@
 # MCP ツール（select・replace）
 
-[English](mcp.md)
+*[English](mcp.md) | **日本語***
 
 **読者**：srwr を使う人。AI エージェントに何をさせ、どんなエラーが返るかを知りたい人。
 

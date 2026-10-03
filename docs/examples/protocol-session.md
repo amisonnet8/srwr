@@ -1,6 +1,6 @@
 # An example of an exchange with the view server
 
-[日本語](protocol-session_ja.md)
+*[日本語](protocol-session_ja.md) | **English***
 
 **Readers**: people who want to make srwr's display work in a new editor. See, in real output, what exchange a client has with `srwr view-server`. The rules are in [protocol.md](../reference/protocol.md).
 

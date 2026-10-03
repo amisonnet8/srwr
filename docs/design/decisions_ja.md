@@ -2,7 +2,7 @@
 
 *[English](decisions.md) | **日本語***
 
-**読者**：srwr の作りを知りたい人、開発に加わる人。「なぜそうなっているか」を知りたいとき。決まりそのものは [reference/](../reference/cli_ja.md)、範囲トークンの理由は [token.md](token_ja.md)。
+**読者**：srwr の作りを知りたい人、開発に加わる人。「なぜそうなっているか」を知りたいとき。決まりそのものは [reference の文書](../reference/cli_ja.md)、範囲トークンの理由は [token.md](token_ja.md)。
 
 ## 編集の仕組み
 

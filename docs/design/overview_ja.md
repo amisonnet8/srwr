@@ -2,7 +2,7 @@
 
 *[English](overview.md) | **日本語***
 
-**読者**：srwr の作りを知りたい人、開発に加わる人。使い方は [reference/](../reference/cli_ja.md)、判断の理由は [decisions.md](decisions_ja.md)。
+**読者**：srwr の作りを知りたい人、開発に加わる人。使い方は [reference の文書](../reference/cli_ja.md)、判断の理由は [decisions.md](decisions_ja.md)。
 
 ## srwr とは
 

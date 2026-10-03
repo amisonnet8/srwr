@@ -114,4 +114,4 @@ Frame のフィールド：
 ## 対応するエディタを作るとき
 
 - 描き方の基準は [vscode.md](vscode_ja.md)。コマの種類ごとの見せ方（範囲の色、`why` の行、差分のコマ）を、同じ情報・同じ順で出す
-- 動くやり取りの例は [examples/](../examples/) にある
+- 動くやり取りの例は [動く例](../examples/select-replace_ja.md) にある

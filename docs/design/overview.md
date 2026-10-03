@@ -2,7 +2,7 @@
 
 *[日本語](overview_ja.md) | **English***
 
-**Readers**: people who want to know how srwr is built, and people who join the development. For how to use it, see [reference/](../reference/cli.md); for the reasons behind decisions, see [decisions.md](decisions.md).
+**Readers**: people who want to know how srwr is built, and people who join the development. For how to use it, see [the reference documents](../reference/cli.md); for the reasons behind decisions, see [decisions.md](decisions.md).
 
 ## What srwr is
 

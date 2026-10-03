@@ -16,9 +16,9 @@ srwr は、AI エージェントに `select` / `replace` の2コマンドだけ�
 
 | フォルダ | 役割 |
 |---|---|
-| [reference/](reference/cli_ja.md) | **決まり**。使い方と、守る約束 |
-| [design/](design/overview_ja.md) | **設計と判断の理由**。全体像、判断の理由、範囲トークン、制限と未定事項 |
-| [examples/](examples/select-replace_ja.md) | **動く例**。実際に動かして取ったやり取り |
+| `reference/` | **決まり**。使い方と、守る約束 |
+| `design/` | **設計と判断の理由**。全体像、判断の理由、範囲トークン、制限と未定事項 |
+| `examples/` | **動く例**。実際に動かして取ったやり取り |
 
 ## 読む順番
 

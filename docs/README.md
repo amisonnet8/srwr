@@ -16,9 +16,9 @@ srwr lets an AI agent edit files with just two commands, `select` and `replace`,
 
 | Folder | Role |
 |---|---|
-| [reference/](reference/cli.md) | **The rules.** How to use srwr, and the promises it keeps |
-| [design/](design/overview.md) | **Design and the reasons for decisions.** The big picture, the reasons, the selection token, limits and open points |
-| [examples/](examples/select-replace.md) | **Working examples.** Exchanges taken from real runs |
+| `reference/` | **The rules.** How to use srwr, and the promises it keeps |
+| `design/` | **Design and the reasons for decisions.** The big picture, the reasons, the selection token, limits and open points |
+| `examples/` | **Working examples.** Exchanges taken from real runs |
 
 ## Reading order
 

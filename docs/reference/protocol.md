@@ -114,4 +114,4 @@ The fields of a Frame:
 ## When you make a supported editor
 
 - The standard for how to draw is [vscode.md](vscode.md). Show each kind of frame (the color of the range, the `why` line, the diff frame) with the same information in the same order
-- Examples of working exchanges are in [examples/](../examples/)
+- Examples of working exchanges are in [the examples](../examples/select-replace.md)

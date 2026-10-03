@@ -152,3 +152,7 @@
 {"id":"6acf55ac5add49229b65b4831691c585","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T00:53:10Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"e938e6ce24ed447789ca43d49197db65","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T00:53:10Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"897bafaf61414d80976d9693ebca3924","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T00:53:10Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"8b124af63b8147d2b0df0c9e8a2246c1","op":"create","type":"memo","text":"R5: 画面の比較は承認した画像から作った基準(vim/test/baseline)。画像そのままでない所(決定2のステータス行・窓より長い範囲の塗り・外部変更2コマ目の下の行)は baseline/README.md に理由つき。スクロールは『先頭から表示→見えなければ zz 相当』で承認画像と一致(ゲートの図は±1行のずれ)。見える条件は『理由の行と範囲の1行目』(承認画像に、範囲の終わりが窓の外のコマがあるため)。壊して確かめる27か所のうち生き残り2件は同じ意味(右窓を閉じると diff は自動で切れる／diff の折りたたみで上から3割が見た目に出ない)。最も古い Vim 9.0.0784 で全部通る。","v":1,"ts":"2026-10-03T03:13:26Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"cfafec9da59c437fa40202666e5fff3d","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T03:13:26Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"ed7b6b1f61764824b7f0fe8fc1488521","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T03:13:26Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"c5e0a4ccd4a24518b76b21f6a88a6b88","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T03:13:26Z","author":{"kind":"ai","name":"claude-code"}}

@@ -17,14 +17,16 @@
 | `qsoku ext-build` | 拡張のコンパイル | 拡張の編集後（`.claude/hooks/build.sh`が自動で呼ぶ） |
 | `qsoku ext` | `bin/srwr` をビルドしてから、拡張のコンパイルとテスト | 拡張を確かめたいとき（CI の extension ジョブ） |
 | `qsoku ui-open vscode <テープ>` | 固定テープの作業場を一時ディレクトリに作り、`.vsix` を入れた VSCode で開く。テープは `why-basic`・`external`・`no-why`・`live`（ライブは3秒ごとに追記） | **人間に VSCode の見た目を見てもらう前**（`.claude/rules/working-with-human.md` 3章）。`code` コマンドが要る |
-| `qsoku vim-test` | `vim/test/test_*.vim`を画面なしのVimで実行 | Vimスクリプトを触ったとき（CI の vim ジョブ） |
+| `qsoku ui-open vim <テープ>` | 同じ作業場を作り、手順を番号つきで出して、Enter のあと `bin/srwr view` で Vim を開く（`live` は5秒後から3秒ごとに追記） | **人間に Vim の見た目を見てもらう前**。人間の端末で動かす |
+| `qsoku vim-test` | `bin/srwr` を作り、`vim/test/test_*.vim`を画面なしのVimで実行。続けて、疑似端末で本物のVimの画面を取り、基準と比べる（`vim/screen_test.go`） | Vimスクリプトを触ったとき（CI の vim ジョブ） |
+| `qsoku vim-oldest` | Vim 9.0.0784 をソースからビルドして（初回だけ）、それで `vim-test` | Vim に関わる変更の区切り（CI の vim-oldest ジョブ）。`SRWR_VIM_OLDEST_DIR` でビルド先を替えられる |
 | `qsoku check` | `go-check`・`cross`・`ext`・`vim-test`をまとめて実行 | **作業の区切りで必ず通す**（`.claude/rules/testing.md`） |
 | `qsoku bin` | `go build -o bin/srwr ./cmd/srwr` | 手元で`srwr`を動かして確かめるとき（R2 以降） |
 | `qsoku race` | `CGO_ENABLED=1 go test -race` | 並行性・排他に関わる変更 |
 | `qsoku trivy` | 既知の脆弱性・ライセンスの検査 | 依存を足したとき |
 | `qsoku shellcheck` | 追跡中の`*.sh`・`*.bash`をShellCheckにかける | シェルスクリプトを足したとき |
 
-`extension/package.json`・`vim/test/`が無いあいだは、`ext`・`ext-build`・`vim-test`は「skipped」と出して成功する。確認の自動化は、`ui-open vscode` が R4 で入った。`ui-open vim`・`ui-check`・`ui-live` は R5・R6 で足す。
+`extension/package.json`・`vim/test/`が無いあいだは、`ext`・`ext-build`・`vim-test`は「skipped」と出して成功する。確認の自動化は、`ui-open vscode` が R4、`ui-open vim` が R5 で入った。`ui-check`・`ui-live` は R6 で足す。
 
 一覧は、今ある`qsokufile`の内容そのもの。`qsoku .list`（名前とコマンド）か`qsoku .names`（名前だけ）で確かめる。**引数なしで`qsoku`とだけ打っても、使い方と定義済みの名前が出る。**
 

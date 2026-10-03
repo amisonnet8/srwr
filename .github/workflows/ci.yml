@@ -85,6 +85,21 @@ jobs:
       - name: qsoku vim-test
         run: qsoku vim-test
 
+  # The oldest Vim srwr-view.vim supports (9.0.0784) is built from source (qsoku vim-oldest) and runs the same tests.
+  vim-oldest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Install qsoku
+        run: go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
+      - name: Install what building Vim needs
+        run: sudo apt-get update && sudo apt-get install -y libncurses-dev
+      - name: qsoku vim-oldest
+        run: qsoku vim-oldest
+
   shellcheck:
     runs-on: ubuntu-latest
     steps:

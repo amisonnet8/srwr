@@ -28,7 +28,7 @@ writefile([
 ], vimrc)
 
 def Start(command: string): number
-  const cmd = ['vim', '-N', '-u', vimrc, '-i', 'NONE',
+  const cmd = [empty($SRWR_VIM_BIN) ? 'vim' : $SRWR_VIM_BIN, '-N', '-u', vimrc, '-i', 'NONE',
     '--cmd', 'let &runtimepath = "' .. repo .. '/vim," . &runtimepath',
     '--cmd', 'let g:srwr_path = "' .. $SRWR_BIN .. '"',
     '-c', command]

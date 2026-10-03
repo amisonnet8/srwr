@@ -30,6 +30,7 @@
 │   ├── viewserver/         ← 表示サーバー（メソッド、ライブの見張り）（R3）
 │   ├── hook/               ← Claude Code の hook の記録（R7）
 │   ├── ignore/             ← 記録しないファイル（R8）
+│   ├── uicheck/            ← 画面を比べる道具（端末の画面・承認した画像 SVG を同じ形にし、セルごとに比べる）（R5）
 │   └── cli/                ← サブコマンド（R2 から順に）
 ├── extension/              ← srwr-view（VSCode 拡張、TypeScript）（R4）
 │   ├── src/                ← server（通信）・timeline・lines・present・replay・live・controls・sidebar・config・extension
@@ -42,10 +43,15 @@
 │   └── tsconfig.json
 ├── vim/                    ← srwr-view.vim（Vim9 script）（R5）
 │   ├── plugin/srwr.vim     ← コマンドの定義だけ（vim9script の前に、足りない機能の検査）
-│   ├── autoload/srwr/      ← 本体（server・replay・live・sidebar・diff・list など）
-│   ├── test/               ← 画面なしの Vim で動かすテスト（test_*.vim）
+│   ├── autoload/srwr/      ← 本体（server・timeline・hl・buf・paint・sidebar・list・replay・diff・live・ui・config）
+│   ├── test/               ← 画面なしの Vim で動かすテスト（test_*.vim）、helpers.vim
+│   │   ├── screen/capture.vim ← 疑似端末で本物の Vim の画面を取る（外側の Vim）
+│   │   └── baseline/       ← 画面の基準（承認した画像から作った JSON）と、hl_*.json（色の実測値）
+│   ├── screen_test.go      ← 画面を取って基準と比べる（`SRWR_SCREEN_TEST=1` のときだけ。`qsoku vim-test` が設定する）
 │   └── embed.go            ← plugin/・autoload/ を srwr に埋め込む（go:embed）
-├── tools/ui-check/         ← UI の確認の自動化（作業場づくり・画面の取得・比較・確認ページ）（R4〜R6）
+├── tools/
+│   ├── ui-check/           ← UI の確認の自動化（作業場づくり・基準づくり・確認ページ）（R4〜R6）
+│   └── vim-oldest.sh       ← 最も古い Vim（9.0.0784）をビルドして `vim-test` を動かす（R5）
 ├── docs/                   ← 外部向けの文書（正本）。reference/・design/・examples/
 ├── dev/                    ← 開発のうちうち。roadmap.md、review/<段階>/（UIゲートの資料）
 ├── handoff/                ← 引き継ぎ資料。**git に入れない（.gitignore）。読むだけ。R12 で消す**
@@ -78,7 +84,7 @@
 - `vim/embed.go` は Go のパッケージ（`go:embed` は親ディレクトリを参照できないので、埋め込む側を `vim/` に置く）。`internal/cli` の `view` がこれを使う
 
 ### 確認の自動化
-- 画面の取得・比較・確認ページの生成は `tools/ui-check/`（Go で書く。シェルスクリプトは最小限）。`qsoku ui-check`・`ui-live`・`ui-open` から呼ぶ。今あるのは `ui-open vscode`（作業場づくり、`.vsix`、VSCode を開く、ライブの追記）。VSCode の画面の取得は拡張のテスト（`extension/test/capture.ts`）にある
+- 画面の取得・比較・確認ページの生成は `tools/ui-check/`（Go で書く。シェルスクリプトは最小限）。`qsoku ui-check`・`ui-live`・`ui-open` から呼ぶ。今あるのは `ui-open vscode`・`ui-open vim`（作業場づくり、VSCode／Vim を開く、ライブの追記）と `vim-baseline`（承認した Vim の画像から基準を作る。一度だけ）。画面の取得は、VSCode が拡張のテスト（`extension/test/capture.ts`）、Vim が `vim/screen_test.go`
 - 基準（前回 OK だった画面の記録）はリポジトリに入れる。結果（`ui-check-result/`）は入れない
 
 ## 各ファイル・ディレクトリの補足

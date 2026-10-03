@@ -40,7 +40,7 @@ var normal = map[string]string{"dark": "#1e1e1e", "light": "#ffffff"}
 
 // makeVimBaseline reads the approved images under images (handoff/design/images/vim) and writes the baseline files into out.
 func makeVimBaseline(images, out string) error {
-	if err := os.MkdirAll(out, 0o750); err != nil {
+	if err := os.MkdirAll(out, 0o750); err != nil { //nolint:gosec // the directory the caller names for the baseline
 		return err
 	}
 	for _, theme := range []string{"dark", "light"} {
@@ -81,7 +81,7 @@ func makeVimBaseline(images, out string) error {
 			if err != nil {
 				return err
 			}
-			if err := os.WriteFile(filepath.Join(out, sc.name+"_"+theme+".json"), data, 0o600); err != nil {
+			if err := os.WriteFile(filepath.Join(out, sc.name+"_"+theme+".json"), data, 0o600); err != nil { //nolint:gosec // see above
 				return err
 			}
 		}

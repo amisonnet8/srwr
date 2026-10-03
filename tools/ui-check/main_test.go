@@ -110,3 +110,24 @@ func TestRunUsage(t *testing.T) {
 		}
 	}
 }
+
+func TestVimGuideCoversEveryTape(t *testing.T) {
+	names := []string{"live"}
+	for name := range tapes {
+		names = append(names, name)
+	}
+	for _, name := range names {
+		steps := vimGuide[name]
+		if len(steps) < 3 {
+			t.Errorf("%s: %d steps", name, len(steps))
+		}
+		for i, s := range steps {
+			if strings.TrimSpace(s) == "" {
+				t.Errorf("%s step %d is empty", name, i+1)
+			}
+		}
+	}
+	if !strings.Contains(strings.Join(vimGuide["live"], "\n"), "[[") || !strings.Contains(strings.Join(vimGuide["live"], "\n"), "`L`") {
+		t.Error("the live guide must say how to go back and how to return to the latest")
+	}
+}

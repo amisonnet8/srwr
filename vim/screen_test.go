@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -83,9 +84,15 @@ func captureSized(t *testing.T, scenario, theme string, rows, cols int) *uicheck
 	ws := t.TempDir()
 	copyDir(t, filepath.Join(repo, "extension", "test", "fixtures", "ui-check"), ws)
 	out := filepath.Join(t.TempDir(), "screens.json")
-	cmdline := "vim -Nu NONE -i NONE -S " + filepath.Join(repo, "vim", "test", "screen", "capture.vim")
+	vimBin := os.Getenv("VIM_BIN")
+	if vimBin == "" {
+		vimBin = "vim"
+	}
+	cmdline := vimBin + " -Nu NONE -i NONE -S " + filepath.Join(repo, "vim", "test", "screen", "capture.vim")
 	cmd := exec.Command("script", "-qec", cmdline, "/dev/null") //nolint:gosec // fixed arguments and paths made by this test
-	cmd.Env = append(os.Environ(), "SRWR_REPO="+repo, "SRWR_BIN="+srwrBinary(t), "WS="+ws, "SCENARIO="+scenario, "THEME="+theme, "OUT="+out, "TERM=xterm-256color")
+	cmd.Env = append(os.Environ(), "SRWR_REPO="+repo, "SRWR_BIN="+srwrBinary(t), "WS="+ws, "SCENARIO="+scenario, "THEME="+theme, "OUT="+out, "TERM=xterm-256color", "SRWR_VIM_BIN="+vimBin,
+		// One language for every machine: UTF-8 (the text is Japanese), and Vim's own messages in English.
+		"LC_ALL=C.UTF-8", "LANG=C.UTF-8")
 	if rows > 0 {
 		cmd.Env = append(cmd.Env, "ROWS="+strconv.Itoa(rows), "COLS="+strconv.Itoa(cols))
 	}
@@ -135,7 +142,7 @@ func TestScreens(t *testing.T) {
 		for _, sc := range scenarios {
 			t.Run(sc.name+"/"+theme, func(t *testing.T) {
 				t.Parallel()
-				data, err := os.ReadFile(filepath.Join("test", "baseline", sc.name+"_"+theme+".json"))
+				data, err := os.ReadFile(filepath.Join("test", "baseline", sc.name+"_"+theme+".json")) //nolint:gosec // a fixed path under vim/test/baseline
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -149,7 +156,10 @@ func TestScreens(t *testing.T) {
 				}
 				for i, g := range got.Grids {
 					frame := uicheck.Reduce(g, got.Labels[i])
-					if diffs := uicheck.Compare(want.Frames[i], frame, want.Normal, 6); len(diffs) > 0 {
+					// The tab line says [無名] or [No Name] by the language of the Vim, which is not srwr's: it is not compared.
+					wantFrame := want.Frames[i]
+					wantFrame.Skip = append(slices.Clone(wantFrame.Skip), 0)
+					if diffs := uicheck.Compare(wantFrame, frame, want.Normal, 6); len(diffs) > 0 {
 						t.Errorf("frame %d (%s, baseline %s) differs:\n  %s", i+1, got.Labels[i], want.Frames[i].Label, strings.Join(diffs, "\n  "))
 					}
 				}
@@ -187,6 +197,13 @@ func TestRangeIsNeverHiddenUnderTheWhyRows(t *testing.T) {
 				if why < 0 {
 					t.Errorf("frame %d: no why row on the screen of %d rows", i+1, rows)
 					continue
+				}
+				if i == 0 {
+					// text.go:37 does not fit from the top of a screen this small: the why row is put in the middle
+					// of the window (what zz does), not left at the bottom edge where the cursor would put it.
+					if want := 1 + (rows-3-1)/2; why != want {
+						t.Errorf("frame 1: the why row is on row %d of the screen of %d rows, want the middle of the window, row %d", why, rows, want)
+					}
 				}
 				if bg := g.Cells[why+1][46].BG; bg != "#1d3a5c" && bg != "#583c27" {
 					t.Errorf("frame %d: the row under the why row is not the range (background %s) on %d rows:\n%s", i+1, bg, rows, g.RowText(why+1))

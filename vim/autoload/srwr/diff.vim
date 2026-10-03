@@ -45,6 +45,12 @@ def GiveBackDiffColors()
   savedColors = []
 enddef
 
+# FoldText is the text of a folded stretch of unchanged lines: "+-- 17 行: the first line". It is Vim's own text, but the
+# word after the number ("lines" or "行" by the language of the Vim) is always the Japanese one, like every word of srwr.
+export def FoldText(): string
+  return substitute(foldtext(), '^\(+-*\s*\d\+\) \S\+:', '\1 行:', '')
+enddef
+
 # Changed returns the lines of the window's buffer that differ from the other side.
 def Changed(win: number): list<number>
   win_execute(win, 'diffupdate')
@@ -81,6 +87,7 @@ export def Enter(s: dict<any>, f: dict<any>, before: string, after: string): boo
   for w in [s.win, s.diffWin]
     win_execute(w, 'setlocal number')
     win_execute(w, 'diffoff | diffthis | setlocal fillchars+=diff:\ ')
+    win_execute(w, 'setlocal foldtext=srwr#diff#FoldText()')
   endfor
   var firsts: dict<number> = {}
   for [w, b, tone] in [[s.win, s.buf, 'select'], [s.diffWin, s.diffBuf, 'replace']]

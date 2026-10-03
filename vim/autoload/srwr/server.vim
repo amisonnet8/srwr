@@ -83,7 +83,7 @@ enddef
 # Start launches `srwr view-server --root <root>` and sends initialize. Done(result, err) is called once.
 export def Start(root: string, Done: func(any, any))
   if Running()
-    Request('initialize', {client: 'vim', protocolVersion: PROTOCOL_VERSION, options: config.ServerOptions()}, (res, err) => Done(res, FixMismatch(err)))
+    Initialize(Done)
     return
   endif
   const cmd = config.Path()
@@ -107,6 +107,11 @@ export def Start(root: string, Done: func(any, any))
     Done(v:null, Fail('binary_not_found', 'srwr view-server を起動できない: ' .. cmd))
     return
   endif
+  Initialize(Done)
+enddef
+
+# Initialize sends initialize to the running server.
+def Initialize(Done: func(any, any))
   Request('initialize', {client: 'vim', protocolVersion: PROTOCOL_VERSION, options: config.ServerOptions()}, (res, err) => Done(res, FixMismatch(err)))
 enddef
 

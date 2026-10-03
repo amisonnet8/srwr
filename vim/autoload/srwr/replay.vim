@@ -378,7 +378,7 @@ export def Open(tapeId: string, frames: list<dict<any>>, root: string, live: boo
   augroup srwr_replay
     autocmd!
     autocmd WinClosed * OnWinClosed(expand('<amatch>'))
-    autocmd VimResized,WinResized * UpdateStatus()
+    autocmd VimResized,WinScrolled * UpdateStatus()
   augroup END
   if live
     buf.SetLines(s.buf, ['ライブ視聴中（AI の操作を待っています）'])

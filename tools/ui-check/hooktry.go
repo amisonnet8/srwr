@@ -14,8 +14,9 @@ import (
 	"github.com/amisonnet8/srwr/internal/tape"
 )
 
-// hook-try is the human check of R7: Claude Code works in a workspace made for it, srwr mcp and srwr hook record, and the
-// tape is played. Everything but Claude Code's own work is done by this command.
+// hook-try is the human check of R7: Claude Code works in a workspace made for it, srwr mcp and srwr hook record, and this
+// command checks the tape by itself (what is in it, that the lines of the edits are right, that it replays to the files). The
+// person starts it, lets Claude Code work, and reads the marks. Everything but Claude Code's own work is done by this command.
 
 const hookTryTask = `# 作業
 
@@ -148,7 +149,17 @@ func hookTryReport(workspace string) (lines []string, tapeID string, ok bool) {
 	}
 	n := map[string]int{}
 	tools := map[string]int{}
-	for _, e := range tape.Parse(b).Events {
+	events := tape.Parse(b).Events
+	state := tape.NewState()
+	badRanges := 0
+	for _, e := range events {
+		state.Apply(e)
+		if e.Type == tape.TypeReplace && e.Source == tape.SourceHook {
+			// The lines the replace says it wrote must be, in the file as it was then, the lines it wrote.
+			if tape.RangeText(state.Files[e.File].Text, e.NewStartLine, e.NewEndLine) != e.NewText {
+				badRanges++
+			}
+		}
 		if e.Type != tape.TypeSelect && e.Type != tape.TypeReplace {
 			continue
 		}
@@ -174,6 +185,25 @@ func hookTryReport(workspace string) (lines []string, tapeID string, ok bool) {
 	check(n["select/hook"] > 0, "AI がファイルを読んだ・探した記録：%d 件（Read %d、Bash %d、Grep %d）", n["select/hook"], tools["Read"], tools["Bash"], tools["Grep"])
 	check(n["replace/hook"] > 0, "AI が Edit（いつもの編集）で直した記録：%d 件", n["replace/hook"])
 	check(n["select/mcp"] > 0 && n["replace/mcp"] > 0, "AI が srwr の select / replace で直した記録：select %d 件、replace %d 件", n["select/mcp"], n["replace/mcp"])
+	same := true
+	var differs []string
+	for name, f := range state.Files {
+		if f.Deleted {
+			continue
+		}
+		if cur, err := os.ReadFile(filepath.Join(workspace, filepath.FromSlash(name))); err != nil || string(cur) != f.Text { //nolint:gosec // a file the tape names, in the workspace of this tool
+			same = false
+			differs = append(differs, name)
+		}
+	}
+	sort.Strings(differs)
+	check(badRanges == 0, "Edit の記録の行番号が、直した行を指している（合わないもの %d 件）", badRanges)
+	check(same, "テープを最初から再生すると、最後のファイルの内容が実際のファイルと同じになる%s", func() string {
+		if same {
+			return ""
+		}
+		return "（違うファイル：" + strings.Join(differs, ", ") + "）"
+	}())
 	return lines, id, ok
 }
 
@@ -201,7 +231,7 @@ func runHookTry(root string, out io.Writer) error {
 	_, _ = fmt.Fprint(out, "\nAI の作業が終わったら、このターミナルに戻って Enter を押してください: ")
 	_, _ = bufio.NewReader(os.Stdin).ReadString('\n')
 
-	lines, id, ok := hookTryReport(workspace)
+	lines, _, ok := hookTryReport(workspace)
 	_, _ = fmt.Fprintln(out, "\n【記録されたもの】")
 	for _, l := range lines {
 		_, _ = fmt.Fprintln(out, l)
@@ -209,17 +239,8 @@ func runHookTry(root string, out io.Writer) error {
 	if !ok {
 		return fmt.Errorf("記録に足りないものがあります（上の × ）。この結果を AI に伝えてください")
 	}
-	_, _ = fmt.Fprintln(out, "\n【再生】Enter を押すと Vim で再生します")
-	for i, s := range hookTryVimSteps {
-		_, _ = fmt.Fprintf(out, "%d. %s\n", i+1, s)
-	}
-	_, _ = fmt.Fprint(out, "\n読んだら Enter を押してください（Vim が開きます）: ")
-	_, _ = bufio.NewReader(os.Stdin).ReadString('\n')
-	cmd := exec.Command(bin, "view", id) //nolint:gosec // the binary this repository built
-	cmd.Dir = workspace
-	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
-	cmd.Env = append(os.Environ(), "VIMINIT="+vimInit(false))
-	return cmd.Run()
+	_, _ = fmt.Fprintln(out, "\n全部 ○ なら、確認は終わりです。結果をチャットで教えてください。")
+	return nil
 }
 
 var hookTrySteps = []string{
@@ -227,12 +248,4 @@ var hookTrySteps = []string{
 	"「MCP サーバー srwr を使うか」と聞かれたら、許可する",
 	"入力欄に英数字で `Do what TASK.md says` と打って Enter を押す",
 	"AI が作業を終えて、`go test` が通ったと言うまで待つ。許可を聞かれたら、許可する",
-}
-
-var hookTryVimSteps = []string{
-	"左に操作一覧が開きます。丸が青（select）・橙（replace）の行が並びます",
-	"`]]` を押して1コマずつ進みます。`[[` で戻れます",
-	"見る：理由の行（青・橙の帯）が出るコマと、出ないコマがあります。出ないのは AI の Read・Bash・Grep・Edit の記録（hook）、出るのは srwr の select / replace です",
-	"見る：Edit のコマ（橙の範囲だけで理由の行が無い）が1つ以上あり、前後のコマと行番号が合っているか",
-	"`q` で閉じます",
 }

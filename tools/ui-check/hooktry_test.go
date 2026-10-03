@@ -11,6 +11,7 @@ import (
 	"github.com/amisonnet8/srwr/internal/core"
 	"github.com/amisonnet8/srwr/internal/hook"
 	"github.com/amisonnet8/srwr/internal/session"
+	"github.com/amisonnet8/srwr/internal/tape"
 )
 
 func TestPrepareHookTryRegistersMCPAndTheHook(t *testing.T) {
@@ -152,9 +153,70 @@ func TestHookTryReport(t *testing.T) {
 	if !ok || id == "" {
 		t.Errorf("everything is recorded, yet: %v %v", lines, ok)
 	}
-	for _, want := range []string{"AI がファイルを読んだ・探した記録：1 件（Read 1", "AI が Edit（いつもの編集）で直した記録：1 件", "select 1 件、replace 1 件"} {
+	for _, want := range []string{"Edit の記録の行番号が、直した行を指している（合わないもの 0 件）", "最後のファイルの内容が実際のファイルと同じになる", "AI がファイルを読んだ・探した記録：1 件（Read 1", "AI が Edit（いつもの編集）で直した記録：1 件", "select 1 件、replace 1 件"} {
 		if !strings.Contains(strings.Join(lines, "\n"), want) {
 			t.Errorf("the report lacks %q:\n%s", want, strings.Join(lines, "\n"))
 		}
+	}
+}
+
+// A tape that does not replay to the files, or an Edit whose lines are wrong, shows as × in the report.
+func TestHookTryReportFindsAWrongTape(t *testing.T) {
+	root := t.TempDir()
+	if real, err := filepath.EvalSymlinks(root); err == nil {
+		root = real
+	}
+	file := filepath.Join(root, "f.go")
+	if err := os.WriteFile(file, []byte("a\nb\nc\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	ws, err := session.Open(root, session.Options{Version: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	c := &core.Core{WS: ws}
+	b, _ := json.Marshal(map[string]any{"hook_event_name": "PostToolUse", "cwd": root, "tool_name": "Read", "tool_input": map[string]any{"file_path": file}})
+	if _, err := hook.Run(strings.NewReader(string(b)), c); err != nil {
+		t.Fatal(err)
+	}
+	// someone changes the file behind the tape's back, and nothing looks at it again
+	if err := os.WriteFile(file, []byte("a\nB\nc\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	lines, _, ok := hookTryReport(root)
+	if ok || !strings.Contains(strings.Join(lines, "\n"), "× テープを最初から再生すると") || !strings.Contains(strings.Join(lines, "\n"), "f.go") {
+		t.Errorf("a tape that does not replay to the file: %v %v", lines, ok)
+	}
+}
+
+func TestHookTryReportFindsAnEditWithWrongLines(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "f.go"), []byte("a\nB\nc\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	text := "a\nb\nc\n"
+	var tapeText strings.Builder
+	for _, e := range []tape.Event{
+		{Type: tape.TypeHeader, Session: "x", StartedAt: "2026-10-03T00:00:00.000+09:00", Author: &tape.Author{Kind: "ai", Name: "claude"}},
+		{Type: tape.TypeSnapshot, Seq: 1, TS: "2026-10-03T00:00:00.000+09:00", File: "f.go", FileHash: tape.FileHash("f.go"), Text: &text, Sha: tape.Sha(text)},
+		// the line written is line 2, but the event says 3
+		{Type: tape.TypeReplace, Seq: 2, TS: "2026-10-03T00:00:00.000+09:00", File: "f.go", StartLine: 2, EndLine: 2, OldText: "b", NewText: "B", NewStartLine: 3, NewEndLine: 3, Source: tape.SourceHook, HookTool: "Edit"},
+	} {
+		line, err := tape.Marshal(e)
+		if err != nil {
+			t.Fatal(err)
+		}
+		tapeText.Write(line)
+	}
+	dir := filepath.Join(root, ".srwr", "tapes")
+	if err := os.MkdirAll(dir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "20261003-0000-x"+tape.FileSuffix), []byte(tapeText.String()), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	lines, _, ok := hookTryReport(root)
+	if ok || !strings.Contains(strings.Join(lines, "\n"), "× Edit の記録の行番号が、直した行を指している（合わないもの 1 件）") {
+		t.Errorf("%v %v", lines, ok)
 	}
 }

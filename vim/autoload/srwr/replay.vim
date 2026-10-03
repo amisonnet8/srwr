@@ -1,0 +1,412 @@
+vim9script
+
+import autoload './buf.vim'
+import autoload './diff.vim'
+import autoload './hl.vim'
+import autoload './paint.vim'
+import autoload './sidebar.vim'
+import autoload './timeline.vim'
+
+# Replay: one tab with the operation list at the left and the frame at the right. Live uses the same screen:
+# the list only grows (Append), and the step to a frame is the same Goto.
+
+const BANNER_PREFIX = '◆ '
+const CLOSE_HINT = '（閉じる：左の一覧で q、または :SrwrClose）'
+
+# The session being shown; {} when none.
+var s: dict<any> = {}
+
+def NoLiveClose()
+enddef
+
+var OnLiveClose: func() = NoLiveClose
+
+export def SetOnLiveClose(F: func())
+  OnLiveClose = F
+enddef
+
+export def Active(): bool
+  return !empty(s)
+enddef
+
+export def Session(): dict<any>
+  return s
+enddef
+
+# --- the why rows ---
+
+# Wrap cuts the why into rows of at most `width` display cells. The first row starts with the mark, the
+# others are indented under it. A why is shown in full.
+export def Wrap(text: string, width: number): list<string>
+  const room = max([width - strdisplaywidth(BANNER_PREFIX), 8])
+  var rows: list<string> = []
+  for para in split(text, "\n", true)
+    var rest = para
+    while true
+      var n = strcharlen(rest)
+      while n > 1 && strdisplaywidth(strcharpart(rest, 0, n)) > room
+        n -= 1
+      endwhile
+      add(rows, (empty(rows) ? BANNER_PREFIX : repeat(' ', strdisplaywidth(BANNER_PREFIX))) .. strcharpart(rest, 0, n))
+      rest = strcharpart(rest, n)
+      if rest ==# ''
+        break
+      endif
+    endwhile
+  endfor
+  return rows
+enddef
+
+# BannerRows are the why rows of a frame: none when it has no why.
+export def BannerRows(f: dict<any>, width: number): list<string>
+  const why = timeline.Why(f)
+  return why ==# '' ? [] : Wrap(why, width)
+enddef
+
+# BannerAt is the line (1-based) the why rows are put in front of: the first line of the range, kept inside the content.
+export def BannerAt(start: number, nlines: number): number
+  return min([max([start, 1]), nlines + 1])
+enddef
+
+# WithBanner puts the rows in front of line `start` of lines.
+export def WithBanner(lines: list<string>, start: number, rows: list<string>): list<string>
+  const at = BannerAt(start, len(lines))
+  # lines[0 : -1] is the whole list, not nothing, so a banner at the top is handled apart.
+  return (at > 1 ? lines[0 : at - 2] : []) + rows + lines[at - 1 :]
+enddef
+
+# --- scrolling ---
+
+# RevealTop decides where the window must scroll so that the lines first..last (the why rows and the range) are all
+# on the screen. It returns -1 when they already are, else the line to put at the top: the block in the middle, or its
+# first line at the top when it does not fit. All numbers are line numbers of the buffer with the why rows put in.
+export def RevealTop(topline: number, height: number, first: number, last: number, total: number): number
+  if height < 1 || (topline <= first && last <= topline + height - 1)
+    return -1
+  endif
+  const block = last - first + 1
+  var top = block >= height ? first : first - (height - block) / 2
+  top = min([top, max([total - height + 1, 1])])
+  return max([min([top, first]), 1])
+enddef
+
+def Reveal(first: number, last: number)
+  const info = getwininfo(s.win)
+  if empty(info)
+    return
+  endif
+  const top = RevealTop(info[0].topline, info[0].height, first, last, line('$', s.win))
+  if top >= 0
+    win_execute(s.win, 'call winrestview({topline: ' .. top .. '})')
+  endif
+enddef
+
+# --- one frame ---
+
+def TextWidth(): number
+  const info = getwininfo(s.win)
+  # The number column (virtual text with why rows, 'number' without) is 4 cells; do not depend on which one is on now.
+  return empty(info) ? 80 : info[0].width - 4
+enddef
+
+# ShowFile points the window at the buffer name of file.
+def ShowFile(file: string)
+  if s.file !=# file
+    buf.Name(s.buf, s.win, 'srwr://' .. s.tape .. '/' .. file)
+    s.file = file
+  endif
+enddef
+
+# Render writes the content with the why rows above the frame's range, and paints the range.
+def Render(f: dict<any>, content: any)
+  ShowFile(f.file)
+  const rows = BannerRows(f, TextWidth())
+  const lines = buf.Lines(type(content) == v:t_string ? content : '')
+  buf.SetLines(s.buf, WithBanner(lines, f.range.start, rows))
+  const at = BannerAt(f.range.start, len(lines))
+  const tone = timeline.Tone(f)
+  for k in range(len(rows))
+    paint.Line(s.buf, at + k, 'srwr_why_' .. tone)
+  endfor
+  paint.Range(s.buf, {start: at, end: at + (f.range.end - f.range.start)}, len(rows), tone)
+  # With why rows 'number' would count them: show the file's own numbers instead. Set every frame (the window keeps it).
+  setwinvar(s.win, '&number', empty(rows))
+  if !empty(rows)
+    paint.Numbers(s.buf, at, len(rows))
+  endif
+  const rangeLen = max([f.range.end - f.range.start + 1, 0])
+  const first = at
+  const last = at + len(rows) + max([rangeLen, empty(rows) ? 1 : 0]) - 1
+  win_execute(s.win, 'call cursor(' .. min([at + len(rows), line('$', s.win)]) .. ', 1)')
+  Reveal(first, max([last, first]))
+enddef
+
+# --- going to a frame ---
+
+# Goto shows frame i.
+export def Goto(i: number)
+  if !Active() || timeline.Len(s.tl) == 0
+    return
+  endif
+  s.index = min([max([i, 0]), timeline.Len(s.tl) - 1])
+  s.wanted = s.index
+  const f: dict<any> = s.tl.frames[s.index]
+  if timeline.IsDiff(f)
+    ShowDiff(f)
+  else
+    LeaveDiff()
+    Render(f, timeline.ContentAt(s.tl, f.file, s.index))
+  endif
+  sidebar.Mark(s.index)
+  UpdateStatus()
+enddef
+
+def ShowDiff(f: dict<any>)
+  paint.Clear(s.buf)
+  s.file = ''
+  if diff.Enter(s, f, f.before, f.after)
+    MapKeys(s.diffWin)
+  endif
+enddef
+
+def LeaveDiff()
+  if diff.Active(s)
+    diff.Leave(s)
+    s.file = ''
+  endif
+enddef
+
+export def StepForward()
+  Goto(s.index + 1)
+enddef
+
+export def StepBack()
+  Goto(s.index - 1)
+enddef
+
+# Jump is used by the operation list.
+export def Jump(i: number)
+  Goto(i)
+enddef
+
+# --- status line ---
+
+# Behind is how many frames arrived after the one on the screen (live only).
+export def Behind(): number
+  return timeline.Len(s.tl) - 1 - s.index
+enddef
+
+# StatusParts is the status line as pieces [text, style]: style is '' (plain), 'dim' (a button that cannot be used now)
+# or 'new' (live, frames waiting). `room` is the width the line has; the close hint is left out when all of the line
+# with it does not fit, so that the live mark is never cut off. `lead` is what comes before it in this window.
+export def StatusParts(index: number, total: number, live: bool, where: string, room: number, lead: string = ''): list<list<string>>
+  if live && total == 0
+    return [['srwr  ● LIVE  （AI の操作を待っています）', '']]
+  endif
+  const behind = total - 1 - index
+  var parts: list<list<string>> = [
+    ['srwr  ' .. max([index + 1, 0]) .. '/' .. total .. '  ', ''],
+    ['[[ 戻る', index > 0 ? '' : 'dim'],
+    ['  ', ''],
+    [']] 進む', index < total - 1 ? '' : 'dim'],
+  ]
+  if live
+    if behind == 0
+      add(parts, ['  ● LIVE', ''])
+    else
+      add(parts, ['  ', ''])
+      add(parts, [' L：LIVE に戻る（新着 ' .. behind .. '） ', 'new'])
+    endif
+  endif
+  if where !=# ''
+    add(parts, ['  ' .. where, ''])
+  endif
+  if live
+    var withHint = copy(parts)
+    add(withHint, ['  ' .. CLOSE_HINT, ''])
+    if strdisplaywidth(lead .. join(mapnew(withHint, (_, p) => p[0]), '')) <= room
+      return withHint
+    endif
+  endif
+  return parts
+enddef
+
+# StatusString is StatusParts as a value for 'statusline'.
+export def StatusString(parts: list<list<string>>, lead: string = ''): string
+  var out = substitute(lead, '%', '%%', 'g')
+  for [text, style] in parts
+    const t = substitute(text, '%', '%%', 'g')
+    if style ==# 'dim'
+      out ..= '%#SrwrDim#' .. t .. '%*'
+    elseif style ==# 'new'
+      out ..= '%#SrwrWhyReplace#' .. t .. '%*'
+    else
+      out ..= t
+    endif
+  endfor
+  return out
+enddef
+
+def Where(): string
+  const n = timeline.Len(s.tl)
+  if s.index >= 0 && s.index < n
+    const f: dict<any> = s.tl.frames[s.index]
+    return f.file .. ':' .. timeline.FormatRange(f.range)
+  endif
+  return ''
+enddef
+
+# Status is the plain text of the status line: srwr  5/7  [[ 戻る  ]] 進む  text.go:37
+export def Status(room: number = 1000): string
+  if !Active()
+    return ''
+  endif
+  return join(mapnew(StatusParts(s.index, timeline.Len(s.tl), s.live, Where(), room), (_, p) => p[0]), '')
+enddef
+
+def WinWidth(w: number): number
+  const info = getwininfo(w)
+  return empty(info) ? 80 : info[0].width
+enddef
+
+def UpdateStatus()
+  if !Active()
+    return
+  endif
+  const n = timeline.Len(s.tl)
+  if diff.Active(s)
+    const f: dict<any> = s.tl.frames[s.index]
+    const lead = '後  '
+    setwinvar(s.win, '&statusline', StatusString([['前  ' .. diff.Label(f), '']]))
+    setwinvar(s.diffWin, '&statusline', StatusString(StatusParts(s.index, n, s.live, Where(), WinWidth(s.diffWin), lead), lead))
+  else
+    setwinvar(s.win, '&statusline', StatusString(StatusParts(s.index, n, s.live, Where(), WinWidth(s.win))))
+  endif
+enddef
+
+# --- keys ---
+
+def MapKeys(win: number)
+  for [lhs, fn] in [
+      [']]', 'StepForward()'], ['<Right>', 'StepForward()'],
+      ['[[', 'StepBack()'], ['<Left>', 'StepBack()'],
+      ['q', 'Close()']]
+    win_execute(win, 'nnoremap <buffer><silent><nowait> ' .. lhs .. ' <ScriptCmd>' .. fn .. '<CR>')
+  endfor
+  if s.live
+    win_execute(win, 'nnoremap <buffer><silent><nowait> L <ScriptCmd>Latest()<CR>')
+  endif
+enddef
+
+# --- live ---
+
+# Append adds a frame that arrived (live/frame). A frame of another tape starts the list again. While following
+# the newest frame it is shown at once; after a step back the screen stays and the arrivals are counted.
+export def Append(tapeId: string, f: dict<any>)
+  if !Active() || !s.live
+    return
+  endif
+  if tapeId !=# s.tape
+    s.tape = tapeId
+    s.tl = timeline.New()
+    s.index = -1
+    s.wanted = -1
+    LeaveDiff()
+    s.file = ''
+  endif
+  const following = s.wanted == timeline.Len(s.tl) - 1
+  timeline.Append(s.tl, f)
+  sidebar.Fill(s.tl)
+  if following
+    s.wanted = timeline.Len(s.tl) - 1
+    Goto(s.wanted)
+  else
+    sidebar.Mark(s.index)
+    UpdateStatus()
+  endif
+enddef
+
+# Latest goes back to the newest frame and follows again.
+export def Latest()
+  if Active() && s.live && timeline.Len(s.tl) > 0
+    s.wanted = timeline.Len(s.tl) - 1
+    Goto(s.wanted)
+  endif
+enddef
+
+# --- opening and closing ---
+
+# OpenLive starts the live view in a new tab: the replay screen, on a list that grows. The frames up to now
+# (from live/start) are only listed; nothing is shown until a frame arrives or a step is made.
+export def OpenLive(tapeId: any, frames: list<dict<any>>, root: string)
+  Open(type(tapeId) == v:t_string ? tapeId : 'live', frames, root, true)
+enddef
+
+# Open starts the replay of a tape in a new tab. frames come from tape/open with withText.
+export def Open(tapeId: string, frames: list<dict<any>>, root: string, live: bool = false)
+  if Active()
+    Close()
+  endif
+  hl.Setup()
+  tabnew
+  const tabId = tabpagenr()
+  s = {
+    tape: tapeId, tl: timeline.New(frames), root: root, index: -1, file: '',
+    diffWin: 0, diffBuf: 0, win: win_getid(), buf: bufnr(), tab: tabId, live: live, wanted: live ? len(frames) - 1 : -1,
+  }
+  buf.SetupReadonly()
+  silent keepalt file srwr://opening
+  const sbwin = sidebar.Create(Jump)
+  s.sidebar = sbwin
+  MapKeys(s.win)
+  MapKeys(sbwin)
+  sidebar.Fill(s.tl)
+  win_gotoid(s.win)
+  augroup srwr_replay
+    autocmd!
+    autocmd WinClosed * OnWinClosed(expand('<amatch>'))
+    autocmd VimResized,WinResized * UpdateStatus()
+  augroup END
+  if live
+    buf.SetLines(s.buf, ['ライブ視聴中（AI の操作を待っています）'])
+    s.index = len(frames) - 1
+    sidebar.Mark(s.index)
+    UpdateStatus()
+  elseif timeline.Len(s.tl) > 0
+    Goto(0)
+  else
+    UpdateStatus()
+  endif
+enddef
+
+def OnWinClosed(id: string)
+  if Active() && (id == string(s.win) || id == string(s.sidebar))
+    Close()
+  endif
+enddef
+
+# Close ends the replay: the tab and its buffers go away. Nothing is left behind.
+export def Close()
+  if !Active()
+    return
+  endif
+  final closing = s
+  s = {}
+  if closing.live
+    OnLiveClose()
+  endif
+  augroup srwr_replay
+    autocmd!
+  augroup END
+  diff.Leave(closing)
+  for w in [closing.win, closing.sidebar]
+    if w > 0 && win_id2win(w) > 0
+      win_execute(w, 'silent! close')
+    endif
+  endfor
+  for b in [closing.buf, sidebar.Buf(), closing.diffBuf]
+    if bufexists(b)
+      execute 'silent! bwipeout! ' .. b
+    endif
+  endfor
+enddef

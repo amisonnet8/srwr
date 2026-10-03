@@ -233,3 +233,21 @@ func TestWidth(t *testing.T) {
 		t.Error("width of a, あ, ●, ◆, （")
 	}
 }
+
+func TestDotFirst(t *testing.T) {
+	g := NewGrid(20, 4, "#000000")
+	g.Put(1, 0, " 5 ", "#d4d4d4", "#000000")
+	g.Put(1, 3, "●", "#f0883e", "#000000")
+	g.Put(1, 4, " replace", "#d4d4d4", "#000000")
+	g.Put(2, 0, "~", "#0000ff", "#000000")
+	DotFirst(g, 1, 2)
+	if got := g.RowText(1); got != "●  5 replace" {
+		t.Errorf("row = %q", got)
+	}
+	if g.Cells[1][0].FG != "#f0883e" || g.Cells[1][2].FG != "#d4d4d4" {
+		t.Error("the colors did not move with the cells")
+	}
+	if g.RowText(2) != "~" {
+		t.Error("a row that is not of the list changed")
+	}
+}

@@ -65,8 +65,8 @@ t.Equal(['    ', '  1 '], paint.NumberLabels(2, 1, 1), 'labels: why row at the t
 t.Equal(5, strchars(paint.NumberLabels(1200, 1, 2)[2]), 'the width grows with the number of file lines')
 
 # --- the operation list ---
-t.Equal(' 5 ● replace text.go:37  幅ちょうどの', sidebar.Line({index: 4, kind: 'replace', file: 'src/text.go', range: {start: 37, end: 37}, why: '幅ちょうどの'}), 'row with why')
-t.Equal(' 6 ● 外部変更 stats.go:1-126', sidebar.Line({index: 5, kind: 'external', file: 'stats.go', range: {start: 1, end: 126}, why: v:null}), 'row without why')
+t.Equal('●  5 replace text.go:37  幅ちょうどの', sidebar.Line({index: 4, kind: 'replace', file: 'src/text.go', range: {start: 37, end: 37}, why: '幅ちょうどの'}), 'row with why')
+t.Equal('●  6 外部変更 stats.go:1-126', sidebar.Line({index: 5, kind: 'external', file: 'stats.go', range: {start: 1, end: 126}, why: v:null}), 'row without why')
 t.Equal('srwr_dot_external', sidebar.DotType('final'), 'final is purple')
 t.Equal('srwr_dot_select', sidebar.DotType('select'), 'select is blue')
 

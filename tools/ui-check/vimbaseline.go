@@ -56,6 +56,7 @@ func makeVimBaseline(images, out string) error {
 				if err != nil {
 					return fmt.Errorf("%s: %w", f, err)
 				}
+				uicheck.DotFirst(g, 1, g.Rows-3)
 				if sc.name == "live-basic" {
 					if lb, ok := liveBehind[i]; ok {
 						if err := uicheck.LiveStatus(g, g.Rows-2, 41, lb.index, lb.total, lb.behind, lb.where); err != nil {

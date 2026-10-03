@@ -16,10 +16,10 @@ enddef
 var JumpTo: func(number) = NoJump
 var rowCount = 0
 
-# Line is the text of one frame: " 5 ● replace text.go:37  why".
+# Line is the text of one frame, in the order of the VSCode list (dot, number, kind, file): "●  5 replace text.go:37  why".
 export def Line(f: dict<any>): string
   const desc = timeline.Why(f)
-  return printf('%2d ● %s %s:%s', f.index + 1, KIND_LABEL[f.kind], timeline.Basename(f.file), timeline.FormatRange(f.range)) ..
+  return printf('● %2d %s %s:%s', f.index + 1, KIND_LABEL[f.kind], timeline.Basename(f.file), timeline.FormatRange(f.range)) ..
     (desc !=# '' ? '  ' .. desc : '')
 enddef
 
@@ -54,7 +54,7 @@ export def Fill(tl: dict<any>)
   rowCount = len(tl.frames)
   buf.SetLines(lbuf, mapnew(tl.frames, (_, f) => Line(f)))
   for f in tl.frames
-    prop_add(f.index + 1, 4, {bufnr: lbuf, type: DotType(f.kind), length: len('●')})
+    prop_add(f.index + 1, 1, {bufnr: lbuf, type: DotType(f.kind), length: len('●')})
   endfor
 enddef
 

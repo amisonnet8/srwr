@@ -36,3 +36,17 @@ func PaintWindowRange(g *Grid, firstRow, lastRow, col int, bg string) {
 		}
 	}
 }
+
+// DotFirst puts the dot of every row of the operation list before the number. The approved images show the rows as
+// " 5 ● replace ..." ; the person who reviews the UI decided the Vim list follows the VSCode list: "● 5 replace ...".
+// The first five cells of a row hold the same things in the other order, so the cells are moved and nothing else changes.
+// A row is one of the list if its fourth cell is the dot; the list is the left 40 columns, rows firstRow..lastRow.
+func DotFirst(g *Grid, firstRow, lastRow int) {
+	for r := firstRow; r <= lastRow; r++ {
+		row := g.Cells[r]
+		if row[3].Ch != "●" {
+			continue
+		}
+		row[0], row[1], row[2], row[3] = row[3], row[2], row[0], row[1]
+	}
+}

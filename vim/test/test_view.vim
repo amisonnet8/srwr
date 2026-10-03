@@ -32,6 +32,8 @@ OpenTape(WHY)
 var s = replay.Session()
 t.Equal(tabsBefore + 1, tabpagenr('$'), 'one tab is added')
 t.Equal(2, winnr('$'), 'the list and the frame')
+# The status line of the list is its name only: Vim's own would add the cursor position and a word like "All" in the language of the Vim.
+t.Equal('%f', getwinvar(sidebar.Win(), '&statusline'), 'the list has a status line of its own')
 t.Equal('srwr://' .. WHY .. '/text.go', bufname(s.buf), 'buffer name')
 t.Equal(7, line('$', s.sidebar), 'seven rows in the list')
 t.Equal('●  1 select  text.go:37  Truncate が幅ちょうどの文字列まで切り詰めてしまう原因の比較。', getbufline(winbufnr(s.sidebar), 1)[0], 'first row of the list: the dot, then the number (the order of the VSCode list)')

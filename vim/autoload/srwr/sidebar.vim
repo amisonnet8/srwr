@@ -38,6 +38,8 @@ export def Create(OnJump: func(number)): number
   buf.SetupReadonly()
   setlocal winfixwidth nonumber norelativenumber nowrap nolist signcolumn=no foldcolumn=0 cursorline
   silent keepalt file srwr://operations
+  # Only the name: the status line of Vim itself adds the cursor position and a word like "All" in the language of the Vim.
+  setlocal statusline=%f
   execute 'vertical resize ' .. WIDTH
   nnoremap <buffer><silent><nowait> <CR> <ScriptCmd>Enter()<CR>
   return win

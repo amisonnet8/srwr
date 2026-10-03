@@ -1,0 +1,230 @@
+// Package hook is srwr hook: it reads what Claude Code tells a hook (a JSON on the standard input) and records what the
+// agent did with its own tools in the tape srwr mcp writes (docs/reference/cli.md).
+//
+// It must never get in the agent's way: whatever goes wrong, Run's caller tells the agent nothing and exits with 0.
+package hook
+
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"sort"
+	"strconv"
+	"strings"
+
+	"github.com/amisonnet8/srwr/internal/core"
+)
+
+// maxSelects is how many selects one hook call may record. A search over a big tree can match thousands of lines.
+const maxSelects = 100
+
+// input is the part of Claude Code's hook JSON that is used.
+type input struct {
+	Event    string          `json:"hook_event_name"`
+	Tool     string          `json:"tool_name"`
+	CWD      string          `json:"cwd"`
+	Input    json.RawMessage `json:"tool_input"`
+	Response json.RawMessage `json:"tool_response"`
+}
+
+// flexInt reads a JSON number or a string of digits.
+type flexInt int
+
+func (n *flexInt) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(b), `"`)
+	if s == "" || s == "null" {
+		return nil
+	}
+	f, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return err
+	}
+	*n = flexInt(f)
+	return nil
+}
+
+// Run records one hook call. root is the workspace. The returned notes say what was left out and why.
+func Run(stdin io.Reader, c *core.Core) (notes []string, err error) {
+	var in input
+	dec := json.NewDecoder(stdin)
+	if err := dec.Decode(&in); err != nil {
+		return nil, fmt.Errorf("hook の入力が JSON として読めない: %w", err)
+	}
+	if in.Event != "" && in.Event != "PostToolUse" {
+		return nil, nil
+	}
+	req, notes := request(in, c.WS.Root())
+	if len(req.Selects) == 0 && req.Edit == nil && !req.ObserveAll {
+		return notes, nil
+	}
+	more, err := c.Hook(req)
+	return append(notes, more...), err
+}
+
+// request makes what to record out of a hook call.
+func request(in input, root string) (req core.HookRequest, notes []string) {
+	rel := func(p string) (string, bool) { return toRel(root, in.CWD, p) }
+	switch in.Tool {
+	case "Read":
+		var t struct {
+			File   string  `json:"file_path"`
+			Offset flexInt `json:"offset"`
+			Limit  flexInt `json:"limit"`
+		}
+		if json.Unmarshal(in.Input, &t) != nil {
+			return req, []string{"Read の入力が読めない"}
+		}
+		f, ok := rel(t.File)
+		if !ok {
+			return req, []string{t.File + " は作業場の外なので記録しない"}
+		}
+		r := core.HookRange{Mode: core.RangeAll}
+		if t.Offset > 0 || t.Limit > 0 {
+			a := max(int(t.Offset), 1)
+			b := 0
+			if t.Limit > 0 {
+				b = a + int(t.Limit) - 1
+			}
+			r = core.HookRange{Mode: core.RangeLines, A: a, B: b}
+		}
+		req.Selects = []core.HookSelect{{File: f, Range: r, Tool: "Read"}}
+	case "Edit":
+		var t struct {
+			File       string `json:"file_path"`
+			Old        string `json:"old_string"`
+			New        string `json:"new_string"`
+			ReplaceAll bool   `json:"replace_all"`
+		}
+		if json.Unmarshal(in.Input, &t) != nil {
+			return req, []string{"Edit の入力が読めない"}
+		}
+		f, ok := rel(t.File)
+		if !ok {
+			return req, []string{t.File + " は作業場の外なので記録しない"}
+		}
+		e := &core.HookEdit{File: f, OldString: t.Old, NewString: t.New, ReplaceAll: t.ReplaceAll}
+		var resp struct {
+			Original *string `json:"originalFile"`
+		}
+		if json.Unmarshal(in.Response, &resp) == nil {
+			e.Original = resp.Original
+		}
+		req.Edit = e
+	case "Bash":
+		var t struct {
+			Command string `json:"command"`
+		}
+		if json.Unmarshal(in.Input, &t) != nil {
+			return req, []string{"Bash の入力が読めない"}
+		}
+		req.ObserveAll = true // whatever the command was, it may have changed the files
+		if r, ok := parseBashRead(t.Command); ok {
+			f, ok := rel(r.File)
+			if !ok {
+				return req, []string{r.File + " は作業場の外なので記録しない"}
+			}
+			if !r.Numbers {
+				req.Selects = []core.HookSelect{{File: f, Range: r.Range, Tool: "Bash"}}
+			} else {
+				req.Selects, notes = grepSelects(numberedLines(responseText(in.Response), f), "Bash", func(p string) (string, bool) { return p, true })
+			}
+		}
+	case "Grep":
+		var t struct {
+			Path string `json:"path"`
+			Mode string `json:"output_mode"`
+		}
+		if json.Unmarshal(in.Input, &t) != nil {
+			return req, []string{"Grep の入力が読めない"}
+		}
+		if t.Mode != "content" {
+			return req, nil // only the files or the counts were shown: no lines to record
+		}
+		// With one file as the path the lines have no file name.
+		single := ""
+		if p, ok := rel(t.Path); ok {
+			if st, err := os.Stat(filepath.Join(root, filepath.FromSlash(p))); err == nil && st.Mode().IsRegular() {
+				single = p
+			}
+		}
+		req.Selects, notes = grepSelects(numberedLines(responseText(in.Response), single), "Grep", rel)
+	}
+	return req, notes
+}
+
+// grepSelects makes a select of each run of numbered lines, by file.
+func grepSelects(byFile map[string][]int, tool string, rel func(string) (string, bool)) ([]core.HookSelect, []string) {
+	var out []core.HookSelect
+	var notes []string
+	names := make([]string, 0, len(byFile))
+	for n := range byFile {
+		names = append(names, n)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		f, ok := rel(name)
+		if !ok {
+			notes = append(notes, name+" は作業場の外なので記録しない")
+			continue
+		}
+		for _, r := range runsOf(byFile[name]) {
+			if len(out) >= maxSelects {
+				return out, append(notes, fmt.Sprintf("一度に記録するのは %d 件まで。残りは記録しない", maxSelects))
+			}
+			out = append(out, core.HookSelect{File: f, Range: core.HookRange{Mode: core.RangeLines, A: r[0], B: r[1]}, Tool: tool})
+		}
+	}
+	return out, notes
+}
+
+// responseText is the text of a tool's answer: the answer itself when it is a string, or the first of the fields that hold
+// the output of a tool (content, stdout, output).
+func responseText(raw json.RawMessage) string {
+	var s string
+	if json.Unmarshal(raw, &s) == nil {
+		return s
+	}
+	var m map[string]json.RawMessage
+	if json.Unmarshal(raw, &m) != nil {
+		return ""
+	}
+	for _, k := range []string{"content", "stdout", "output"} {
+		if json.Unmarshal(m[k], &s) == nil && s != "" {
+			return s
+		}
+	}
+	return ""
+}
+
+// toRel turns the path of a tool into one relative to the workspace. A relative path is relative to where the agent was (cwd), and
+// without a cwd to the workspace. A path outside the workspace gives false.
+func toRel(root, cwd, p string) (string, bool) {
+	if strings.TrimSpace(p) == "" {
+		return "", false
+	}
+	if !filepath.IsAbs(p) {
+		base := cwd
+		if base == "" {
+			base = root
+		}
+		p = filepath.Join(base, p)
+	}
+	r, err := filepath.Rel(realPath(root), realPath(p))
+	if err != nil || r == ".." || strings.HasPrefix(r, ".."+string(filepath.Separator)) || r == "." {
+		return "", false
+	}
+	return filepath.ToSlash(r), true
+}
+
+// realPath follows symbolic links as far as the path exists (a path may not exist yet, or any more).
+func realPath(p string) string {
+	if r, err := filepath.EvalSymlinks(p); err == nil {
+		return r
+	}
+	if dir := filepath.Dir(p); dir != p {
+		return filepath.Join(realPath(dir), filepath.Base(p))
+	}
+	return p
+}

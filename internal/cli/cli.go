@@ -10,8 +10,10 @@ import (
 	"runtime/debug"
 
 	"github.com/amisonnet8/srwr/internal/core"
+	"github.com/amisonnet8/srwr/internal/hook"
 	"github.com/amisonnet8/srwr/internal/mcp"
 	"github.com/amisonnet8/srwr/internal/session"
+	"github.com/amisonnet8/srwr/internal/tape"
 	"github.com/amisonnet8/srwr/internal/viewserver"
 )
 
@@ -19,7 +21,7 @@ const usage = `srwr: AI に select / replace の2コマンドだけでファイ�
 
 使い方:
   srwr mcp [--root <作業場>]     MCP サーバー（select / replace）。AI のエージェントが起動する
-  srwr hook                      Claude Code の hook の記録
+  srwr hook [--root <作業場>]    Claude Code の hook の記録（標準入力の JSON を読む）
   srwr view-server               表示サーバー（エディタが起動する）
   srwr view [テープ] [--live]    Vim で再生する（--root <作業場>）
   srwr init                      作業場を srwr 用に準備する
@@ -27,11 +29,11 @@ const usage = `srwr: AI に select / replace の2コマンドだけでファイ�
   srwr --version                 バージョン
   srwr --help                    この説明
 
-まだ使えるのは mcp・view-server・view だけです。
+まだ使えるのは mcp・hook・view-server・view だけです。
 `
 
 // notYet are the subcommands that exist in docs/reference/cli.md and are made in later stages.
-var notYet = map[string]bool{"hook": true, "init": true, "tapes": true}
+var notYet = map[string]bool{"init": true, "tapes": true}
 
 // Run runs srwr with the arguments (without the program name) and returns the exit code.
 func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
@@ -48,6 +50,8 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		return 0
 	case cmd == "mcp":
 		return runMCP(args[1:], stdin, stdout, stderr)
+	case cmd == "hook":
+		return runHook(args[1:], stdin, stderr)
 	case cmd == "view-server":
 		return runViewServer(args[1:], stdin, stdout, stderr)
 	case cmd == "view":
@@ -121,6 +125,40 @@ func runMCP(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if err := server.Serve(stdin, stdout); err != nil {
 		_, _ = fmt.Fprintf(stderr, "srwr mcp: %v\n", err)
 		return 1
+	}
+	return 0
+}
+
+// runHook records what Claude Code tells a hook. It never gets in the agent's way: whatever goes wrong it only says so on the
+// standard error output and exits with 0 (an exit code of 2 would stop the agent's tool call). A wrong command line is the
+// one thing that exits with 1, which the agent sees as a failed hook and goes on.
+func runHook(args []string, stdin io.Reader, stderr io.Writer) int {
+	fs := flag.NewFlagSet("srwr hook", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	def := os.Getenv("CLAUDE_PROJECT_DIR")
+	if def == "" {
+		def = "."
+	}
+	root := fs.String("root", def, "作業場のディレクトリ（省略時は CLAUDE_PROJECT_DIR、なければカレントディレクトリ）")
+	if err := fs.Parse(args); err != nil || fs.NArg() > 0 {
+		return 1
+	}
+	if info, err := os.Stat(*root); err != nil || !info.IsDir() { //nolint:gosec // the workspace the user (or Claude Code) named
+		_, _ = fmt.Fprintf(stderr, "srwr hook: 作業場 %q がディレクトリとして開けないので記録しない\n", *root)
+		return 0
+	}
+	ws, err := session.Open(*root, session.Options{Version: Version()})
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, "srwr hook: %v\n", err)
+		return 0
+	}
+	ws.SetAuthor(tape.Author{Kind: "ai", Name: "claude"})
+	notes, err := hook.Run(stdin, &core.Core{WS: ws})
+	for _, n := range notes {
+		_, _ = fmt.Fprintf(stderr, "srwr hook: %s\n", n)
+	}
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, "srwr hook: %v\n", err)
 	}
 	return 0
 }

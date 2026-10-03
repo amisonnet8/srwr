@@ -54,7 +54,7 @@
 {"v":1,"seq":2,"ts":"…","type":"select","file":"cmd/app/main.go","startLine":12,"endLine":14,"why":"main関数に修正が必要か確認中","selection":"sel_7K3M9QX2F4HD8R1WTB"}
 ```
 
-hook が記録した `select`（Read など）は、`why` が `null`。`source`（`mcp` または `hook`）と、hook のときの元のツール名 `tool` を持つ。`source` のない古いテープは `mcp` として読む。
+hook が記録した `select`（Read など）は、`why` が `null`。`source`（`mcp` または `hook`）と、hook のときの元のツール名 `tool`（`Read`・`Bash`・`Grep`・`Edit`）を持つ。範囲トークンは持たず、`selection` も `null`。`source` のない古いテープは `mcp` として読む。
 
 ### replace
 
@@ -66,6 +66,7 @@ hook が記録した `select`（Read など）は、`why` が `null`。`source`�
 - `startLine`・`endLine` は、補正後の実際の範囲
 - `oldText`・`newText` は、範囲の行を `\n` でつないだもの（末尾の改行は含まない）。削除は `newEndLine = newStartLine - 1` で、`newText` は空。空行1つは `newEndLine = newStartLine` で `newText` も空なので、行の数は `newStartLine`・`newEndLine` から読む
 - 範囲トークンの中の `seq` は、そのトークンを発行したイベントの `seq`
+- hook が記録した `replace`（Edit）は、`from`・`selection`・`why` が `null` で、`source` が `hook`、`tool` が `Edit`。範囲は置換位置を含む行全体
 
 ### external
 

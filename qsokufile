@@ -40,6 +40,10 @@ ui-live: (cd //; qsoku bin && { [ "$1" = --watch ] || qsoku ext-build; } && go r
 # `qsoku ui-accept ng <note>` (the baseline stays).
 ui-accept: (cd //; go run ./tools/ui-check accept "$@")
 
+# R7: a workspace for Claude Code to work in (two bugs, srwr mcp and srwr hook registered, the lenient mode), opened in VSCode.
+# After the work, shows what was recorded and plays the tape in Vim. For a person to run in their terminal.
+hook-try: (cd //; qsoku bin && go run ./tools/ui-check hook-try)
+
 # Opens the fixed workspace in a real VSCode with the extension installed, for a person to look at (.claude/rules/working-with-human.md).
 # qsoku ui-open <vscode|vim> <why-basic|external|no-why|live>
 ui-open: (cd //; qsoku bin && { [ "$1" != vscode ] || qsoku ext-build; } && go run ./tools/ui-check open "$@")

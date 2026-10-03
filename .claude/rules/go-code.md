@@ -26,6 +26,15 @@
 - サーバーからの通知（ライブ）を書く goroutine は、接続が終わるときに必ず止めて待つ。通知は、その要求への返事を書いたあとに始める
   - 「返事のあとに始める」は、結果に `After()` を持たせて `jsonrpc.Serve` に任せる（`jsonrpc.Afterward`）。ハンドラーの中で始めると、返事の組み立てが長いときに通知が先に出る。**テスト**は、長いテープ（2万コマ）で返事の組み立てを遅くし、書き込みを続けながら開始する。短いテープだと、壊しても落ちない
 
+## hook（`srwr hook`）
+
+- **AI の作業を止めない。** 失敗しても標準エラー出力に出して**終了コード 0**。終了コード 2 は Claude Code が道具の実行を止める。コマンドラインの誤りだけが 1（止めない失敗）
+- 記録は `internal/core` の `Hook` に集める（`mcp` と同じ `Workspace.Do` の中。ロック・セッション・テープの読み足しが同じ）。`internal/hook` は JSON と Bash の読み取りを読んで `core.HookRequest` を作るだけ
+- パスは `toRel` で作業場からの相対にし、`core.cleanPath`・`readTarget` を通す（外を指すパス・リンクは記録しない）。**R8（記録しないファイル）は、`core.readForHook` の1か所に判定を差し込む**
+- **Edit は、ファイルを先に書いた後で呼ばれる（`PostToolUse`）。** 編集前の内容は、テープが持つもの、なければ `tool_response.originalFile`。`old_string` → `new_string` を当てて今のファイルと一致しなければ、`replace` を作らず `external` にする
+- Bash の読み取りは、**先頭のコマンドだけ**を見る。`$( )`・書き込みのリダイレクト・`sed -i`・`tail -f` などは読み取りとして扱わない。Bash のあとは、読み取りでなくても `ObserveAll`
+- 実際の Claude Code の形：Read・Edit・Bash の `tool_response` は過去の記録（`~/.claude/projects/*.jsonl` の `toolUseResult`）で確かめた。**Grep の形は確かめていない**ので、複数の書式を受け、実機で確かめる
+
 ## テープを読む・行を数える
 
 - **`json.Unmarshal` は `null` をエラーにせず、ゼロ値を入れる。** `"why":null` が空文字列として読めてしまうので、`internal/tape` の `has()` で欠落として扱う

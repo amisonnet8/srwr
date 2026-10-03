@@ -120,8 +120,8 @@ srwr は、前のリポジトリで一度作った（段階 P0〜P5 と、UI の
 
 参照：`docs/reference/cli.md`（`srwr hook`）・`docs/reference/tape.md`（`source`・`tool`）
 
-- [ ] `srwr hook`：Read・Bash・Grep・Edit・Write の記録。`mcp` と同じセッションに書く
-- [ ] 調べる過程のコマが多いときの見せ方を変える必要が出たら【UIゲート】（`docs/design/limitations.md` の未定）
+- [x] `srwr hook`：Read・Bash・Grep・Edit・Write の記録。`mcp` と同じセッションに書く
+- [x] 調べる過程のコマが多いときの見せ方を変える必要が出たら【UIゲート】（`docs/design/limitations.md` の未定）
 
 **完了条件**：一時的な作業場で Claude Code に作業させ、調べる過程と `select` / `replace` が1本のテープに並ぶ。`qsoku ui-check` が通る。
 **人間の確認**：`qsoku ui-check` の確認ページ（違いがあるときだけ）。

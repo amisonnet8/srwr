@@ -37,6 +37,12 @@ func run(args []string, out io.Writer) error {
 				return errors.New("usage: ui-check live [--watch <vscode|vim>]")
 			}
 			return doRun(true, out)
+		case "hook-try":
+			root, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+			return runHookTry(root, out)
 		case "accept":
 			root, err := os.Getwd()
 			if err != nil {

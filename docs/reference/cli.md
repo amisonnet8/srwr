@@ -53,7 +53,26 @@ AI に使わせる MCP サーバー。AI エージェント（MCP クライア�
 
 ## srwr hook
 
-Claude Code の hook から呼ばれ、AI が持つ既存のツールの操作を、同じテープに記録する。調べる過程（どこを読んだか）も、テープに載せるため。標準入力から hook の JSON を読む。
+```
+srwr hook [--root <作業場>]
+```
+
+Claude Code の hook から呼ばれ、AI が持つ既存のツールの操作を、同じテープに記録する。調べる過程（どこを読んだか）も、テープに載せるため。標準入力から hook の JSON を読む。動かした例は [hook.md](../examples/hook.md)。
+
+- 作業場は `--root`。省略すると環境変数 `CLAUDE_PROJECT_DIR`、それも無ければカレントディレクトリ
+- 記録するのは `PostToolUse`（道具を使い終えたあと）の JSON だけ。使う項目は `hook_event_name`・`tool_name`・`tool_input`・`tool_response`・`cwd`。相対パスは `cwd` からの相対として読み、作業場の外のパスは記録しない
+- **AI の作業を止めない。** 読めない JSON、無いファイル、扱えないファイル（バイナリ・CRLF）があっても、標準エラー出力に理由を出して終了コード 0 で終わる（終了コード 2 は Claude Code が道具の実行を止めるため、使わない）
+- 登録は `.claude/settings.json`（`srwr init` が書く）：
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      { "matcher": "Read|Bash|Grep|Edit", "hooks": [{ "type": "command", "command": "srwr hook" }] }
+    ]
+  }
+}
+```
 
 | Claude Code の操作 | テープへの記録 |
 |---|---|
@@ -61,11 +80,13 @@ Claude Code の hook から呼ばれ、AI が持つ既存のツールの操作�
 | Bash の読み取り（`cat`・`nl`・`head`・`tail`・`sed -n 'A,Bp'`・`grep -n`） | `select` |
 | Grep（内容モード） | `select`（連続する行は1つにまとめる） |
 | Edit | `replace`（範囲は置換位置を含む行全体。`replace_all` は一致ごとに1件） |
-| Write・MultiEdit・NotebookEdit | 記録しない（次に srwr が触れたとき、`external` として見える。緩いモードでは `replace` として記録） |
+| Write・MultiEdit・NotebookEdit | 記録しない（次に srwr が触れたとき、`external` として見える） |
 
-- Bash のあとは、テープが内容を持つ全ファイルを読み直し、違えば `external` を記録する
+- Bash のあとは（読み取りでなくても）、テープが内容を持つ全ファイルを読み直し、違えば `external`（`detectedBy` は `hook`）を記録する
+- Edit は、編集前の内容（テープが持つもの。無ければ `tool_response.originalFile`）に `old_string` → `new_string` を当てて、今のファイルと一致すれば `replace`。一致しなければ（ほかの変更も混ざっているなど）`external` として記録する
+- 一度の呼び出しで記録する `select` は100件まで（広い範囲の検索で、テープが膨らまないように）
 - パイプは先頭のコマンドだけを見る。`$( )`・書き込みのリダイレクト・`sed -i`・`tail -f`・`-n` なしの `grep` は記録しない
-- hook が記録したコマは、`why` が `null` で表示される（`why` の行が出ない）
+- hook が記録したコマは、`why` が `null` で表示される（`why` の行が出ない）。範囲トークンは持たない（`selection`・`from` は `null`）。`srwr mcp` が先に発行したトークンは、hook の `replace` のあとも、行番号が補正されて使える
 
 ## srwr view-server
 
@@ -100,7 +121,7 @@ srwr view-server --root <作業場>
 | モード | 内容 |
 |---|---|
 | **厳格モード**（既定） | Claude Code の Edit・Write・MultiEdit・NotebookEdit を禁止する。AI がファイルを変える手段は `select` / `replace` だけになり、テープには必ず `why` が残る |
-| **緩いモード**（`srwr init --lenient`） | Edit・Write を禁止しない。hook が `replace`（`why` は `null`）として記録する |
+| **緩いモード**（`srwr init --lenient`） | Edit・Write を禁止しない。hook が Edit を `replace`（`why` は `null`）として記録する。Write は記録せず、`external` として見える |
 
 厳格モードでも塞げないものがある。Bash 経由の編集（`sed -i`、リダイレクトなど）は、`external` として検知して見せる。
 

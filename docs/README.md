@@ -7,7 +7,7 @@ srwr は、AI エージェントに `select` / `replace` の2コマンドだけ�
 | 読者 | 読むもの |
 |---|---|
 | srwr を**使う人** | [reference/cli.md](reference/cli.md)（導入・コマンド）、[reference/settings.md](reference/settings.md)（設定の一覧）、[reference/mcp.md](reference/mcp.md)（AI が使うツール）、[reference/vscode.md](reference/vscode.md)・[reference/vim.md](reference/vim.md)（見る） |
-| srwr の**テープや表示サーバーとつなぐ人**（他のエディタへの対応、テープを読む道具） | [reference/tape.md](reference/tape.md)、[reference/protocol.md](reference/protocol.md)、動かした例 [examples/protocol-session.md](examples/protocol-session.md) |
+| srwr の**テープや表示サーバーとつなぐ人**（他のエディタへの対応、テープを読む道具） | [reference/tape.md](reference/tape.md)、[reference/protocol.md](reference/protocol.md)、動かした例 [examples/protocol-session.md](examples/protocol-session.md)、hook の例 [examples/hook.md](examples/hook.md) |
 | srwr の**作りを知りたい人・開発に加わる人** | [design/overview.md](design/overview.md)、[design/decisions.md](design/decisions.md)、[design/limitations.md](design/limitations.md) |
 
 ## 構成

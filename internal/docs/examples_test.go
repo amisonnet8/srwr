@@ -2,6 +2,7 @@ package docs
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -9,8 +10,10 @@ import (
 	"testing"
 
 	"github.com/amisonnet8/srwr/internal/core"
+	"github.com/amisonnet8/srwr/internal/hook"
 	"github.com/amisonnet8/srwr/internal/mcp"
 	"github.com/amisonnet8/srwr/internal/session"
+	"github.com/amisonnet8/srwr/internal/tape"
 	"github.com/amisonnet8/srwr/internal/viewserver"
 )
 
@@ -183,5 +186,100 @@ func TestProtocolSessionExample(t *testing.T) {
 	}
 	if checked < 8 {
 		t.Errorf("only %d responses were checked", checked)
+	}
+}
+
+// tapeTS hides the time of an event.
+var tapeTS = regexp.MustCompile(`"ts":"[^"]*"`)
+
+// TestHookExample runs the hook calls in docs/examples/hook.md against the real srwr hook, in one workspace, and checks that the
+// tape they leave is the one the document shows. An Edit has already changed the file when the hook runs, so the test makes
+// the change first, as Claude Code does.
+func TestHookExample(t *testing.T) {
+	path := filepath.Join("..", "..", "docs", "examples", "hook.md")
+	goBlocks := codeBlocks(t, path, "go")
+	hookBlocks := codeBlocks(t, path, "hook")
+	tapeBlocks := codeBlocks(t, path, "jsonl")
+	if len(goBlocks) != 2 || len(hookBlocks) != 1 || len(tapeBlocks) != 1 {
+		t.Fatalf("found %d go blocks, %d hook blocks and %d jsonl blocks", len(goBlocks), len(hookBlocks), len(tapeBlocks))
+	}
+	root := t.TempDir()
+	if real, err := filepath.EvalSymlinks(root); err == nil {
+		root = real
+	}
+	file := filepath.Join(root, "cmd", "main.go")
+	if err := os.MkdirAll(filepath.Dir(file), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(file, []byte(strings.Join(goBlocks[0], "\n")+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	ws, err := session.Open(root, session.Options{Version: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ws.SetAuthor(tape.Author{Kind: "ai", Name: "claude"})
+	c := &core.Core{WS: ws}
+	calls := 0
+	for _, line := range hookBlocks[0] {
+		if !strings.HasPrefix(line, "→ ") {
+			continue
+		}
+		in := strings.ReplaceAll(strings.TrimPrefix(line, "→ "), "/work", filepath.ToSlash(root))
+		var msg struct {
+			Tool  string `json:"tool_name"`
+			Input struct {
+				Old string `json:"old_string"`
+				New string `json:"new_string"`
+			} `json:"tool_input"`
+		}
+		if err := json.Unmarshal([]byte(in), &msg); err != nil {
+			t.Fatal(err)
+		}
+		if msg.Tool == "Edit" {
+			b, err := os.ReadFile(file) //nolint:gosec // a path in a temporary directory
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(file, []byte(strings.Replace(string(b), msg.Input.Old, msg.Input.New, 1)), 0o600); err != nil { //nolint:gosec // a path in a temporary directory
+				t.Fatal(err)
+			}
+		}
+		if _, err := hook.Run(strings.NewReader(in), c); err != nil {
+			t.Fatal(err)
+		}
+		calls++
+	}
+	if calls != 3 {
+		t.Fatalf("the document shows %d calls", calls)
+	}
+
+	active, err := os.ReadFile(filepath.Join(root, ".srwr", "active")) //nolint:gosec // a path in a temporary directory
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(filepath.Join(root, ".srwr", "tapes", tape.FileName(strings.TrimSpace(string(active))))) //nolint:gosec // a path in a temporary directory
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for i, l := range strings.Split(strings.TrimSpace(string(raw)), "\n") {
+		if i > 0 { // the header holds the time and the session of this run
+			got = append(got, tapeTS.ReplaceAllString(l, `"ts":"TS"`))
+		}
+	}
+	var want []string
+	for _, l := range tapeBlocks[0] {
+		want = append(want, tapeTS.ReplaceAllString(l, `"ts":"TS"`))
+	}
+	if strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Errorf("the tape differs from the document.\nthe tape:\n%s\nthe document:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+	b, err := os.ReadFile(file) //nolint:gosec // a path in a temporary directory
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := strings.Join(goBlocks[1], "\n") + "\n"; string(b) != want {
+		t.Errorf("file after the example:\n%s\nthe document says:\n%s", b, want)
 	}
 }

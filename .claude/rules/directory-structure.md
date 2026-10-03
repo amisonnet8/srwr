@@ -28,7 +28,7 @@
 │   ├── mcp/                ← MCP サーバー（R2）
 │   ├── timeline/           ← コマの列・文書の状態・差分のコマ・最後の差分（R3）
 │   ├── viewserver/         ← 表示サーバー（メソッド、ライブの見張り）（R3）
-│   ├── hook/               ← Claude Code の hook の記録（R7）
+│   ├── hook/               ← `srwr hook`：hook の JSON と Bash の読み取り・Grep の出力を読んで `core.HookRequest` を作る（R7）
 │   ├── ignore/             ← 記録しないファイル（R8）
 │   ├── uicheck/            ← 画面を比べる道具（端末の画面・承認した画像 SVG を同じ形にし、セルごとに比べる）（R5）
 │   └── cli/                ← サブコマンド（R2 から順に）
@@ -52,7 +52,7 @@
 ├── tools/
 │   ├── ui-check/           ← UI の確認の自動化：`run`（qsoku ui-check）・`live`・`accept`・`open`、自動の検証の項目の表（checks.go）、長い理由のテープ（maketape.go）、確認ページ（page.go）（R4〜R6）
 │   └── vim-oldest.sh       ← 最も古い Vim（9.0.0784）をビルドして `vim-test` を動かす（R5）
-├── docs/                   ← 外部向けの文書（正本）。reference/・design/・examples/
+├── docs/                   ← 外部向けの文書（正本）。reference/・design/・examples/（`select-replace.md`・`protocol-session.md`・`hook.md`。`internal/docs` が本物と照合する）
 ├── dev/                    ← 開発のうちうち。roadmap.md、review/<段階>/（UIゲートの資料）
 ├── handoff/                ← 引き継ぎ資料。**git に入れない（.gitignore）。読むだけ。R12 で消す**
 ├── .vscode/launch.json     ← 拡張を F5 で起動するためだけに置く（R4）
@@ -84,7 +84,7 @@
 - `vim/embed.go` は Go のパッケージ（`go:embed` は親ディレクトリを参照できないので、埋め込む側を `vim/` に置く）。`internal/cli` の `view` がこれを使う
 
 ### 確認の自動化
-- 画面の取得・比較・確認ページの生成は `tools/ui-check/`（Go で書く。シェルスクリプトは最小限）。`qsoku ui-check`・`ui-live`・`ui-open` から呼ぶ。今あるのは `run`（`qsoku ui-check`）・`live`（`ui-live`）・`accept`（`ui-accept`）・`open vscode|vim`（`ui-open`。作業場づくり、VSCode／Vim を開く、ライブの追記）と `vim-baseline`（承認した Vim の画像から基準を作る。一度だけ）。画面の取得は、Vim が `internal/uicheck` の `CaptureVim`（`vim/screen_test.go` も同じ部品を使う）、VSCode が `extension/test/capture.ts`（`node --require ./out/test/setup.js out/test/capture.js <出力先> [<追加の作業場>]`）。比較・描画は `internal/uicheck`（`CompareBaseline`・`CompareShots`・`Grid.SVG`）
+- 画面の取得・比較・確認ページの生成は `tools/ui-check/`（Go で書く。シェルスクリプトは最小限）。`qsoku ui-check`・`ui-live`・`ui-open` から呼ぶ。今あるのは `run`（`qsoku ui-check`）・`live`（`ui-live`）・`accept`（`ui-accept`）・`hook-try`（`qsoku hook-try`。R7 の確認）・`open vscode|vim`（`ui-open`。作業場づくり、VSCode／Vim を開く、ライブの追記）と `vim-baseline`（承認した Vim の画像から基準を作る。一度だけ）。画面の取得は、Vim が `internal/uicheck` の `CaptureVim`（`vim/screen_test.go` も同じ部品を使う）、VSCode が `extension/test/capture.ts`（`node --require ./out/test/setup.js out/test/capture.js <出力先> [<追加の作業場>]`）。比較・描画は `internal/uicheck`（`CompareBaseline`・`CompareShots`・`Grid.SVG`）
 - 基準（前回 OK だった画面の記録）はリポジトリに入れる。結果（`ui-check-result/`）は入れない
 
 ## 各ファイル・ディレクトリの補足

@@ -14,7 +14,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"slices"
 	"strings"
 	"time"
 )
@@ -113,11 +112,10 @@ func openVSCode(root, name string, out io.Writer) error {
 	if _, err := exec.LookPath("code"); err != nil {
 		return fmt.Errorf("the code command was not found. Open %s in VSCode by hand and install %s", workspace, vsix)
 	}
-	install, open := vscodeArgs(base, vsix, workspace)
-	if err := command(root, out, "code", install...); err != nil {
+	if err := command(root, out, "code", "--install-extension", vsix, "--force"); err != nil {
 		return fmt.Errorf("installing the extension: %w", err)
 	}
-	if err := command(root, out, "code", open...); err != nil {
+	if err := command(root, out, "code", "-n", workspace); err != nil {
 		return fmt.Errorf("opening VSCode: %w", err)
 	}
 	guide(out, name, workspace)
@@ -131,16 +129,6 @@ func openVSCode(root, name string, out io.Writer) error {
 	return feedLive(workspace, fixture, wait, 3*time.Second, out)
 }
 
-// vscodeArgs are the arguments of `code` that install the extension and open the workspace. VSCode gets a user data directory and
-// an extensions directory of its own, so it is a new instance with no language pack: its screen is English, whatever the display
-// language of the person's VSCode is (a --locale given to a VSCode that is already running is ignored).
-func vscodeArgs(base, vsix, workspace string) (install, open []string) {
-	own := []string{"--user-data-dir", filepath.Join(base, "vscode-user"), "--extensions-dir", filepath.Join(base, "vscode-extensions")}
-	install = append(slices.Clone(own), "--install-extension", vsix, "--force")
-	open = append(slices.Clone(own), "-n", "--locale", "en", workspace)
-	return install, open
-}
-
 func command(dir string, out io.Writer, name string, args ...string) error {
 	cmd := exec.Command(name, args...) //nolint:gosec // fixed commands: npx, code
 	cmd.Dir = dir
@@ -152,12 +140,12 @@ func command(dir string, out io.Writer, name string, args ...string) error {
 func guide(out io.Writer, name, workspace string) {
 	_, _ = fmt.Fprintf(out, "\n作業場：%s\n", workspace)
 	if name == "live" {
-		_, _ = fmt.Fprintln(out, "【ライブ】開いた VSCode で、左端のカセット →「Start live view」（VSCode の表示は英語）。")
+		_, _ = fmt.Fprintln(out, "【ライブ】開いた VSCode で、左端のカセット →「Start live view」（VSCode の表示言語が English のとき）。")
 		_, _ = fmt.Fprintln(out, "見るところ：追っている間は「● LIVE」で、ちらつかず、すぐ出る。「Back」を押すと「Back to LIVE (N new)」が橙で出る。")
 		return
 	}
 	t := tapes[name]
-	_, _ = fmt.Fprintf(out, "【%s】開いた VSCode で、左端のカセット →「Open a tape」→「%s」を選ぶ（VSCode の表示は英語）。\n", name, t.Started)
+	_, _ = fmt.Fprintf(out, "【%s】開いた VSCode で、左端のカセット →「Open a tape」→「%s」を選ぶ（VSCode の表示言語が English のとき）。\n", name, t.Started)
 	_, _ = fmt.Fprintf(out, "見るところ：%s。パネル・下のバー・タブ・アイコンが崩れていないか。\n", t.Look)
 	_, _ = fmt.Fprintln(out, "light で見るとき：Ctrl+K Ctrl+T →「Light Modern」。")
 }

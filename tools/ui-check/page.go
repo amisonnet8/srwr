@@ -205,20 +205,27 @@ func lookSteps(r *Report) []string {
 	return steps
 }
 
+// enRunning is the first step of a look at a real VSCode: the extension shows English only when the display language of VSCode is
+// English. `code` here asks the person's own VSCode to open a window (a --locale or a profile of its own is ignored), so the person
+// switches the display language.
+const enRunning = "VSCode の表示言語を英語にする（すでに英語なら飛ばす）。VSCode で Ctrl+Shift+P を押し、「Configure Display Language」と打って Enter、「English (en)」を選び、出てくる「Restart」を押す。見終わったら、同じ手順で「日本語 (ja)」に戻す"
+
 // vscodeSteps are the steps to look at a tape in a real VSCode, written out in full (HTML, an ordered list).
 func vscodeSteps(tape, _ string) string {
 	t := tapes[tape]
 	look := html.EscapeString(lookOf(tape))
 	steps := []string{
+		enRunning,
 		fmt.Sprintf("日本語入力を切り、ターミナルで <code>qsoku ui-open vscode %s</code> と打って Enter を押す。新しい VSCode が開く（数十秒かかることがある）", tape),
-		fmt.Sprintf("開いた VSCode で、左端のカセットのアイコンを押し、「Open a tape」を選ぶ（VSCode の表示は英語）。出てきた一覧から「%s」を選ぶ", html.EscapeString(t.Started)),
+		fmt.Sprintf("開いた VSCode で、左端のカセットのアイコンを押し、「Open a tape」を選ぶ（VSCode の表示言語が English のとき）。出てきた一覧から「%s」を選ぶ", html.EscapeString(t.Started)),
 		"1 コマ目が開く。見る：" + look,
 		"下のバーの「Forward」を押して次のコマへ進み、同じように見る。「Back」で戻れる",
 	}
 	if tape == "live" {
 		steps = []string{
+			enRunning,
 			fmt.Sprintf("日本語入力を切り、ターミナルで <code>qsoku ui-open vscode %s</code> と打って Enter を押す。新しい VSCode が開く", tape),
-			"開いた VSCode で、左端のカセットのアイコンを押し、「Start live view」を押す（VSCode の表示は英語）",
+			"開いた VSCode で、左端のカセットのアイコンを押し、「Start live view」を押す（VSCode の表示言語が English のとき）",
 			"ターミナルに戻り、Enter を押す。3 秒ごとに 1 コマずつ追記される",
 			"見る：" + look,
 		}

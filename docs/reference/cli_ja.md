@@ -31,7 +31,7 @@ go install github.com/amisonnet8/srwr/cmd/srwr@latest
 
 | 見る場所 | 入れるもの |
 |---|---|
-| VSCode | 拡張 srwr-view（[vscode.md](vscode_ja.md)） |
+| VSCode | 拡張 srwr-view（[vscode.md](vscode_ja.md)）。拡張は `srwr` を含まないので、先に `srwr` を入れる（上） |
 | Vim | なし。`srwr view` が、バイナリに埋め込んだ Vim スクリプトで起動する（[vim.md](vim_ja.md)） |
 
 ## 作業場のディレクトリ

@@ -49,7 +49,7 @@ These five are where the design starts.
 
 - **So that it can be viewed in the terminal alone.** srwr is used in a development environment that has an AI agent (Claude Code and the like). A person who runs the agent in a terminal can replay the tape from the same terminal
 - **Vim is the target; Neovim is not.** Neovim is installed only by those who use it, which does not fit the aim of "anyone can view it in a terminal"
-- Environments with an AI agent are new, so **Vim 9.0 or later** is assumed. There are no branches for older Vim
+- Environments with an AI agent are new, so **Vim 9.0.0784 or later** is assumed. There are no branches for older Vim
 - **Users are not asked to install a plugin.** `srwr view` loads the Vim scripts embedded in the binary and starts Vim
 - Syntax highlighting is left to Vim
 

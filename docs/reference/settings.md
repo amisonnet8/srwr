@@ -4,7 +4,7 @@
 
 **Readers**: people who use srwr. A list of what the user can set (and what cannot be set).
 
-srwr has few settings. **There are no settings for the look (colors, widths, labels and so on).** What you set is mostly where the `srwr` binary is, and the language of what srwr shows.
+srwr has few settings. **srwr has no settings for the look (colors, widths, labels and so on).** (In Vim, the colors can still be overridden with highlight groups; see below.) What you set is mostly where the `srwr` binary is, and the language of what srwr shows.
 
 ## 1. Settings for viewing
 
@@ -19,7 +19,7 @@ The editor starts the `srwr` binary to read tapes. If `srwr` is on the PATH, no 
 | `SRWR_PATH` | Environment variable | none | Where `srwr` is, used only while `srwr.path` of VSCode is left at its default (for starting the extension for development) |
 | `SRWR_VIM` | Environment variable | `vim` on the PATH | The Vim that `srwr view` starts |
 
-- `srwr.path` of VSCode is **the only setting the extension has**. When the binary is not found or the versions do not match, it says how to install it, with an "Open Settings" button
+- `srwr.path` of VSCode is **the only setting the extension has**. When the binary is not found, it says how to install it, with an "Open Settings" button; when the versions do not match, it asks you to update one of them
 - In a Vim started by `srwr view`, `g:srwr_path` is set to that very `srwr` automatically
 - Your `vimrc` is read also by `srwr view`. Settings of `g:srwr_…` can go in your `vimrc`
 
@@ -34,13 +34,13 @@ What srwr shows is **English by default**. Japanese is available.
 | VSCode (srwr-view) | Nothing to set for srwr: the extension follows the display language of VSCode. Install the Japanese language pack and VSCode shows the Japanese texts |
 
 - `SRWR_LANG` is Japanese when its value starts with `ja` (`ja`, `ja_JP.UTF-8`); anything else, or nothing set, is English. `LANG` and other variables are not consulted
-- The texts meant for the AI (the MCP tool descriptions and error messages), the notes of the hook, and the error messages of the view server are English only
+- The texts meant for the AI (the MCP tool descriptions and error messages), the notes of the hook, the error messages of the view server, and the "cannot run" notice that the Vim script prints when the Vim is too old (it is shown before the script can look at `SRWR_LANG`) are English only
 
 ### Time
 
 - Times on a tape (`header.startedAt` and the `ts` of every event) are written in **UTC** (`2026-10-03T08:12:10.000Z`). The date and time in the tape ID are UTC too. Tapes written by older versions with an offset such as `+09:00` are read as they are
 - What is shown to a person (`srwr tapes`, the list of Vim, the tape picker of VSCode) is shown in **the time zone of the machine**. To show another zone, set the environment variable `TZ` (for example `TZ=America/Los_Angeles srwr tapes`)
-- `srwr tapes` writes `Oct 03 17:12` in English and `10/03 17:12` in Japanese. The list of Vim and the picker of VSCode write `2026-10-03 17:12` in both languages
+- `srwr tapes` writes `Oct 03 17:12` in English and `10/03 17:12` in Japanese. The list of Vim writes `2026-10-03 17:12` and the picker of VSCode `2026-10-03 17:12:10` (with seconds), in both languages
 
 ### Overriding the colors in Vim
 

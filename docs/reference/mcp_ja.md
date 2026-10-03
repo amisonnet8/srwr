@@ -25,7 +25,7 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **2つの
 // 入力
 { "file": "cmd/app/main.go", "startLine": 12, "endLine": 14, "why": "main関数に修正が必要か確認中" }
 // 出力
-{ "ok": true, "selection": "sel_7K3M9QX2F4HD8R1WTB", "lines": ["func main() {", "…", "}"] }
+{ "ok": true, "selection": "sel_0410R3GZE4KV11C6325D32S7", "lines": ["func main() {", "…", "}"] }
 ```
 
 | 項目 | 意味 |
@@ -46,9 +46,9 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **2つの
 
 ```jsonc
 // 入力
-{ "selection": "sel_7K3M9QX2F4HD8R1WTB", "newText": "func main() {\n    setupSignals()\n    …\n}", "why": "シグナル処理の初期化が漏れていたので追加" }
+{ "selection": "sel_0410R3GZE4KV11C6325D32S7", "newText": "func main() {\n    setupSignals()\n    …\n}", "why": "シグナル処理の初期化が漏れていたので追加" }
 // 出力
-{ "ok": true, "selection": "sel_8M1R4TW6ZC2NQ9HXKD", "startLine": 12, "endLine": 15 }
+{ "ok": true, "selection": "sel_041GR3RZE4KV0BBH2S177Q36", "startLine": 12, "endLine": 15 }
 ```
 
 | 項目 | 意味 |
@@ -83,10 +83,10 @@ MCP の応答では `isError: true` になり、本文は次の JSON。
 | `invalid_selection` | トークンの形式が不正、または書き換えられた。別のテープ（別のセッション）で発行されたものも、これになる。30分空いて新しいセッションになったときも同じ | `select` し直す |
 | `selection_stale` | トークンを発行したあとに、その範囲と重なる編集があった | `select` し直す |
 | `selection_mismatch` | 行番号を補正しても、範囲の内容が `select` したときと違う（srwr の外で変更された疑い） | 内容を確認して `select` し直す |
-| `file_not_found` | 対象のファイルがない | — |
+| `file_not_found` | 対象のファイルがない、または通常のファイルでない（ディレクトリなど） | — |
 | `invalid_range` | 行番号がファイルの範囲外、または作業場の外のパス | 行数を確認して `select` し直す |
 | `ignored_file` | 記録しないファイルに `select`・`replace` した。 | srwr では扱えない。ユーザーに頼む |
-| `invalid_input` | 必須の入力がない、型が違う、`why` が空 | 入力を直す |
+| `invalid_input` | 必須の入力がない、型が違う、`why` が空。`file` が空か NUL を含む、`selection` が空白だけ、`newText` に CR がある | 入力を直す |
 | `unsupported_file` | CRLF やバイナリ | — |
 | `internal_error` | I/O エラーなど | — |
 
@@ -110,7 +110,7 @@ MCP の応答では `isError: true` になり、本文は次の JSON。
 5. 内容の照合（一致しなければ `selection_mismatch`）
 6. **先に実ファイルを書き、そのあとテープに追記する**
 
-検知するファイルをトークンから知るので、復号が先になる。偽のトークンでは、外部変更を記録しない。`select` は、検知 → 範囲の検査（`invalid_range`）→ 記録の順。
+検知するファイルをトークンから知るので、復号が先になる。偽のトークンでは、外部変更を記録しない。`select` は、パス・記録しないファイル・ファイルの種類の検査（`invalid_range`・`ignored_file`・`file_not_found`・`unsupported_file`）→ 検知 → 範囲の検査（`invalid_range`）→ 記録の順。
 
 途中で落ちても、次に srwr が触れたとき、実ファイルとの食い違いが `external` として見える。
 

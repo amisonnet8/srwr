@@ -31,7 +31,7 @@ Choose the tool for viewing as you like.
 
 | Where to view | What to install |
 |---|---|
-| VSCode | The extension srwr-view ([vscode.md](vscode.md)) |
+| VSCode | The extension srwr-view ([vscode.md](vscode.md)). It does not contain `srwr`, so install `srwr` first (above) |
 | Vim | Nothing. `srwr view` starts Vim with the Vim scripts embedded in the binary ([vim.md](vim.md)) |
 
 ## The workspace directory

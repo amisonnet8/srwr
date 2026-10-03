@@ -21,27 +21,27 @@ import (
 const usageEN = `srwr: let an AI edit files with just two commands, select / replace, and record the operations on a tape
 
 Usage:
-  srwr mcp [--root <workspace>]     MCP server (select / replace). Started by the AI agent
-  srwr hook [--root <workspace>]    Record Claude Code hook events (reads JSON on stdin)
-  srwr view-server                  View server (started by the editor)
-  srwr view [tape] [--live]         Replay in Vim (--root <workspace>)
-  srwr init [--lenient]             Set up a workspace for srwr (--lenient: do not forbid Edit and Write)
-  srwr tapes [new|prune|path]       List and tidy tapes (--root <workspace>)
-  srwr --version                    Version
-  srwr --help                       This help
+  srwr mcp [--root <workspace>]          MCP server (select / replace). Started by the AI agent
+  srwr hook [--root <workspace>]         Record Claude Code hook events (reads JSON on stdin)
+  srwr view-server [--root <workspace>]  View server (started by the editor)
+  srwr view [tape] [--live]              Replay in Vim (--root <workspace>)
+  srwr init [--lenient]                  Set up a workspace for srwr (--lenient: do not forbid Edit and Write; --root <workspace>)
+  srwr tapes [new|prune|path]            List and tidy tapes (--root <workspace>)
+  srwr --version                         Version
+  srwr --help                            This help
 `
 
 const usageJA = `srwr: AI に select / replace の2コマンドだけでファイルを編集させ、操作をテープに記録する
 
 使い方:
-  srwr mcp [--root <作業場>]     MCP サーバー（select / replace）。AI のエージェントが起動する
-  srwr hook [--root <作業場>]    Claude Code の hook の記録（標準入力の JSON を読む）
-  srwr view-server               表示サーバー（エディタが起動する）
-  srwr view [テープ] [--live]    Vim で再生する（--root <作業場>）
-  srwr init [--lenient]          作業場を srwr 用に準備する（--lenient：Edit・Write を禁止しない）
-  srwr tapes [new|prune|path]    テープの一覧・整理（--root <作業場>）
-  srwr --version                 バージョン
-  srwr --help                    この説明
+  srwr mcp [--root <作業場>]          MCP サーバー（select / replace）。AI のエージェントが起動する
+  srwr hook [--root <作業場>]         Claude Code の hook の記録（標準入力の JSON を読む）
+  srwr view-server [--root <作業場>]  表示サーバー（エディタが起動する）
+  srwr view [テープ] [--live]         Vim で再生する（--root <作業場>）
+  srwr init [--lenient]               作業場を srwr 用に準備する（--lenient：Edit・Write を禁止しない。--root <作業場>）
+  srwr tapes [new|prune|path]         テープの一覧・整理（--root <作業場>）
+  srwr --version                      バージョン
+  srwr --help                         この説明
 `
 
 // usage is the help text in the language the person asked for.

@@ -25,7 +25,7 @@ Declares the range being looked at, and returns a **selection token** for editin
 // input
 { "file": "cmd/app/main.go", "startLine": 12, "endLine": 14, "why": "Checking whether the main function needs a fix" }
 // output
-{ "ok": true, "selection": "sel_7K3M9QX2F4HD8R1WTB", "lines": ["func main() {", "…", "}"] }
+{ "ok": true, "selection": "sel_0410R3GZE4KV11C6325D32S7", "lines": ["func main() {", "…", "}"] }
 ```
 
 | Item | Meaning |
@@ -46,9 +46,9 @@ Replaces the range with new text. An insertion is a replacement of an empty rang
 
 ```jsonc
 // input
-{ "selection": "sel_7K3M9QX2F4HD8R1WTB", "newText": "func main() {\n    setupSignals()\n    …\n}", "why": "Added the missing initialization of signal handling" }
+{ "selection": "sel_0410R3GZE4KV11C6325D32S7", "newText": "func main() {\n    setupSignals()\n    …\n}", "why": "Added the missing initialization of signal handling" }
 // output
-{ "ok": true, "selection": "sel_8M1R4TW6ZC2NQ9HXKD", "startLine": 12, "endLine": 15 }
+{ "ok": true, "selection": "sel_041GR3RZE4KV0BBH2S177Q36", "startLine": 12, "endLine": 15 }
 ```
 
 | Item | Meaning |
@@ -83,10 +83,10 @@ In the MCP response `isError` is `true`, and the body is the following JSON.
 | `invalid_selection` | The form of the token is wrong, or it was altered. A token issued on another tape (another session) also gives this. So does a new session started after a gap of 30 minutes | Call `select` again |
 | `selection_stale` | An edit that overlaps the range was made after the token was issued | Call `select` again |
 | `selection_mismatch` | Even with the line numbers corrected, the content of the range differs from when `select` was called (it may have been changed outside srwr) | Check the content and call `select` again |
-| `file_not_found` | The target file does not exist | — |
+| `file_not_found` | The target file does not exist, or is not a regular file (a directory, for example) | — |
 | `invalid_range` | The line numbers are outside the file, or the path is outside the workspace | Check the number of lines and call `select` again |
 | `ignored_file` | `select` or `replace` was used on a file that is not recorded | srwr cannot handle it. Ask the user |
-| `invalid_input` | A required input is missing, has the wrong type, or `why` is empty | Fix the input |
+| `invalid_input` | A required input is missing, has the wrong type, or `why` is empty; `file` is empty or has a NUL; `selection` is blank; `newText` has a CR | Fix the input |
 | `unsupported_file` | CRLF or binary | — |
 | `internal_error` | An I/O error and the like | — |
 
@@ -110,7 +110,7 @@ When srwr receives a `replace`, it works in this order.
 5. Check the content (a mismatch gives `selection_mismatch`)
 6. **Write the real file first, then append to the tape**
 
-The file to detect is learned from the token, so decoding comes first. With a forged token, no external change is recorded. For `select`, the order is: detection, then the check of the range (`invalid_range`), then recording.
+The file to detect is learned from the token, so decoding comes first. With a forged token, no external change is recorded. For `select`, the order is: the check of the path, the files that are not recorded and the kind of file (`invalid_range`, `ignored_file`, `file_not_found`, `unsupported_file`), then detection, then the check of the range (`invalid_range`), then recording.
 
 Even if the process dies in between, the next time srwr touches the files, the mismatch with the real file shows up as `external`.
 

@@ -49,7 +49,7 @@
 | `live/stop` | 要求 | `{}` → `{}`。見張りをやめる |
 | `shutdown` | 要求 | `{}` → `{}`。返事を書いたあと、サーバーは終了する |
 
-**`tapeId`**：テープのファイル名から `.tape.jsonl` を除いたもの（例：`20260929-0237-1359`）。`/` や `..` を含むものは `invalid_params`。
+**`tapeId`**：テープのファイル名から `.tape.jsonl` を除いたもの（例：`20260929-0237-1359`）。使える文字は `0-9 A-Z a-z - _ .` だけで、`.` で始まってはいけない。それ以外（`/` など）は `invalid_params`。
 
 **TapeInfo**：`{tapeId, startedAt, updatedAt, ops, files}`。`startedAt` は header の値（header がなければ `""`）、`updatedAt` はテープのファイルの最終更新時刻（UTC の RFC 3339、ミリ秒まで、末尾は `Z`）、`ops` は `select`・`replace`・`external` の数、`files` は触れたファイル（初めて触れた順）。古い版が書いたテープの `startedAt` には `+09:00` のようなオフセットが付いていることがある（同じ瞬間）。クライアントは、これらの時刻をその機械の時間帯で見せる。
 
@@ -103,7 +103,7 @@ Frame のフィールド：
 | `not_initialized` | −32000 | `initialize` の前に要求が来た |
 | `tape_not_found` | −32000 | `tapeId` のテープがない（開いていない・存在しない） |
 | `tape_unreadable` | −32000 | テープを読めない |
-| `invalid_params` | −32602 | 引数の誤り（型、`index` の範囲、不正な `tapeId`） |
+| `invalid_params` | −32602 | 引数の誤り（型、`index` の範囲、不正な `tapeId`、`initialize` に `protocolVersion` がない） |
 | （なし） | −32601 | 知らないメソッド |
 
 ## 互換性

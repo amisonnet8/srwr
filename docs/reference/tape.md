@@ -8,7 +8,7 @@ A **tape** is the series of operations srwr records. It is an append-only JSONL 
 
 ## File name and session
 
-- The file name is `<date and time>-<short ID>.tape.jsonl` (for example `20260929-0237-1359`). The date and time are **UTC**. The name without `.tape.jsonl` is the **tape ID**. The short ID at the end (for example `1795`) is the same as `session` in the `header`
+- The file name is `<date and time>-<short ID>.tape.jsonl` (for example `20260929-0237-1359`). The date and time are **UTC**. The name without `.tape.jsonl` is the **tape ID**. The short ID at the end (for example `1359`) is the same as `session` in the `header`
 - A tape is **made when the first operation is recorded**. If nothing is done, no empty tape is left
 - One tape corresponds to one unit of work (a **session**)
 
@@ -26,7 +26,7 @@ The current session is the one `.srwr/active` (the current tape ID) of the works
 - Append only. Existing lines are never rewritten or deleted
 - `seq` is a sequence number that starts at 1 within the tape and has no gaps (the `header` has none)
 - `ts` is RFC 3339 **in UTC**, with milliseconds and a trailing `Z` (`2026-09-29T02:20:04.123Z`). Tapes written by older versions have an offset such as `+09:00` (the time zone of the machine then); they are read as the same moments, and an old line is never rewritten
-- A field with no value (`why`, `selection`, `from` and so on) is written as `null`, not left out
+- A field with no value (`why`, `selection`, `from` and so on) is written as `null`, not left out. The exceptions are the optional fields `source` and `tool` (left out when empty) and `deleted` (written only when true)
 - One event per line. A last line that does not end with a line break is treated as being in the middle of being written
 - A reader ignores fields it does not know. To avoid breaking old readers, fields may be added, but the meaning of an existing one is not changed
 
@@ -64,7 +64,7 @@ The **whole text** of a file. It is recorded when the file is first touched in t
 ### select
 
 ```json
-{"v":1,"seq":2,"ts":"…","type":"select","file":"cmd/app/main.go","startLine":12,"endLine":14,"why":"Checking whether the main function needs a fix","selection":"sel_7K3M9QX2F4HD8R1WTB"}
+{"v":1,"seq":2,"ts":"…","type":"select","file":"cmd/app/main.go","startLine":12,"endLine":14,"why":"Checking whether the main function needs a fix","selection":"sel_0410R3GZE4KV11C6325D32S7","source":"mcp"}
 ```
 
 A `select` recorded by the hook (Read and the like) has a `why` of `null`. It has `source` (`mcp` or `hook`), and for the hook the name of the original tool, `tool` (`Read`, `Bash`, `Grep`, `Edit`). It has no selection token, and `selection` is `null` too. An old tape without `source` is read as `mcp`.
@@ -72,7 +72,7 @@ A `select` recorded by the hook (Read and the like) has a `why` of `null`. It ha
 ### replace
 
 ```json
-{"v":1,"seq":3,"ts":"…","type":"replace","file":"cmd/app/main.go","from":"sel_7K3M9QX2F4HD8R1WTB","startLine":12,"endLine":14,"oldText":"…","newText":"…","newStartLine":12,"newEndLine":15,"selection":"sel_8M1R4TW6ZC2NQ9HXKD","why":"Added the missing initialization of signal handling","fileShaBefore":"sha256:…","fileShaAfter":"sha256:…"}
+{"v":1,"seq":3,"ts":"…","type":"replace","file":"cmd/app/main.go","from":"sel_0410R3GZE4KV11C6325D32S7","startLine":12,"endLine":14,"oldText":"…","newText":"…","newStartLine":12,"newEndLine":15,"selection":"sel_041GR3RZE4KV0BBH2S177Q36","why":"Added the missing initialization of signal handling","fileShaBefore":"sha256:…","fileShaAfter":"sha256:…","source":"mcp"}
 ```
 
 - `from` is the selection token that was given, and `selection` is the one returned. Following `from` → `selection` shows the **lineage**: which `select` a `replace` came from
@@ -89,14 +89,14 @@ Recorded when a change to a file made outside srwr is detected. The `snapshot` o
 {"v":1,"seq":4,"ts":"…","type":"external","file":"cmd/app/main.go","author":{"kind":"external"},"detectedBy":"select","expectedSha":"sha256:…","actualSha":"sha256:…","text":"package main\n… (the whole text after the change)"}
 ```
 
-- `text`: the **whole text of the file after the change**. It is kept to replay as a diff frame (a side-by-side diff). When the file was gone it is `null`, and `deleted: true` is added
+- `text`: the **whole text of the file after the change**. It is kept to replay as a diff frame (a side-by-side diff). When the file was gone it is `null`, `actualSha` is an empty string, and `deleted: true` is added
 - `detectedBy`: what led to the detection (`select`, `replace`, `hook`)
 - `author.kind` is always `external` (srwr cannot know who changed it)
 - An `external` of the old form without `text` can be read too. Then the `snapshot` right after it is shown as the content after the change
 
 **What can be detected**: an `external` happens only when a file for which **the tape already holds the content (a `snapshot`)** later differs. A file first touched in the session has its content at that time as its first `snapshot`. A change to a file that is never touched cannot be seen.
 
-If a `replace` is made with a selection token issued before an `external`, the content check gives `selection_mismatch`. srwr does not estimate the shift of lines from the content of the external change.
+If a `replace` is made with a selection token issued before an `external`, the token is followed in the usual way (line numbers are corrected only for the edits srwr made itself). If the external change did not change the range or the number of lines above it, the token still works. If it did, the content check gives `selection_mismatch`. srwr does not estimate the shift of lines from the content of the external change.
 
 ## The selection token
 

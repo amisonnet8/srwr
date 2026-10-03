@@ -156,3 +156,25 @@ func renameTape(t *testing.T, root, prefix, newPrefix string) {
 	}
 	t.Fatalf("no tape %s", prefix)
 }
+
+// Every subcommand that takes --root says so in the usage, in both languages (the docs say it; the usage once left two out).
+func TestUsageNamesRootForEverySubcommand(t *testing.T) {
+	for _, lang := range []string{"", "ja"} {
+		t.Setenv("SRWR_LANG", lang)
+		_, out, _ := run([]string{"--help"}, "")
+		for _, cmd := range []string{"srwr mcp", "srwr hook", "srwr view-server", "srwr view ", "srwr init", "srwr tapes"} {
+			found := false
+			for _, line := range strings.Split(out, "\n") {
+				if strings.Contains(line, cmd) {
+					found = true
+					if !strings.Contains(line, "--root") {
+						t.Errorf("SRWR_LANG=%q: the usage line of %q has no --root:\n%s", lang, cmd, line)
+					}
+				}
+			}
+			if !found {
+				t.Errorf("SRWR_LANG=%q: no usage line for %q", lang, cmd)
+			}
+		}
+	}
+}

@@ -1,4 +1,4 @@
-// Package ignore decides which files of a workspace are never put on a tape (docs/reference/cli.md, "記録しないファイル").
+// Package ignore decides which files of a workspace are never put on a tape (docs/reference/cli.md, "Files that are not recorded").
 // The built-in patterns cannot be undone; the .srwrignore of the workspace root adds to them in the syntax of .gitignore.
 package ignore
 

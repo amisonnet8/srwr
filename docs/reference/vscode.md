@@ -12,7 +12,7 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 2. Install the extension srwr-view (the `.vsix`)
 3. Open the workspace in VSCode. From "srwr" at the left edge → "Operations", choose "Open a tape" or "Start live view"
 
-- Where `srwr` is, is the setting `srwr.path` (the default `srwr` is searched for on the PATH). When it is not found or the versions do not match, the extension says how to install it, with an "Open Settings" button
+- Where `srwr` is, is the setting `srwr.path` (the default `srwr` is searched for on the PATH). When it is not found, the extension says how to install it, with an "Open Settings" button. When the versions (`protocolVersion`) do not match, it asks you to update one of them
 - The only setting is `srwr.path`. There are no settings for the look
 - The view server (`srwr view-server`) is started when it is first needed. One per workspace
 - The extension writes neither tapes nor real files. It does not read the key (`.srwr/key`) either
@@ -54,14 +54,14 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 - The heading is shown on the left tab
   - "Before ⚠ Changed outside srwr: main.go"
   - "Before ⚠ Changed after recording (diff from current file): main.go"
-  - For a file that no longer exists: "… (no longer exists)", and "… (deleted)" for a deleted file. The right tab is "After main.go"
+  - For a file that no longer exists: "… (no longer exists)" on the "after recording" heading, and "… (deleted)" on the "outside srwr" heading when the external change deleted it. The right tab is "After main.go"
 - When it goes back to an ordinary frame, the editor on the right is closed. **Tabs do not pile up when you move back and forth**
 - One frame per change. If there is no change, none is shown
 
 ### 4. The operation list (the left panel)
 
 - "srwr" at the left edge → "Operations". The frames are listed **in the order recorded, 1, 2, 3… from the top**. The number is the same as the position in the bottom bar (5/7). There is no indenting by parent and child
-- Each row: `number  kind  file:range`, with the `why` as the description. The color of the dot at the front tells them apart: select = blue, replace = orange, external and final = purple. The kinds are written `select`, `replace`, `external` and `final`
+- Each row: `number  kind  file:range` (`37`, `39-41`; an empty range reads `before 12`), with the `why` as the description. The color of the dot at the front tells them apart: select = blue, replace = orange, external and final = purple. The kinds are written `select`, `replace`, `external` and `final` (in the Japanese UI: `select`, `replace`, `外部変更` and `録画後`)
 - Clicking moves to that frame. The row of the current frame is selected
 - The ☓ at the top right closes the tape (or the live view)
 
@@ -74,14 +74,14 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 ### 6. Live
 
 - **The same screen as replay** (reason line, colors, line numbers, diff frames). Real files are not touched. What is shown is the text the server hands over (`withText`)
-- The frames up to the start are only listed, not shown. Frames appended after the start are shown
+- The frames up to the start are only listed, not shown. Frames appended after the start are shown. `external` frames of the tape appear, but the final diff (`final`) does not: it is a comparison made when a recorded tape is opened
 - **While following the newest**, a new frame is shown at once. The bottom bar shows "● LIVE". It follows even when frames arrive one after another
 - **When you step back to an old frame with the stepping**, the screen does not move and only the number of new frames is counted. The bottom bar shows "Back to LIVE (N new)" (on an orange background). Pressing it moves to the newest and follows again
 - When it moves to another tape, the list is rebuilt and shown from the beginning
 
 ### 7. The tape picker
 
-- "Open a tape" shows the tapes that have one or more operations, newest first (date and time, number of operations, files). Choosing one shows it from the first frame
+- "Open a tape" shows the tapes that have one or more operations, newest first (the start time with seconds in the time zone of the machine, then the number of operations and the files, and the tape file name below). Choosing one shows it from the first frame
 
 ## Commands and settings
 

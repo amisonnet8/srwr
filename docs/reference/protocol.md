@@ -4,7 +4,7 @@
 
 **Readers**: people who want to make srwr's display work in a new editor (IDE). VSCode and Vim replay tapes with this promise alone.
 
-**Reading the tape and building the data needed for stepping is the job of the view server (`srwr view-server`).** The editor side only has to draw the data it receives from the server. **It need not know the format of the tape, and it neither reads nor writes the tape or the real files.** It does not read the key (`.srwr/key)` either.
+**Reading the tape and building the data needed for stepping is the job of the view server (`srwr view-server`).** The editor side only has to draw the data it receives from the server. **It need not know the format of the tape, and it neither reads nor writes the tape or the real files.** It does not read the key (`.srwr/key`) either.
 
 | View server (Go) | Client (editor) |
 |---|---|
@@ -49,7 +49,7 @@ The arguments are a JSON object (`{}` if none).
 | `live/stop` | request | `{}` → `{}`. Stops watching |
 | `shutdown` | request | `{}` → `{}`. The server exits after writing the reply |
 
-**`tapeId`**: the file name of the tape without `.tape.jsonl` (for example `20260929-0237-1359`). One that contains `/` or `..` gives `invalid_params`.
+**`tapeId`**: the file name of the tape without `.tape.jsonl` (for example `20260929-0237-1359`). Only the characters `0-9 A-Z a-z - _ .` are accepted and it must not start with `.`; anything else (such as `/`) gives `invalid_params`.
 
 **TapeInfo**: `{tapeId, startedAt, updatedAt, ops, files}`. `startedAt` is the value of the header (`""` if there is no header), `updatedAt` is the last update time of the tape's file (RFC 3339 in UTC with milliseconds, ending in `Z`), `ops` is the number of `select`, `replace` and `external`, and `files` are the files touched (in the order first touched). `startedAt` of a tape written by an older version may have an offset such as `+09:00`; it is the same moment. A client shows these times in the time zone of the machine.
 
@@ -103,7 +103,7 @@ The fields of a Frame:
 | `not_initialized` | −32000 | A request came before `initialize` |
 | `tape_not_found` | −32000 | There is no tape with that `tapeId` (not open, or does not exist) |
 | `tape_unreadable` | −32000 | The tape cannot be read |
-| `invalid_params` | −32602 | A mistake in the arguments (type, range of `index`, an invalid `tapeId`) |
+| `invalid_params` | −32602 | A mistake in the arguments (type, range of `index`, an invalid `tapeId`, no `protocolVersion` in `initialize`) |
 | (none) | −32601 | An unknown method |
 
 ## Compatibility

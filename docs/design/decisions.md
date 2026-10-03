@@ -72,6 +72,10 @@ It is not a shared daemon. What is shared is the tape itself.
 
 Go uses only the standard library (MCP and the view server use our own JSON-RPC, and live uses polling). The VSCode extension has zero runtime dependencies. Vim relies on no other plugin. Distribution is simple (`go install` is enough, no cgo), and there is no need to worry about the vulnerabilities and licenses of dependencies.
 
+### The VSCode extension does not carry the `srwr` binary
+
+The extension (`.vsix`) is distributed alone, and `srwr` is installed separately (`go install` or GitHub Releases), as [cli.md](../reference/cli.md) says. The reasons: whoever lets an AI use srwr installs `srwr` anyway (`srwr mcp` and `srwr hook` are the binary), and Vim uses the same binary, so there is one way to install it. A binary inside the extension could differ in version from the one the AI runs. And a `.vsix` for each OS and CPU (six of them) is avoided. The cost is two steps for a person who only wants to view a tape; the extension tells them how to install `srwr` when it is not found.
+
 ## UI decisions
 
 The screen specifications are in [vscode.md](../reference/vscode.md) and [vim.md](../reference/vim.md). This part says why they were decided so.
@@ -85,7 +89,7 @@ The screen specifications are in [vscode.md](../reference/vscode.md) and [vim.md
 | **The operation list is flat, numbered from 1** | Indenting by parent and child is hard to read and has no use. The number is the same as the position in the bottom bar |
 | **"Back" and "Forward" and the position are always shown.** The side that cannot be taken is dimmed, not hidden | The position does not move, so the operations are easy to remember |
 | **Live is the same screen as replay.** "● LIVE" while following, "Back to LIVE (N new)" on an old frame | There is no other screen to learn. The screen does not move while an old frame is being read |
-| **There are no settings for the look** (the only setting is where `srwr` is) | The same look can be shared, and combinations of settings need not be checked |
+| **srwr has no settings for the look** (the only setting is where `srwr` is; Vim's highlight groups can still be overridden) | The same look can be shared, and combinations of settings need not be checked |
 | **Real files are not opened. There is no jump display** | The tape is self-contained. What is missing is added to the frames |
 | **The final diff stays as one of the diff frames** | A change to the files after the recording can be checked in the same way |
 

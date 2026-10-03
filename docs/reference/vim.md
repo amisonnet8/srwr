@@ -23,7 +23,7 @@ From the terminal where the AI agent runs, you can replay a tape in Vim as it is
 | `:SrwrNext`, `:SrwrPrev`, `:SrwrClose` | Stepping (forward, back), and closing (the same as "Keys" below) |
 | `:SrwrLatest` | In live, goes back to the newest frame |
 
-The only setting is `g:srwr_path` (where the `srwr` binary is). There are no settings for the look.
+The only setting is `g:srwr_path` (where the `srwr` binary is). srwr has no settings for the look (the colors can be overridden with highlight groups; see below).
 
 ## Language and time
 
@@ -36,6 +36,7 @@ The only setting is `g:srwr_path` (where the `srwr` binary is). There are no set
 - **Vim 9.0.0784 or later**, with `+channel`, `+job`, `+textprop` and `+vim9script`. The feature to show virtual text above a line came in 9.0.0438, and 9.0.0784, which includes the fix of a display bug of it, is the oldest version checked (the tests pass with 9.0.0784 and with the latest Vim). The Vim of Debian 12 (9.0.1378) and Ubuntu 24.04 (9.1) and later satisfy this
 - 'encoding' is utf-8
 - With a Vim that lacks features (`vim-tiny` and the like), it says what is missing at startup and ends
+- When the `srwr` binary is not found, the Vim script says so in red ("srwr binary not found (g:srwr_path = 'srwr'). Install srwr or set g:srwr_path"). When the versions (`protocolVersion`) do not match, it asks you to update srwr (this can happen only when `vim/` is installed as a plugin; the scripts that `srwr view` embeds always match their binary)
 - Neovim is not a target (it may work, but it is not checked)
 
 ## Screen specification
@@ -44,14 +45,14 @@ It shows the same information as VSCode ([vscode.md](vscode.md)), in the same or
 
 ### 1. Starting and the layout of the screen
 - Start with `srwr view [tape]` (see "Getting started" above). Inside Vim, `:SrwrOpen [tape]` and `:SrwrLive`
-- If the tape is left out, a **tape list buffer** (start time, update time, number of events, number of files) is shown, and `<CR>` opens one
+- If the tape is left out, a **tape list buffer** (start time, update time, number of operations, number of files, tape) is shown, and `<CR>` opens one
 - When opened, one tab is used like this
   ```
   ┌──────────────┬──────────────────────────────────────┐
   │ Operations    │ The replay buffer (read-only)         │
-  │ 1 ● select …  │  ◆ Checking whether main needs a fix  │ ← reason line (blue)
-  │ 2 ● select …  │  func main() {                       │ ← range (light blue)
-  │ 3 ● replace … │      …                               │
+  │ ● 1 select …  │  ◆ Checking whether main needs a fix  │ ← reason line (blue)
+  │ ● 2 select …  │  func main() {                       │ ← range (light blue)
+  │ ● 3 replace … │      …                               │
   │ …             │  }                                    │
   ├──────────────┴──────────────────────────────────────┤
   │ srwr  3/12  [[ Back  ]] Forward  main.go:12-14        │ ← status line
@@ -99,7 +100,7 @@ The same as [vscode.md](vscode.md). **select is blue, and what changes a file is
 
 ### 5. The operation list
 - The frames are listed **in the order recorded, 1, 2, 3…** (the number is the same as the position in the status line). There is no indenting by parent and child
-- Each row: `● number kind file:range  why` (the same order as the list of VSCode: dot, number, kind, file name). The color of the dot tells them apart (select = blue, replace = orange, external and final = purple). An external change is `external`, and the final diff is `final`
+- Each row: `● number kind file:range  why` (the range is `37`, `39-41`, or `before 12` for an empty range; the same order as the list of VSCode: dot, number, kind, file name). The color of the dot tells them apart (select = blue, replace = orange, external and final = purple). An external change is `external`, and the final diff is `final`
 - `<CR>` moves to that frame. The row of the current frame is painted
 
 ### 6. The status line and keys
@@ -115,14 +116,14 @@ The same as [vscode.md](vscode.md). **select is blue, and what changes a file is
 
 ### 7. Live (`srwr view --live`, `:SrwrLive`)
 - **The same screen as replay** (reason line, colors, diff frames, operation list). Real files are not touched. What is shown is the text the server hands over (`withText`)
-- The frames up to the start are only listed. "Live view (waiting for the AI's operations)" is shown, and frames appended after the start are shown
+- The frames up to the start are only listed. "Live view (waiting for the AI's operations)" is shown, and frames appended after the start are shown (`external` frames appear; the final diff does not, as in VSCode)
 - **While following the newest**, a new frame is shown at once. The status line shows "● LIVE". It follows even when frames arrive one after another
 - **When you step back to an old frame with `[[`**, the screen does not move and only the number of new frames is counted. The status line shows "L: Back to LIVE (N new)" (on an orange background). `L` moves to the newest and follows again
 - When it moves to another tape, the list is rebuilt and shown from the beginning
 - To close: `q` in the operation list on the left, or `:SrwrClose` from anywhere (it is written in the status line too)
 
 ### 8. The tape list
-- Newest first (by the time the tape started): start time, update time, number of operations, number of files, in the time zone of the machine. `<CR>` opens one. `q` closes it
+- The buffer `srwr://tapes`. Newest first (by the time the tape started), with the columns `Started`, `Updated`, `Ops`, `Files` and `Tape` (the tape ID), the times in the time zone of the machine (`2026-10-03 17:12`). With no tape it says "No tapes (in .srwr/tapes/ of this workspace)". `<CR>` opens one. `q` closes it
 
 ## How it works (for those who build)
 

@@ -8,7 +8,7 @@
 
 ## ファイル名とセッション
 
-- ファイル名は `<日時>-<短いID>.tape.jsonl`（例：`20260929-0237-1359`）。日時は **UTC**。`.tape.jsonl` を除いたものが**テープID**。最後の短いID（例：`1795`）は `header` の `session` と同じ
+- ファイル名は `<日時>-<短いID>.tape.jsonl`（例：`20260929-0237-1359`）。日時は **UTC**。`.tape.jsonl` を除いたものが**テープID**。最後の短いID（例：`1359`）は `header` の `session` と同じ
 - テープは、**最初の操作を記録するときに作る**。何も操作しなければ、空のテープは残らない
 - 1本のテープは、作業のひとまとまり（**セッション**）に当たる
 
@@ -26,7 +26,7 @@
 - 追記のみ。既存の行を書き換えたり消したりしない
 - `seq` はテープ内で1から始まる連番で、欠番がない（`header` は持たない）
 - `ts` は RFC 3339 の **UTC** で、ミリ秒まで、末尾は `Z`（`2026-09-29T02:20:04.123Z`）。古い版が書いたテープには `+09:00` のようなオフセット（そのときの機械の時間帯）が付いている。同じ瞬間として読み、古い行を書き換えることはしない
-- 値のないフィールド（`why`・`selection`・`from` など）は、省略せず `null`
+- 値のないフィールド（`why`・`selection`・`from` など）は、省略せず `null`。例外は、任意の `source`・`tool`（空なら書かない）と `deleted`（真のときだけ書く）
 - 1イベント1行。改行で終わっていない最後の行は、書き込み途中として扱う
 - 読む側は、知らないフィールドを無視する。古い読み手を壊さないため、フィールドは足せるが、既存の意味は変えない
 
@@ -64,7 +64,7 @@
 ### select
 
 ```json
-{"v":1,"seq":2,"ts":"…","type":"select","file":"cmd/app/main.go","startLine":12,"endLine":14,"why":"main関数に修正が必要か確認中","selection":"sel_7K3M9QX2F4HD8R1WTB"}
+{"v":1,"seq":2,"ts":"…","type":"select","file":"cmd/app/main.go","startLine":12,"endLine":14,"why":"main関数に修正が必要か確認中","selection":"sel_0410R3GZE4KV11C6325D32S7","source":"mcp"}
 ```
 
 hook が記録した `select`（Read など）は、`why` が `null`。`source`（`mcp` または `hook`）と、hook のときの元のツール名 `tool`（`Read`・`Bash`・`Grep`・`Edit`）を持つ。範囲トークンは持たず、`selection` も `null`。`source` のない古いテープは `mcp` として読む。
@@ -72,7 +72,7 @@ hook が記録した `select`（Read など）は、`why` が `null`。`source`�
 ### replace
 
 ```json
-{"v":1,"seq":3,"ts":"…","type":"replace","file":"cmd/app/main.go","from":"sel_7K3M9QX2F4HD8R1WTB","startLine":12,"endLine":14,"oldText":"…","newText":"…","newStartLine":12,"newEndLine":15,"selection":"sel_8M1R4TW6ZC2NQ9HXKD","why":"シグナル処理の初期化が漏れていたので追加","fileShaBefore":"sha256:…","fileShaAfter":"sha256:…"}
+{"v":1,"seq":3,"ts":"…","type":"replace","file":"cmd/app/main.go","from":"sel_0410R3GZE4KV11C6325D32S7","startLine":12,"endLine":14,"oldText":"…","newText":"…","newStartLine":12,"newEndLine":15,"selection":"sel_041GR3RZE4KV0BBH2S177Q36","why":"シグナル処理の初期化が漏れていたので追加","fileShaBefore":"sha256:…","fileShaAfter":"sha256:…","source":"mcp"}
 ```
 
 - `from` は入力された範囲トークン、`selection` は返したトークン。`from` → `selection` をたどると、どの `select` からどの `replace` が生まれたかの**系譜**が分かる
@@ -89,14 +89,14 @@ srwr の外でファイルが変わったことを検知したとき。直後に
 {"v":1,"seq":4,"ts":"…","type":"external","file":"cmd/app/main.go","author":{"kind":"external"},"detectedBy":"select","expectedSha":"sha256:…","actualSha":"sha256:…","text":"package main\n…（変更後の全文）"}
 ```
 
-- `text`：**変更後のファイル全文**。差分のコマ（左右に並べた diff）として再生するために持つ。ファイルが消えていたときは `null` で、`deleted: true` が付く
+- `text`：**変更後のファイル全文**。差分のコマ（左右に並べた diff）として再生するために持つ。ファイルが消えていたときは `null`、`actualSha` は空文字列で、`deleted: true` が付く
 - `detectedBy`：検知のきっかけ（`select`・`replace`・`hook`）
 - `author.kind` は `external` 固定（誰が変えたかは srwr には分からない）
 - `text` のない古い形式の `external` も読める。そのときは、直後の `snapshot` を変更後の内容として見せる
 
 **検知できる範囲**：`external` になるのは、**テープがすでに内容（`snapshot`）を持つファイル**が、あとで食い違ったときだけ。そのセッションで初めて触れるファイルは、そのときの内容が最初の `snapshot` になる。一度も触れないファイルの変更は見えない。
 
-`external` より前に発行した範囲トークンで `replace` すると、内容の照合で `selection_mismatch` になる。外部変更の中身から、行のずれを推定することはしない。
+`external` より前に発行した範囲トークンで `replace` したときも、ふつうに追う（行番号を補正するのは、srwr 自身の編集だけ）。外部変更が、範囲の中身も、範囲より上の行数も変えていなければ、そのトークンは使える。変えていれば、内容の照合で `selection_mismatch` になる。外部変更の中身から、行のずれを推定することはしない。
 
 ## 範囲トークン
 

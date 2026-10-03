@@ -7,7 +7,7 @@
 The **selection token** is a string that `select` returns and `replace` receives. It seals "which file, which lines, with which content were being looked at" in a single string, so the AI can edit by passing it on as it is.
 
 ```
-sel_7K3M9QX2F4HD8R1WTB
+sel_0410R3GZE4KV11C6325D32S7
 └┬┘ └───────┬────────┘
 prefix   Crockford Base32 (the binary below, encoded)
 ```
@@ -27,7 +27,7 @@ The binary inside (concatenated from the top):
 | mac | 3 bytes | The first 3 bytes of the HMAC-SHA256 (the key is `.srwr/key`) over the **tape ID** (the file name of the tape without `.tape.jsonl`, for example `20261001-1706-1795`) and everything above |
 
 - The variable-length integer is LEB128 (the same scheme as the varint of Protocol Buffers)
-- The total is roughly 14 to 20 bytes, which is **about 23 to 32 characters** in Base32
+- The total is roughly 15 to 20 bytes, which is **about 24 to 32 characters** in Base32
 - The tape ID is used only to compute the mac and is not in the token. So a token issued on another tape (another session) has an HMAC that does not match and gives `invalid_selection`. The short ID (4 characters) alone could collide with another tape, so the whole tape ID, which includes the date and time, is used
 
 ## What is accepted when decoding
@@ -51,7 +51,7 @@ When srwr receives a `replace`, it works in this order (the whole order is in [m
 
 All edits to files are made by srwr itself, so srwr knows everything that happened after the token was issued. That is why the AI does not need to calculate line numbers.
 
-A token issued before an `external` (a change outside srwr) cannot be followed by correcting line numbers. The content check gives `selection_mismatch`. srwr does not estimate the shift of lines from the content of the external change.
+An `external` (a change outside srwr) is not an edit that srwr can follow, so it adds no correction. A token issued before it still works if the external change left the range and the number of lines above it as they were (for example, a change below the range). Otherwise the content check gives `selection_mismatch`. srwr does not estimate the shift of lines from the content of the external change.
 
 ## Where it is valid
 

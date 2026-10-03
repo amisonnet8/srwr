@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -269,5 +270,21 @@ func TestClaudeBinaryIsFoundInTheVSCodeExtension(t *testing.T) {
 	}
 	if got, _ := claudeBinary(); got != filepath.Join(home, "elsewhere") {
 		t.Errorf("the path of the running Claude Code comes first: %q", got)
+	}
+}
+
+// Claude Code ignores the permissions of an untrusted workspace's settings (R7: "Permission was declined"), so they are on
+// the command line too, and the MCP server is named on it.
+func TestClaudeArgsAllowTheToolsOnTheCommandLine(t *testing.T) {
+	args := claudeArgs()
+	joined := strings.Join(args, " ")
+	for _, want := range []string{"-p Do what TASK.md says", "--mcp-config .mcp.json", "mcp__srwr__select", "mcp__srwr__replace", "Edit", "Bash(go test:*)"} {
+		if !strings.Contains(joined, want) {
+			t.Errorf("the arguments lack %q: %v", want, args)
+		}
+	}
+	i := slices.Index(args, "--allowedTools")
+	if i < 0 || i+1 >= len(args) || args[i+1] != strings.Join(hookTryAllow, ",") {
+		t.Errorf("--allowedTools does not carry the list of the settings: %v", args)
 	}
 }

@@ -32,6 +32,19 @@ const hookTryTask = `# 作業
 4. 最後に go test ./... を実行して、通ることを確かめる
 `
 
+// hookTryAllow are the tools Claude Code may use without asking. They are in the settings of the workspace, and also on the
+// command line: Claude Code ignores the permissions of the settings of a workspace that is not trusted yet (this one is new
+// every time), but not the ones on the command line.
+var hookTryAllow = []string{
+	"mcp__srwr__select", "mcp__srwr__replace", "Read", "Edit", "Grep",
+	"Bash(cat:*)", "Bash(nl:*)", "Bash(head:*)", "Bash(tail:*)", "Bash(sed:*)", "Bash(grep:*)", "Bash(go test:*)", "Bash(ls:*)",
+}
+
+// claudeArgs is the command line of Claude Code for the task: it works without asking, with the MCP server of .mcp.json.
+func claudeArgs() []string {
+	return []string{"-p", "Do what TASK.md says", "--allowedTools", strings.Join(hookTryAllow, ","), "--mcp-config", ".mcp.json"}
+}
+
 var hookTryFiles = map[string]string{
 	"go.mod": "module trial\n\ngo 1.21\n",
 	"text.go": `package trial
@@ -114,10 +127,7 @@ func prepareHookTry(dst, bin string) error {
 	mcp := map[string]any{"mcpServers": map[string]any{"srwr": map[string]any{"command": bin, "args": []string{"mcp", "--root", dst}}}}
 	settings := map[string]any{
 		"enableAllProjectMcpServers": true,
-		"permissions": map[string]any{"allow": []string{
-			"mcp__srwr__select", "mcp__srwr__replace", "Read", "Edit", "Grep",
-			"Bash(cat:*)", "Bash(nl:*)", "Bash(head:*)", "Bash(tail:*)", "Bash(sed:*)", "Bash(grep:*)", "Bash(go test:*)", "Bash(ls:*)",
-		}},
+		"permissions":                map[string]any{"allow": hookTryAllow},
 		"hooks": map[string]any{"PostToolUse": []any{map[string]any{
 			"matcher": "Read|Bash|Grep|Edit",
 			"hooks":   []any{map[string]any{"type": "command", "command": bin + " hook"}},
@@ -252,7 +262,7 @@ func runHookTry(root string, out io.Writer) error {
 	_, _ = fmt.Fprintln(out, "Claude Code に作業させています（数分かかります）…")
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, claude, "-p", "Do what TASK.md says") //nolint:gosec // Claude Code, found above
+	cmd := exec.CommandContext(ctx, claude, claudeArgs()...) //nolint:gosec // Claude Code, found above
 	cmd.Dir = workspace
 	var said bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &said, &said

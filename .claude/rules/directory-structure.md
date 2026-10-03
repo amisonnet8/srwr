@@ -8,7 +8,7 @@
 .
 ├── CLAUDE.md               ← プロジェクトルール（参照先の案内）
 ├── LICENSE                 （MIT）
-├── README.md               ← 利用者向けの入口
+├── README.md / README_ja.md ← 利用者向けの入口（英語が基準）
 ├── qsokufile               ← ビルド・テストの近道（qsoku）
 ├── go.mod / go.sum         （module github.com/amisonnet8/srwr）
 ├── .gitattributes          （`* text=auto eol=lf`）
@@ -42,6 +42,8 @@
 │   │   ├── golden/         ← コマの列の正解（22本）。**書き換えない**（最初からある）
 │   │   └── baseline/       ← 画面の基準（`ja/`・`en/` それぞれに、録画3本・ライブ2本・長い理由。`capture.test.ts` が比べる）（R4・R10.5）
 │   ├── media/srwr.svg      ← 左端のアイコン
+│   ├── media/readme/       ← 拡張の README の画像（PNG。`qsoku readme-media` が作る）
+│   ├── README.md / README_ja.md ← 拡張の README（Marketplace に出るのは `README.md`）
 │   ├── package.json
 │   └── tsconfig.json
 ├── vim/                    ← srwr-view.vim（Vim9 script）（R5）
@@ -55,6 +57,7 @@
 ├── tools/
 │   ├── ui-check/           ← UI の確認の自動化：`run`（qsoku ui-check）・`live`・`accept`・`open`、自動の検証の項目の表（checks.go）、長い理由のテープ（maketape.go）、確認ページ（page.go）（R4〜R6）
 │   └── vim-oldest.sh       ← 最も古い Vim（9.0.0784）をビルドして `vim-test` を動かす（R5）
+├── docs/images/            ← README の画像（バナーは手書き、デモ・VSCode の絵は `qsoku readme-media` で作る。コミットする）
 ├── docs/                   ← 外部向けの文書（正本）。英語が `名前.md`、日本語版が `名前_ja.md`。reference/・design/・examples/（`select-replace.md`・`protocol-session.md`・`hook.md`。`internal/docs` が本物と照合する。`internal/docs/testdata/demo-en/`（英語・UTC のテープ）と `demo/`（日本語・古い `+09:00` のテープ）が protocol-session の題材）
 ├── dev/                    ← 開発のうちうち。roadmap.md、review/<段階>/（UIゲートの資料）
 ├── handoff/                ← 引き継ぎ資料。**git に入れない（.gitignore）。読むだけ。R14 で消す**
@@ -87,7 +90,7 @@
 - `vim/embed.go` は Go のパッケージ（`go:embed` は親ディレクトリを参照できないので、埋め込む側を `vim/` に置く）。`internal/cli` の `view` がこれを使う
 
 ### 確認の自動化
-- 画面の取得・比較・確認ページの生成は `tools/ui-check/`（Go で書く。シェルスクリプトは最小限）。`qsoku ui-check`・`ui-live`・`ui-open` から呼ぶ。今あるのは `run`（`qsoku ui-check`）・`live`（`ui-live`）・`accept`（`ui-accept`）・`hook-try`（`qsoku hook-try`。R7 の確認）・`init-try`（`qsoku init-try`。R9 の確認）・`open vscode|vim`（`ui-open`。作業場づくり、VSCode／Vim を開く、ライブの追記）と `vim-baseline`（承認した Vim の画像から基準を作る。一度だけ）。画面の取得は、Vim が `internal/uicheck` の `CaptureVim`（`vim/screen_test.go` も同じ部品を使う）、VSCode が `extension/test/capture.ts`（`node --require ./out/test/setup.js out/test/capture.js <出力先> [<追加の作業場>]`）。比較・描画は `internal/uicheck`（`CompareBaseline`・`CompareShots`・`Grid.SVG`）
+- 画面の取得・比較・確認ページの生成は `tools/ui-check/`（Go で書く。シェルスクリプトは最小限）。`qsoku ui-check`・`ui-live`・`ui-open` から呼ぶ。今あるのは `run`（`qsoku ui-check`）・`live`（`ui-live`）・`accept`（`ui-accept`）・`hook-try`（`qsoku hook-try`。R7 の確認）・`init-try`（`qsoku init-try`。R9 の確認）・`readme`（`qsoku readme-media`。README の画像）・`open vscode|vim`（`ui-open`。作業場づくり、VSCode／Vim を開く、ライブの追記）と `vim-baseline`（承認した Vim の画像から基準を作る。一度だけ）。画面の取得は、Vim が `internal/uicheck` の `CaptureVim`（`vim/screen_test.go` も同じ部品を使う）、VSCode が `extension/test/capture.ts`（`node --require ./out/test/setup.js out/test/capture.js <出力先> [<追加の作業場>]`）。比較・描画は `internal/uicheck`（`CompareBaseline`・`CompareShots`・`Grid.SVG`）
 - 基準（前回 OK だった画面の記録）はリポジトリに入れる。結果（`ui-check-result/`）は入れない
 
 ## 各ファイル・ディレクトリの補足

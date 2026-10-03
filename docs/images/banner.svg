@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="360" viewBox="0 0 1280 360" role="img" aria-label="srwr: let AI agents edit files with just select and replace, and replay every step with its reason">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1117"/>
+      <stop offset="1" stop-color="#1b2433"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="360" rx="18" fill="url(#bg)"/>
+  <!-- the tape: frames in a row, select blue, replace orange, a change from outside purple -->
+  <g stroke="#30394a" stroke-width="2"><path d="M90 292H1190"/></g>
+  <g>
+    <circle cx="150" cy="292" r="9" fill="#4aa3ff"/>
+    <circle cx="290" cy="292" r="9" fill="#f0883e"/>
+    <circle cx="430" cy="292" r="9" fill="#4aa3ff"/>
+    <circle cx="570" cy="292" r="9" fill="#f0883e"/>
+    <circle cx="710" cy="292" r="9" fill="#b180d7"/>
+    <circle cx="850" cy="292" r="9" fill="#4aa3ff"/>
+    <circle cx="990" cy="292" r="9" fill="#f0883e"/>
+    <circle cx="1130" cy="292" r="9" fill="#b180d7"/>
+  </g>
+  <rect x="540" y="280" width="60" height="24" rx="12" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="2"/>
+  <!-- the logo: a tape reel -->
+  <g transform="translate(120,72) scale(6)" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2.5" y="6" width="19" height="12" rx="2"/>
+    <circle cx="8" cy="12" r="2.5"/>
+    <circle cx="16" cy="12" r="2.5"/>
+    <path d="M6 18l1.5-3M18 18l-1.5-3"/>
+  </g>
+  <text x="300" y="150" fill="#ffffff" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="92" font-weight="700" letter-spacing="2">srwr</text>
+  <text x="300" y="200" fill="#c9d1d9" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="30">Let AI agents edit files with just <tspan fill="#4aa3ff" font-weight="700">select</tspan> and <tspan fill="#f0883e" font-weight="700">replace</tspan>.</text>
+  <text x="300" y="242" fill="#8b949e" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="21">Every step on a tape, with its reason. Replay it frame by frame in VSCode or Vim.</text>
+</svg>

@@ -51,6 +51,12 @@ func run(args []string, out io.Writer) error {
 				return err
 			}
 			return runInitTry(root, out)
+		case "readme":
+			root, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+			return runReadme(root, out)
 		case "accept":
 			root, err := os.Getwd()
 			if err != nil {

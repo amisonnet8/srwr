@@ -63,7 +63,19 @@ const rowH = int(cellH)
 func (g *Grid) SVG(title string, marks [][2]int) string {
 	w, h := float64(g.Cols)*cellW, float64(g.Rows)*cellH
 	var b strings.Builder
-	fmt.Fprintf(&b, `<svg xmlns="http://www.w3.org/2000/svg" width="%.0f" height="%.0f" viewBox="0 0 %.1f %.1f" role="img" aria-label="%s" font-family="'DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Noto Sans JP','Meiryo',monospace" font-size="16" style="white-space:pre">`+"\n", w, h, w, h, html.EscapeString(title))
+	fmt.Fprintf(&b, `<svg xmlns="http://www.w3.org/2000/svg" width="%.0f" height="%.0f" viewBox="0 0 %.1f %.1f" role="img" aria-label="%s" font-family="%s" font-size="16" style="white-space:pre">`+"\n", w, h, w, h, html.EscapeString(title), svgFont)
+	b.WriteString(g.svgBody(marks))
+	b.WriteString("</svg>\n")
+	return b.String()
+}
+
+// svgFont is the font list of a screen drawn as an image.
+const svgFont = "'DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Noto Sans JP','Meiryo',monospace"
+
+// svgBody is what SVG draws inside the <svg> element: the background, the cells, and the frames of marks.
+func (g *Grid) svgBody(marks [][2]int) string {
+	w, h := float64(g.Cols)*cellW, float64(g.Rows)*cellH
+	var b strings.Builder
 	fmt.Fprintf(&b, `<rect width="%.1f" height="%.1f" fill="%s"/>`+"\n", w, h, g.Normal)
 	for r := 0; r < g.Rows; r++ {
 		for c := 0; c < g.Cols; {
@@ -111,7 +123,6 @@ func (g *Grid) SVG(title string, marks [][2]int) string {
 	for _, box := range marksByRow(marks) {
 		fmt.Fprintf(&b, `<rect x="%.1f" y="%d" width="%.1f" height="%d" fill="none" stroke="#ff2d2d" stroke-width="2"/>`+"\n", float64(box[1])*cellW-1, box[0]*rowH, float64(box[2]-box[1]+1)*cellW+2, rowH)
 	}
-	b.WriteString("</svg>\n")
 	return b.String()
 }
 

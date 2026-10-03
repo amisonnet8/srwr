@@ -129,3 +129,12 @@ func ParseCapture(data []byte, normal string) (*Capture, error) {
 	}
 	return out, nil
 }
+
+// WithoutTopRows returns the screen without its first n rows (for example the tab line of Vim, which says "[No Name]" in a
+// terminal that was started for a picture).
+func (g *Grid) WithoutTopRows(n int) *Grid {
+	if n < 0 || n > g.Rows {
+		n = 0
+	}
+	return &Grid{Cols: g.Cols, Rows: g.Rows - n, Normal: g.Normal, Cells: g.Cells[n:]}
+}

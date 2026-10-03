@@ -10,8 +10,8 @@
 | `docs/examples/` | 実際に動かして取ったやり取りの例。`internal/docs` のテストが本物との一致を確かめる（R2・R3） | 挙動を変えたとき（テストが落ちる） |
 | `dev/` | 開発のうちうち：`roadmap.md`（段階）、`review/`（UIゲートの資料） | 段階が進んだとき |
 | `handoff/`（git に入れない） | 引き継ぎ資料。確定したデザインと UI の振る舞い（`design/`・`ui/`）、確認の方針（`checklist/`）、前の決まり（`reference/`） | **変えない**。例外：UIゲートで決まった新しい画面だけ、`design/DESIGN.md`・`images/`・`ui/UI.md` に足す |
-| `README.md` | 利用者向けの入口 | 使い方が変わったとき |
-| `extension/README.md` | 拡張の利用者向けの説明（対応する表示サーバーのバージョンを含む） | 拡張の振る舞いが変わったとき |
+| `README.md`・`README_ja.md` | 利用者向けの入口（GitHub の最初の画面）。英語が基準、日本語版は `_ja`。冒頭の画像（`docs/images/`）は `qsoku readme-media` で作る | 使い方が変わったとき |
+| `extension/README.md`・`extension/README_ja.md` | 拡張の利用者向けの説明（Marketplace に出る）。対応する `protocolVersion` を含む。画像は PNG（`extension/media/readme/`。vsce は README の SVG を受けない）。`README_ja.md` は Marketplace には出ない | 拡張の振る舞いが変わったとき |
 | `CLAUDE.md`・`.claude/rules/` | 開発のルール | 気づき・落とし穴が見つかったとき（`CLAUDE.md` 参照） |
 
 - `docs/` は、リポジトリに残る外部向けの文書。**`handoff/` や `dev/` を `docs/` から参照しない**（`handoff/` は最後に消す）
@@ -28,6 +28,8 @@
 ## 書き方
 
 - **`docs/` の文書は英語が基準。** 日本語版は、同じ名前に `_ja` を付ける（`reference/cli.md` と `reference/cli_ja.md`）。2つは対で、どちらも先頭（3行目）に、言語の切り替えを置く（英語版は `*[日本語](名前_ja.md) | **English***`、日本語版は `*[English](名前.md) | **日本語***`）。**仕様を直すときは、同じ変更の中で両方を直す**（`internal/docs` のテストが、対になっていること・英語版に日本語が混ざっていないことを確かめる）
+- **README は、先頭が中央寄せのブロック（画像・バッジ）なので、言語の切り替えは3行目でなく、先頭12行のどこかに置く**（英語版は `<a href="README_ja.md">日本語</a> | <b>English</b>`、日本語版は `English</a> | <b>日本語</b>`）。`internal/docs/readme_test.go` が、4つの README の対・切り替え・英語版の日本語の混入・画像とリンクの実在・目次の見出しを確かめる。**README には、本物と同じ形の範囲トークンを使う**（`tokens_test.go` は `docs/` だけを見る）
+- 外部サービスのバッジ（shields.io）と対話形式のガイドの URL は、テストで確かめない（通信が要る）。README は拡張と一緒に公開されるので、公開後にバッジを足すと公開物とリポジトリが食い違う。**公開前の Marketplace のバッジは、見つからない表示のまま入れておく**（R12 の決定）
 - `docs/examples/` の英語版は英語の出力、日本語版は日本語の入力（`why` など）で、サーバーが返す文言（MCP のエラーなど）は、どちらも英語。両方を `internal/docs` のテストが本物と照合する
 - `dev/`・`.claude/rules/`・`CLAUDE.md`・mtqg は、開発のうちうちなので日本語のまま。人間とのやり取りも日本語
 - コード中のコメントは英語（Go・TypeScript・Vim script・シェルとも）

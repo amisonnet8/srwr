@@ -49,6 +49,9 @@ hook-try: (cd //; qsoku bin && go run ./tools/ui-check hook-try)
 # For a person to run in their terminal.
 init-try: (cd //; qsoku bin && go run ./tools/ui-check init-try)
 
+# qsoku readme-media: makes the pictures of the README (docs/images/, extension/media/readme/) and the page to look at
+readme-media: (cd //; qsoku bin && go run ./tools/ui-check readme)
+
 # Opens the fixed workspace in a real VSCode with the extension installed, for a person to look at (.claude/rules/working-with-human.md).
 # qsoku ui-open <vscode|vim> <why-basic|external|no-why|live>
 ui-open: (cd //; qsoku bin && { [ "$1" != vscode ] || qsoku ext-build; } && go run ./tools/ui-check open "$@")

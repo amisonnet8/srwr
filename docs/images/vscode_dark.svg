@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="385" viewBox="0 0 1000 385" role="img" aria-label="srwr-view in VSCode (dark): the replace with its reason line, the operations list and the bottom bar">
+<rect width="1000" height="385" fill="#1e1e1e"/>
+<rect width="40" height="363" fill="#333333"/>
+<g transform="translate(8,8)" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="8" cy="12" r="2.5"/><circle cx="16" cy="12" r="2.5"/><path d="M6 18l1.5-3M18 18l-1.5-3"/></g>
+<rect x="0" y="4" width="2" height="36" fill="#ffffff"/>
+<rect x="40" width="250" height="363" fill="#252526"/>
+<text x="54" y="20" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11">SRWR</text>
+<rect x="40" y="30" width="250" height="22" fill="#2d2d2d"/>
+<text x="54" y="45" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11" font-weight="bold">Operations</text>
+<circle cx="56" cy="63" r="4.5" fill="#4aa3ff"/>
+<text x="70" y="67" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12" xml:space="preserve">1  select  main.go:9-11</text>
+<rect x="40" y="74" width="250" height="22" fill="#37373d"/>
+<circle cx="56" cy="85" r="4.5" fill="#f0883e"/>
+<text x="70" y="89" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12" xml:space="preserve">2  replace  main.go:9-14</text>
+<circle cx="56" cy="107" r="4.5" fill="#4aa3ff"/>
+<text x="70" y="111" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12" xml:space="preserve">3  select  main.go:5-7</text>
+<circle cx="56" cy="129" r="4.5" fill="#f0883e"/>
+<text x="70" y="133" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12" xml:space="preserve">4  replace  main.go:5-8</text>
+<circle cx="56" cy="151" r="4.5" fill="#b180d7"/>
+<text x="70" y="155" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12" xml:space="preserve">5  final  main.go</text>
+<rect x="290" width="710" height="35" fill="#2d2d2d"/>
+<rect x="290" width="90" height="35" fill="#1e1e1e"/>
+<text x="304" y="22" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13" font-style="italic">main.go</text>
+<text x="334" y="49" text-anchor="end" fill="#858585" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14">1</text>
+<text x="366.0" y="49" fill="#569cd6" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">package</text>
+<text x="433.2" y="49" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">main</text>
+<text x="334" y="68" text-anchor="end" fill="#858585" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14">2</text>
+<text x="334" y="87" text-anchor="end" fill="#858585" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14">3</text>
+<text x="366.0" y="87" fill="#569cd6" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">import</text>
+<text x="424.8" y="87" fill="#ce9178" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">&#34;fmt&#34;</text>
+<text x="334" y="106" text-anchor="end" fill="#858585" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14">4</text>
+<text x="334" y="125" text-anchor="end" fill="#858585" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14">5</text>
+<text x="366.0" y="125" fill="#569cd6" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">func</text>
+<text x="408.0" y="125" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">main</text>
+<text x="441.6" y="125" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">() {</text>
+<text x="334" y="144" text-anchor="end" fill="#858585" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14">6</text>
+<text x="399.6" y="144" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">fmt</text>
+<text x="424.8" y="144" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">.</text>
+<text x="433.2" y="144" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">Println</text>
+<text x="492.0" y="144" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">(</text>
+<text x="500.4" y="144" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">greet</text>
+<text x="542.4" y="144" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">(</text>
+<text x="550.8" y="144" fill="#ce9178" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">&#34;world&#34;</text>
+<text x="609.6" y="144" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">))</text>
+<text x="334" y="163" text-anchor="end" fill="#858585" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14">7</text>
+<text x="366.0" y="163" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">}</text>
+<text x="334" y="182" text-anchor="end" fill="#858585" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14">8</text>
+<rect x="350" y="187" width="650" height="19" fill="#b45f06"/>
+<text x="366" y="201" fill="#ffffff" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" font-weight="bold" xml:space="preserve">◆ An empty name printed &#34;hello &#34; with nothing after it, so greet a</text>
+<rect x="350" y="206" width="650" height="19" fill="#b45f06"/>
+<text x="366" y="220" fill="#ffffff" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" font-weight="bold" xml:space="preserve">  stranger instead</text>
+<rect x="350" y="225" width="650" height="19" fill="#583c27"/>
+<text x="334" y="239" text-anchor="end" fill="#858585" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14">9</text>
+<text x="366.0" y="239" fill="#569cd6" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">func</text>
+<text x="408.0" y="239" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">greet</text>
+<text x="450.0" y="239" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">(</text>
+<text x="458.4" y="239" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">name</text>
+<text x="500.4" y="239" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">string</text>
+<text x="550.8" y="239" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">) </text>
+<text x="567.6" y="239" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">string</text>
+<text x="618.0" y="239" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve"> {</text>
+<rect x="350" y="244" width="650" height="19" fill="#583c27"/>
+<text x="334" y="258" text-anchor="end" fill="#858585" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14">10</text>
+<text x="399.6" y="258" fill="#569cd6" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">if</text>
+<text x="424.8" y="258" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">name</text>
+<text x="458.4" y="258" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve"> == </text>
+<text x="492.0" y="258" fill="#ce9178" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">&#34;&#34;</text>
+<text x="508.8" y="258" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve"> {</text>
+<rect x="350" y="263" width="650" height="19" fill="#583c27"/>
+<text x="334" y="277" text-anchor="end" fill="#858585" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14">11</text>
+<text x="433.2" y="277" fill="#569cd6" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">return</text>
+<text x="492.0" y="277" fill="#ce9178" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">&#34;hello, stranger&#34;</text>
+<rect x="350" y="282" width="650" height="19" fill="#583c27"/>
+<text x="334" y="296" text-anchor="end" fill="#858585" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14">12</text>
+<text x="366.0" y="296" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">    }</text>
+<rect x="350" y="301" width="650" height="19" fill="#583c27"/>
+<text x="334" y="315" text-anchor="end" fill="#858585" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14">13</text>
+<text x="399.6" y="315" fill="#569cd6" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">return</text>
+<text x="458.4" y="315" fill="#ce9178" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">&#34;hello, &#34;</text>
+<text x="534.0" y="315" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve"> + </text>
+<text x="559.2" y="315" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">name</text>
+<rect x="350" y="320" width="650" height="19" fill="#583c27"/>
+<text x="334" y="334" text-anchor="end" fill="#858585" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14">14</text>
+<text x="366.0" y="334" fill="#d4d4d4" font-family="'Cascadia Code','DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Meiryo',monospace" font-size="14" xml:space="preserve">}</text>
+<rect y="363" width="1000" height="22" fill="#007acc"/>
+<text x="10" y="378" fill="#ffffff" fill-opacity="1" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">‹ Back</text>
+<text x="72" y="378" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Forward ›</text>
+<text x="150" y="378" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">2/5</text>
+<text x="190" y="378" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">×</text>
+</svg>

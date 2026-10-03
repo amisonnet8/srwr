@@ -144,21 +144,21 @@ func renderDistTryPage(lines []string, vsix, exe string, ok bool) string {
 	b.WriteString("</table>\n")
 	fmt.Fprintf(&b, "<h2>使ったもの（dist/ のものだけ。bin/srwr は使っていません）</h2><ul><li>srwr：<code>%s</code></li><li>.vsix：<code>%s</code></li></ul>\n", html.EscapeString(exe), html.EscapeString(vsix))
 	b.WriteString(`<h2>人間が見ること</h2>
-<h3>A. VSCode（コマンドを動かすと、新しい窓で開いています）</h3>
+<h3>① VSCode の確認（コマンドを動かすと、新しい窓で開いています）</h3>
 <ol>
 <li>左端の「srwr」（カセットの絵）をクリックし、「Operations」（日本語の表示言語なら「操作一覧」）の「Open a tape」（「テープを開く」）を押して、一番上の <code>2026-09-30 …</code> を選ぶ。</li>
 <li>見る：左の一覧に 1〜7 の行（青の丸が4つ、橙の丸が3つ）が出て、右に <code>text.go</code> と青い理由の行が出る。下のバーに「‹ Back　Forward ›　1/7」が出る。</li>
 <li>「Forward」を5回押す。見る：6/7 のコマで橙の理由の行が出て、その下の行が薄い橙で塗られる。</li>
 <li>OK の基準：上の3つが出る。「srwr を起動できません」「バージョンが合っていません」などのエラーが出ない（この窓は、設定 srwr.path で dist/ の srwr を指しています）。</li>
 </ol>
-<h3>B. Vim（コマンドのウィンドウで Enter を押すと開きます）</h3>
+<h3>② Vim の確認（コマンドを打ったターミナルで Enter を押すと開きます）</h3>
 <ol>
 <li>日本語入力（IME）を切る。Vim が開いたら、左に操作一覧（7行）、右にコマが出る。</li>
 <li><code>]]</code> を5回押す。見る：6/7 で橙の理由の行が出て、ステータス行に「srwr  6/7」が出る。</li>
 <li><code>q</code> で閉じる。</li>
 <li>OK の基準：上の2つが出る。「Vim が見つかりません」などのエラーが出ない（この Vim は、dist/ の srwr に埋め込まれたスクリプトで動いています）。</li>
 </ol>
-<h3>C. 終わったら</h3>
+<h3>③ 終わったら</h3>
 <p>拡張を戻したいときは、VSCode の拡張の一覧で srwr-view を「アンインストール」します（この確認では、dist/ の .vsix を入れたままにしています）。</p>
 </body></html>
 `)
@@ -217,7 +217,7 @@ func runDistTry(root string, in io.Reader, out io.Writer) error {
 	if err := command(root, out, "code", "-n", workspace); err != nil {
 		return fmt.Errorf("opening VSCode: %w", err)
 	}
-	_, _ = fmt.Fprint(out, "\nVSCode は、確認ページの「A」を上からやってください。終わったら、ここで Enter を押すと Vim が開きます（ページの「B」）: ")
+	_, _ = fmt.Fprint(out, "\n新しく開いた VSCode の窓で、確認ページの「① VSCode の確認」を上からやってください。終わったら、このターミナルに戻って Enter を押すと Vim が開きます（ページの「② Vim の確認」）: ")
 	_, _ = bufio.NewReader(in).ReadString('\n')
 	cmd := exec.Command(exe, "view", tapes["why-basic"].ID) //nolint:gosec // the binary taken out of dist/
 	cmd.Dir = workspace

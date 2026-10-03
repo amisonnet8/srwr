@@ -11,9 +11,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
@@ -129,9 +131,43 @@ func openVSCode(root, name string, out io.Writer) error {
 	return feedLive(workspace, fixture, wait, 3*time.Second, out)
 }
 
+// liveIPC finds the socket the `code` command talks to. The terminal keeps the one it was opened with in VSCODE_IPC_HOOK_CLI,
+// and after VSCode restarts (switching the display language does) that socket is gone ("Unable to connect to VS Code server");
+// then the newest socket in dir that answers is used. It returns "" when the current one works or none does.
+func liveIPC(dir, current string) string {
+	works := func(p string) bool {
+		c, err := net.DialTimeout("unix", p, time.Second)
+		if err != nil {
+			return false
+		}
+		_ = c.Close()
+		return true
+	}
+	if current != "" && works(current) {
+		return ""
+	}
+	socks, _ := filepath.Glob(filepath.Join(dir, "vscode-ipc-*.sock"))
+	sort.Slice(socks, func(i, j int) bool {
+		a, errA := os.Stat(socks[i])
+		b, errB := os.Stat(socks[j])
+		return errA == nil && errB == nil && a.ModTime().After(b.ModTime())
+	})
+	for _, p := range socks {
+		if works(p) {
+			return p
+		}
+	}
+	return ""
+}
+
 func command(dir string, out io.Writer, name string, args ...string) error {
 	cmd := exec.Command(name, args...) //nolint:gosec // fixed commands: npx, code
 	cmd.Dir = dir
+	if name == "code" {
+		if p := liveIPC(os.TempDir(), os.Getenv("VSCODE_IPC_HOOK_CLI")); p != "" {
+			cmd.Env = append(os.Environ(), "VSCODE_IPC_HOOK_CLI="+p)
+		}
+	}
 	cmd.Stdout = out
 	cmd.Stderr = out
 	return cmd.Run()

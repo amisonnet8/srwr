@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"net"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -262,5 +263,32 @@ func TestLongWhyTapeHasTheSameTimesEveryRun(t *testing.T) {
 	}
 	if !strings.Contains(made[0], `"startedAt":"2026-10-03T00:00:00.000+09:00"`) {
 		t.Errorf("the header time is not the fixed one: %s", strings.SplitN(made[0], "\n", 2)[0])
+	}
+}
+
+func TestLiveIPCFindsASocketThatAnswers(t *testing.T) {
+	dir, err := os.MkdirTemp("", "ipc") // a short path: a unix socket path is limited in length
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = os.RemoveAll(dir) }()
+	gone := filepath.Join(dir, "vscode-ipc-gone.sock")
+	if err := os.WriteFile(gone, nil, 0o600); err != nil { // a leftover file nobody listens on
+		t.Fatal(err)
+	}
+	if got := liveIPC(dir, gone); got != "" {
+		t.Errorf("no socket answers, got %q", got)
+	}
+	live := filepath.Join(dir, "vscode-ipc-live.sock")
+	l, err := net.Listen("unix", live)
+	if err != nil {
+		t.Skip("no unix sockets here:", err)
+	}
+	defer func() { _ = l.Close() }()
+	if got := liveIPC(dir, filepath.Join(dir, "vscode-ipc-old.sock")); got != live {
+		t.Errorf("the old socket is gone: got %q, want %q", got, live)
+	}
+	if got := liveIPC(dir, live); got != "" {
+		t.Errorf("the current socket works, so nothing is replaced, got %q", got)
 	}
 }

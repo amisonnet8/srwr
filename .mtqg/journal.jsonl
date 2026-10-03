@@ -181,3 +181,4 @@
 {"id":"031e6f2a28c849cbbcd3d41e7781d9bf","op":"create","type":"memo","text":"R6 実装：qsoku ui-check（自動の検証14項目・Vim/VSCode の画面を基準と比較・長い理由のテープをその場で作る・確認ページ）、ui-accept、ui-live。拡張の色をわざと壊すと『select・replace の表示』が落ち、基準と違うコマ10が出ることを確認。実物の VSCode の撮影は作らない（q 回答済み）。","v":1,"ts":"2026-10-03T04:20:19Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"d7cc01ca6426481d9ec4f4b26a854575","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T04:20:36Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"e2e227832e8b4382bce714b442e22567","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T04:21:15Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"7ef535c7d0cf428abee2ded57aee956c","op":"create","type":"rule","text":"人間への確認の依頼に、CHECKLIST の名前や番号を書かない。手順どおりにやれば確認が済む形にし、見るものと OK／NG の基準は手順の中の文で書く（.claude/rules/working-with-human.md 3章）。","v":1,"ts":"2026-10-03T04:32:24Z","author":{"kind":"ai","name":"claude-code"}}

@@ -10,7 +10,7 @@ figure{background:var(--card);border:1px solid var(--line);border-radius:8px;pad
 <h2>決めること（推奨案）</h2><table><tr><th>項目</th><th>推奨案</th><th>理由</th></tr>
 <tr><td>切り替え方</td><td>CLI と Vim は環境変数 <code>SRWR_LANG</code>（<code>ja</code> で始まれば日本語、それ以外・未設定は英語）。VSCode は VSCode の表示言語（日本語の言語パックなら日本語）。<code>LANG</code> からは推測しない</td><td>コマンド名は VSCode の表示言語にしか従えない。「何も設定しなければ英語」を守る</td></tr>
 <tr><td>英語だけにするもの</td><td>MCP のツールの説明とエラー文、hook の注記、表示サーバーのエラー文。人に見せるもの（テープが無い・版の不一致など）は、クライアントがエラーコードから自分の言語の文を作る</td><td>読むのは AI か開発者。プロトコルは変えない</td></tr>
-<tr><td>時刻の持ち方</td><td>テープの <code>startedAt</code>・<code>ts</code>、表示サーバーの <code>updatedAt</code>、<b>テープID</b> は UTC（<code>…Z</code>）。古い <code>+09:00</code> のテープもそのまま読める</td><td>共有したとき、どの機械でも同じ意味になる</td></tr>
+<tr><td>時刻の持ち方</td><td>テープの <code>startedAt</code>・<code>ts</code>、表示サーバーの <code>updatedAt</code>、<b>テープID</b> は UTC（<code>…Z</code>）。古い <code>+09:00</code> のテープもそのまま読める。ファイル名の日時（<code>20261003-0812-k3f9</code> の <code>0812</code>）も UTC で、<code>Z</code> は付けない。日本の機械では、一覧の <code>17:12</code> と 9 時間ずれて見える（ファイル名は一意な名前で、時刻は一覧で見る）。今あるテープの名前は変えない</td><td>共有したとき、どの機械でも同じ意味になる</td></tr>
 <tr><td>時刻の見せ方</td><td>その機械の時間帯（<code>TZ</code>）に直して見せる。<code>srwr tapes</code> は英語 <code>Oct 03 17:12</code>・日本語 <code>10/03 17:12</code>。Vim の一覧と VSCode のテープ選びは両言語とも <code>2026-10-03 17:12</code></td><td>年も見えて並べやすい形を残す</td></tr>
 <tr><td>docs</td><td><code>docs/名前.md</code> を英語、<code>docs/名前_ja.md</code> を日本語。先頭に相手の言語へのリンク。<code>README.md</code> は R11 で同じ形に</td><td>人間の決定</td></tr>
 </table>

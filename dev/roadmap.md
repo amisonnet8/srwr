@@ -139,8 +139,8 @@ srwr は、前のリポジトリで一度作った（段階 P0〜P5 と、UI の
 
 参照：`docs/reference/cli.md`・`docs/reference/settings.md`
 
-- [ ] **ゲート**：利用者が見る出力（書き換えた内容の案内、一覧の見え方）の例を、端末の画像で
-- [ ] `init`（厳格・緩い、既存ファイルを壊さない追記、バックアップ）、`tapes`（一覧・new・prune・path）
+- [x] **ゲート**：利用者が見る出力（書き換えた内容の案内、一覧の見え方）の例を、端末の画像で
+- [x] `init`（厳格・緩い、既存ファイルを壊さない追記、バックアップ）、`tapes`（一覧・new・prune・path）
 
 **完了条件**：空の作業場と、既存の `.claude/settings.json`・`.mcp.json` がある作業場の両方で `srwr init` し、Claude Code がそのまま srwr を使える。
 **人間の確認**：一時的な作業場を作って `srwr init` を見せるところまでを1コマンドに（`qsoku try-init` など）。

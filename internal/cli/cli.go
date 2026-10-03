@@ -24,16 +24,11 @@ const usage = `srwr: AI に select / replace の2コマンドだけでファイ�
   srwr hook [--root <作業場>]    Claude Code の hook の記録（標準入力の JSON を読む）
   srwr view-server               表示サーバー（エディタが起動する）
   srwr view [テープ] [--live]    Vim で再生する（--root <作業場>）
-  srwr init                      作業場を srwr 用に準備する
-  srwr tapes                     テープの一覧・整理
+  srwr init [--lenient]          作業場を srwr 用に準備する（--lenient：Edit・Write を禁止しない）
+  srwr tapes [new|prune|path]    テープの一覧・整理（--root <作業場>）
   srwr --version                 バージョン
   srwr --help                    この説明
-
-まだ使えるのは mcp・hook・view-server・view だけです。
 `
-
-// notYet are the subcommands that exist in docs/reference/cli.md and are made in later stages.
-var notYet = map[string]bool{"init": true, "tapes": true}
 
 // Run runs srwr with the arguments (without the program name) and returns the exit code.
 func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
@@ -41,24 +36,25 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		_, _ = io.WriteString(stderr, usage)
 		return 2
 	}
-	switch cmd := args[0]; {
-	case cmd == "--help" || cmd == "-h" || cmd == "help":
+	switch cmd := args[0]; cmd {
+	case "--help", "-h", "help":
 		_, _ = io.WriteString(stdout, usage)
 		return 0
-	case cmd == "--version" || cmd == "version":
+	case "--version", "version":
 		_, _ = fmt.Fprintf(stdout, "srwr %s\n", Version())
 		return 0
-	case cmd == "mcp":
+	case "mcp":
 		return runMCP(args[1:], stdin, stdout, stderr)
-	case cmd == "hook":
+	case "hook":
 		return runHook(args[1:], stdin, stderr)
-	case cmd == "view-server":
+	case "view-server":
 		return runViewServer(args[1:], stdin, stdout, stderr)
-	case cmd == "view":
+	case "tapes":
+		return runTapes(args[1:], stdout, stderr)
+	case "init":
+		return runInit(args[1:], stdout, stderr)
+	case "view":
 		return runView(args[1:], stdin, stdout, stderr)
-	case notYet[cmd]:
-		_, _ = fmt.Fprintf(stderr, "srwr %s: まだ実装されていません\n", cmd)
-		return 2
 	default:
 		_, _ = fmt.Fprintf(stderr, "srwr: 知らないコマンド %q\n\n%s", cmd, usage)
 		return 2

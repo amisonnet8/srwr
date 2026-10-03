@@ -42,7 +42,9 @@ srwr の設定は少ない。**見た目（色、幅、ラベルなど）の設�
 | `srwr mcp` | `--root <作業場>` | 作業場のディレクトリ。省略時はカレントディレクトリ |
 | `srwr view-server` | `--root <作業場>` | 同上（エディタが起動する） |
 | `srwr view [テープ]` | `--root <作業場>`、`--live` | 作業場（省略時はカレント）、ライブ視聴。テープはテープIDか、`.tape.jsonl` のパス。省略すると一覧 |
-| `srwr hook` | なし | 標準入力から、Claude Code の hook の JSON を読む |
+| `srwr hook` | `--root <作業場>` | 標準入力から、Claude Code の hook の JSON を読む。作業場は、省略すると `CLAUDE_PROJECT_DIR`、それも無ければカレントディレクトリ |
+| `srwr init` | `--lenient`、`--root <作業場>` | 作業場を準備する。`--lenient` は Edit・Write を禁止しない |
+| `srwr tapes` | `new`・`prune --keep N`／`--older-than 30d`・`path <テープID>`、`--root <作業場>` | テープの一覧・整理 |
 | `srwr` | `--version`、`--help` | バージョン、使い方 |
 
 ## 3. 作業場のファイル
@@ -60,10 +62,17 @@ srwr の設定は少ない。**見た目（色、幅、ラベルなど）の設�
 { "mcpServers": { "srwr": { "command": "srwr", "args": ["mcp"] } } }
 ```
 
-厳格モードにするには、`.claude/settings.json` で、組み込みの編集ツールを禁止する（理由は [decisions.md](../design/decisions.md)）。
+`srwr init`（[cli.md](cli.md)）が `.claude/settings.json` に書く内容（厳格モード）：hook の登録、Claude Code が聞かずに使えるようにする設定、組み込みの編集ツールの禁止（理由は [decisions.md](../design/decisions.md)）。緩いモード（`--lenient`）では、`deny` を書かない。
 
 ```json
-{ "permissions": { "deny": ["Edit", "Write", "MultiEdit", "NotebookEdit"] } }
+{
+  "hooks": { "PostToolUse": [ { "matcher": "Read|Bash|Grep|Edit", "hooks": [ { "type": "command", "command": "srwr hook" } ] } ] },
+  "enabledMcpjsonServers": ["srwr"],
+  "permissions": {
+    "allow": ["mcp__srwr__select", "mcp__srwr__replace"],
+    "deny": ["Edit", "Write", "MultiEdit", "NotebookEdit"]
+  }
+}
 ```
 
 ## 4. 設定できないもの

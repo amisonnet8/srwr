@@ -35,6 +35,14 @@
 - Bash の読み取りは、**先頭のコマンドだけ**を見る。`$( )`・書き込みのリダイレクト・`sed -i`・`tail -f` などは読み取りとして扱わない。Bash のあとは、読み取りでなくても `ObserveAll`
 - 実際の Claude Code の形：Read・Edit・Bash の `tool_response` は過去の記録（`~/.claude/projects/*.jsonl` の `toolUseResult`）で確かめた。**Grep の形は確かめていない**ので、複数の書式を受け、実機で確かめる
 
+## init・tapes（`srwr init`・`srwr tapes`）
+
+- `internal/setup` は、ファイルを**全部読んで計画を立ててから**書く。JSON として読めない・形が違うファイルが1つでもあれば `*UserError` で止まり、何も書かない（鍵も作らない）
+- JSON は `internal/setup/ordered.go` の順序を保つ値で読み書きする（`map` に落とさない。キーの順と数値の書式を保つ）。変えるものがなければ書き換えない（バックアップも作らない）
+- 厳格 ⇄ 緩いの切り替えで外す禁止は、`Edit`・`Write`・`MultiEdit`・`NotebookEdit` の4つだけ
+- `srwr tapes new`・`prune` はロック（`Workspace.Do`）の中で動かす。`prune` は今のセッションのテープを消さない。`srwr tapes`（一覧）と `path` はロックも `.srwr/` の作成もしない
+- 端末の表示の桁は `cellWidth`（全角は2桁）で揃える。出力の文言は、UIゲートで了承した例（`dev/review/R9/`）と `init_tapes_test.go` が一致を確かめる
+
 ## テープを読む・行を数える
 
 - **`json.Unmarshal` は `null` をエラーにせず、ゼロ値を入れる。** `"why":null` が空文字列として読めてしまうので、`internal/tape` の `has()` で欠落として扱う

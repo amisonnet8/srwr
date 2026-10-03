@@ -44,6 +44,11 @@ ui-accept: (cd //; go run ./tools/ui-check accept "$@")
 # After the work, shows what was recorded and plays the tape in Vim. For a person to run in their terminal.
 hook-try: (cd //; qsoku bin && go run ./tools/ui-check hook-try)
 
+# R9: a workspace that already has its own .mcp.json and .claude/settings.json gets `srwr init`; the person's Claude Code works in it
+# with only what init wrote (the strict mode), and the files, the second run of init and the tape are checked. Page: ui-check-result/init-try/index.html.
+# For a person to run in their terminal.
+init-try: (cd //; qsoku bin && go run ./tools/ui-check init-try)
+
 # Opens the fixed workspace in a real VSCode with the extension installed, for a person to look at (.claude/rules/working-with-human.md).
 # qsoku ui-open <vscode|vim> <why-basic|external|no-why|live>
 ui-open: (cd //; qsoku bin && { [ "$1" != vscode ] || qsoku ext-build; } && go run ./tools/ui-check open "$@")

@@ -115,6 +115,42 @@ func (w *Workspace) Do(fn func(*Tx) error) error {
 	return fn(&Tx{w: w, tc: tc, key: key})
 }
 
+// Prepare makes .srwr/ with its lock and key, and nothing else. srwr init uses it.
+func (w *Workspace) Prepare() error { return w.Do(func(*Tx) error { return nil }) }
+
+// EndSession closes the current session: the next write starts a new tape. Without a current session it does nothing.
+// It returns the ID of the tape that was closed, or "".
+func (w *Workspace) EndSession() (string, error) {
+	var closed string
+	err := w.Do(func(tx *Tx) error {
+		if !tx.tc.exists {
+			return nil
+		}
+		closed = tx.tc.id
+		if err := os.Remove(filepath.Join(w.dir, "active")); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+		w.cache = nil
+		return nil
+	})
+	return closed, err
+}
+
+// Current returns the ID of the current tape, without taking the lock or making anything. ok is false when there is none.
+func (w *Workspace) Current() (id string, ok bool) {
+	id, ok = w.readActive()
+	if !ok {
+		return "", false
+	}
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	tc, err := w.load(id)
+	if err != nil || !tc.exists || w.opts.Now().Sub(tc.last) > w.opts.Gap {
+		return "", false
+	}
+	return id, true
+}
+
 // current decides which session is current and reads its tape. When there is none, it
 // returns an empty session with a fresh tape ID; the tape is made when something is appended.
 func (w *Workspace) current() (*tapeCache, error) {

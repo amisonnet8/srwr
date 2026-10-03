@@ -76,7 +76,12 @@ type client struct {
 
 func startClient(t *testing.T, root string) *client {
 	t.Helper()
-	cmd := exec.Command(binary(t), "mcp", "--root", root) //nolint:gosec // the binary was built by this test
+	return startClientCmd(t, exec.Command(binary(t), "mcp", "--root", root)) //nolint:gosec // the binary was built by this test
+}
+
+// startClientCmd runs cmd, which has to be srwr mcp, and talks to it.
+func startClientCmd(t *testing.T, cmd *exec.Cmd) *client {
+	t.Helper()
 	in, err := cmd.StdinPipe()
 	if err != nil {
 		t.Fatal(err)

@@ -104,17 +104,38 @@ srwr view-server --root <作業場>
 
 ## srwr init
 
-作業場を srwr 用に準備する。
+```
+srwr init [--lenient] [--root <作業場>]
+```
+
+作業場を srwr 用に準備する。何回動かしても同じ結果になり、変えるものがなければ何も書き換えない。
 
 | 項目 | 内容 |
 |---|---|
 | `.srwr/` | ディレクトリと鍵を作る |
-| `.mcp.json` | `srwr mcp` を登録する（既存の内容は残して追記） |
-| `.claude/settings.json` | hook の登録。厳格モードなら Edit/Write の禁止（既存の内容は残して追記） |
-| `.gitignore` | `.srwr/key`・`.srwr/lock`・`.srwr/active` を足す（git の管理下の場合） |
+| `.mcp.json` | `srwr mcp` を登録する（既存のサーバーは残して追記。すでに `srwr` があれば触らない） |
+| `.claude/settings.json` | hook の登録、Claude Code が聞かずに使えるようにする設定（`enabledMcpjsonServers` と、`select`・`replace` の許可）、厳格モードなら Edit/Write の禁止（既存の内容は残して追記） |
+| `.gitignore` | `.srwr/key`・`.srwr/lock`・`.srwr/active`・`.srwr/init-backup/` を足す（git の管理下の場合）。テープ（`.srwr/tapes/`）は共有できるよう無視しない |
 
-- 既存のファイルを壊さない。書き換える前の内容は `.srwr/init-backup/` に残す
+- 既存のファイルを壊さない。キーの順や、ほかの設定・サーバー・hook はそのまま残す。書式は2字下げの JSON に整える
+- 書き換える前の内容は `.srwr/init-backup/<日時>/` に残す（変えるファイルがあるときだけ）
+- JSON として読めないファイルがあるとき（またはオブジェクト・配列の形が違うとき）は、何も書き換えずに終了コード 1 で止まる
+- `srwr` が PATH にないときは、最後に注意を出す（`.mcp.json` と hook は `srwr` を呼ぶ）
 - 対象のエージェントは **Claude Code のみ**（MCP 自体は他のエージェントでも使えるが、Edit/Write の禁止と hook は Claude Code の設定に依存する）
+
+出力の例（空の作業場）：
+
+```
+作業場：/home/me/project
+
+  作った   .srwr/                鍵 .srwr/key を作りました
+  作った   .mcp.json             srwr mcp を登録しました
+  作った   .claude/settings.json hook を登録し、Edit・Write などを禁止しました（厳格モード）
+  作った   .gitignore            .srwr/key .srwr/lock .srwr/active .srwr/init-backup/
+
+準備できました。Claude Code を開き直すと、select / replace が使えます。
+緩いモード（Edit・Write を禁止しない）にするときは、srwr init --lenient。
+```
 
 ### 厳格モードと緩いモード
 
@@ -123,18 +144,33 @@ srwr view-server --root <作業場>
 | **厳格モード**（既定） | Claude Code の Edit・Write・MultiEdit・NotebookEdit を禁止する。AI がファイルを変える手段は `select` / `replace` だけになり、テープには必ず `why` が残る |
 | **緩いモード**（`srwr init --lenient`） | Edit・Write を禁止しない。hook が Edit を `replace`（`why` は `null`）として記録する。Write は記録せず、`external` として見える |
 
-厳格モードでも塞げないものがある。Bash 経由の編集（`sed -i`、リダイレクトなど）は、`external` として検知して見せる。
+- 厳格 ⇄ 緩いは、`srwr init` と `srwr init --lenient` で切り替えられる。緩いモードにすると、`permissions.deny` から上の4つ（`Edit`・`Write`・`MultiEdit`・`NotebookEdit`）を外す。それ以外の禁止は残す（利用者が自分で足した `Edit` の禁止も、同じ名前なので外れる）
+- 厳格モードでも塞げないものがある。Bash 経由の編集（`sed -i`、リダイレクトなど）は、`external` として検知して見せる
 
 ## srwr tapes
 
+```
+srwr tapes [new | prune (--keep N | --older-than 30d) | path <テープID>] [--root <作業場>]
+```
+
 | コマンド | 内容 |
 |---|---|
-| `srwr tapes` | 一覧（開始時刻、最後の更新、イベント数、ファイル数、大きさ、今のセッションか） |
-| `srwr tapes new` | 今のセッションを閉じ、次の書き込みから新しいセッションにする |
-| `srwr tapes prune --keep N` / `--older-than 30d` | 古いテープを消す。今のセッションは消さない |
+| `srwr tapes` | 一覧（テープID、開始、最後の更新、イベント数、ファイル数、大きさ、今のセッションか）。新しい順。時刻はその機械の時間帯 |
+| `srwr tapes new` | 今のセッションを閉じ、次の書き込みから新しいセッションにする。閉じる前に発行した範囲トークンは使えなくなる |
+| `srwr tapes prune --keep N` / `--older-than 30d` | 古いテープを消す。`--keep N` は新しい方から N 本を残す。`--older-than` は `30d`・`12h` の形。確認は聞かず、消したテープを1行ずつ出す。**今のセッションのテープは消さない** |
 | `srwr tapes path <id>` | テープのパスを表示（共有するときに使う） |
 
 自動の整理はしない。消すのは利用者が明示的に行う。
+
+出力の例：
+
+```
+  テープ              開始         最後の更新   イベント  ファイル  大きさ
+  20261003-1712-k3f9  10/03 17:12  10/03 17:48  14        3          5.1 KB  ← 今のセッション
+  20261002-0930-a8z1  10/02 09:30  10/02 11:05  62        7         21.4 KB
+
+2 本（合計 26.5 KB）。再生は srwr view <テープ>、共有は srwr tapes path <テープ>。
+```
 
 ## 記録しないファイル
 

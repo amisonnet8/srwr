@@ -322,6 +322,13 @@ func hookTryRows(workspace string) []hookTryRow {
 }
 
 func renderHookTryPage(lines []string, rows []hookTryRow, said string, runErr error) string {
+	return renderTryPage("hook の確認", lines, nil, rows, said, runErr)
+}
+
+// shown is a piece of text the page shows as it is, under a heading (what a command printed, for example).
+type shown struct{ Heading, Text string }
+
+func renderTryPage(title string, lines []string, outputs []shown, rows []hookTryRow, said string, runErr error) string {
 	var b strings.Builder
 	allOK := runErr == nil
 	for _, l := range lines {
@@ -329,7 +336,7 @@ func renderHookTryPage(lines []string, rows []hookTryRow, said string, runErr er
 			allOK = false
 		}
 	}
-	b.WriteString(`<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>hook の確認</title><style>` + pageCSS + `</style></head><body>` + "\n")
+	b.WriteString(`<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>` + html.EscapeString(title) + `</title><style>` + pageCSS + `</style></head><body>` + "\n")
 	if allOK {
 		b.WriteString(`<div class="big ok">全部 ○ でした</div><p>確認は終わりです。結果をチャットで「OK」と伝えてください。</p>` + "\n")
 	} else {
@@ -347,7 +354,11 @@ func renderHookTryPage(lines []string, rows []hookTryRow, said string, runErr er
 		mark, text, _ := strings.Cut(l, " ")
 		fmt.Fprintf(&b, `<tr class="%s"><td>%s</td><td>%s</td></tr>`+"\n", cls, html.EscapeString(mark), html.EscapeString(text))
 	}
-	b.WriteString("</table>\n<h2>記録された操作（上から順）</h2><table><tr><th>番号</th><th>種類</th><th>だれが</th><th>ファイル:行</th><th>理由（why）</th></tr>\n")
+	b.WriteString("</table>\n")
+	for _, o := range outputs {
+		fmt.Fprintf(&b, "<h2>%s</h2><pre>%s</pre>\n", html.EscapeString(o.Heading), html.EscapeString(o.Text))
+	}
+	b.WriteString("<h2>記録された操作（上から順）</h2><table><tr><th>番号</th><th>種類</th><th>だれが</th><th>ファイル:行</th><th>理由（why）</th></tr>\n")
 	for _, r := range rows {
 		fmt.Fprintf(&b, "<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n", r.Seq, html.EscapeString(r.Kind), html.EscapeString(r.By), html.EscapeString(r.Where), html.EscapeString(r.Why))
 	}

@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="918" height="144" viewBox="0 0 918 144" role="img" aria-label="srwr init：設定が JSON として読めないとき（何も変えずに止まる）（light）" font-family="'DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Noto Sans JP','Meiryo',monospace" font-size="16" white-space="pre">
-<rect width="918" height="144" fill="#ffffff"/>
-<rect width="918" height="28" fill="#e8e8e8"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="717" height="144" viewBox="0 0 717 144" role="img" aria-label="srwr init：設定が JSON として読めないとき（何も変えずに止まる）（light）" font-family="'DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Noto Sans JP','Meiryo',monospace" font-size="16" white-space="pre">
+<rect width="717" height="144" fill="#ffffff"/>
+<rect width="717" height="28" fill="#e8e8e8"/>
 <text x="12" y="19" fill="#767676" font-size="13" style="white-space:pre">srwr init：設定が JSON として読めないとき（何も変えずに止まる）</text>
 <text x="8.0" y="51" fill="#767676">$</text>
 <text x="27.2" y="51" fill="#795e26">s</text>
@@ -58,19 +58,9 @@
 <text x="574.4" y="71" fill="#c62828">3</text>
 <text x="593.6" y="71" fill="#c62828" textLength="19.2" lengthAdjust="spacingAndGlyphs">行</text>
 <text x="612.8" y="71" fill="#c62828" textLength="19.2" lengthAdjust="spacingAndGlyphs">目</text>
-<text x="632.0" y="71" fill="#c62828">:</text>
-<text x="651.2" y="71" fill="#c62828" textLength="19.2" lengthAdjust="spacingAndGlyphs">区</text>
-<text x="670.4" y="71" fill="#c62828" textLength="19.2" lengthAdjust="spacingAndGlyphs">切</text>
-<text x="689.6" y="71" fill="#c62828" textLength="19.2" lengthAdjust="spacingAndGlyphs">り</text>
-<text x="708.8" y="71" fill="#c62828" textLength="19.2" lengthAdjust="spacingAndGlyphs">の</text>
-<text x="737.6" y="71" fill="#c62828">,</text>
-<text x="756.8" y="71" fill="#c62828" textLength="19.2" lengthAdjust="spacingAndGlyphs">が</text>
-<text x="776.0" y="71" fill="#c62828" textLength="19.2" lengthAdjust="spacingAndGlyphs">あ</text>
-<text x="795.2" y="71" fill="#c62828" textLength="19.2" lengthAdjust="spacingAndGlyphs">り</text>
-<text x="814.4" y="71" fill="#c62828" textLength="19.2" lengthAdjust="spacingAndGlyphs">ま</text>
-<text x="833.6" y="71" fill="#c62828" textLength="19.2" lengthAdjust="spacingAndGlyphs">せ</text>
-<text x="852.8" y="71" fill="#c62828" textLength="19.2" lengthAdjust="spacingAndGlyphs">ん</text>
-<text x="872.0" y="71" fill="#c62828" textLength="19.2" lengthAdjust="spacingAndGlyphs">）</text>
+<text x="632.0" y="71" fill="#c62828" textLength="19.2" lengthAdjust="spacingAndGlyphs">付</text>
+<text x="651.2" y="71" fill="#c62828" textLength="19.2" lengthAdjust="spacingAndGlyphs">近</text>
+<text x="670.4" y="71" fill="#c62828" textLength="19.2" lengthAdjust="spacingAndGlyphs">）</text>
 <text x="8.0" y="91" fill="#1e1e1e" textLength="19.2" lengthAdjust="spacingAndGlyphs">何</text>
 <text x="27.2" y="91" fill="#1e1e1e" textLength="19.2" lengthAdjust="spacingAndGlyphs">も</text>
 <text x="46.4" y="91" fill="#1e1e1e" textLength="19.2" lengthAdjust="spacingAndGlyphs">書</text>

@@ -192,8 +192,8 @@ R10 までは、確認者が日本語の方が得意なので、日本語で作�
 - [x] `srwr` のビルド（Linux・macOS・Windows、amd64・arm64、`CGO_ENABLED=0`）
 - [x] 拡張の `.vsix`（`npx @vscode/vsce package`）。`package.json` の `description`・`keywords` を決めた言葉にそろえる
 - [x] `qsoku dist`（6つのバイナリ・`checksums.txt`・`.vsix`）、`qsoku dist-try`、`qsoku publish-check`、CI の `dist` ジョブ、`release.yml`、`dev/publish.md`
-- [ ] **最初の Release `v0.1.0`**（人間：タグを push し、GitHub で Publish。`release.yml` が成果物を付ける）。付いたものを確かめる
-- [ ] **Marketplace へのアップロード**（人間：`.vsix` を Web サイトから。`dev/publish.md`）。ページのアイコン・画像・バッジを確かめる
+- [x] **Release**（人間：タグを push し、GitHub で Publish。`release.yml` が成果物を付ける）：`v0.1.0` と、バッジの直しを含む `v0.1.1`。付いたものを確かめた
+- [x] **Marketplace へのアップロード**（人間：`.vsix` を Web サイトから。`dev/publish.md`）：`0.1.0`、バッジを直した `0.1.1`。ページのアイコン・画像・バッジを確かめた
 
 **完了条件**：手元で作った `.vsix` と `srwr` で、固定テープを VSCode と Vim の両方で開ける。
 **人間の確認**：入れて開くまでを1コマンドに。

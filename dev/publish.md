@@ -10,9 +10,11 @@ AI は公開しない（`git push`・`gh release create`・Marketplace へのア
 
 ## 2. 公開前の確認（手元）
 
+**公開したものは戻せない**（公開した版は書き換えられない。版を消しても、その番号は使えない。拡張を Remove すると名前が永久に使えなくなる）。だから、操作の前に、機械で確かめられることを全部確かめ、結果を見てから進める（`.claude/rules/distribution.md`）。
+
 1. main に push して、CI が通っていること（`dist` のジョブを含む）
 2. `qsoku dist-try` を動かし、できたページ（`ui-check-result/dist-try/index.html`）の手順をやる（VSCode と Vim）
-3. `qsoku publish-check`（`.vsix` の中身を検査して、アップロードの手順を出す）
+3. `qsoku publish-check`（`.vsix` の中身、README がリポジトリと同じこと、**README が使う画像・バッジの URL を全部ネットワークから取って壊れていないこと**を検査し、結果のページ `ui-check-result/publish-check/index.html` を出す）。**ページを開いて、画像が全部出ていて、バッジに「retired」「error」などの文字が無いことを目で見る**。1 つでも変なら上げない
 
 ## 3. GitHub Releases（バイナリと .vsix）
 

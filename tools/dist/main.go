@@ -196,11 +196,29 @@ func publishCheck(root, path string, out io.Writer) error {
 	if src.Version != m.Version {
 		return fmt.Errorf("the .vsix is version %s but extension/package.json says %s: run qsoku dist again", m.Version, src.Version)
 	}
+	// Everything the READMEs reach over the network is fetched now, before anything is uploaded.
+	files, err := readZip(path)
+	if err != nil {
+		return err
+	}
+	if err := readmeMatchesRepo(root, string(files["extension/readme.md"])); err != nil {
+		return err
+	}
+	urls := readmeURLs(root, string(files["extension/readme.md"]))
+	problems := checkRemoteImages(fetchClient, urls)
+	page, err := writePreviewPage(root, urls, problems)
+	if err != nil {
+		return err
+	}
+	if len(problems) > 0 {
+		return fmt.Errorf("DO NOT UPLOAD. %d picture(s) of the READMEs do not work:\n  %s\n(look at %s)", len(problems), strings.Join(problems, "\n  "), page)
+	}
 	info, err := os.Stat(path) //nolint:gosec // the .vsix a person named, or one found in dist/
 	if err != nil {
 		return err
 	}
-	_, _ = fmt.Fprintf(out, "OK  %s  (%s.%s %s, %d KB)\n\n", path, m.Publisher, m.Name, m.Version, info.Size()/1024)
+	_, _ = fmt.Fprintf(out, "OK  %s  (%s.%s %s, %d KB)\n", path, m.Publisher, m.Name, m.Version, info.Size()/1024)
+	_, _ = fmt.Fprintf(out, "OK  %d pictures of the READMEs were fetched and all work. Look at them too: %s\n\n", len(urls), page)
 	_, _ = fmt.Fprintf(out, `Upload it by hand (dev/publish.md):
   1. Push main first: the README pictures are read from main (%s/media/readme/).
   2. Open https://marketplace.visualstudio.com/manage/publishers/%s

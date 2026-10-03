@@ -147,3 +147,26 @@ func checkVsix(path string) (manifest, error) {
 	}
 	return m, nil
 }
+
+// normalizeReadme turns the README inside a .vsix back into the text of extension/README.md: vsce writes the relative paths of
+// pictures and links as absolute URLs under the two base URLs, and this undoes exactly that.
+func normalizeReadme(s string) string {
+	s = strings.ReplaceAll(s, baseImagesURL+"/", "")
+	s = strings.ReplaceAll(s, baseContentURL+"/", "")
+	return strings.TrimSpace(strings.ReplaceAll(s, "\r\n", "\n"))
+}
+
+// readmeMatchesRepo says whether the README inside the .vsix is the README of the repository: what is uploaded is what a person
+// sees on GitHub (the two once differed after a publication).
+func readmeMatchesRepo(root, vsixReadme string) error {
+	b, err := os.ReadFile(filepath.Join(root, "extension", "README.md")) //nolint:gosec // the README of this repository
+	if err != nil {
+		return err
+	}
+	// Both sides are normalized: a link the author wrote out in full (the language switch, which must work on the Marketplace)
+	// is the same link as the relative one after vsce has done its work.
+	if normalizeReadme(vsixReadme) != normalizeReadme(string(b)) {
+		return fmt.Errorf("the README inside the .vsix is not extension/README.md of this checkout: build the .vsix again from the commit you mean to publish")
+	}
+	return nil
+}

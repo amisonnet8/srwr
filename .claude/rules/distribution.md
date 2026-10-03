@@ -15,6 +15,17 @@
 - **Release は人間が作る**（タグを push し、GitHub で Publish）。公開されると `.github/workflows/release.yml` が `qsoku dist` を動かし、6つの圧縮ファイル（`srwr_<版>_<os>_<arch>.tar.gz`、Windows は `.zip`）・`checksums.txt`・`.vsix` を付ける。**タグのコミットからビルドしないと、`srwr --version` が `v0.0.0-…` になる**（workflow は `fetch-depth: 0`）。CI の `dist` ジョブも同じコマンドを毎回動かす
 - ビルド済みバイナリはリポジトリにコミットしない（`/bin/`・`/dist/` は `.gitignore` 済み）
 
+## 取り消せない操作の前に（公開・タグの push・Release・Marketplace へのアップロード）
+
+**公開したものは戻せない。** Marketplace は、公開した版を書き換えられず、版を消してもその番号は二度と使えず、拡張を Remove すると名前（ID）が永久に予約される（`dev/publish.md`）。最初の公開（0.1.0）で、README のバッジが廃止されていて色が付かなかったが、公開の前に確かめていなかった。だから、操作の**前**に、機械で確かめられることを全部確かめる。
+
+1. README と `.vsix` が使う**外部の URL を、実際に取りに行く**。画像が返り、バッジが壊れた文言（retired・invalid・error・unavailable・404・500 など）を言っていないこと。`qsoku publish-check` がやる。結果は `ui-check-result/publish-check/index.html` に、ブラウザが読むのと同じに並べるので、人間も目で見る
+2. 外部のサービス（バッジなど）は、**まだ公開していない対象で試して済ませない**。公開済みの別の対象でも先に試す。足す前に、そのサービスが今も動いていることを確かめる
+3. `.vsix` の README が、リポジトリの `extension/README.md` と同じであること（`publish-check` が見る）
+4. 上げる `.vsix` は、**タグのコミットから CI が作って Release に付けたもの**。上げる前に、それを取り出して 1〜3 を通す
+5. 結果を人間に見せ、人間が「上げる」と言ったときだけ、操作の手順を渡す。**公開後の確認を、確認の代わりにしない**
+6. 直す必要が出ても、人間に聞かずに、版を上げたり、決めたことを変えたりしない
+
 ## srwr-view（VSCode 拡張）
 
 - `.vsix` は `qsoku dist` が作る（`npx @vscode/vsce package --no-dependencies --baseContentUrl … --baseImagesUrl …`）。**拡張は `extension/` にあるので、README の相対パスの画像・リンクが正しい URL になるよう、この2つを渡す**（渡さないと `…/raw/HEAD/media/…` になって画像が出ない）。`@vscode/vsce` は devDependencies に入れず、使うときに `npx` で呼ぶ（依存を増やさない）

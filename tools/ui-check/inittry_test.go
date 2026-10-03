@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -137,5 +138,24 @@ func TestInitTryPageShowsTheOutputs(t *testing.T) {
 		if !strings.Contains(page, want) {
 			t.Errorf("page lacks %q", want)
 		}
+	}
+}
+
+// A name that is only in binDir (srwr is not installed on this machine) is found, and what a failed command said is kept.
+func TestRunInFindsTheCommandInBinDir(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the command is a shell script")
+	}
+	bin, work := t.TempDir(), t.TempDir()
+	script := "#!/bin/sh\necho \"hello from $PWD $1\"\nexit 3\n"
+	if err := os.WriteFile(filepath.Join(bin, "srwrfake"), []byte(script), 0o700); err != nil { //nolint:gosec // a script in a temporary directory
+		t.Fatal(err)
+	}
+	out, err := runIn(work, bin, "srwrfake", "init")
+	if err == nil || !strings.Contains(out, "hello from") || !strings.Contains(out, "init") || !strings.Contains(out, "失敗：exit status 3") {
+		t.Errorf("out %q err %v", out, err)
+	}
+	if _, err := runIn(work, bin, "no-such-command-at-all"); err == nil {
+		t.Error("a command that does not exist succeeded")
 	}
 }

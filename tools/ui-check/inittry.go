@@ -73,15 +73,25 @@ func initTryClaudeArgs() []string {
 }
 
 // runIn runs a command in dir with binDir first on PATH (so that srwr is found by name, as an installed one is).
+//
+// exec.Command looks the name up on the PATH of this process, not of the command, so a name that is in binDir is given as its path.
 func runIn(dir, binDir string, name string, args ...string) (string, error) {
+	if p := filepath.Join(binDir, name); fileExists(p) {
+		name = p
+	}
 	cmd := exec.Command(name, args...) //nolint:gosec // srwr of this repository, or go
 	cmd.Dir = dir
 	cmd.Env = append(os.Environ(), "PATH="+binDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 	var out bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &out, &out
 	err := cmd.Run()
+	if err != nil {
+		out.WriteString("\n（失敗：" + err.Error() + "）\n")
+	}
 	return out.String(), err
 }
+
+func fileExists(p string) bool { _, err := os.Stat(p); return err == nil } //nolint:gosec // a path of this tool
 
 func fileText(workspace, rel string) string {
 	b, _ := os.ReadFile(filepath.Join(workspace, filepath.FromSlash(rel))) //nolint:gosec // a file of the workspace of this tool

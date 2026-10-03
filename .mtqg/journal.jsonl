@@ -300,3 +300,4 @@
 {"id":"0991ecb4187f485cbfbe0beadc28a322","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T10:40:33Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"090fa96fdedd4b79bf5e0d70f38b67c6","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T10:40:33Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"f3393ac21ad74184ac37b59f0b07311c","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T10:40:33Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"8d2c28ca3556421a837d4d0d17e0b51a","op":"create","type":"bug","status":"open","text":"R10.5 の確認で人間が NG：Vim の画面がめちゃくちゃ。どの画像か未確認。自動の取得（term_scrape の文字）には崩れが見えない。SVG の描画か、実物の Vim か、ページの見え方かを切り分ける","v":1,"ts":"2026-10-03T11:03:09Z","author":{"kind":"ai","name":"claude-code"}}

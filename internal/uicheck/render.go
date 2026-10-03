@@ -80,13 +80,30 @@ func (g *Grid) SVG(title string, marks [][2]int) string {
 		for c := 0; c < g.Cols; {
 			fg := g.Cells[r][c].FG
 			e := c
-			var text strings.Builder
 			for e < g.Cols && g.Cells[r][e].FG == fg {
-				text.WriteString(g.Cells[r][e].Ch)
 				e++
 			}
-			if s := strings.TrimRight(text.String(), " "); s != "" && fg != "" {
-				fmt.Fprintf(&b, `<text x="%.1f" y="%d" fill="%s" textLength="%.1f" lengthAdjust="spacing">%s</text>`+"\n", float64(c)*cellW, r*rowH+15, fg, float64(e-c)*cellW, html.EscapeString(strings.TrimLeft(s, " ")))
+			// The text is drawn from its first to its last visible cell, and stretched over exactly those cells. (Stretching it
+			// over the blank cells around it as well spreads the letters of a short text over the whole line.)
+			first, last := -1, -1
+			for i := c; i < e; i++ {
+				if ch := g.Cells[r][i].Ch; ch != " " && ch != "" {
+					if first < 0 {
+						first = i
+					}
+					last = i
+				}
+			}
+			if first >= 0 && fg != "" {
+				end := last + 1
+				for end < e && g.Cells[r][end].Ch == "" { // the second cell of a wide character
+					end++
+				}
+				var text strings.Builder
+				for i := first; i < end; i++ {
+					text.WriteString(g.Cells[r][i].Ch)
+				}
+				fmt.Fprintf(&b, `<text x="%.1f" y="%d" fill="%s" textLength="%.1f" lengthAdjust="spacing" xml:space="preserve">%s</text>`+"\n", float64(first)*cellW, r*rowH+15, fg, float64(end-first)*cellW, html.EscapeString(text.String()))
 			}
 			c = e
 		}

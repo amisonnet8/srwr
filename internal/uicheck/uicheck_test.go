@@ -2,6 +2,9 @@ package uicheck
 
 import (
 	"encoding/json"
+	"html"
+	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -249,5 +252,31 @@ func TestDotFirst(t *testing.T) {
 	}
 	if g.RowText(2) != "~" {
 		t.Error("a row that is not of the list changed")
+	}
+}
+
+// A short text in a long run of one color is drawn over its own cells: stretching it over the blanks around it spread its
+// letters over the whole line (the Vim screens of R10.5 looked like noise).
+func TestSVGTextIsStretchedOverItsOwnCellsOnly(t *testing.T) {
+	g := NewGrid(30, 2, "#1e1e1e")
+	g.Put(0, 0, "ab   textkit                ", "#d4d4d4", "#1e1e1e") // one color for the whole line, with blanks inside and around
+	g.Put(1, 3, "あい  x", "#ffffff", "#1e1e1e")
+	svg := g.SVG("t", nil)
+	re := regexp.MustCompile(`x="([\d.]+)" y="\d+" fill="#\w+" textLength="([\d.]+)"[^>]*>([^<]*)</text>`)
+	seen := map[string]string{}
+	for _, m := range re.FindAllStringSubmatch(svg, -1) {
+		text := html.UnescapeString(m[3])
+		cells := 0
+		for _, r := range text {
+			cells += Width(r)
+		}
+		if want := strconv.FormatFloat(float64(cells)*cellW, 'f', 1, 64); m[2] != want {
+			t.Errorf("%q is drawn over %s, want %s (its own cells)", text, m[2], want)
+		}
+		seen[text] = m[1]
+	}
+	// The text starts at its first visible cell, and keeps the blanks inside it.
+	if seen["ab   textkit"] != "0.0" || seen["あい  x"] != "28.8" {
+		t.Errorf("texts = %v\n%s", seen, svg)
 	}
 }

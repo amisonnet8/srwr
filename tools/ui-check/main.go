@@ -136,7 +136,7 @@ func openVSCode(root, name string, out io.Writer) error {
 // then the newest socket in dir that answers is used. It returns "" when the current one works or none does.
 func liveIPC(dir, current string) string {
 	works := func(p string) bool {
-		c, err := net.DialTimeout("unix", p, time.Second)
+		c, err := net.DialTimeout("unix", p, time.Second) //nolint:gosec // a socket in the temporary directory, not a network address
 		if err != nil {
 			return false
 		}

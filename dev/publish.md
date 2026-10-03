@@ -33,7 +33,8 @@ AI は公開しない（`git push`・`gh release create`・Marketplace へのア
 3. 公開に使う `.vsix` は、**Release の *Assets* に付いた `srwr-view-<版>.vsix`**（`release.yml` がタグのコミットから作ったもの）。ブラウザで Release のページからダウンロードする。手元の `dist/` のものは、作った時点の作業ツリーによって中身が変わりうるので、公開には使わない。ダウンロードしたものと `checksums.txt` が合うことは、AI が確かめられる。`qsoku publish-check <ファイル>` で検査もできる（devcontainer の中に置いたファイルを指す）
 4. *New extension* → *Visual Studio Code* で `.vsix` を選ぶ。更新は、拡張の *…* → *Update*
 5. 検証が終わるのを待ち、拡張のページを見る：アイコン、README の画像、バッジ（版・評価は、公開されて初めて出る）、「Prerequisites」のリンク
-6. 公開後に、インストール数のバッジ（`img.shields.io/visual-studio-marketplace/i/amisonnet8.srwr-view`）を README に足し直すかを決める（今は外してある。ルートと拡張の README の英語・日本語の4つ）
+6. 公開後に、インストール数・評価のバッジを README に足し直すかを決める（今は外してある。ルートと拡張の README の英語・日本語の4つ）。使うのは `https://flat.badgen.net/vs-marketplace/i/amisonnet8.srwr-view`（インストール数）と `…/rating/…`（評価。評価が1件もないあいだは 500 になる）。shields.io の Marketplace のバッジは廃止されている
+7. README だけを直して公開し直すときも、`package.json` の `version` を上げる（0.1.0 → 0.1.1）。Marketplace の README は `.vsix` の中のものなので、リポジトリの README を直しても、上げ直すまで公開側は変わらない。main に push して作業ツリーが clean な状態で `qsoku dist` を動かし、できた `dist/srwr-view-<版>.vsix` を `qsoku publish-check` に通して上げる（srwr のバイナリは変わらないので、Release は作らなくてよい）
 
 ## 5. Open VSX（任意）
 

@@ -56,6 +56,17 @@ const vimNote = `
 ・light で見るときは、名前の後ろに -light を付けて動かします。例：qsoku ui-open vim why-basic-light
 `
 
+// vimEnv is the environment of the Vim that is opened for a person. The screens are in English unless SRWR_LANG asks for Japanese
+// (SRWR_LANG=ja qsoku ui-open vim external); then Vim's own words (the tab line, its messages) follow the same language, so that
+// no Japanese is mixed into the English screen by the locale of the person's terminal.
+func vimEnv(srwrLang string, light bool) []string {
+	env := []string{"VIMINIT=" + vimInit(light)}
+	if strings.HasPrefix(strings.ToLower(strings.TrimSpace(srwrLang)), "ja") {
+		return append(env, "SRWR_LANG=ja", "LC_ALL=ja_JP.UTF-8", "LANG=ja_JP.UTF-8")
+	}
+	return append(env, "SRWR_LANG=en", "LC_ALL=C.UTF-8", "LANG=C.UTF-8")
+}
+
 // vimInit is what Vim is told to start with: the colors the approved images were drawn with (vim/test/screen/capture.vim).
 func vimInit(light bool) string {
 	if light {
@@ -109,7 +120,7 @@ func openVim(root, name string, out io.Writer) error {
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
 	// VIMINIT is read instead of the vimrc: a plain Vim whose Normal colors are the ones of the images (and of the screen
 	// tests), whatever the colors of the person's terminal and vimrc are.
-	cmd.Env = append(os.Environ(), "VIMINIT="+vimInit(light), "SRWR_LANG=en") // the screens are in English
+	cmd.Env = append(os.Environ(), vimEnv(os.Getenv("SRWR_LANG"), light)...)
 	if name == "live" {
 		return runLiveVim(cmd, workspace, fixture)
 	}

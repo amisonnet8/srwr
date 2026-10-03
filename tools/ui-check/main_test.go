@@ -288,3 +288,22 @@ func TestACodeTerminalMustReachTheOpenVSCode(t *testing.T) {
 		t.Errorf("a socket that answers: %v", err)
 	}
 }
+
+func TestVimOpensInEnglishUnlessJapaneseIsAskedFor(t *testing.T) {
+	for _, tc := range []struct {
+		in   string
+		want []string
+	}{
+		{"", []string{"SRWR_LANG=en", "LC_ALL=C.UTF-8"}},
+		{"en", []string{"SRWR_LANG=en", "LC_ALL=C.UTF-8"}},
+		{"ja", []string{"SRWR_LANG=ja", "LC_ALL=ja_JP.UTF-8"}},
+		{"ja_JP.UTF-8", []string{"SRWR_LANG=ja", "LC_ALL=ja_JP.UTF-8"}},
+	} {
+		got := strings.Join(vimEnv(tc.in, false), "\n")
+		for _, w := range tc.want {
+			if !strings.Contains(got, w) {
+				t.Errorf("SRWR_LANG=%q: %q lacks %q", tc.in, got, w)
+			}
+		}
+	}
+}

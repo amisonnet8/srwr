@@ -266,3 +266,5 @@
 {"id":"c1e0e2627cdc4c0c920083d54f161882","op":"create","type":"bug","status":"open","text":"qsoku init-try で srwr init が動かず、全項目 ×（NG）になった。exec.Command は自プロセスの PATH で名前を探すので、bin/ だけを PATH に足した子プロセスの srwr が見つからなかった。bin/ にあれば絶対パスで呼ぶよう直し、失敗の内容もページに出すようにした","v":1,"ts":"2026-10-03T08:25:02Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"c1e0e2627cdc4c0c920083d54f161882","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T08:25:02Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"fb8d735cc10644289372a90f5e9a8786","op":"create","type":"memo","text":"R9 の人間の確認(qsoku init-try)は OK。push と CI のあとで todo 538d3acaf5 を閉じる","v":1,"ts":"2026-10-03T08:29:03Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"538d3acaf5ea4593bb9b036f88661966","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T08:39:21Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"1b8b8c4b0f594737956684ba3c2a1e91","op":"create","type":"memo","text":"R9 完了（CI 通過）。次は R10（header の vcs）。「R10開始」の合図まで着手しない。その後 R10.5（言語・時間対応、UIゲート）→R11→R12","v":1,"ts":"2026-10-03T08:39:21Z","author":{"kind":"ai","name":"claude-code"}}

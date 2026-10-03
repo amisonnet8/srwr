@@ -170,10 +170,10 @@ func hookTryReport(workspace string) (lines []string, tapeID string, ok bool) {
 		lines = append(lines, mark+" "+fmt.Sprintf(format, a...))
 	}
 	id := strings.TrimSuffix(filepath.Base(files[0]), tape.FileSuffix)
-	check(true, "テープは1本：%s", id)
-	check(n["select/hook"] > 0, "調べた読み取り（hook の select）：%d 件（Read %d、Bash %d、Grep %d）", n["select/hook"], tools["Read"], tools["Bash"], tools["Grep"])
-	check(n["replace/hook"] > 0, "AI の Edit（hook の replace）：%d 件", n["replace/hook"])
-	check(n["select/mcp"] > 0 && n["replace/mcp"] > 0, "srwr の select / replace（mcp）：select %d 件、replace %d 件", n["select/mcp"], n["replace/mcp"])
+	check(true, "記録（テープ）が1本できた：%s", id)
+	check(n["select/hook"] > 0, "AI がファイルを読んだ・探した記録：%d 件（Read %d、Bash %d、Grep %d）", n["select/hook"], tools["Read"], tools["Bash"], tools["Grep"])
+	check(n["replace/hook"] > 0, "AI が Edit（いつもの編集）で直した記録：%d 件", n["replace/hook"])
+	check(n["select/mcp"] > 0 && n["replace/mcp"] > 0, "AI が srwr の select / replace で直した記録：select %d 件、replace %d 件", n["select/mcp"], n["replace/mcp"])
 	return lines, id, ok
 }
 

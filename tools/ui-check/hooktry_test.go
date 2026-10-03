@@ -134,7 +134,7 @@ func TestHookTryReport(t *testing.T) {
 	}
 	file := filepath.Join(root, "f.go")
 	call("Read", map[string]any{"file_path": file}, nil)
-	if lines, _, ok := hookTryReport(root); ok || !strings.Contains(strings.Join(lines, "\n"), "× AI の Edit") {
+	if lines, _, ok := hookTryReport(root); ok || !strings.Contains(strings.Join(lines, "\n"), "× AI が Edit（いつもの編集）で直した記録") {
 		t.Errorf("only a read: %v %v", lines, ok)
 	}
 	sel, cerr := c.Select(core.SelectInput{File: "f.go", StartLine: 2, EndLine: 2, Why: "見る"})
@@ -152,7 +152,7 @@ func TestHookTryReport(t *testing.T) {
 	if !ok || id == "" {
 		t.Errorf("everything is recorded, yet: %v %v", lines, ok)
 	}
-	for _, want := range []string{"調べた読み取り（hook の select）：1 件（Read 1", "AI の Edit（hook の replace）：1 件", "select 1 件、replace 1 件"} {
+	for _, want := range []string{"AI がファイルを読んだ・探した記録：1 件（Read 1", "AI が Edit（いつもの編集）で直した記録：1 件", "select 1 件、replace 1 件"} {
 		if !strings.Contains(strings.Join(lines, "\n"), want) {
 			t.Errorf("the report lacks %q:\n%s", want, strings.Join(lines, "\n"))
 		}

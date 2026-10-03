@@ -131,8 +131,8 @@ func checkVsix(path string) (manifest, error) {
 	}
 	for _, im := range imgs {
 		u := im[1]
-		if strings.HasPrefix(u, "https://img.shields.io/") || strings.HasPrefix(u, "https://flat.badgen.net/") {
-			continue // a badge, from a host the Marketplace trusts
+		if strings.HasPrefix(u, "https://img.shields.io/") {
+			continue // a badge, which the Marketplace trusts
 		}
 		if !strings.HasPrefix(u, baseImagesURL+"/media/") || !strings.HasSuffix(u, ".png") {
 			problems = append(problems, "a README picture is not a PNG under "+baseImagesURL+"/media/: "+u)

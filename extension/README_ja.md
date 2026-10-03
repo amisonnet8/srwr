@@ -5,7 +5,8 @@
 <p align="center"><i><a href="README.md">English</a> | <b>日本語</b></i></p>
 
 <p align="center">
-  <a href="https://marketplace.visualstudio.com/items?itemName=amisonnet8.srwr-view"><img alt="Version" src="https://flat.badgen.net/vs-marketplace/v/amisonnet8.srwr-view"></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=amisonnet8.srwr-view"><img alt="Version" src="https://img.shields.io/visual-studio-marketplace/v/amisonnet8.srwr-view?label=Marketplace&logo=visualstudiocode&logoColor=white"></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=amisonnet8.srwr-view"><img alt="Rating" src="https://img.shields.io/visual-studio-marketplace/r/amisonnet8.srwr-view"></a>
   <img alt="VSCode ^1.90" src="https://img.shields.io/badge/VSCode-%5E1.90-007acc?logo=visualstudiocode&logoColor=white">
   <a href="https://github.com/amisonnet8/srwr/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/amisonnet8/srwr/ci.yml?branch=main&label=CI&logo=github"></a>
   <a href="https://github.com/amisonnet8/srwr/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/github/license/amisonnet8/srwr"></a>

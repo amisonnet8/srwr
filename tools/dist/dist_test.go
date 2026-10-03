@@ -170,7 +170,7 @@ func goodVsix() map[string]string {
 	return map[string]string{
 		"extension.vsixmanifest":            "<x/>",
 		"extension/package.json":            `{"name":"srwr-view","publisher":"amisonnet8","version":"0.1.0","keywords":["ai"]}`,
-		"extension/readme.md":               "![a](" + baseImagesURL + "/media/readme/replay.png) ![b](https://img.shields.io/x.svg) ![c](https://flat.badgen.net/vs-marketplace/v/a.b)",
+		"extension/readme.md":               "![a](" + baseImagesURL + "/media/readme/replay.png) ![b](https://img.shields.io/x.svg)",
 		"extension/LICENSE.txt":             "MIT",
 		"extension/package.nls.json":        "{}",
 		"extension/package.nls.ja.json":     "{}",

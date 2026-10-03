@@ -61,7 +61,7 @@
 - テストは、失敗したら `cquit`（終了コード 1）、成功したら `qall!` で終わる。`v:errors` を使い、最後に空でなければ失敗にする
 - **スクリプトが途中でエラーになると、Ex モードで標準入力を待って固まる。** そのため `-c 'cquit 2' </dev/null` を付けて動かす（`qsoku vim-test` はそうしてある）。`-V1` でエラーの内容が標準エラー出力に出る
 - 表示サーバーを使うテストは、`qsoku bin` で作った `bin/srwr` を起動する（`qsoku vim-test` が先に作る）
-- **画面の取得と基準**（`vim/screen_test.go`）：疑似端末（`script -qec`）の外側の Vim が、`term_start()` で内側の Vim（srwr-view.vim）を 140桁×50行の端末で動かし、`term_scrape()` でコマごとの画面を取る（`vim/test/screen/capture.vim`）。待ちは画面の条件（`sleep` で時間を待たない）。基準 `vim/test/baseline/*.json` は、承認した画像（`handoff/design/images/vim/`）から `go run ./tools/ui-check vim-baseline` で作ったもので、文字と背景は全部、前景は srwr が決める色（理由の行・範囲・丸・ステータス行）だけを比べる。Vim の構文の色は版で変わるので比べない。基準を替えるときは、理由を書いて人間の了承をもらう（`vim/test/baseline/README.md`）
+- **画面の取得と基準**（部品は `internal/uicheck/vimcap.go` の `CaptureVim`。`vim/screen_test.go` と `qsoku ui-check` が使う）：疑似端末（`script -qec`）の外側の Vim が、`term_start()` で内側の Vim（srwr-view.vim）を 140桁×50行の端末で動かし、`term_scrape()` でコマごとの画面を取る（`vim/test/screen/capture.vim`）。待ちは画面の条件（`sleep` で時間を待たない）。基準 `vim/test/baseline/*.json` は、承認した画像（`handoff/design/images/vim/`）から `go run ./tools/ui-check vim-baseline` で作ったもので、文字と背景は全部、前景は srwr が決める色（理由の行・範囲・丸・ステータス行）だけを比べる。Vim の構文の色は版で変わるので比べない。基準を替えるときは、理由を書いて人間の了承をもらう（`vim/test/baseline/README.md`）
 - `term_scrape()` が返す文字は、全角が1つで幅 2。反転（`reverse`）は、色を入れ替えて見た目どおりにして記録する（ステータス行）
 - 承認した画像の背景は、一番多い色が全体の下地になる。`Normal` の背景とは限らない（範囲が画面いっぱいのコマ）。`Normal` の背景は呼ぶ側が渡す
 - **画面なしの Vim では、スクロール位置（`topline`）や見た目は確かめられない。** 疑似端末で本物の Vim を動かして `term_scrape()` で取る（R5 の画面の取得。例：`TERM=xterm script -qec "vim -Nu NONE -S 確認用.vim" /dev/null`）

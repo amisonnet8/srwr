@@ -1,17 +1,14 @@
 package vim
 
 import (
-	"bytes"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"slices"
 	"strconv"
 	"strings"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/amisonnet8/srwr/internal/uicheck"
 )
@@ -83,43 +80,8 @@ func captureSized(t *testing.T, scenario, theme string, rows, cols int) *uicheck
 	}
 	ws := t.TempDir()
 	copyDir(t, filepath.Join(repo, "extension", "test", "fixtures", "ui-check"), ws)
-	out := filepath.Join(t.TempDir(), "screens.json")
-	vimBin := os.Getenv("VIM_BIN")
-	if vimBin == "" {
-		vimBin = "vim"
-	}
-	cmdline := vimBin + " -Nu NONE -i NONE -S " + filepath.Join(repo, "vim", "test", "screen", "capture.vim")
-	cmd := exec.Command("script", "-qec", cmdline, "/dev/null") //nolint:gosec // fixed arguments and paths made by this test
-	cmd.Env = append(os.Environ(), "SRWR_REPO="+repo, "SRWR_BIN="+srwrBinary(t), "WS="+ws, "SCENARIO="+scenario, "THEME="+theme, "OUT="+out, "TERM=xterm-256color", "SRWR_VIM_BIN="+vimBin,
-		// One language for every machine: UTF-8 (the text is Japanese), and Vim's own messages in English.
-		"LC_ALL=C.UTF-8", "LANG=C.UTF-8")
-	if rows > 0 {
-		cmd.Env = append(cmd.Env, "ROWS="+strconv.Itoa(rows), "COLS="+strconv.Itoa(cols))
-	}
-	cmd.Stdin = nil
-	done := make(chan error, 1)
-	var output bytes.Buffer
-	cmd.Stdout, cmd.Stderr = &output, &output
-	if err := cmd.Start(); err != nil {
-		t.Fatal(err)
-	}
-	go func() { done <- cmd.Wait() }()
-	select {
-	case <-done:
-	case <-time.After(3 * time.Minute):
-		_ = cmd.Process.Kill()
-		t.Fatalf("the outer Vim did not finish; it printed:\n%s", output.String())
-	}
-	data, err := os.ReadFile(out) //nolint:gosec // a path in a temporary directory
-	if err != nil {
-		msg, _ := os.ReadFile(out + ".error") //nolint:gosec // see above
-		t.Fatalf("no screens were taken: %v\n%s\n%s", err, msg, output.String())
-	}
-	normal := "#1e1e1e"
-	if theme == "light" {
-		normal = "#ffffff"
-	}
-	c, err := uicheck.ParseCapture(data, normal)
+	c, err := uicheck.CaptureVim(uicheck.VimOptions{Repo: repo, Bin: srwrBinary(t), Workspace: ws, Scenario: scenario, Theme: theme,
+		VimBin: os.Getenv("VIM_BIN"), Rows: rows, Cols: cols})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -151,17 +113,8 @@ func TestScreens(t *testing.T) {
 					t.Fatal(err)
 				}
 				got := capture(t, sc.scenario, theme)
-				if len(got.Grids) != len(want.Frames) {
-					t.Fatalf("%d screens were taken, the baseline has %d", len(got.Grids), len(want.Frames))
-				}
-				for i, g := range got.Grids {
-					frame := uicheck.Reduce(g, got.Labels[i])
-					// The tab line says [無名] or [No Name] by the language of the Vim, which is not srwr's: it is not compared.
-					wantFrame := want.Frames[i]
-					wantFrame.Skip = append(slices.Clone(wantFrame.Skip), 0)
-					if diffs := uicheck.Compare(wantFrame, frame, want.Normal, 6); len(diffs) > 0 {
-						t.Errorf("frame %d (%s, baseline %s) differs:\n  %s", i+1, got.Labels[i], want.Frames[i].Label, strings.Join(diffs, "\n  "))
-					}
+				for _, d := range uicheck.CompareBaseline(want, got) {
+					t.Errorf("frame %d (%s, baseline %s) differs:\n  %s", d.Index, d.Label, d.Want, strings.Join(d.Diffs, "\n  "))
 				}
 			})
 		}

@@ -46,6 +46,21 @@ execute 'normal [['
 t.Equal(4, s.index, '[[ in the right-hand window')
 win_gotoid(s.win)
 
+# many presses in a row: the position follows every press and stops at both ends
+win_gotoid(s.win)
+replay.Jump(0)
+const last = len(s.tl.frames) - 1
+for _ in range(last + 15)
+  execute 'normal ]]'
+endfor
+t.Equal(last, s.index, 'many ]] stop at the last frame')
+for _ in range(last + 15)
+  execute 'normal [['
+endfor
+t.Equal(0, s.index, 'many [[ stop at the first frame')
+t.Equal(2, winnr('$'), 'no window piled up while pressing')
+win_gotoid(s.win)
+
 # q closes
 execute 'normal q'
 t.Equal(false, replay.Active(), 'q closes the replay')

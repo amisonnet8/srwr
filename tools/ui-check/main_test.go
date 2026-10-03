@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/amisonnet8/srwr/internal/uicheck"
 )
 
 const fixture = "../../extension/test/fixtures/ui-check"
@@ -155,5 +157,72 @@ func TestVimInitIsThePlainColorsOfTheImages(t *testing.T) {
 	}
 	if !strings.Contains(light, "background=light") || !strings.Contains(light, "guibg=#ffffff") || !strings.Contains(light, "guifg=#1f2328") {
 		t.Errorf("light = %q", light)
+	}
+}
+
+func TestLongWhyTapeIsMadeByTheRealMCP(t *testing.T) {
+	bin, err := filepath.Abs("../../bin/srwr")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(bin); err != nil {
+		t.Skip("bin/srwr is not built (qsoku bin)")
+	}
+	extra := t.TempDir()
+	if err := makeLongWhyTape(bin, extra); err != nil {
+		t.Fatal(err)
+	}
+	b, err := os.ReadFile(filepath.Join(extra, ".srwr", "tapes", longWhyTape+".tape.jsonl")) //nolint:gosec // a path in a temporary directory
+	if err != nil {
+		t.Fatal(err)
+	}
+	var types []string
+	var whys []string
+	for _, l := range strings.Split(strings.TrimSpace(string(b)), "\n") {
+		var e struct {
+			Type string
+			Why  *string
+		}
+		if err := json.Unmarshal([]byte(l), &e); err != nil {
+			t.Fatal(err)
+		}
+		types = append(types, e.Type)
+		if e.Why != nil {
+			whys = append(whys, *e.Why)
+		}
+	}
+	if got := strings.Join(types, ","); got != "header,snapshot,select,replace" {
+		t.Errorf("events = %s", got)
+	}
+	if len(whys) != 2 || whys[0] != longSelectWhy || whys[1] != longReplaceWhy {
+		t.Errorf("whys = %q", whys)
+	}
+	a, err := os.ReadFile(filepath.Join(extra, "a.go")) //nolint:gosec // a path in a temporary directory
+	if err != nil || !strings.Contains(string(a), "println") {
+		t.Errorf("a.go is not the file as the replace left it: %q %v", a, err)
+	}
+}
+
+func TestVerifyLongWhy(t *testing.T) {
+	const why = "とても長い理由です。折り返されるはず。"
+	mk := func(rows ...string) *uicheck.Grid {
+		g := uicheck.NewGrid(60, 12, "#1e1e1e")
+		for i, r := range rows {
+			g.Put(1+i, 0, r, "#ffffff", "#0b61a4")
+		}
+		return g
+	}
+	if n, p := verifyLongWhy(mk("◆ とても長い理由です。", "  折り返されるはず。"), why); n != 2 || len(p) != 0 {
+		t.Errorf("a good folding: rows %d, problems %v", n, p)
+	}
+	for name, g := range map[string]*uicheck.Grid{
+		"one row":        mk("◆ とても長い理由です。折り返されるはず。"),
+		"not indented":   mk("◆ とても長い理由です。", "折り返されるはず。"),
+		"a part is lost": mk("◆ とても長い理由です。", "  折り返されるは"),
+		"no mark":        mk("  とても長い理由です。", "  折り返されるはず。"),
+	} {
+		if _, p := verifyLongWhy(g, why); len(p) == 0 {
+			t.Errorf("%s was accepted", name)
+		}
 	}
 }

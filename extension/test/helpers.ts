@@ -38,9 +38,13 @@ export function goldenFrames(g: Golden): Frame[] {
 }
 
 // Copies the fixed workspace (three tapes and the real files) to a new temporary directory.
-export function copyWorkspace(): string {
+// `extra` is another directory copied over it (qsoku ui-check adds the tape it made on the spot).
+export function copyWorkspace(extra?: string): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "srwr-ext-"));
   fs.cpSync(uiCheckDir, dir, { recursive: true });
+  if (extra) {
+    fs.cpSync(extra, dir, { recursive: true });
+  }
   return dir;
 }
 

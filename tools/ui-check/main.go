@@ -1,4 +1,6 @@
 // Command ui-check prepares what a person needs to look at the UI by eye (docs: .claude/rules/working-with-human.md 3章).
+// `ui-check run` (qsoku ui-check) does all the checks and makes the page to look at; `ui-check live [--watch <vscode|vim>]`
+// (qsoku ui-live) is the same for the live view only; `ui-check accept [ng <note>]` (qsoku ui-accept) records the decision.
 // `ui-check open <vscode|vim> <why-basic|external|no-why|live>` is called by `qsoku ui-open`.
 // `ui-check vim-baseline <images> <out>` makes vim/test/baseline from the approved Vim images (done once, at R5).
 package main
@@ -23,6 +25,32 @@ func main() {
 }
 
 func run(args []string, out io.Writer) error {
+	if len(args) >= 1 {
+		switch args[0] {
+		case "run":
+			return doRun(false, out)
+		case "live":
+			if len(args) == 3 && args[1] == "--watch" {
+				return run([]string{"open", args[2], "live"}, out)
+			}
+			if len(args) != 1 {
+				return errors.New("usage: ui-check live [--watch <vscode|vim>]")
+			}
+			return doRun(true, out)
+		case "accept":
+			root, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+			if len(args) == 1 {
+				return acceptResult(root, true, "", out)
+			}
+			if args[1] == "ng" && len(args) >= 3 {
+				return acceptResult(root, false, strings.Join(args[2:], " "), out)
+			}
+			return errors.New("usage: ui-check accept [ng <note>]")
+		}
+	}
 	if len(args) == 3 && args[0] == "vim-baseline" {
 		return makeVimBaseline(args[1], args[2])
 	}
@@ -102,4 +130,42 @@ func guide(out io.Writer, name, workspace string) {
 	_, _ = fmt.Fprintf(out, "【%s】開いた VSCode で、左端のカセット →「テープを開く」→「%s」を選ぶ。\n", name, t.Started)
 	_, _ = fmt.Fprintf(out, "見るところ：%s。パネル・下のバー・タブ・アイコンが崩れていないか。\n", t.Look)
 	_, _ = fmt.Fprintln(out, "light で見るとき：Ctrl+K Ctrl+T →「Light Modern」。")
+}
+
+// doRun is `ui-check run` and `ui-check live`: it ends with the summary and the page to open. An exit code of 1 means a check
+// failed or a screen differs from the baseline.
+func doRun(liveOnly bool, out io.Writer) error {
+	root, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	rep, dir, err := runCheck(root, liveOnly, out)
+	if err != nil {
+		return err
+	}
+	page := filepath.Join(root, "ui-check-result", "latest", "index.html")
+	_, _ = fmt.Fprintln(out)
+	failed := 0
+	for _, c := range rep.Checks {
+		if !c.OK {
+			failed++
+			_, _ = fmt.Fprintf(out, "失敗：%s：%s\n", c.Name, strings.Join(c.Notes, "；"))
+		}
+	}
+	for _, p := range rep.Problems {
+		_, _ = fmt.Fprintln(out, "問題："+p)
+	}
+	switch {
+	case rep.Clean() && rep.NewCount() == 0:
+		_, _ = fmt.Fprintln(out, "違いなし")
+	case rep.Clean():
+		_, _ = fmt.Fprintf(out, "違いなし。新しい画面が %d（基準がまだ無い）\n", rep.NewCount())
+	default:
+		_, _ = fmt.Fprintf(out, "自動の検証の失敗 %d、基準と違うコマ %d\n", failed, rep.DiffCount())
+	}
+	_, _ = fmt.Fprintf(out, "確認ページ：%s\n結果：%s\n", page, dir)
+	if !rep.Clean() {
+		return errors.New("see the page above")
+	}
+	return nil
 }

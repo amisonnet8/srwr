@@ -38,8 +38,8 @@ function position(): number {
 }
 
 // Opens a tape and shows every frame in turn (frame 0 is shown by opening it).
-export async function captureReplay(tapeId: string): Promise<Shot[]> {
-  const { app, close } = newApp(copyWorkspace());
+export async function captureReplay(tapeId: string, extra?: string): Promise<Shot[]> {
+  const { app, close } = newApp(copyWorkspace(extra));
   try {
     state.pickQuickPick = (items) => items.find((i) => i.tape.tapeId === tapeId);
     await app.run("srwr.openTape");
@@ -152,7 +152,8 @@ export const liveExt = (): Promise<Shot[]> => {
   );
 };
 
-// `node out/test/capture.js <dir>` writes the five files, to compare with baseline/ or to make a new baseline.
+// `node --require ./out/test/setup.js out/test/capture.js <dir> [<extra workspace>]` writes the five files, to compare with baseline/ or to make a new
+// baseline. With an extra workspace (qsoku ui-check makes one with the tape of a long why), long_why.json is written too.
 async function main(): Promise<void> {
   const dir = process.argv[2];
   if (!dir) {
@@ -160,12 +161,22 @@ async function main(): Promise<void> {
   }
   fs.mkdirSync(dir, { recursive: true });
   const out = (name: string, v: unknown): void => fs.writeFileSync(path.join(dir, `${name}.json`), JSON.stringify(v, null, 1) + "\n");
-  out("all_basic", await captureReplay("20260930-0054-why-basic"));
-  out("all_ext", await captureReplay("20260930-0949-external"));
-  out("all_nowhy", await captureReplay("20260930-0053-no-why"));
+  const liveOnly = process.env.SRWR_CAPTURE_ONLY === "live"; // qsoku ui-live
+  if (!liveOnly) {
+    out("all_basic", await captureReplay("20260930-0054-why-basic"));
+    out("all_ext", await captureReplay("20260930-0949-external"));
+    out("all_nowhy", await captureReplay("20260930-0053-no-why"));
+  }
   out("live_basic", await liveBasic());
   out("live_ext", await liveExt());
+  const extra = process.argv[3];
+  if (extra && !liveOnly) {
+    out("long_why", await captureReplay(longWhyTape, extra));
+  }
 }
+
+// The tape qsoku ui-check makes on the spot (tools/ui-check/maketape.go).
+export const longWhyTape = "20260101-0000-long-why";
 
 if (require.main === module) {
   require("./setup");

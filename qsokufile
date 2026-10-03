@@ -28,6 +28,18 @@ ext-build: (cd //; if [ -f extension/package.json ]; then cd extension && { [ -d
 # Builds bin/srwr first: the extension's tests talk to the real display server.
 ext: (cd //; if [ -f extension/package.json ]; then qsoku bin && cd extension && { [ -d node_modules ] || qsoku ext-deps; } && npm run compile && npm test; else echo 'extension/package.json does not exist yet; skipped'; fi)
 
+# Runs every check of the UI (the tests behind each item of handoff/checklist/CHECKLIST.md 2章, the screens of the Vim client and of
+# the extension against their baselines, the tape of a long why made on the spot) and makes the page to look at:
+# ui-check-result/latest/index.html. Exit code 1 when a check failed or a screen differs. VIM_BIN names another Vim.
+ui-check: (cd //; qsoku bin && qsoku ext-build && go run ./tools/ui-check run)
+
+# The same for the live view only. `qsoku ui-live --watch vim` (or vscode) instead opens the live view for a person to feel it.
+ui-live: (cd //; qsoku bin && { [ "$1" = --watch ] || qsoku ext-build; } && go run ./tools/ui-check live "$@")
+
+# Records what the person decided about the last qsoku ui-check: `qsoku ui-accept` (OK: the screens become the baseline),
+# `qsoku ui-accept ng <note>` (the baseline stays).
+ui-accept: (cd //; go run ./tools/ui-check accept "$@")
+
 # Opens the fixed workspace in a real VSCode with the extension installed, for a person to look at (.claude/rules/working-with-human.md).
 # qsoku ui-open <vscode|vim> <why-basic|external|no-why|live>
 ui-open: (cd //; qsoku bin && { [ "$1" != vscode ] || qsoku ext-build; } && go run ./tools/ui-check open "$@")

@@ -18,6 +18,9 @@
 | `qsoku ext` | `bin/srwr` をビルドしてから、拡張のコンパイルとテスト | 拡張を確かめたいとき（CI の extension ジョブ） |
 | `qsoku ui-open vscode <テープ>` | 固定テープの作業場を一時ディレクトリに作り、`.vsix` を入れた VSCode で開く。テープは `why-basic`・`external`・`no-why`・`live`（ライブは3秒ごとに追記） | **人間に VSCode の見た目を見てもらう前**（`.claude/rules/working-with-human.md` 3章）。`code` コマンドが要る |
 | `qsoku ui-open vim <テープ>` | 同じ作業場を作り、手順を番号つきで出して、Enter のあと `bin/srwr view` で Vim を開く（`live` は5秒後から3秒ごとに追記） | **人間に Vim の見た目を見てもらう前**。人間の端末で動かす |
+| `qsoku ui-check` | **UI の確認を1コマンドで**。自動の検証（CHECKLIST 2章の14項目。名前の付いた既存のテストを走らせる）、Vim と拡張の画面の取得、基準との比較、長い理由のテープ（本物の `srwr mcp` でその場で作る）、確認ページ `ui-check-result/latest/index.html` と `result.json` の保存。数十秒。違い・失敗があれば終了コード 1 | **人間に UI を見てもらう前**。人間に渡すのはこの1コマンドと、できたページだけ |
+| `qsoku ui-live` | `ui-check` のライブだけ（Vim の live-basic・live-external、拡張の live_basic・live_ext）。`qsoku ui-live --watch vim`（`vscode`）は、人間が流し込みを見て体感するために、ライブを開く（`ui-open … live` と同じ） | ライブに関わる変更 |
+| `qsoku ui-accept` | 最後の `ui-check` の結果に、人間の判断を記録する。引数なしが OK（違う画面・新しい画面が次の基準になり、基準の README に日付が付く）。`qsoku ui-accept ng <ひとこと>` は NG（基準はそのまま）。自動の検証が落ちている結果は OK にできない | 人間がチャットで OK／NG を答えたあと、AI が動かす |
 | `qsoku vim-test` | `bin/srwr` を作り、`vim/test/test_*.vim`を画面なしのVimで実行。続けて、疑似端末で本物のVimの画面を取り、基準と比べる（`vim/screen_test.go`） | Vimスクリプトを触ったとき（CI の vim ジョブ） |
 | `qsoku vim-oldest` | Vim 9.0.0784 をソースからビルドして（初回だけ）、それで `vim-test` | Vim に関わる変更の区切り（CI の vim-oldest ジョブ）。`SRWR_VIM_OLDEST_DIR` でビルド先を替えられる |
 | `qsoku check` | `go-check`・`cross`・`ext`・`vim-test`をまとめて実行 | **作業の区切りで必ず通す**（`.claude/rules/testing.md`） |
@@ -26,7 +29,7 @@
 | `qsoku trivy` | 既知の脆弱性・ライセンスの検査 | 依存を足したとき |
 | `qsoku shellcheck` | 追跡中の`*.sh`・`*.bash`をShellCheckにかける | シェルスクリプトを足したとき |
 
-`extension/package.json`・`vim/test/`が無いあいだは、`ext`・`ext-build`・`vim-test`は「skipped」と出して成功する。確認の自動化は、`ui-open vscode` が R4、`ui-open vim` が R5 で入った。`ui-check`・`ui-live` は R6 で足す。
+`extension/package.json`・`vim/test/`が無いあいだは、`ext`・`ext-build`・`vim-test`は「skipped」と出して成功する。確認の自動化は、`ui-open vscode` が R4、`ui-open vim` が R5、`ui-check`・`ui-live`・`ui-accept` が R6 で入った。
 
 一覧は、今ある`qsokufile`の内容そのもの。`qsoku .list`（名前とコマンド）か`qsoku .names`（名前だけ）で確かめる。**引数なしで`qsoku`とだけ打っても、使い方と定義済みの名前が出る。**
 

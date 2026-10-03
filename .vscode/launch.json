@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "srwr-view",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/extension",
+        "${workspaceFolder}/extension/test/fixtures/ui-check"
+      ],
+      "outFiles": ["${workspaceFolder}/extension/out/src/**/*.js"],
+      "env": { "SRWR_PATH": "${workspaceFolder}/bin/srwr" }
+    }
+  ]
+}

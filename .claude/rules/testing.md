@@ -69,5 +69,5 @@
 - **Windowsのcheckoutで改行がCRLFになると、`gofmt -l`が全ファイルを未整形と誤検知する。** ルートの`.gitattributes`（`* text=auto eol=lf`）で防ぐ
 - **`uses: owner/repo@TAG`はタグ名と厳密に一致しないと失敗する。** `v`の有無を見落としやすい。書く前に実際のタグ名を確かめる
 - **Unix 専用の呼び出し（`syscall.Flock` など）は、Windows ではビルドできない。** OS ごとにビルドタグで分け、手元でも `qsoku cross`（`GOOS=windows`・`darwin` で `vet` と `lint`）を通す。手元の Linux だけでは見つからず、CI の Windows で初めて落ちる
-- **手元の機械は JST で、CI は UTC。** 時刻を文字列で比べるテストは、手元でだけ通る。時刻は瞬間（`time.Time.Equal`）で比べる。時刻を扱う変更では、手元でも `TZ=UTC go test ./...` を流す（R3 で、`updatedAt` を `+09:00` の文字列で比べて、CI の3OSで落ちた）
+- **手元の機械は JST で、CI は UTC。** 時刻を文字列で比べるテストは、手元でだけ通る。時刻は瞬間（`time.Time.Equal`）で比べる。時刻を扱う変更では、手元でも `TZ=UTC go test ./...` を流す（R3 で、`updatedAt` を `+09:00` の文字列で比べて、CI の3OSで落ちた）。R10.5 から、テープの時刻は UTC で書くので、表示（`srwr tapes`、Vim の一覧、VSCode のテープ選び）が `TZ` に従うことを、`time.Local`・`process.env.TZ`・`$TZ` を替えるテストで確かめる
 - **Windowsには実行ビットの概念がない。** `os.Chmod`後に実行ビットを確かめるテストは、`runtime.GOOS != "windows"`でガードする

@@ -15,7 +15,10 @@ import (
 	"github.com/amisonnet8/srwr/internal/uicheck"
 )
 
-// screenRun is one run of the Vim client whose screens are compared with vim/test/baseline/<name>_<theme>.json.
+// screenLangs are the languages the screens are taken in: English is the default, Japanese is what SRWR_LANG=ja gives.
+var screenLangs = []string{"en", "ja"}
+
+// screenRun is one run of the Vim client whose screens are compared with vim/test/baseline/<lang>/<name>_<theme>.json.
 type screenRun struct {
 	Name, Scenario string
 	Themes         []string
@@ -233,8 +236,8 @@ func workspaceFor(root, extra string, withExtra bool) (string, error) {
 
 func captureVimAll(root, bin, dir, extra string, haveLong, liveOnly bool, rep *Report) []CaptureResult {
 	type job struct {
-		sc    screenRun
-		theme string
+		sc          screenRun
+		theme, lang string
 	}
 	var jobs []job
 	for _, sc := range screenRuns {
@@ -244,8 +247,10 @@ func captureVimAll(root, bin, dir, extra string, haveLong, liveOnly bool, rep *R
 		if strings.Contains(sc.Name, "long-why") && !haveLong {
 			continue
 		}
-		for _, th := range sc.Themes {
-			jobs = append(jobs, job{sc, th})
+		for _, lang := range screenLangs {
+			for _, th := range sc.Themes {
+				jobs = append(jobs, job{sc, th, lang})
+			}
 		}
 	}
 	results := make([]CaptureResult, len(jobs))
@@ -257,21 +262,21 @@ func captureVimAll(root, bin, dir, extra string, haveLong, liveOnly bool, rep *R
 			defer wg.Done()
 			sem <- struct{}{}
 			defer func() { <-sem }()
-			results[i] = captureVimOne(root, bin, dir, extra, j.sc, j.theme, rep)
+			results[i] = captureVimOne(root, bin, dir, extra, j.sc, j.theme, j.lang, rep)
 		}()
 	}
 	wg.Wait()
 	return results
 }
 
-func captureVimOne(root, bin, dir, extra string, sc screenRun, theme string, rep *Report) CaptureResult {
-	res := CaptureResult{Name: sc.Name + " " + theme}
+func captureVimOne(root, bin, dir, extra string, sc screenRun, theme, lang string, rep *Report) CaptureResult {
+	res := CaptureResult{Name: sc.Name + " " + lang + " " + theme}
 	ws, err := workspaceFor(root, extra, strings.Contains(sc.Scenario, longWhyTape))
 	if err != nil {
 		return CaptureResult{Name: res.Name, Status: statusError, Error: err.Error()}
 	}
 	defer func() { _ = os.RemoveAll(ws) }()
-	got, err := uicheck.CaptureVim(uicheck.VimOptions{Repo: root, Bin: bin, Workspace: ws, Scenario: sc.Scenario, Theme: theme,
+	got, err := uicheck.CaptureVim(uicheck.VimOptions{Repo: root, Bin: bin, Workspace: ws, Scenario: sc.Scenario, Theme: theme, Lang: lang,
 		VimBin: os.Getenv("VIM_BIN"), Rows: sc.Rows, Cols: sc.Cols})
 	if err != nil {
 		res.Status, res.Error = statusError, err.Error()
@@ -293,8 +298,8 @@ func captureVimOne(root, bin, dir, extra string, sc screenRun, theme string, rep
 	for i, g := range got.Grids {
 		now.Frames = append(now.Frames, uicheck.Reduce(g, got.Labels[i]))
 	}
-	file := filepath.Join("vim", sc.Name+"_"+theme+".json")
-	target := filepath.Join("vim", "test", "baseline", sc.Name+"_"+theme+".json")
+	file := filepath.Join("vim", sc.Name+"_"+lang+"_"+theme+".json")
+	target := filepath.Join("vim", "test", "baseline", lang, sc.Name+"_"+theme+".json")
 	res.File, res.Target = file, target
 	data, err := uicheck.MarshalBaseline(now)
 	if err == nil {
@@ -366,14 +371,26 @@ func (r *Report) addProblem(s string) {
 }
 
 func captureVSCode(root, dir, extra string, haveLong, liveOnly bool) []CaptureResult {
-	outDir := filepath.Join(dir, "vscode")
+	var out []CaptureResult
+	for _, lang := range screenLangs {
+		out = append(out, captureVSCodeIn(root, dir, extra, lang, haveLong, liveOnly)...)
+	}
+	return out
+}
+
+// captureVSCodeIn takes the screens of the extension in one language (the fake vscode says its language is lang).
+func captureVSCodeIn(root, dir, extra, lang string, haveLong, liveOnly bool) []CaptureResult {
+	outDir := filepath.Join(dir, "vscode", lang)
+	if err := os.MkdirAll(outDir, 0o750); err != nil {
+		return []CaptureResult{{Name: "vscode " + lang, Status: statusError, Error: err.Error()}}
+	}
 	args := []string{"--require", "./out/test/setup.js", "out/test/capture.js", outDir}
 	if haveLong {
 		args = append(args, extra)
 	}
-	env := []string(nil)
+	env := []string{"SRWR_TEST_LANG=" + lang}
 	if liveOnly {
-		env = []string{"SRWR_CAPTURE_ONLY=live"}
+		env = append(env, "SRWR_CAPTURE_ONLY=live")
 	}
 	b, err := capture(filepath.Join(root, "extension"), env, "node", args...)
 	var out []CaptureResult
@@ -384,7 +401,7 @@ func captureVSCode(root, dir, extra string, haveLong, liveOnly bool) []CaptureRe
 		if f.Name == "long_why" && !haveLong {
 			continue
 		}
-		res := CaptureResult{Name: f.Name, File: filepath.Join("vscode", f.Name+".json"), Target: filepath.Join("extension", "test", "baseline", f.Name+".json")}
+		res := CaptureResult{Name: f.Name + " " + lang, File: filepath.Join("vscode", lang, f.Name+".json"), Target: filepath.Join("extension", "test", "baseline", lang, f.Name+".json")}
 		data, rerr := os.ReadFile(filepath.Join(dir, res.File)) //nolint:gosec // our own result directory
 		if rerr != nil {
 			res.Status, res.Error = statusError, fmt.Sprintf("no capture (%v): %s", err, lastLines(string(b), 6))
@@ -420,8 +437,7 @@ func captureVSCode(root, dir, extra string, haveLong, liveOnly bool) []CaptureRe
 		}
 		res.Status = statusDiff
 		for _, d := range diffs {
-			fi := FrameInfo{Index: d.Index, Label: d.Label, Diffs: d.Diffs}
-			res.Frames = append(res.Frames, fi)
+			res.Frames = append(res.Frames, FrameInfo{Index: d.Index, Label: d.Label, Diffs: d.Diffs})
 		}
 		out = append(out, res)
 	}

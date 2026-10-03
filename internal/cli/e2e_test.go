@@ -29,6 +29,9 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	// The texts the tests expect are the Japanese ones (what srwr said before it spoke English by default).
+	// lang_test.go sets SRWR_LANG back for the English ones. A child srwr inherits this.
+	_ = os.Setenv("SRWR_LANG", "ja")
 	code := m.Run()
 	if binDir != "" {
 		_ = os.RemoveAll(binDir)

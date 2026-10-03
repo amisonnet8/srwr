@@ -18,7 +18,7 @@
 ├── .mcp.json               ← mtqgのMCPサーバーの配線（srwr の開発用。srwr 自身は登録しない）
 ├── cmd/srwr/               ← 単一バイナリ（R2）。main.go は引数を internal/cli に渡すだけ
 ├── internal/
-│   ├── docs/               ← docs/ の検査だけのテスト（リンク切れ。R2・R3 で examples/ の照合を足す）（R0）
+│   ├── docs/               ← docs/ の検査だけのテスト（リンク切れ、英語版と日本語版の対、examples/ の本物との照合）（R0・R2・R3・R10.5）
 │   ├── tape/               ← テープの読み書き（イベントの型、追記、読み込み、テープから作る状態）（R1）
 │   ├── token/              ← 範囲トークン（R1）
 │   ├── jsonrpc/            ← 改行区切りの JSON-RPC（mcp と viewserver が共有）（R2）
@@ -31,6 +31,7 @@
 │   ├── hook/               ← `srwr hook`：hook の JSON と Bash の読み取り・Grep の出力を読んで `core.HookRequest` を作る（R7）
 │   ├── ignore/             ← 記録しないファイル（R8）
 │   ├── vcs/                ← header の vcs：git の HEAD と未コミットの有無（R10）
+│   ├── lang/               ← 画面や端末に出す文言の言語（`SRWR_LANG`）。英語が既定（R10.5）
 │   ├── setup/              ← `srwr init`：`.mcp.json`・`.claude/settings.json`・`.gitignore` への追記、順序を保つ JSON、バックアップ（R9）
 │   ├── uicheck/            ← 画面を比べる道具（端末の画面・承認した画像 SVG を同じ形にし、セルごとに比べる）（R5）
 │   └── cli/                ← サブコマンド（R2 から順に）
@@ -39,7 +40,7 @@
 │   ├── test/
 │   │   ├── fixtures/       ← 実物のテープ。ui-check/ は固定テープ3本の作業場。**書き換えない**（最初からある）
 │   │   ├── golden/         ← コマの列の正解（22本）。**書き換えない**（最初からある）
-│   │   └── baseline/       ← 画面の基準（録画3本・ライブ2本。`capture.test.ts` が比べる）（R4）
+│   │   └── baseline/       ← 画面の基準（`ja/`・`en/` それぞれに、録画3本・ライブ2本・長い理由。`capture.test.ts` が比べる）（R4・R10.5）
 │   ├── media/srwr.svg      ← 左端のアイコン
 │   ├── package.json
 │   └── tsconfig.json
@@ -48,13 +49,13 @@
 │   ├── autoload/srwr/      ← 本体（server・timeline・hl・buf・paint・sidebar・list・replay・diff・live・ui・config）
 │   ├── test/               ← 画面なしの Vim で動かすテスト（test_*.vim）、helpers.vim
 │   │   ├── screen/capture.vim ← 疑似端末で本物の Vim の画面を取る（外側の Vim）
-│   │   └── baseline/       ← 画面の基準（承認した画像から作った JSON）と、hl_*.json（色の実測値）
+│   │   └── baseline/       ← 画面の基準 `ja/`・`en/`（`ja/` は承認した画像から作った JSON）と、hl_*.json（色の実測値）
 │   ├── screen_test.go      ← 画面を取って基準と比べる（`SRWR_SCREEN_TEST=1` のときだけ。`qsoku vim-test` が設定する）
 │   └── embed.go            ← plugin/・autoload/ を srwr に埋め込む（go:embed）
 ├── tools/
 │   ├── ui-check/           ← UI の確認の自動化：`run`（qsoku ui-check）・`live`・`accept`・`open`、自動の検証の項目の表（checks.go）、長い理由のテープ（maketape.go）、確認ページ（page.go）（R4〜R6）
 │   └── vim-oldest.sh       ← 最も古い Vim（9.0.0784）をビルドして `vim-test` を動かす（R5）
-├── docs/                   ← 外部向けの文書（正本）。reference/・design/・examples/（`select-replace.md`・`protocol-session.md`・`hook.md`。`internal/docs` が本物と照合する）
+├── docs/                   ← 外部向けの文書（正本）。英語が `名前.md`、日本語版が `名前_ja.md`。reference/・design/・examples/（`select-replace.md`・`protocol-session.md`・`hook.md`。`internal/docs` が本物と照合する。`internal/docs/testdata/demo-en/`（英語・UTC のテープ）と `demo/`（日本語・古い `+09:00` のテープ）が protocol-session の題材）
 ├── dev/                    ← 開発のうちうち。roadmap.md、review/<段階>/（UIゲートの資料）
 ├── handoff/                ← 引き継ぎ資料。**git に入れない（.gitignore）。読むだけ。R12 で消す**
 ├── .vscode/launch.json     ← 拡張を F5 で起動するためだけに置く（R4）

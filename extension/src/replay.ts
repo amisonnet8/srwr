@@ -1,5 +1,6 @@
 // Replay: a virtual document with the frame's content, the why rows above the range, and the left/right editors for diffs.
 import * as vscode from "vscode";
+import { pick } from "./lang";
 import { Nav } from "./controls";
 import { insertBanner, wrapWhy } from "./lines";
 import { OpsSource } from "./sidebar";
@@ -170,7 +171,7 @@ export class ReplaySession implements OpsSource, Nav, vscode.Disposable {
     const uri = (side: "before" | "after"): vscode.Uri =>
       vscode.Uri.from({
         scheme: REPLAY_SCHEME,
-        path: `/${this.title}/diff${f.index}/${side === "before" ? `前 ${diffTitle(f)}` : `後 ${basename(f.file)}`}`,
+        path: `/${this.title}/diff${f.index}/${side === "before" ? `${pick("Before", "前")} ${diffTitle(f)}` : `${pick("After", "後")} ${basename(f.file)}`}`,
         query: `diff=${f.index}&side=${side}`,
       });
     const left = await vscode.workspace.openTextDocument(uri("before"));
@@ -268,7 +269,10 @@ export function revealNearTop(editor: vscode.TextEditor, line: number): void {
 export function diffTitle(f: Frame): string {
   const name = basename(f.file);
   if (f.kind === "final") {
-    return `⚠ 録画のあとで変更（${f.deleted ? "今は存在しない" : "今のファイルとの差分"}）：${name}`;
+    return pick(
+      `⚠ Changed after recording (${f.deleted ? "no longer exists" : "diff from current file"}): ${name}`,
+      `⚠ 録画のあとで変更（${f.deleted ? "今は存在しない" : "今のファイルとの差分"}）：${name}`,
+    );
   }
-  return `⚠ srwrの外で変更${f.deleted ? "（削除）" : ""}：${name}`;
+  return pick(`⚠ Changed outside srwr${f.deleted ? " (deleted)" : ""}: ${name}`, `⚠ srwrの外で変更${f.deleted ? "（削除）" : ""}：${name}`);
 }

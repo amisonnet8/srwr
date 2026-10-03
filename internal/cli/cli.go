@@ -11,13 +11,27 @@ import (
 
 	"github.com/amisonnet8/srwr/internal/core"
 	"github.com/amisonnet8/srwr/internal/hook"
+	"github.com/amisonnet8/srwr/internal/lang"
 	"github.com/amisonnet8/srwr/internal/mcp"
 	"github.com/amisonnet8/srwr/internal/session"
 	"github.com/amisonnet8/srwr/internal/tape"
 	"github.com/amisonnet8/srwr/internal/viewserver"
 )
 
-const usage = `srwr: AI に select / replace の2コマンドだけでファイルを編集させ、操作をテープに記録する
+const usageEN = `srwr: let an AI edit files with just two commands, select / replace, and record the operations on a tape
+
+Usage:
+  srwr mcp [--root <workspace>]     MCP server (select / replace). Started by the AI agent
+  srwr hook [--root <workspace>]    Record Claude Code hook events (reads JSON on stdin)
+  srwr view-server                  View server (started by the editor)
+  srwr view [tape] [--live]         Replay in Vim (--root <workspace>)
+  srwr init [--lenient]             Set up a workspace for srwr (--lenient: do not forbid Edit and Write)
+  srwr tapes [new|prune|path]       List and tidy tapes (--root <workspace>)
+  srwr --version                    Version
+  srwr --help                       This help
+`
+
+const usageJA = `srwr: AI に select / replace の2コマンドだけでファイルを編集させ、操作をテープに記録する
 
 使い方:
   srwr mcp [--root <作業場>]     MCP サーバー（select / replace）。AI のエージェントが起動する
@@ -30,15 +44,18 @@ const usage = `srwr: AI に select / replace の2コマンドだけでファイ�
   srwr --help                    この説明
 `
 
+// usage is the help text in the language the person asked for.
+func usage() string { return lang.Pick(usageEN, usageJA) }
+
 // Run runs srwr with the arguments (without the program name) and returns the exit code.
 func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		_, _ = io.WriteString(stderr, usage)
+		_, _ = io.WriteString(stderr, usage())
 		return 2
 	}
 	switch cmd := args[0]; cmd {
 	case "--help", "-h", "help":
-		_, _ = io.WriteString(stdout, usage)
+		_, _ = io.WriteString(stdout, usage())
 		return 0
 	case "--version", "version":
 		_, _ = fmt.Fprintf(stdout, "srwr %s\n", Version())
@@ -56,7 +73,7 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	case "view":
 		return runView(args[1:], stdin, stdout, stderr)
 	default:
-		_, _ = fmt.Fprintf(stderr, "srwr: 知らないコマンド %q\n\n%s", cmd, usage)
+		_, _ = fmt.Fprintf(stderr, lang.Pick("srwr: unknown command %q\n\n%s", "srwr: 知らないコマンド %q\n\n%s"), cmd, usage())
 		return 2
 	}
 }
@@ -74,16 +91,16 @@ func Version() string {
 func workspaceArg(name string, args []string, stderr io.Writer) (root string, code int) {
 	fs := flag.NewFlagSet("srwr "+name, flag.ContinueOnError)
 	fs.SetOutput(stderr)
-	r := fs.String("root", ".", "作業場のディレクトリ")
+	r := fs.String("root", ".", lang.Pick("the workspace directory", "作業場のディレクトリ"))
 	if err := fs.Parse(args); err != nil {
 		return "", 2
 	}
 	if fs.NArg() > 0 {
-		_, _ = fmt.Fprintf(stderr, "srwr %s: 余分な引数 %q\n", name, fs.Arg(0))
+		_, _ = fmt.Fprintf(stderr, lang.Pick("srwr %s: unexpected argument %q\n", "srwr %s: 余分な引数 %q\n"), name, fs.Arg(0))
 		return "", 2
 	}
 	if info, err := os.Stat(*r); err != nil || !info.IsDir() {
-		_, _ = fmt.Fprintf(stderr, "srwr %s: 作業場 %q がディレクトリとして開けません\n", name, *r)
+		_, _ = fmt.Fprintf(stderr, lang.Pick("srwr %s: cannot open the workspace %q as a directory\n", "srwr %s: 作業場 %q がディレクトリとして開けません\n"), name, *r)
 		return "", 1
 	}
 	return *r, 0
@@ -135,12 +152,12 @@ func runHook(args []string, stdin io.Reader, stderr io.Writer) int {
 	if def == "" {
 		def = "."
 	}
-	root := fs.String("root", def, "作業場のディレクトリ（省略時は CLAUDE_PROJECT_DIR、なければカレントディレクトリ）")
+	root := fs.String("root", def, "the workspace directory (default: CLAUDE_PROJECT_DIR, or the current directory)")
 	if err := fs.Parse(args); err != nil || fs.NArg() > 0 {
 		return 1
 	}
 	if info, err := os.Stat(*root); err != nil || !info.IsDir() { //nolint:gosec // the workspace the user (or Claude Code) named
-		_, _ = fmt.Fprintf(stderr, "srwr hook: 作業場 %q がディレクトリとして開けないので記録しない\n", *root)
+		_, _ = fmt.Fprintf(stderr, "srwr hook: cannot open the workspace %q as a directory, so nothing is recorded\n", *root)
 		return 0
 	}
 	ws, err := session.Open(*root, session.Options{Version: Version()})

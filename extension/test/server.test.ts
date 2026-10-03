@@ -3,9 +3,13 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { afterEach, test } from "node:test";
+import { setJapanese } from "../src/lang";
 import { ServerError, ServerProcess } from "../src/server";
 import { Frame } from "../src/timeline";
 import { binPath, copyWorkspace, goldenFrames, loadGolden, tapeLines, until } from "./helpers";
+
+// The error texts these tests look at are the Japanese ones (english.test.ts looks at the English ones).
+setJapanese(true);
 
 const servers: ServerProcess[] = [];
 afterEach(() => {

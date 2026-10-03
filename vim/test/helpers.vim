@@ -8,6 +8,10 @@ enddef
 
 # Setup puts the plugin on 'runtimepath' and points g:srwr_path at the binary that `qsoku bin` built.
 export def Setup()
+  # These tests look at the Japanese texts (test_lang.vim looks at the English ones), and at times in the zone the fixed tapes
+  # were recorded in (+09:00); a test that is about the zone sets $TZ itself.
+  $SRWR_LANG = 'ja'
+  $TZ = 'Asia/Tokyo'
   &runtimepath = Root() .. '/vim,' .. &runtimepath
   g:srwr_path = Root() .. '/bin/srwr'
   v:errors = []

@@ -32,7 +32,7 @@ func TestRun(t *testing.T) {
 		{"tapes with a root that is missing", []string{"tapes", "--root", "/no/such/dir/at/all"}, 1, "", "ディレクトリとして開けません"},
 		{"hook with an unknown flag", []string{"hook", "--nope"}, 1, "", "nope"},
 		{"hook with a stray argument", []string{"hook", "x"}, 1, "", ""},
-		{"hook with a root that is missing does not stop the agent", []string{"hook", "--root", "/no/such/dir/at/all"}, 0, "", "ディレクトリとして開けない"},
+		{"hook with a root that is missing does not stop the agent", []string{"hook", "--root", "/no/such/dir/at/all"}, 0, "", "cannot open the workspace"},
 		{"view-server with a root that is missing", []string{"view-server", "--root", "/no/such/dir/at/all"}, 1, "", "ディレクトリとして開けません"},
 		{"view-server with a stray argument", []string{"view-server", "x"}, 2, "", "余分な引数"},
 		{"mcp with an unknown flag", []string{"mcp", "--nope"}, 2, "", "nope"},

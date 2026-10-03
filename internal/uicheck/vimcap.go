@@ -19,6 +19,7 @@ type VimOptions struct {
 	Workspace string // a workspace made for this capture (its tapes are the ones the scenario opens)
 	Scenario  string // replay:<tape id> | live-basic | live-external (vim/test/screen/capture.vim)
 	Theme     string // dark | light
+	Lang      string // en | ja: what srwr-view.vim speaks (SRWR_LANG); "en" when empty
 	VimBin    string // the Vim to run; "vim" when empty
 	Rows      int    // the size of the screen; 50 by 140 when 0
 	Cols      int
@@ -40,8 +41,8 @@ func CaptureVim(o VimOptions) (*Capture, error) {
 	cmdline := vimBin + " -Nu NONE -i NONE -S " + filepath.Join(o.Repo, "vim", "test", "screen", "capture.vim")
 	cmd := exec.Command("script", "-qec", cmdline, "/dev/null") //nolint:gosec // fixed arguments and paths made by the caller
 	cmd.Env = append(os.Environ(), "SRWR_REPO="+o.Repo, "SRWR_BIN="+o.Bin, "WS="+o.Workspace, "SCENARIO="+o.Scenario, "THEME="+o.Theme, "OUT="+out,
-		"TERM=xterm-256color", "SRWR_VIM_BIN="+vimBin,
-		// One language for every machine: UTF-8 (the text is Japanese), and Vim's own messages in English.
+		"TERM=xterm-256color", "SRWR_VIM_BIN="+vimBin, "SRWR_LANG="+langOf(o.Lang),
+		// One language for every machine: UTF-8 (the text may be Japanese), and Vim's own messages in English.
 		"LC_ALL=C.UTF-8", "LANG=C.UTF-8")
 	if o.Rows > 0 {
 		cmd.Env = append(cmd.Env, "ROWS="+strconv.Itoa(o.Rows), "COLS="+strconv.Itoa(o.Cols))
@@ -99,3 +100,10 @@ func CompareBaseline(want *Baseline, got *Capture) []FrameDiff {
 
 // ErrNoBaseline says a baseline does not exist yet (a new scenario): the screens are shown as new ones.
 var ErrNoBaseline = errors.New("no baseline")
+
+func langOf(l string) string {
+	if l == "" {
+		return "en"
+	}
+	return l
+}

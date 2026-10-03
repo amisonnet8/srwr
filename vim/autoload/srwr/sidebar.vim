@@ -1,12 +1,18 @@
 vim9script
 
 import autoload './buf.vim'
+import autoload './lang.vim'
 import autoload './timeline.vim'
 
 # The operation list (left): frames in recorded order, numbered from 1. A colored dot tells the kind.
 
 const WIDTH = 40
-const KIND_LABEL = {select: 'select ', replace: 'replace', external: '外部変更', final: '録画後'}
+const KIND_LABEL_JA = {select: 'select ', replace: 'replace', external: '外部変更', final: '録画後'}
+const KIND_LABEL_EN = {select: 'select  ', replace: 'replace ', external: 'external', final: 'final   '}
+
+def KindLabel(kind: string): string
+  return lang.Ja() ? KIND_LABEL_JA[kind] : KIND_LABEL_EN[kind]
+enddef
 
 var win = 0
 var lbuf = 0
@@ -19,7 +25,7 @@ var rowCount = 0
 # Line is the text of one frame, in the order of the VSCode list (dot, number, kind, file): "●  5 replace text.go:37  why".
 export def Line(f: dict<any>): string
   const desc = timeline.Why(f)
-  return printf('● %2d %s %s:%s', f.index + 1, KIND_LABEL[f.kind], timeline.Basename(f.file), timeline.FormatRange(f.range)) ..
+  return printf('● %2d %s %s:%s', f.index + 1, KindLabel(f.kind), timeline.Basename(f.file), timeline.FormatRange(f.range)) ..
     (desc !=# '' ? '  ' .. desc : '')
 enddef
 

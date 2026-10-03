@@ -99,8 +99,8 @@ func TestPageSaysWhatHappened(t *testing.T) {
 			[]string{"自動の検証が 1 件失敗", "差分のコマ", "test_diff.vim"}, []string{"違いなし</div>"}},
 		"a new one": {Report{Checks: okChecks(), Vim: []CaptureResult{{Name: "replay-long-why dark", Status: statusNew, Frames: []FrameInfo{{Index: 1, Label: "1", Got: "<svg>n</svg>"}}}}},
 			[]string{"新しいコマ", "基準がありません", "<svg>n</svg>"}, []string{"違いなし</div>"}},
-		"the extension, new": {Report{Checks: okChecks(), VSCode: []CaptureResult{{Name: "long_why", Status: statusNew, Frames: []FrameInfo{{Index: 1, Label: "1"}, {Index: 2, Label: "2"}}}}},
-			[]string{"画像で見るものはありません", "<code>qsoku ui-open vscode long-why</code> と打って Enter", "左端のカセットのアイコンを押し", "「テープを開く」", "「進む」を押して"}, []string{"<svg", "…", "2 コマ。画像はありません", "新しい画面（基準がありません"}},
+		"the extension, new": {Report{Checks: okChecks(), VSCode: []CaptureResult{{Name: "all_ext en", Status: statusNew, Frames: []FrameInfo{{Index: 1, Label: "1"}, {Index: 2, Label: "2"}}}}},
+			[]string{"画像で見るものはありません", "<code>qsoku ui-open vscode external</code> と打って Enter", "左端のカセットのアイコンを押し", "「Open a tape」", "「Forward」を押して"}, []string{"<svg", "…", "2 コマ。画像はありません", "新しい画面（基準がありません"}},
 		"the extension, differs": {Report{Checks: okChecks(), VSCode: []CaptureResult{{Name: "all_basic", Status: statusDiff, Frames: []FrameInfo{{Index: 5, Label: "frame 4", Diffs: []string{"editor 1 decorations: baseline only line 36 #b45f06; now only line 36 #c05f06"}}}}}},
 			[]string{"VSCode（拡張）", "5 コマ目", "#c05f06"}, []string{"<svg", "簡素な図"}},
 		"an error":  {Report{Checks: okChecks(), VSCode: []CaptureResult{{Name: "all_basic", Status: statusError, Error: "no capture"}}}, []string{"取れなかった", "no capture"}, []string{"違いなし</div>"}},
@@ -278,7 +278,7 @@ func TestBreakingTheVimClientIsFoundAndNamed(t *testing.T) {
 		}
 	}
 	rep := &Report{}
-	res := captureVimOne(root, bin, dir, "", sc, "dark", rep)
+	res := captureVimOne(root, bin, dir, "", sc, "dark", "ja", rep)
 	if res.Status != statusDiff {
 		t.Fatalf("status = %s (%s), want diff", res.Status, res.Error)
 	}
@@ -354,13 +354,13 @@ func TestCleanAndCounts(t *testing.T) {
 func TestLookStepsAreExactAndNeedNoThinking(t *testing.T) {
 	rep := &Report{Checks: okChecks(),
 		Vim:    []CaptureResult{{Name: "replay-long-why dark", Status: statusNew}, {Name: "replay-external light", Status: statusDiff}, {Name: "live-basic dark", Status: statusSame}},
-		VSCode: []CaptureResult{{Name: "long_why", Status: statusNew, Frames: []FrameInfo{{Index: 1}}}, {Name: "all_ext", Status: statusDiff, Frames: []FrameInfo{{Index: 1}}}}}
+		VSCode: []CaptureResult{{Name: "live_ext en", Status: statusNew, Frames: []FrameInfo{{Index: 1}}}, {Name: "all_ext ja", Status: statusDiff, Frames: []FrameInfo{{Index: 1}}}, {Name: "long_why en", Status: statusNew, Frames: []FrameInfo{{Index: 1}}}}}
 	steps := lookSteps(rep)
-	if len(steps) != 4 {
+	if len(steps) != 4 { // a real VSCode is looked at for the external and the live tapes only; long_why is compared by the machine
 		t.Fatalf("%d steps: %q", len(steps), steps)
 	}
 	all := strings.Join(steps, "\n")
-	for _, want := range []string{"Vim・replay-long-why dark", "折り返され", "Vim・replay-external light", "赤枠", "<code>qsoku ui-open vscode long-why</code> と打って Enter を押す", "<code>qsoku ui-open vscode external</code> と打って Enter を押す", "「テープを開く」"} {
+	for _, want := range []string{"Vim・replay-long-why dark", "折り返され", "Vim・replay-external light", "赤枠", "<code>qsoku ui-open vscode live</code> と打って Enter を押す", "<code>qsoku ui-open vscode external</code> と打って Enter を押す", "「Open a tape」", "「Start live view」"} {
 		if !strings.Contains(all, want) {
 			t.Errorf("the steps lack %q:\n%s", want, all)
 		}

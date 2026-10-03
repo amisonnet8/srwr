@@ -260,7 +260,7 @@ func eventTime(e tape.Event) (time.Time, bool) {
 	return t, err == nil
 }
 
-// newID returns a tape ID such as "20261001-1706-1795" that no tape has yet.
+// newID returns a tape ID such as "20261001-1706-1795" (the time is UTC) that no tape has yet.
 func (w *Workspace) newID(now time.Time) (string, error) {
 	const chars = "0123456789abcdefghijklmnopqrstuvwxyz"
 	for range 100 {
@@ -271,7 +271,7 @@ func (w *Workspace) newID(now time.Time) (string, error) {
 		for i := range b {
 			b[i] = chars[int(b[i])%len(chars)]
 		}
-		id := now.Format("20060102-1504") + "-" + string(b[:])
+		id := now.UTC().Format("20060102-1504") + "-" + string(b[:])
 		if _, err := os.Stat(w.TapePath(id)); errors.Is(err, os.ErrNotExist) {
 			return id, nil
 		}

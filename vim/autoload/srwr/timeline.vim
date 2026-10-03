@@ -1,5 +1,7 @@
 vim9script
 
+import autoload './lang.vim'
+
 # New wraps the frames of an opened tape (with before/after, i.e. withText) in a timeline.
 export def New(frames: list<dict<any>> = []): dict<any>
   return {frames: copy(frames)}
@@ -43,10 +45,10 @@ export def Basename(file: string): string
   return i < 0 ? file : file[i + 1 :]
 enddef
 
-# FormatRange: an empty range reads "12の前".
+# FormatRange: an empty range reads "before 12" ("12の前").
 export def FormatRange(r: dict<any>): string
   if r.end < r.start
-    return r.start .. 'の前'
+    return lang.Pick('before ' .. r.start, r.start .. 'の前')
   endif
   return r.start == r.end ? string(r.start) : r.start .. '-' .. r.end
 enddef

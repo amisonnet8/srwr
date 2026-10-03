@@ -57,7 +57,21 @@ func normalize(s string) string {
 // TestSelectReplaceExample runs the exchange in docs/examples/select-replace.md against the real
 // server, in one workspace, and checks that every response is the one the document shows.
 func TestSelectReplaceExample(t *testing.T) {
-	path := filepath.Join("..", "..", "docs", "examples", "select-replace.md")
+	eachVersion(t, "select-replace", checkSelectReplaceExample)
+}
+
+// eachVersion runs a check on the English document and on its Japanese version (name_ja.md). Both must show what the real
+// server says: the messages of the server are in English, whatever the language of the document.
+func eachVersion(t *testing.T, name string, check func(t *testing.T, path string)) {
+	t.Helper()
+	for _, suffix := range []string{"", "_ja"} {
+		t.Run(name+suffix, func(t *testing.T) {
+			check(t, filepath.Join("..", "..", "docs", "examples", name+suffix+".md"))
+		})
+	}
+}
+
+func checkSelectReplaceExample(t *testing.T, path string) {
 	goBlocks := codeBlocks(t, path, "go")
 	rpcBlocks := codeBlocks(t, path, "jsonrpc")
 	if len(goBlocks) == 0 || len(rpcBlocks) == 0 {
@@ -143,11 +157,21 @@ func TestSelectReplaceExample(t *testing.T) {
 // display server. Each block is a connection of its own, on the workspace in testdata/demo, which
 // is the tape that the exchange in select-replace.md leaves (made by the real core, run with a fixed clock).
 func TestProtocolSessionExample(t *testing.T) {
-	blocks := codeBlocks(t, filepath.Join("..", "..", "docs", "examples", "protocol-session.md"), "jsonrpc")
+	eachVersion(t, "protocol-session", checkProtocolSessionExample)
+}
+
+func checkProtocolSessionExample(t *testing.T, path string) {
+	blocks := codeBlocks(t, path, "jsonrpc")
 	if len(blocks) < 2 {
 		t.Fatalf("found %d jsonrpc blocks, want at least 2", len(blocks))
 	}
-	root, err := filepath.Abs(filepath.Join("testdata", "demo"))
+	// The English document shows a tape written as today's srwr writes it (UTC, English reasons); the Japanese one shows an
+	// older tape (+09:00, Japanese reasons).
+	demo := "demo-en"
+	if strings.HasSuffix(path, "_ja.md") {
+		demo = "demo"
+	}
+	root, err := filepath.Abs(filepath.Join("testdata", demo))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -195,8 +219,9 @@ var tapeTS = regexp.MustCompile(`"ts":"[^"]*"`)
 // TestHookExample runs the hook calls in docs/examples/hook.md against the real srwr hook, in one workspace, and checks that the
 // tape they leave is the one the document shows. An Edit has already changed the file when the hook runs, so the test makes
 // the change first, as Claude Code does.
-func TestHookExample(t *testing.T) {
-	path := filepath.Join("..", "..", "docs", "examples", "hook.md")
+func TestHookExample(t *testing.T) { eachVersion(t, "hook", checkHookExample) }
+
+func checkHookExample(t *testing.T, path string) {
 	goBlocks := codeBlocks(t, path, "go")
 	hookBlocks := codeBlocks(t, path, "hook")
 	tapeBlocks := codeBlocks(t, path, "jsonl")

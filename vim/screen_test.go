@@ -66,13 +66,13 @@ func copyDir(t *testing.T, src, dst string) {
 }
 
 // capture runs the outer Vim and returns the screens it took.
-func capture(t *testing.T, scenario, theme string) *uicheck.Capture {
+func capture(t *testing.T, scenario, theme, lang string) *uicheck.Capture {
 	t.Helper()
-	return captureSized(t, scenario, theme, 0, 0)
+	return captureSized(t, scenario, theme, lang, 0, 0)
 }
 
 // captureSized is capture on a screen of rows by cols (0 for the default, 50 by 140).
-func captureSized(t *testing.T, scenario, theme string, rows, cols int) *uicheck.Capture {
+func captureSized(t *testing.T, scenario, theme, lang string, rows, cols int) *uicheck.Capture {
 	t.Helper()
 	repo, err := filepath.Abs("..")
 	if err != nil {
@@ -80,7 +80,7 @@ func captureSized(t *testing.T, scenario, theme string, rows, cols int) *uicheck
 	}
 	ws := t.TempDir()
 	copyDir(t, filepath.Join(repo, "extension", "test", "fixtures", "ui-check"), ws)
-	c, err := uicheck.CaptureVim(uicheck.VimOptions{Repo: repo, Bin: srwrBinary(t), Workspace: ws, Scenario: scenario, Theme: theme,
+	c, err := uicheck.CaptureVim(uicheck.VimOptions{Repo: repo, Bin: srwrBinary(t), Workspace: ws, Scenario: scenario, Theme: theme, Lang: lang,
 		VimBin: os.Getenv("VIM_BIN"), Rows: rows, Cols: cols})
 	if err != nil {
 		t.Fatal(err)
@@ -100,23 +100,25 @@ func TestScreens(t *testing.T) {
 			t.Skipf("no %s", tool)
 		}
 	}
-	for _, theme := range []string{"dark", "light"} {
-		for _, sc := range scenarios {
-			t.Run(sc.name+"/"+theme, func(t *testing.T) {
-				t.Parallel()
-				data, err := os.ReadFile(filepath.Join("test", "baseline", sc.name+"_"+theme+".json")) //nolint:gosec // a fixed path under vim/test/baseline
-				if err != nil {
-					t.Fatal(err)
-				}
-				want, err := uicheck.ReadBaseline(data)
-				if err != nil {
-					t.Fatal(err)
-				}
-				got := capture(t, sc.scenario, theme)
-				for _, d := range uicheck.CompareBaseline(want, got) {
-					t.Errorf("frame %d (%s, baseline %s) differs:\n  %s", d.Index, d.Label, d.Want, strings.Join(d.Diffs, "\n  "))
-				}
-			})
+	for _, lang := range []string{"en", "ja"} {
+		for _, theme := range []string{"dark", "light"} {
+			for _, sc := range scenarios {
+				t.Run(lang+"/"+sc.name+"/"+theme, func(t *testing.T) {
+					t.Parallel()
+					data, err := os.ReadFile(filepath.Join("test", "baseline", lang, sc.name+"_"+theme+".json")) //nolint:gosec // a fixed path under vim/test/baseline
+					if err != nil {
+						t.Fatal(err)
+					}
+					want, err := uicheck.ReadBaseline(data)
+					if err != nil {
+						t.Fatal(err)
+					}
+					got := capture(t, sc.scenario, theme, lang)
+					for _, d := range uicheck.CompareBaseline(want, got) {
+						t.Errorf("frame %d (%s, baseline %s) differs:\n  %s", d.Index, d.Label, d.Want, strings.Join(d.Diffs, "\n  "))
+					}
+				})
+			}
 		}
 	}
 }
@@ -135,7 +137,7 @@ func TestRangeIsNeverHiddenUnderTheWhyRows(t *testing.T) {
 	for _, rows := range []int{40, 30, 25} {
 		t.Run(strconv.Itoa(rows)+" rows", func(t *testing.T) {
 			t.Parallel()
-			got := captureSized(t, "replay:20260930-0054-why-basic", "dark", rows, 140)
+			got := captureSized(t, "replay:20260930-0054-why-basic", "dark", "en", rows, 140)
 			if len(got.Grids) != 7 {
 				t.Fatalf("%d screens", len(got.Grids))
 			}

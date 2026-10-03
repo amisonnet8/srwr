@@ -58,7 +58,7 @@ t.Equal(full, Plain(replay.StatusParts(1, 3, true, 'text.go:103', w + 4, '後  '
 t.Equal(true, Plain(replay.StatusParts(1, 3, false, 'text.go:103', 1000)) !~# hint, 'no hint outside live')
 
 # the value for 'statusline'
-t.Equal('srwr  1/3  %#SrwrDim#[[ 戻る%*  ]] 進む  a%%b.go:1', replay.StatusString(replay.StatusParts(0, 3, false, 'a%b.go:1', 100)), 'statusline value: dim part and escaped percent')
+t.Equal('srwr  1/3  %#SrwrDim#[[ 戻る%*  ]] 進む%<  a%%b.go:1', replay.StatusString(replay.StatusParts(0, 3, false, 'a%b.go:1', 100)), 'statusline value: dim part and escaped percent')
 t.Equal(true, replay.StatusString(replay.StatusParts(1, 3, true, '', 80)) =~# '%#SrwrWhyReplace# L：LIVE に戻る（新着 1） %\*', 'statusline value: orange part')
 t.Equal('50%%  後', replay.StatusString([['後', '']], '50%  '), 'the lead is escaped')
 

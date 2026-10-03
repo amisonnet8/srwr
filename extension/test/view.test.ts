@@ -7,6 +7,9 @@ import { state } from "./fakevscode";
 import { goldenFrames, loadGolden } from "./helpers";
 import { start } from "./harness";
 
+// These tests look at the Japanese texts (english.test.ts looks at the English ones).
+process.env.SRWR_TEST_LANG = "ja";
+
 const WHY = "20260930-0054-why-basic";
 const EXT = "20260930-0949-external";
 const NOWHY = "20260930-0053-no-why";

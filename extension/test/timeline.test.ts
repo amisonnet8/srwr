@@ -1,8 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { setJapanese } from "../src/lang";
 import { PROTOCOL_VERSION, resolveCommand } from "../src/server";
 import { Timeline, basename, changedLines, formatRange, splitLines, toFrame, MAX_LCS_CELLS } from "../src/timeline";
 import { goldenFrames, goldenNames, loadGolden } from "./helpers";
+
+// The Japanese text of "before 12" (english.test.ts looks at the English one).
+setJapanese(true);
 
 test("formatRange: one line, many lines, empty range", () => {
   assert.equal(formatRange({ start: 37, end: 37 }), "37");

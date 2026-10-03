@@ -5,7 +5,6 @@ package setup
 
 import (
 	"errors"
-	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -14,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/amisonnet8/srwr/internal/lang"
 	"github.com/amisonnet8/srwr/internal/session"
 )
 
@@ -193,15 +193,15 @@ func readObject(root, rel string) (o *object, old []byte, existed bool, err erro
 	}
 	v, perr := parseJSON(old)
 	if perr != nil {
-		msg := fmt.Sprintf("%s を JSON として読めません", rel)
+		msg := lang.Sprintf("%s is not valid JSON", "%s を JSON として読めません", rel)
 		if n := lineOf(old, perr); n > 0 {
-			msg += fmt.Sprintf("（%d 行目付近）", n)
+			msg += lang.Sprintf(" (near line %d)", "（%d 行目付近）", n)
 		}
 		return nil, nil, false, &UserError{Msg: msg}
 	}
 	obj, ok := v.(*object)
 	if !ok {
-		return nil, nil, false, &UserError{Msg: fmt.Sprintf("%s の一番外側が JSON のオブジェクトではありません", rel)}
+		return nil, nil, false, &UserError{Msg: lang.Sprintf("the top level of %s is not a JSON object", "%s の一番外側が JSON のオブジェクトではありません", rel)}
 	}
 	return obj, old, true, nil
 }
@@ -216,7 +216,7 @@ func child(o *object, key, where string) (*object, error) {
 	}
 	c, ok := v.(*object)
 	if !ok {
-		return nil, &UserError{Msg: fmt.Sprintf("%s の %s がオブジェクトではありません", where, key)}
+		return nil, &UserError{Msg: lang.Sprintf("%s: %s is not an object", "%s の %s がオブジェクトではありません", where, key)}
 	}
 	return c, nil
 }
@@ -229,7 +229,7 @@ func stringList(o *object, key, where string) ([]any, error) {
 	}
 	l, ok := v.([]any)
 	if !ok {
-		return nil, &UserError{Msg: fmt.Sprintf("%s の %s が配列ではありません", where, key)}
+		return nil, &UserError{Msg: lang.Sprintf("%s: %s is not an array", "%s の %s が配列ではありません", where, key)}
 	}
 	return l, nil
 }
@@ -264,9 +264,9 @@ func planMCP(root string) (plan, error) {
 	if !existed {
 		p.change.Kind = Created
 	}
-	p.change.Detail = "srwr mcp を登録しました"
+	p.change.Detail = lang.Pick("registered srwr mcp", "srwr mcp を登録しました")
 	if others > 0 {
-		p.change.Detail += fmt.Sprintf("（ほかのサーバー %d 件はそのまま）", others)
+		p.change.Detail += lang.Sprintf(" (%d other servers left as they were)", "（ほかのサーバー %d 件はそのまま）", others)
 	}
 	return p, nil
 }
@@ -284,7 +284,7 @@ func planSettings(root string, lenient bool) (plan, error) {
 	if err != nil {
 		return plan{}, err
 	}
-	post, err := stringListAny(hooks, "PostToolUse", where+" の hooks")
+	post, err := stringListAny(hooks, "PostToolUse", where+lang.Pick(", hooks", " の hooks"))
 	if err != nil {
 		return plan{}, err
 	}
@@ -312,7 +312,7 @@ func planSettings(root string, lenient bool) (plan, error) {
 	if err != nil {
 		return plan{}, err
 	}
-	allow, err := stringList(perms, "allow", where+" の permissions")
+	allow, err := stringList(perms, "allow", where+lang.Pick(", permissions", " の permissions"))
 	if err != nil {
 		return plan{}, err
 	}
@@ -324,7 +324,7 @@ func planSettings(root string, lenient bool) (plan, error) {
 	}
 	perms.set("allow", allow)
 
-	deny, err := stringList(perms, "deny", where+" の permissions")
+	deny, err := stringList(perms, "deny", where+lang.Pick(", permissions", " の permissions"))
 	if err != nil {
 		return plan{}, err
 	}
@@ -371,19 +371,19 @@ func planSettings(root string, lenient bool) (plan, error) {
 func settingsDetail(created, lenient, hookAdded, denyAdded, denyRemoved bool) string {
 	switch {
 	case created && lenient:
-		return "hook を登録しました（緩いモード）"
+		return lang.Pick("registered the hook (lenient mode)", "hook を登録しました（緩いモード）")
 	case created:
-		return "hook を登録し、Edit・Write などを禁止しました（厳格モード）"
+		return lang.Pick("registered the hook; forbade Edit, Write, etc. (strict mode)", "hook を登録し、Edit・Write などを禁止しました（厳格モード）")
 	case !hookAdded && denyRemoved:
-		return "Edit・Write などの禁止を外しました（緩いモード）"
+		return lang.Pick("lifted the ban on Edit, Write, etc. (lenient mode)", "Edit・Write などの禁止を外しました（緩いモード）")
 	case !hookAdded && denyAdded:
-		return "Edit・Write などを禁止しました（厳格モード）"
+		return lang.Pick("forbade Edit, Write, etc. (strict mode)", "Edit・Write などを禁止しました（厳格モード）")
 	case !hookAdded:
-		return "許可を足しました（既存の設定はそのまま）"
+		return lang.Pick("added the permissions (existing settings left as they were)", "許可を足しました（既存の設定はそのまま）")
 	case lenient:
-		return "hook を足しました（既存の設定はそのまま）"
+		return lang.Pick("added the hook (existing settings left as they were)", "hook を足しました（既存の設定はそのまま）")
 	default:
-		return "hook と禁止を足しました（既存の設定はそのまま）"
+		return lang.Pick("added the hook and the prohibitions (existing settings left as they were)", "hook と禁止を足しました（既存の設定はそのまま）")
 	}
 }
 

@@ -120,8 +120,9 @@ func AppendLine(path string, line []byte) error {
 	return err
 }
 
-// FormatTS formats a time as the tape's ts: RFC 3339 with milliseconds and a time zone.
-func FormatTS(t time.Time) string { return t.Format("2006-01-02T15:04:05.000Z07:00") }
+// FormatTS formats a time as the tape's ts: RFC 3339 in UTC (a trailing Z) with milliseconds. Older tapes were written in
+// the zone of the machine (+09:00 and so on); both are read as the same instant.
+func FormatTS(t time.Time) string { return t.UTC().Format("2006-01-02T15:04:05.000Z") }
 
 // Sha returns the "sha256:…" of text, as in sha, fileShaBefore and fileShaAfter.
 func Sha(text string) string {

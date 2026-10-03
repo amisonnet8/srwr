@@ -1,6 +1,8 @@
 // The frames the display server builds (docs/reference/protocol.md) and the small calculations the editor does on them.
 // This file does not import vscode.
 
+import { pick } from "./lang";
+
 export type FrameKind = "select" | "replace" | "external" | "final";
 
 export interface LineRange {
@@ -39,7 +41,7 @@ export function basename(file: string): string {
 // "37", "39-41", and "12の前" for an empty range.
 export function formatRange(r: LineRange): string {
   if (r.end < r.start) {
-    return `${r.start}の前`;
+    return pick(`before ${r.start}`, `${r.start}の前`);
   }
   return r.start === r.end ? `${r.start}` : `${r.start}-${r.end}`;
 }

@@ -3,6 +3,7 @@ vim9script
 import autoload './buf.vim'
 import autoload './diff.vim'
 import autoload './hl.vim'
+import autoload './lang.vim'
 import autoload './paint.vim'
 import autoload './sidebar.vim'
 import autoload './timeline.vim'
@@ -11,7 +12,9 @@ import autoload './timeline.vim'
 # the list only grows (Append), and the step to a frame is the same Goto.
 
 const BANNER_PREFIX = '◆ '
-const CLOSE_HINT = '（閉じる：左の一覧で q、または :SrwrClose）'
+def CloseHint(): string
+  return lang.Pick('(Close: q in the list on the left, or :SrwrClose)', '（閉じる：左の一覧で q、または :SrwrClose）')
+enddef
 
 # The session being shown; {} when none.
 var s: dict<any> = {}
@@ -210,33 +213,36 @@ export def Behind(): number
 enddef
 
 # StatusParts is the status line as pieces [text, style]: style is '' (plain), 'dim' (a button that cannot be used now)
-# or 'new' (live, frames waiting). `room` is the width the line has; the close hint is left out when all of the line
+# or 'new' (live, frames waiting); 'cut' is not text but the place where a line that is too long is cut.
+# `room` is the width the line has; the close hint is left out when all of the line
 # with it does not fit, so that the live mark is never cut off. `lead` is what comes before it in this window.
 export def StatusParts(index: number, total: number, live: bool, where: string, room: number, lead: string = ''): list<list<string>>
   if live && total == 0
-    return [['srwr  ● LIVE  （AI の操作を待っています）', '']]
+    return [[lang.Pick("srwr  ● LIVE  (waiting for the AI's operations)", 'srwr  ● LIVE  （AI の操作を待っています）'), '']]
   endif
   const behind = total - 1 - index
   var parts: list<list<string>> = [
     ['srwr  ' .. max([index + 1, 0]) .. '/' .. total .. '  ', ''],
-    ['[[ 戻る', index > 0 ? '' : 'dim'],
+    ['[[ ' .. lang.Pick('Back', '戻る'), index > 0 ? '' : 'dim'],
     ['  ', ''],
-    [']] 進む', index < total - 1 ? '' : 'dim'],
+    [']] ' .. lang.Pick('Forward', '進む'), index < total - 1 ? '' : 'dim'],
   ]
   if live
     if behind == 0
       add(parts, ['  ● LIVE', ''])
     else
       add(parts, ['  ', ''])
-      add(parts, [' L：LIVE に戻る（新着 ' .. behind .. '） ', 'new'])
+      add(parts, [lang.Pick(' L: Back to LIVE (' .. behind .. ' new) ', ' L：LIVE に戻る（新着 ' .. behind .. '） '), 'new'])
     endif
   endif
   if where !=# ''
+    # When the line is too long for the window, the file and range are what is cut (the buttons and the position stay).
+    add(parts, ['', 'cut'])
     add(parts, ['  ' .. where, ''])
   endif
   if live
     var withHint = copy(parts)
-    add(withHint, ['  ' .. CLOSE_HINT, ''])
+    add(withHint, ['  ' .. CloseHint(), ''])
     if strdisplaywidth(lead .. join(mapnew(withHint, (_, p) => p[0]), '')) <= room
       return withHint
     endif
@@ -249,7 +255,9 @@ export def StatusString(parts: list<list<string>>, lead: string = ''): string
   var out = substitute(lead, '%', '%%', 'g')
   for [text, style] in parts
     const t = substitute(text, '%', '%%', 'g')
-    if style ==# 'dim'
+    if style ==# 'cut'
+      out ..= '%<'
+    elseif style ==# 'dim'
       out ..= '%#SrwrDim#' .. t .. '%*'
     elseif style ==# 'new'
       out ..= '%#SrwrWhyReplace#' .. t .. '%*'
@@ -289,8 +297,8 @@ def UpdateStatus()
   const n = timeline.Len(s.tl)
   if diff.Active(s)
     const f: dict<any> = s.tl.frames[s.index]
-    const lead = '後  '
-    setwinvar(s.win, '&statusline', StatusString([['前  ' .. diff.Label(f), '']]))
+    const lead = lang.Pick('After  ', '後  ')
+    setwinvar(s.win, '&statusline', StatusString([[lang.Pick('Before  ', '前  ') .. diff.Label(f), '']]))
     setwinvar(s.diffWin, '&statusline', StatusString(StatusParts(s.index, n, s.live, Where(), WinWidth(s.diffWin), lead), lead))
   else
     setwinvar(s.win, '&statusline', StatusString(StatusParts(s.index, n, s.live, Where(), WinWidth(s.win))))
@@ -381,7 +389,7 @@ export def Open(tapeId: string, frames: list<dict<any>>, root: string, live: boo
     autocmd VimResized,WinScrolled * UpdateStatus()
   augroup END
   if live
-    buf.SetLines(s.buf, ['ライブ視聴中（AI の操作を待っています）'])
+    buf.SetLines(s.buf, [lang.Pick("Live view (waiting for the AI's operations)", 'ライブ視聴中（AI の操作を待っています）')])
     s.index = len(frames) - 1
     sidebar.Mark(s.index)
     UpdateStatus()

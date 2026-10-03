@@ -15,7 +15,7 @@
 
 ## 用語（日本語と英語の対応）
 
-文書・コメント・UI の文言で、同じものを別の言葉で呼ばない。
+文書・コメント・UI の文言で、同じものを別の言葉で呼ばない。画面に出る英語は、この表の「英語」の列を使う（`external`・`final` など）。日本語の画面（`SRWR_LANG=ja`）は、「日本語」の列。
 
 | 日本語 | 英語（コード・JSON） | 意味 |
 |---|---|---|
@@ -47,7 +47,7 @@
 
 ## Go のコード
 
-- パッケージ名は短い小文字1語（`core`、`tape`、`token`、`tools`、`jsonrpc`、`mcp`、`hook`、`session`、`ignore`、`timeline`、`viewserver`、`cli`、`docs`）
+- パッケージ名は短い小文字1語（`core`、`tape`、`token`、`tools`、`jsonrpc`、`mcp`、`hook`、`session`、`ignore`、`lang`、`setup`、`vcs`、`timeline`、`viewserver`、`cli`、`docs`）
 - 上の用語表の英語をそのまま型名・関数名に使う（例：`Tape`、`Session`、`Selection`、`Frame`）
 - サブコマンドの実装は `internal/cli` に置き、`cmd/srwr/main.go` は引数を渡すだけにする
 

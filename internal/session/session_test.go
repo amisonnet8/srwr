@@ -59,7 +59,7 @@ func TestFirstCallMakesNoTape(t *testing.T) {
 	var id string
 	err := w.Do(func(tx *Tx) error {
 		id = tx.TapeID()
-		if !idRe.MatchString(id) || id[:13] != "20261001-1706" {
+		if !idRe.MatchString(id) || id[:13] != "20261001-0806" {
 			t.Errorf("TapeID = %q", id)
 		}
 		if tx.NextSeq() != 1 || len(tx.State().Files) != 0 || len(tx.Key()) != 32 {
@@ -97,11 +97,11 @@ func TestAppendMakesTheTape(t *testing.T) {
 		t.Fatalf("events = %d, skipped = %d", len(res.Events), res.Skipped)
 	}
 	h := res.Events[0]
-	if h.Type != tape.TypeHeader || h.Session != id[len(id)-4:] || h.StartedAt != "2026-10-01T17:06:00.000+09:00" ||
+	if h.Type != tape.TypeHeader || h.Session != id[len(id)-4:] || h.StartedAt != "2026-10-01T08:06:00.000Z" ||
 		h.Author == nil || h.Author.Name != "demo" || h.Tool == nil || h.Tool.Name != "srwr" || h.Tool.Version != "v-test" {
 		t.Errorf("header = %+v", h)
 	}
-	if e := res.Events[1]; e.Seq != 1 || e.TS != "2026-10-01T17:06:00.000+09:00" {
+	if e := res.Events[1]; e.Seq != 1 || e.TS != "2026-10-01T08:06:00.000Z" {
 		t.Errorf("event = %+v", e)
 	}
 	active, _ := os.ReadFile(filepath.Join(root, ".srwr", "active")) //nolint:gosec // a path in a temporary directory

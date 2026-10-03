@@ -1,122 +1,132 @@
-# Vim（srwr-view.vim）
+# Vim (srwr-view.vim)
 
-**読者**：ターミナルの Vim でテープを見る人。
+[日本語](vim_ja.md)
 
-AI エージェントを動かしているターミナルから、そのまま Vim でテープを再生できる。VSCode と同じ情報を、同じ順で見せる。
+**Readers**: people who view tapes in Vim in a terminal.
 
-## 使い始める
+From the terminal where the AI agent runs, you can replay a tape in Vim as it is. It shows the same information as VSCode, in the same order.
 
-- **`srwr view [テープ]`**：`srwr` のバイナリに埋め込んだ Vim スクリプトを、ユーザーのキャッシュディレクトリ（`os.UserCacheDir()/srwr/vim/<バージョン>-<ファイルのハッシュ>/`）に書き出し、`runtimepath` に足して Vim を起動する。**プラグインを入れなくてよい**
-  - 作業場のディレクトリ（`.srwr/` のあるところ）で実行する。別の場所からは `--root <作業場>`
-  - テープは、テープID（`:SrwrOpen` で一覧に出るもの）か、`.tape.jsonl` のパス。省くと、一覧のバッファから選ぶ
-  - `--live` でライブ視聴（`srwr view --live`）
-  - 起動する Vim は `$SRWR_VIM`、なければ PATH の `vim`。あなたの `vimrc` は読み込んだまま（`g:srwr_…` の設定は `vimrc` に書ける）
-  - 使えない Vim（古い、`vim-tiny` など）のときは、何が足りないかを伝えて終わる
-- **プラグインとしても入れられる**：リポジトリの `vim/` を、プラグインマネージャーで入れる。入れたあとは、Vim の中から次のコマンドが使える。このときも `srwr` のバイナリは要る（PATH にあるか、`g:srwr_path` で指定する）
+## Getting started
 
-| コマンド | 動き |
+- **`srwr view [tape]`**: writes the Vim scripts embedded in the `srwr` binary to the user's cache directory (`os.UserCacheDir()/srwr/vim/<version>-<hash of the files>/`), adds it to `runtimepath`, and starts Vim. **You do not have to install a plugin**
+  - Run it in the workspace directory (where `.srwr/` is). From elsewhere, `--root <workspace>`
+  - The tape is a tape ID (what shows in the list of `:SrwrOpen`) or the path of a `.tape.jsonl`. If left out, you choose from the list buffer
+  - `--live` is live viewing (`srwr view --live`)
+  - The Vim that is started is `$SRWR_VIM`, or `vim` on the PATH. Your `vimrc` is still read (settings of `g:srwr_…` can go in your `vimrc`)
+  - With a Vim that cannot be used (too old, `vim-tiny` and the like), it says what is missing and ends
+- **It can also be installed as a plugin**: install the repository's `vim/` with a plugin manager. After that, the following commands can be used inside Vim. The `srwr` binary is needed in this case too (on the PATH, or given with `g:srwr_path`)
+
+| Command | Action |
 |---|---|
-| `:SrwrOpen [テープ]` | テープを開く。省くと一覧 |
-| `:SrwrLive` | ライブ視聴 |
-| `:SrwrNext`・`:SrwrPrev`・`:SrwrClose` | コマ送り（進む・戻る）と、閉じる（下の「キー」と同じ） |
-| `:SrwrLatest` | ライブで、最新のコマへ戻る |
+| `:SrwrOpen [tape]` | Opens a tape. The list if left out |
+| `:SrwrLive` | Live viewing |
+| `:SrwrNext`, `:SrwrPrev`, `:SrwrClose` | Stepping (forward, back), and closing (the same as "Keys" below) |
+| `:SrwrLatest` | In live, goes back to the newest frame |
 
-設定は `g:srwr_path`（`srwr` のバイナリの場所）だけ。見た目の設定はない。
+The only setting is `g:srwr_path` (where the `srwr` binary is). There are no settings for the look.
 
-## 対応する Vim
+## Language and time
 
-- **Vim 9.0.0784 以上**で、`+channel`・`+job`・`+textprop`・`+vim9script` があること。仮想テキストを行の上に出す機能は 9.0.0438 で入り、その表示の不具合の修正を含む 9.0.0784 を、確かめた最も古い版とした（9.0.0784 と最新の Vim で、テストが通る）。Debian 12（9.0.1378）・Ubuntu 24.04（9.1）以降の Vim はこれを満たす
-- 'encoding' は utf-8
-- 機能が足りない Vim（`vim-tiny` など）では、起動時に何が足りないかを伝えて終わる
-- Neovim は対象にしない（動けばよいが、確かめない）
+- The texts are **English**. Set the environment variable `SRWR_LANG=ja` before starting Vim for Japanese (`SRWR_LANG=ja srwr view`). Anything else, or nothing set, is English
+- The times in the tape list are shown in the time zone of the machine (the environment variable `TZ`). The tape holds UTC
+- The word for folded lines of a diff is `lines` in English and `行` in Japanese, whatever the language of the Vim itself
 
-## 画面の仕様
+## Supported Vim
 
-VSCode（[vscode.md](vscode.md)）と同じ情報を、同じ順で、同じ色で見せる。見るのは**コマ送りだけ**で、自動再生はない。部品が Vim のものに置き換わる。
+- **Vim 9.0.0784 or later**, with `+channel`, `+job`, `+textprop` and `+vim9script`. The feature to show virtual text above a line came in 9.0.0438, and 9.0.0784, which includes the fix of a display bug of it, is the oldest version checked (the tests pass with 9.0.0784 and with the latest Vim). The Vim of Debian 12 (9.0.1378) and Ubuntu 24.04 (9.1) and later satisfy this
+- 'encoding' is utf-8
+- With a Vim that lacks features (`vim-tiny` and the like), it says what is missing at startup and ends
+- Neovim is not a target (it may work, but it is not checked)
 
-### 1. 起動と画面の構成
-- `srwr view [テープ]` で起動する（上の「使い始める」）。Vim の中からは `:SrwrOpen [テープ]`・`:SrwrLive`
-- テープを省くと、**テープ一覧のバッファ**（開始時刻・更新時刻・イベント数・ファイル数）を出し、`<CR>` で開く
-- 開くと、1つのタブを次のように使う
+## Screen specification
+
+It shows the same information as VSCode ([vscode.md](vscode.md)), in the same order, in the same colors. You view by **stepping only**; there is no autoplay. The parts are replaced by those of Vim.
+
+### 1. Starting and the layout of the screen
+- Start with `srwr view [tape]` (see "Getting started" above). Inside Vim, `:SrwrOpen [tape]` and `:SrwrLive`
+- If the tape is left out, a **tape list buffer** (start time, update time, number of events, number of files) is shown, and `<CR>` opens one
+- When opened, one tab is used like this
   ```
   ┌──────────────┬──────────────────────────────────────┐
-  │ 操作一覧       │ リプレイのバッファ（読み取り専用）       │
-  │ 1 ● select …  │  ◆ main関数に修正が必要か確認中        │ ← 理由の行（青）
-  │ 2 ● select …  │  func main() {                       │ ← 範囲（薄い青）
+  │ Operations    │ The replay buffer (read-only)         │
+  │ 1 ● select …  │  ◆ Checking whether main needs a fix  │ ← reason line (blue)
+  │ 2 ● select …  │  func main() {                       │ ← range (light blue)
   │ 3 ● replace … │      …                               │
   │ …             │  }                                    │
   ├──────────────┴──────────────────────────────────────┤
-  │ srwr  3/12  [[ 戻る  ]] 進む  main.go:12-14           │ ← ステータス行
+  │ srwr  3/12  [[ Back  ]] Forward  main.go:12-14        │ ← status line
   └─────────────────────────────────────────────────────┘
   ```
-- 操作一覧の幅は 40 桁
+- The operation list is 40 columns wide
 
-### 2. 色
+### 2. Colors
 
-[vscode.md](vscode.md) と同じ。**select は青、ファイルを変えたものは橙。** 理由の行は濃い色に白の太字、範囲は同じ色の薄い色。ハイライトグループは `highlight default` で定義するので、`vimrc` で上書きできる。
+The same as [vscode.md](vscode.md). **select is blue, and what changes a file is orange.** The reason line is a dark color with white bold text, and the range is the lighter version of the same color. The highlight groups are defined with `highlight default`, so they can be overridden in your `vimrc`.
 
-| グループ | 使うところ | dark | light |
+| Group | Used for | dark | light |
 |---|---|---|---|
-| `SrwrWhySelect` | select の理由の行 | `#0b61a4`、白の太字 | 同じ |
-| `SrwrWhyReplace` | replace の理由の行 | `#b45f06`、白の太字 | 同じ |
-| `SrwrSelect` | select の範囲、差分の前（左） | `#1d3a5c` | `#cfe3fb` |
-| `SrwrReplace` | replace の範囲、差分の後（右） | `#583c27` | `#fde3c8` |
-| `SrwrCurrent` | 操作一覧の今のコマ | `#3a3d41` | `#e4e6f1` |
-| `SrwrDotSelect`・`SrwrDotReplace` | 操作一覧の丸（青・橙） | `#4aa3ff`・`#f0883e` | `#0b61a4`・`#b45f06` |
-| `SrwrDotExternal` | 操作一覧の丸（外部変更・録画後） | `#b180d7` | `#652d90` |
-| `SrwrDim` | 使えないボタン | 灰色 | 灰色 |
+| `SrwrWhySelect` | The reason line of a select | `#0b61a4`, white bold | the same |
+| `SrwrWhyReplace` | The reason line of a replace | `#b45f06`, white bold | the same |
+| `SrwrSelect` | The range of a select, the before (left) of a diff | `#1d3a5c` | `#cfe3fb` |
+| `SrwrReplace` | The range of a replace, the after (right) of a diff | `#583c27` | `#fde3c8` |
+| `SrwrCurrent` | The current frame in the operation list | `#3a3d41` | `#e4e6f1` |
+| `SrwrDotSelect`, `SrwrDotReplace` | The dots in the operation list (blue, orange) | `#4aa3ff`, `#f0883e` | `#0b61a4`, `#b45f06` |
+| `SrwrDotExternal` | The dots in the operation list (external change, final) | `#b180d7` | `#652d90` |
+| `SrwrDim` | Buttons that cannot be used | gray | gray |
 
-- 256色の端末でも見分けられる値を持つ（`ctermbg`）。`termguicolors` があればその色を使う
-- 'background' を変えると、色が替わる（利用者が上書きした色は、そのまま）
+- It has values that can be told apart even on a 256-color terminal (`ctermbg`). If `termguicolors` is on, those colors are used
+- Changing 'background' changes the colors (colors the user overrode are left as they are)
 
-### 3. リプレイのバッファ（select と replace のコマ）
-- 名前は `srwr://<テープ名>/<ファイル>`。`buftype=nofile`、`nomodifiable`。`filetype` は元ファイルの拡張子から決める（構文ハイライトは Vim に任せる）
-- コマごとに、表示サーバーから受け取った文書の内容で中身を差し替える
-- **範囲の直前に、理由の行を実際に差し込む。** 長い理由は、ウィンドウの幅で何行かに折り返し、全文を出す。2行目からは字下げする。`why` が `null` のコマは、理由の行を出さない
-- 範囲の行を、薄い色で塗る（行末まで。空範囲は塗らない）
-- **コマごとに、中身の先頭から表示する。** 理由の行と範囲の1行目が画面に入らないときだけ、理由の行が画面の真ん中に来るように動かす（ファイルの終わりより下の空白は見せない）。範囲が画面の下端に近くても、理由の行の下に範囲の1行目が見える
-- replace は、書き換えたあとの内容を、最初から橙で見せる（赤→緑の動きはない）
-- **行番号**：理由の行を差し込むと、標準の行番号（`number`）が合わなくなる。そのため、理由の行があるコマでは `number` を消し、**実ファイルどおりの番号**を各行の左端に仮想テキストで出す（理由の行は空白）。理由の行がないコマ・差分のコマは、標準の `number`。VSCode と同じ見え方
+### 3. The replay buffer (frames of select and replace)
+- The name is `srwr://<tape name>/<file>`. `buftype=nofile`, `nomodifiable`. `filetype` is decided from the extension of the original file (syntax highlighting is left to Vim)
+- For each frame, the content is replaced with the content of the document received from the view server
+- **A reason line is actually inserted just before the range.** A long reason is wrapped into several lines at the width of the window and shown in full. From the second line it is indented. A frame whose `why` is `null` shows no reason line
+- The lines of the range are painted in the lighter color (up to the end of the line. An empty range is not painted)
+- **Each frame is shown from the top of its content.** Only when the reason line and the first line of the range do not fit on the screen, it scrolls so that the reason line comes to the middle of the screen (the blank space below the end of the file is not shown). Even when the range is near the bottom edge of the screen, the first line of the range is visible below the reason line
+- A replace shows the content after the rewrite, in orange from the start (there is no red → green motion)
+- **Line numbers**: inserting the reason line makes the standard line numbers (`number`) wrong. So in a frame that has a reason line `number` is turned off, and **the real file's own numbers** are shown at the left edge of each line as virtual text (blank for the reason line). Frames without a reason line and diff frames use the standard `number`. The same look as VSCode
 
-### 4. 差分のコマ（外部変更・最後の差分）
-- リプレイのウィンドウを**左右2つのウィンドウ**に分け、`:diffthis` で並べる。左＝変更前、右＝変更後。どちらも読み取り専用のバッファ
-- **変わった行だけを塗る：左は青、右は橙。** Vim 標準の diff の色（`DiffAdd` など）は、差分のコマを出している間だけ消す。終わると元に戻す
-- 最初に変わった行にカーソルを置き、画面の上から**3割ぐらい**に来るようにスクロールする。片方に変わった行がなければ、もう片方の行に合わせる
-- 各ウィンドウのステータス行に、見出しを出す
-  - 左：「前  ⚠ srwrの外で変更：main.go」「前  ⚠ 録画のあとで変更（今のファイルとの差分）：main.go」
-  - 右：「後  」に続けて、いつものステータス（`srwr  6/12 …`）
-- ふつうのコマに戻ると、1つのウィンドウに戻す。**ウィンドウやバッファを増やし続けない**
-- 変更のかたまりの移動は、Vim の `]c`・`[c`
+### 4. Diff frames (external change, final diff)
+- The replay window is split into **two windows, left and right**, and lined up with `:diffthis`. Left = before, right = after. Both are read-only buffers
+- **Only the changed lines are painted: blue on the left, orange on the right.** The standard diff colors of Vim (`DiffAdd` and the like) are taken away only while a diff frame is shown, and put back afterwards
+- The cursor is put on the first changed line, and it scrolls so that the line comes about **30%** from the top of the screen. If one side has no changed line, it follows the lines of the other side
+- The status line of each window shows a heading
+  - Left: "Before  ⚠ Changed outside srwr: main.go", "Before  ⚠ Changed after recording (diff from current file): main.go"
+  - Right: "After  " followed by the usual status (`srwr  6/12 …`)
+- When it goes back to an ordinary frame, it returns to one window. **Windows and buffers do not keep increasing**
+- Moving between the blocks of changes is done with Vim's `]c` and `[c`
+- The unchanged lines are folded. The fold text is `+-- 17 lines: …` (`行` in Japanese)
 
-### 5. 操作一覧
-- コマを、**記録された順に、1、2、3…と並べる**（番号は、ステータス行の位置と同じ）。親子の字下げはしない
-- 各行：`● 番号 種類 ファイル:範囲  why`（VSCode の一覧と同じ並び：丸、番号、種類、ファイル名）。丸の色で見分ける（select＝青、replace＝橙、外部変更・録画後＝紫）。外部変更は「外部変更」、最後の差分は「録画後」
-- `<CR>` でそのコマへ移動。今のコマの行を塗る
+### 5. The operation list
+- The frames are listed **in the order recorded, 1, 2, 3…** (the number is the same as the position in the status line). There is no indenting by parent and child
+- Each row: `● number kind file:range  why` (the same order as the list of VSCode: dot, number, kind, file name). The color of the dot tells them apart (select = blue, replace = orange, external and final = purple). An external change is `external`, and the final diff is `final`
+- `<CR>` moves to that frame. The row of the current frame is painted
 
-### 6. ステータス行とキー
-- ステータス行：`srwr  位置/総数  [[ 戻る  ]] 進む  ファイル:範囲`。**「戻る」「進む」は、いつも出す**。行けない側（最初のコマの戻る、最後のコマの進む）は薄くする。ライブの最後に付く「（閉じる：左の一覧で q、または :SrwrClose）」は、ウィンドウに全部収まるときだけ出す（収まらないときは出さず、「L：LIVE に戻る（新着 N）」を必ず読めるようにする）
-- キーは、srwr のバッファ（操作一覧・リプレイ・差分）の中だけで効く。ファイルの種類（`filetype`）のプラグインが同じキー（`]]`・`[[` など）を割り当てても、srwr のキーが優先される
+### 6. The status line and keys
+- The status line: `srwr  position/total  [[ Back  ]] Forward  file:range`. **"Back" and "Forward" are always shown.** The side that cannot be taken (Back at the first frame, Forward at the last) is dimmed. The "(Close: q in the list on the left, or :SrwrClose)" that comes last in live is shown only when all of it fits in the window (when it does not fit, it is left out so that "L: Back to LIVE (N new)" can always be read). If the line is still too long for the window, the file and range at its end are cut (the position and the buttons stay)
+- The keys work only inside the buffers of srwr (the operation list, the replay, the diff). Even if a plugin for the file type (`filetype`) assigns the same keys (`]]`, `[[` and so on), the keys of srwr win
 
-| キー | コマンド | 動き |
+| Key | Command | Action |
 |---|---|---|
-| `]]`・`<Right>` | `:SrwrNext` | 1つ進む |
-| `[[`・`<Left>` | `:SrwrPrev` | 1つ戻る |
-| `L` | `:SrwrLatest` | ライブで、最新のコマへ戻り、また追う |
-| `q` | `:SrwrClose` | 閉じる |
+| `]]`, `<Right>` | `:SrwrNext` | One forward |
+| `[[`, `<Left>` | `:SrwrPrev` | One back |
+| `L` | `:SrwrLatest` | In live, go back to the newest frame and follow again |
+| `q` | `:SrwrClose` | Close |
 
-### 7. ライブ（`srwr view --live`・`:SrwrLive`）
-- **録画と同じ画面**（理由の行、色、差分のコマ、操作一覧）。実ファイルには触れない。見せるのは、サーバーが渡す本文（`withText`）
-- 起動時までのコマは、一覧に載せるだけ。「ライブ視聴中（AI の操作を待っています）」と出し、起動後に追記されたコマから見せる
-- **最新を追っている間**は、新しいコマをすぐ見せる。ステータス行に「● LIVE」。続けて届いても追いかける
-- **`[[` で古いコマに戻ると**、画面は動かさず、新着の数だけ数える。ステータス行に「L：LIVE に戻る（新着 N）」（橙の背景）。`L` で最新へ移り、また追いかける
-- 別のテープに移ったら、一覧を作り直して、先頭から見せる
-- 閉じ方：左の操作一覧で `q`、またはどこからでも `:SrwrClose`（ステータス行にも書いてある）
+### 7. Live (`srwr view --live`, `:SrwrLive`)
+- **The same screen as replay** (reason line, colors, diff frames, operation list). Real files are not touched. What is shown is the text the server hands over (`withText`)
+- The frames up to the start are only listed. "Live view (waiting for the AI's operations)" is shown, and frames appended after the start are shown
+- **While following the newest**, a new frame is shown at once. The status line shows "● LIVE". It follows even when frames arrive one after another
+- **When you step back to an old frame with `[[`**, the screen does not move and only the number of new frames is counted. The status line shows "L: Back to LIVE (N new)" (on an orange background). `L` moves to the newest and follows again
+- When it moves to another tape, the list is rebuilt and shown from the beginning
+- To close: `q` in the operation list on the left, or `:SrwrClose` from anywhere (it is written in the status line too)
 
-### 8. テープ一覧
-- 新しい順に、開始時刻・更新時刻・操作数・ファイル数。`<CR>` で開く。`q` で閉じる
+### 8. The tape list
+- Newest first (by the time the tape started): start time, update time, number of operations, number of files, in the time zone of the machine. `<CR>` opens one. `q` closes it
 
-## 動きの仕組み（作る人向け）
+## How it works (for those who build)
 
-- コマの列は、表示サーバーが作る（[protocol.md](protocol.md)）。Vim は描くだけ
-- 色は、テキストプロパティ（`prop_add()`）。行末までの塗りは、空白の仮想テキスト。差分で「変わった行」は `diff_hlID()` で調べる
-- 設計の判断は [decisions.md](../design/decisions.md)
+- The frames are built by the view server ([protocol.md](protocol.md)). Vim only draws
+- Colors are text properties (`prop_add()`). The paint up to the end of a line is blank virtual text. The "changed lines" of a diff are found with `diff_hlID()`
+- The language is chosen by `$SRWR_LANG` (`autoload/srwr/lang.vim`)
+- Reasons for the design decisions are in [decisions.md](../design/decisions.md)

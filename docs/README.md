@@ -1,26 +1,32 @@
-# srwr のドキュメント
+# srwr documentation
 
-srwr は、AI エージェントに `select` / `replace` の2コマンドだけでファイルを編集させ、その操作を**テープ**に記録し、エディタで**コマ送りで再生**する道具。
+[日本語](README_ja.md)
 
-## 誰が、何を読むか
+srwr lets an AI agent edit files with just two commands, `select` and `replace`, records the operations on a **tape**, and **replays them frame by frame** in an editor.
 
-| 読者 | 読むもの |
+## Who reads what
+
+| Reader | Reads |
 |---|---|
-| srwr を**使う人** | [reference/cli.md](reference/cli.md)（導入・コマンド）、[reference/settings.md](reference/settings.md)（設定の一覧）、[reference/mcp.md](reference/mcp.md)（AI が使うツール）、[reference/vscode.md](reference/vscode.md)・[reference/vim.md](reference/vim.md)（見る） |
-| srwr の**テープや表示サーバーとつなぐ人**（他のエディタへの対応、テープを読む道具） | [reference/tape.md](reference/tape.md)、[reference/protocol.md](reference/protocol.md)、動かした例 [examples/protocol-session.md](examples/protocol-session.md)、hook の例 [examples/hook.md](examples/hook.md) |
-| srwr の**作りを知りたい人・開発に加わる人** | [design/overview.md](design/overview.md)、[design/decisions.md](design/decisions.md)、[design/limitations.md](design/limitations.md) |
+| People who **use** srwr | [reference/cli.md](reference/cli.md) (install, commands), [reference/settings.md](reference/settings.md) (all settings), [reference/mcp.md](reference/mcp.md) (the tools the AI uses), [reference/vscode.md](reference/vscode.md) and [reference/vim.md](reference/vim.md) (viewing) |
+| People who **connect to the tape or the view server** (support for another editor, a tool that reads tapes) | [reference/tape.md](reference/tape.md), [reference/protocol.md](reference/protocol.md), a recorded run [examples/protocol-session.md](examples/protocol-session.md), a hook example [examples/hook.md](examples/hook.md) |
+| People who want to know **how srwr is built**, or who join the development | [design/overview.md](design/overview.md), [design/decisions.md](design/decisions.md), [design/limitations.md](design/limitations.md) |
 
-## 構成
+## Layout
 
-| フォルダ | 役割 |
+| Folder | Role |
 |---|---|
-| [reference/](reference/cli.md) | **決まり**。使い方と、守る約束 |
-| [design/](design/overview.md) | **設計と判断の理由**。全体像、判断の理由、範囲トークン、制限と未定事項 |
-| [examples/](examples/select-replace.md) | **動く例**。実際に動かして取ったやり取り |
+| [reference/](reference/cli.md) | **The rules.** How to use srwr, and the promises it keeps |
+| [design/](design/overview.md) | **Design and the reasons for decisions.** The big picture, the reasons, the selection token, limits and open points |
+| [examples/](examples/select-replace.md) | **Working examples.** Exchanges taken from real runs |
 
-## 読む順番
+## Reading order
 
-1. [reference/cli.md](reference/cli.md) — 全体と導入
-2. [reference/mcp.md](reference/mcp.md) → [examples/select-replace.md](examples/select-replace.md) — AI が何をするか
-3. [reference/tape.md](reference/tape.md) — 何が記録されるか
-4. [reference/vscode.md](reference/vscode.md) または [reference/vim.md](reference/vim.md) — どう見るか
+1. [reference/cli.md](reference/cli.md) — the whole picture and installation
+2. [reference/mcp.md](reference/mcp.md), then [examples/select-replace.md](examples/select-replace.md) — what the AI does
+3. [reference/tape.md](reference/tape.md) — what is recorded
+4. [reference/vscode.md](reference/vscode.md) or [reference/vim.md](reference/vim.md) — how to view it
+
+## Languages
+
+Every document here is in English, and the Japanese version of each has the same name with `_ja` (for example `reference/cli_ja.md`). The words srwr shows on the screen and in the terminal are English by default; see the setting `SRWR_LANG` in [reference/settings.md](reference/settings.md) for Japanese.

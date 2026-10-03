@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/amisonnet8/srwr/internal/lang"
 	"github.com/amisonnet8/srwr/vim"
 )
 
@@ -45,27 +46,27 @@ func parseViewArgs(args []string) (viewArgs, error) {
 			v.live = true
 		case a == "--root" || a == "-root":
 			if i+1 >= len(args) {
-				return v, errors.New("--root には作業場のディレクトリが要ります")
+				return v, errors.New(lang.Pick("--root needs a workspace directory", "--root には作業場のディレクトリが要ります"))
 			}
 			i++
 			v.root = args[i]
 		case strings.HasPrefix(a, "--root="):
 			v.root = strings.TrimPrefix(a, "--root=")
 		case strings.HasPrefix(a, "-"):
-			return v, fmt.Errorf("知らないオプション %q", a)
+			return v, fmt.Errorf(lang.Pick("unknown option %q", "知らないオプション %q"), a)
 		case v.tape != "":
-			return v, fmt.Errorf("余分な引数 %q", a)
+			return v, fmt.Errorf(lang.Pick("unexpected argument %q", "余分な引数 %q"), a)
 		default:
 			v.tape = a
 		}
 	}
 	if v.live && v.tape != "" {
-		return v, errors.New("--live と テープは一緒に指定できません")
+		return v, errors.New(lang.Pick("--live and a tape cannot be given together", "--live と テープは一緒に指定できません"))
 	}
 	if v.tape != "" {
 		id := strings.TrimSuffix(filepath.Base(v.tape), ".tape.jsonl")
 		if !tapeName.MatchString(id) {
-			return v, fmt.Errorf("テープ %q の名前が正しくありません（テープID か .tape.jsonl のパス）", v.tape)
+			return v, fmt.Errorf(lang.Pick("%q is not a valid tape name (a tape ID or the path of a .tape.jsonl file)", "テープ %q の名前が正しくありません（テープID か .tape.jsonl のパス）"), v.tape)
 		}
 		v.tape = id
 	}
@@ -84,7 +85,7 @@ func runView(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		return 1
 	}
 	if info, err := os.Stat(root); err != nil || !info.IsDir() {
-		_, _ = fmt.Fprintf(stderr, "srwr view: 作業場 %q がディレクトリとして開けません\n", v.root)
+		_, _ = fmt.Fprintf(stderr, lang.Pick("srwr view: cannot open the workspace %q as a directory\n", "srwr view: 作業場 %q がディレクトリとして開けません\n"), v.root)
 		return 1
 	}
 	vimPath, err := findVim()
@@ -96,24 +97,26 @@ func runView(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		_, _ = fmt.Fprintf(stderr, "srwr view: %v\n", err)
 		return 1
 	} else if len(missing) > 0 {
-		_, _ = fmt.Fprintf(stderr, "srwr view: この Vim（%s）では動かせません。足りないもの: %s\n"+
-			"Vim %s 以上で、%s が要ります。別の Vim は環境変数 SRWR_VIM で指定できます。\n",
-			vimPath, strings.Join(missing, "、"), minVimPatch, "+"+strings.Join(vimFeatures, " +"))
+		_, _ = fmt.Fprintf(stderr, lang.Pick("srwr view: this Vim (%s) cannot run it. Missing: %s\n"+
+			"It needs Vim %s or later with %s. Set the environment variable SRWR_VIM to use another Vim.\n",
+			"srwr view: この Vim（%s）では動かせません。足りないもの: %s\n"+
+				"Vim %s 以上で、%s が要ります。別の Vim は環境変数 SRWR_VIM で指定できます。\n"),
+			vimPath, strings.Join(missing, lang.Pick(", ", "、")), minVimPatch, "+"+strings.Join(vimFeatures, " +"))
 		return 1
 	}
 	cache, err := os.UserCacheDir()
 	if err != nil {
-		_, _ = fmt.Fprintf(stderr, "srwr view: キャッシュのディレクトリが分かりません: %v\n", err)
+		_, _ = fmt.Fprintf(stderr, lang.Pick("srwr view: cannot find the cache directory: %v\n", "srwr view: キャッシュのディレクトリが分かりません: %v\n"), err)
 		return 1
 	}
 	dir, err := extractVim(filepath.Join(cache, "srwr", "vim"), Version())
 	if err != nil {
-		_, _ = fmt.Fprintf(stderr, "srwr view: Vim スクリプトをキャッシュに書き出せません: %v\n", err)
+		_, _ = fmt.Fprintf(stderr, lang.Pick("srwr view: cannot write the Vim scripts to the cache: %v\n", "srwr view: Vim スクリプトをキャッシュに書き出せません: %v\n"), err)
 		return 1
 	}
 	exe, err := os.Executable()
 	if err != nil {
-		_, _ = fmt.Fprintf(stderr, "srwr view: srwr の場所が分かりません: %v\n", err)
+		_, _ = fmt.Fprintf(stderr, lang.Pick("srwr view: cannot find where srwr is: %v\n", "srwr view: srwr の場所が分かりません: %v\n"), err)
 		return 1
 	}
 	if resolved, err := filepath.EvalSymlinks(exe); err == nil {
@@ -128,7 +131,7 @@ func runView(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		if errors.As(err, &exit) {
 			return exit.ExitCode()
 		}
-		_, _ = fmt.Fprintf(stderr, "srwr view: Vim を起動できません: %v\n", err)
+		_, _ = fmt.Fprintf(stderr, lang.Pick("srwr view: cannot start Vim: %v\n", "srwr view: Vim を起動できません: %v\n"), err)
 		return 1
 	}
 	return 0
@@ -161,7 +164,7 @@ func findVim() (string, error) {
 	}
 	p, err := exec.LookPath(name)
 	if err != nil {
-		return "", fmt.Errorf("Vim が見つかりません（%s）。Vim %s 以上を入れるか、環境変数 SRWR_VIM で場所を指定してください", name, minVimPatch) //nolint:staticcheck // a proper noun starts the sentence
+		return "", fmt.Errorf(lang.Pick("Vim not found (%s). Install Vim %s or later, or set SRWR_VIM to its path", "Vim が見つかりません（%s）。Vim %s 以上を入れるか、環境変数 SRWR_VIM で場所を指定してください"), name, minVimPatch)
 	}
 	return p, nil
 }
@@ -197,7 +200,7 @@ func checkVim(vimPath string) (missing []string, err error) {
 		}
 	}
 	if !got["patch"] {
-		missing = append(missing, "パッチ "+minVimPatch)
+		missing = append(missing, lang.Pick("patch ", "パッチ ")+minVimPatch)
 	}
 	for _, f := range vimFeatures {
 		if !got[f] {

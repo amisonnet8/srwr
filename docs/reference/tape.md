@@ -1,59 +1,61 @@
-# テープ
+# The tape
 
-**読者**：テープを共有する人、テープを読む道具を作る人。再生の仕方は [vscode.md](vscode.md)・[vim.md](vim.md)。
+[日本語](tape_ja.md)
 
-**テープ**は、srwr が記録する操作の列。追記のみの JSONL（1行1イベント）で、`.srwr/tapes/<id>.tape.jsonl` に置かれる。**テープだけで、再生を完全に再現できる**（実ファイルがその後どう変わっても）。共有したいときは、テープそのものを渡す。受け取った人は、自分のエディタで開く。
+**Readers**: people who share tapes, and people who make tools that read tapes. For how to replay, see [vscode.md](vscode.md) and [vim.md](vim.md).
 
-## ファイル名とセッション
+A **tape** is the series of operations srwr records. It is an append-only JSONL file (one event per line), kept at `.srwr/tapes/<id>.tape.jsonl`. **The tape alone can rebuild the replay completely** (however the real files change afterwards). To share, hand over the tape itself. The person who receives it opens it in their own editor.
 
-- ファイル名は `<日時>-<短いID>.tape.jsonl`（例：`20260929-1837-1359`）。`.tape.jsonl` を除いたものが**テープID**。最後の短いID（例：`1795`）は `header` の `session` と同じ
-- テープは、**最初の操作を記録するときに作る**。何も操作しなければ、空のテープは残らない
-- 1本のテープは、作業のひとまとまり（**セッション**）に当たる
+## File name and session
 
-今のセッションは、作業場の `.srwr/active`（今のテープID）が指す。**複数の `srwr mcp` を起動しても、同じ作業場なら同じテープに書く**（書き込みは `.srwr/lock` で順番に行う。別のプロセスが書いた分は、書く前にテープから読み足す）。次のどれかのとき、新しいセッション（新しいテープ）になる。
+- The file name is `<date and time>-<short ID>.tape.jsonl` (for example `20260929-0237-1359`). The date and time are **UTC**. The name without `.tape.jsonl` is the **tape ID**. The short ID at the end (for example `1795`) is the same as `session` in the `header`
+- A tape is **made when the first operation is recorded**. If nothing is done, no empty tape is left
+- One tape corresponds to one unit of work (a **session**)
 
-1. 今のセッションがない（`.srwr/active` がない、指すテープがない）
-2. 今のセッションの最後のイベントから、一定時間（既定30分）が過ぎた
-3. 利用者が `srwr tapes new` を実行した
+The current session is the one `.srwr/active` (the current tape ID) of the workspace points to. **Even if several `srwr mcp` are started, they write to the same tape if the workspace is the same** (writes take turns using `.srwr/lock`. What another process wrote is read from the tape before writing). A new session (a new tape) starts in any of these cases:
 
-`srwr hook` も、`srwr mcp` と同じセッション（同じテープ）に書く。
+1. There is no current session (no `.srwr/active`, or the tape it points to is missing)
+2. A set time (30 minutes by default) has passed since the last event of the current session
+3. The user ran `srwr tapes new`
 
-## 書き方の決まり
+`srwr hook` also writes to the same session (the same tape) as `srwr mcp`.
 
-- すべてのイベントに `"v":1`（形式のバージョン）
-- 追記のみ。既存の行を書き換えたり消したりしない
-- `seq` はテープ内で1から始まる連番で、欠番がない（`header` は持たない）
-- `ts` は RFC 3339 で、ミリ秒まで、タイムゾーン付き
-- 値のないフィールド（`why`・`selection`・`from` など）は、省略せず `null`
-- 1イベント1行。改行で終わっていない最後の行は、書き込み途中として扱う
-- 読む側は、知らないフィールドを無視する。古い読み手を壊さないため、フィールドは足せるが、既存の意味は変えない
+## Rules of writing
 
-## イベント
+- Every event has `"v":1` (the version of the format)
+- Append only. Existing lines are never rewritten or deleted
+- `seq` is a sequence number that starts at 1 within the tape and has no gaps (the `header` has none)
+- `ts` is RFC 3339 **in UTC**, with milliseconds and a trailing `Z` (`2026-09-29T02:20:04.123Z`). Tapes written by older versions have an offset such as `+09:00` (the time zone of the machine then); they are read as the same moments, and an old line is never rewritten
+- A field with no value (`why`, `selection`, `from` and so on) is written as `null`, not left out
+- One event per line. A last line that does not end with a line break is treated as being in the middle of being written
+- A reader ignores fields it does not know. To avoid breaking old readers, fields may be added, but the meaning of an existing one is not changed
+
+## Events
 
 ### header
 
-テープ先頭に1行。
+One line at the top of the tape.
 
 ```json
-{"v":1,"type":"header","session":"a1b2","startedAt":"2026-09-29T11:20:00+09:00","author":{"kind":"ai","name":"claude"}}
+{"v":1,"type":"header","session":"a1b2","startedAt":"2026-09-29T02:20:00.000Z","author":{"kind":"ai","name":"claude"}}
 ```
 
-そのほか、`vcs` と `tool`（`{"name":"srwr","version":"…"}`）を持つ。
+It also has `vcs` and `tool` (`{"name":"srwr","version":"…"}`).
 
-`vcs` は、テープを作った（セッションの最初の記録をした）ときの git の状態。あとで変わっても書き換えない。
+`vcs` is the state of git when the tape was made (when the first record of the session was written). It is not rewritten even if the state changes later.
 
 ```json
-"vcs":{"type":"git","head":"3f2a…（40桁の16進）","dirty":true}
+"vcs":{"type":"git","head":"3f2a… (40 hex digits)","dirty":true}
 ```
 
-- `head`：HEAD のコミット。コミットがまだ無いリポジトリでは `null`
-- `dirty`：コミットしていない変更があるか。追跡中のファイルの変更・ステージ・削除と、`.gitignore` で無視されていない新しいファイル。作業場の下だけを見る。**`.srwr/` の中は数えない**（テープ自身で常に変更ありになるため）
-- git の管理下でないとき、git が使えないとき（入っていない、拒否された、5秒で終わらない）は `null`。AI の作業は止めない
-- ブランチ名やリモートの URL は書かない（テープは共有されるため）。読む側は、`vcs` の知らない項目を無視する
+- `head`: the commit of HEAD. `null` in a repository that has no commit yet
+- `dirty`: whether there are changes that are not committed. Changes, staging and deletions of tracked files, and new files that `.gitignore` does not ignore. Only below the workspace is looked at. **Anything inside `.srwr/` is not counted** (the tape itself would always make it dirty)
+- When the workspace is not under git, or git cannot be used (not installed, refused, or not finished in 5 seconds), it is `null`. The AI's work is not stopped
+- Neither the branch name nor the URL of the remote is written (tapes are shared). A reader ignores items of `vcs` it does not know
 
 ### snapshot
 
-ファイルの**全文**。そのセッションでそのファイルに初めて触れたときと、`external` の直後に記録する。再生は、最後の `snapshot` から、`replace` を順に適用して作る。
+The **whole text** of a file. It is recorded when the file is first touched in the session, and right after an `external`. Replay is built by applying the `replace` events in order from the last `snapshot`.
 
 ```json
 {"v":1,"seq":1,"ts":"…","type":"snapshot","file":"cmd/app/main.go","fileHash":"a3f09c21","text":"package main\n…","sha":"sha256:…"}
@@ -62,48 +64,48 @@
 ### select
 
 ```json
-{"v":1,"seq":2,"ts":"…","type":"select","file":"cmd/app/main.go","startLine":12,"endLine":14,"why":"main関数に修正が必要か確認中","selection":"sel_7K3M9QX2F4HD8R1WTB"}
+{"v":1,"seq":2,"ts":"…","type":"select","file":"cmd/app/main.go","startLine":12,"endLine":14,"why":"Checking whether the main function needs a fix","selection":"sel_7K3M9QX2F4HD8R1WTB"}
 ```
 
-hook が記録した `select`（Read など）は、`why` が `null`。`source`（`mcp` または `hook`）と、hook のときの元のツール名 `tool`（`Read`・`Bash`・`Grep`・`Edit`）を持つ。範囲トークンは持たず、`selection` も `null`。`source` のない古いテープは `mcp` として読む。
+A `select` recorded by the hook (Read and the like) has a `why` of `null`. It has `source` (`mcp` or `hook`), and for the hook the name of the original tool, `tool` (`Read`, `Bash`, `Grep`, `Edit`). It has no selection token, and `selection` is `null` too. An old tape without `source` is read as `mcp`.
 
 ### replace
 
 ```json
-{"v":1,"seq":3,"ts":"…","type":"replace","file":"cmd/app/main.go","from":"sel_7K3M9QX2F4HD8R1WTB","startLine":12,"endLine":14,"oldText":"…","newText":"…","newStartLine":12,"newEndLine":15,"selection":"sel_8M1R4TW6ZC2NQ9HXKD","why":"シグナル処理の初期化が漏れていたので追加","fileShaBefore":"sha256:…","fileShaAfter":"sha256:…"}
+{"v":1,"seq":3,"ts":"…","type":"replace","file":"cmd/app/main.go","from":"sel_7K3M9QX2F4HD8R1WTB","startLine":12,"endLine":14,"oldText":"…","newText":"…","newStartLine":12,"newEndLine":15,"selection":"sel_8M1R4TW6ZC2NQ9HXKD","why":"Added the missing initialization of signal handling","fileShaBefore":"sha256:…","fileShaAfter":"sha256:…"}
 ```
 
-- `from` は入力された範囲トークン、`selection` は返したトークン。`from` → `selection` をたどると、どの `select` からどの `replace` が生まれたかの**系譜**が分かる
-- `startLine`・`endLine` は、補正後の実際の範囲
-- `oldText`・`newText` は、範囲の行を `\n` でつないだもの（末尾の改行は含まない）。削除は `newEndLine = newStartLine - 1` で、`newText` は空。空行1つは `newEndLine = newStartLine` で `newText` も空なので、行の数は `newStartLine`・`newEndLine` から読む
-- 範囲トークンの中の `seq` は、そのトークンを発行したイベントの `seq`
-- hook が記録した `replace`（Edit）は、`from`・`selection`・`why` が `null` で、`source` が `hook`、`tool` が `Edit`。範囲は置換位置を含む行全体
+- `from` is the selection token that was given, and `selection` is the one returned. Following `from` → `selection` shows the **lineage**: which `select` a `replace` came from
+- `startLine` and `endLine` are the real range after correction
+- `oldText` and `newText` are the lines of the range joined with `\n` (without a trailing line break). A deletion has `newEndLine = newStartLine - 1` and an empty `newText`. One empty line has `newEndLine = newStartLine` and an empty `newText` too, so the number of lines is read from `newStartLine` and `newEndLine`
+- The `seq` inside a selection token is the `seq` of the event that issued the token
+- A `replace` recorded by the hook (Edit) has `from`, `selection` and `why` of `null`, `source` of `hook` and `tool` of `Edit`. The range is the whole lines that contain the replaced place
 
 ### external
 
-srwr の外でファイルが変わったことを検知したとき。直後に、そのファイルの `snapshot` を続けて記録する。
+Recorded when a change to a file made outside srwr is detected. The `snapshot` of that file follows it right away.
 
 ```json
-{"v":1,"seq":4,"ts":"…","type":"external","file":"cmd/app/main.go","author":{"kind":"external"},"detectedBy":"select","expectedSha":"sha256:…","actualSha":"sha256:…","text":"package main\n…（変更後の全文）"}
+{"v":1,"seq":4,"ts":"…","type":"external","file":"cmd/app/main.go","author":{"kind":"external"},"detectedBy":"select","expectedSha":"sha256:…","actualSha":"sha256:…","text":"package main\n… (the whole text after the change)"}
 ```
 
-- `text`：**変更後のファイル全文**。差分のコマ（左右に並べた diff）として再生するために持つ。ファイルが消えていたときは `null` で、`deleted: true` が付く
-- `detectedBy`：検知のきっかけ（`select`・`replace`・`hook`）
-- `author.kind` は `external` 固定（誰が変えたかは srwr には分からない）
-- `text` のない古い形式の `external` も読める。そのときは、直後の `snapshot` を変更後の内容として見せる
+- `text`: the **whole text of the file after the change**. It is kept to replay as a diff frame (a side-by-side diff). When the file was gone it is `null`, and `deleted: true` is added
+- `detectedBy`: what led to the detection (`select`, `replace`, `hook`)
+- `author.kind` is always `external` (srwr cannot know who changed it)
+- An `external` of the old form without `text` can be read too. Then the `snapshot` right after it is shown as the content after the change
 
-**検知できる範囲**：`external` になるのは、**テープがすでに内容（`snapshot`）を持つファイル**が、あとで食い違ったときだけ。そのセッションで初めて触れるファイルは、そのときの内容が最初の `snapshot` になる。一度も触れないファイルの変更は見えない。
+**What can be detected**: an `external` happens only when a file for which **the tape already holds the content (a `snapshot`)** later differs. A file first touched in the session has its content at that time as its first `snapshot`. A change to a file that is never touched cannot be seen.
 
-`external` より前に発行した範囲トークンで `replace` すると、内容の照合で `selection_mismatch` になる。外部変更の中身から、行のずれを推定することはしない。
+If a `replace` is made with a selection token issued before an `external`, the content check gives `selection_mismatch`. srwr does not estimate the shift of lines from the content of the external change.
 
-## 範囲トークン
+## The selection token
 
-`select` が返す `sel_…` の文字列。`from`・`selection` に入る。AI はそのまま渡すだけで、中身を知らなくてよい。
+The `sel_…` string that `select` returns. It goes into `from` and `selection`. The AI only passes it on and need not know what is inside.
 
-- **テープの中でだけ有効**。別のテープ（別のセッション）で発行されたものは、`invalid_selection` になる。セッションが替わる（30分空く、など）と、前のセッションのトークンは使えない
-- 形式と検証の詳細は、開発者向けの [token.md](../design/token.md)
+- **Valid only within the tape.** One issued on another tape (another session) gives `invalid_selection`. When the session changes (after a gap of 30 minutes, for example), the tokens of the previous session cannot be used
+- The format and the verification are described in [token.md](../design/token.md), for developers
 
-## 共有するときの注意
+## Notes when sharing
 
-- テープは**ファイルの全文**を持つ。秘密情報を含むファイルは記録しない（[cli.md](cli.md)「記録しないファイル」）。共有の前に、中身を確かめる
-- 鍵（`.srwr/key`）は、再生に不要。共有しない。表示サーバーもエディタも、鍵を読まない
+- A tape holds the **whole text of files**. Files that contain secrets are not recorded (see "Files that are not recorded" in [cli.md](cli.md)). Check the content before sharing
+- The key (`.srwr/key`) is not needed for replay. Do not share it. Neither the view server nor the editors read the key

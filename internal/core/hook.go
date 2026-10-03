@@ -93,7 +93,7 @@ func (c *Core) observeAll(tx *session.Tx) (notes []string, err error) {
 			continue // a file that is not recorded is not looked at either
 		}
 		if cerr != nil {
-			notes = append(notes, fmt.Sprintf("%s は読み直せない：%s", name, cerr.Message))
+			notes = append(notes, fmt.Sprintf("%s cannot be read again: %s", name, cerr.Message))
 			continue
 		}
 		var cur *string
@@ -111,14 +111,14 @@ func (c *Core) observeAll(tx *session.Tx) (notes []string, err error) {
 func (c *Core) readForHook(file string) (rel string, t target, note string) {
 	rel, cerr := cleanPath(file)
 	if cerr != nil {
-		return "", target{}, fmt.Sprintf("%s は記録しない：%s", file, cerr.Message)
+		return "", target{}, fmt.Sprintf("%s is not recorded: %s", file, cerr.Message)
 	}
 	t, cerr = c.readTarget(rel)
 	if cerr != nil && cerr.Code == CodeIgnoredFile {
-		return rel, target{}, rel + " は記録しないファイルなので記録しない"
+		return rel, target{}, rel + " is a file that is not recorded, so it is not recorded"
 	}
 	if cerr != nil {
-		return rel, target{}, fmt.Sprintf("%s は記録しない：%s", rel, cerr.Message)
+		return rel, target{}, fmt.Sprintf("%s is not recorded: %s", rel, cerr.Message)
 	}
 	return rel, t, ""
 }
@@ -129,7 +129,7 @@ func (c *Core) hookSelect(tx *session.Tx, s HookSelect) (string, error) {
 		return note, nil
 	}
 	if !t.exists {
-		return rel + " が無いので記録しない", Observe(tx, rel, "hook", nil)
+		return rel + " does not exist, so it is not recorded", Observe(tx, rel, "hook", nil)
 	}
 	if err := Observe(tx, rel, "hook", &t.text); err != nil {
 		return "", err
@@ -137,7 +137,7 @@ func (c *Core) hookSelect(tx *session.Tx, s HookSelect) (string, error) {
 	n := len(tape.Lines(t.text))
 	a, b := hookLines(s.Range, n)
 	if a > b {
-		return fmt.Sprintf("%s の範囲が空なので記録しない", rel), nil
+		return fmt.Sprintf("the range of %s is empty, so it is not recorded", rel), nil
 	}
 	return "", tx.Append(tape.Event{
 		Type: tape.TypeSelect, Seq: tx.NextSeq(), File: rel, StartLine: a, EndLine: b,
@@ -170,7 +170,7 @@ func (c *Core) hookEdit(tx *session.Tx, e HookEdit) (string, error) {
 		return note, nil
 	}
 	if !t.exists {
-		return rel + " が無いので記録しない", Observe(tx, rel, "hook", nil)
+		return rel + " does not exist, so it is not recorded", Observe(tx, rel, "hook", nil)
 	}
 	known := tx.State().Files[rel]
 	haveKnown := known != nil && !known.Deleted
@@ -182,12 +182,12 @@ func (c *Core) hookEdit(tx *session.Tx, e HookEdit) (string, error) {
 		before = e.Original
 	}
 	if before == nil {
-		return rel + " の編集前の内容が分からないので、今の内容だけを記録する", Observe(tx, rel, "hook", &t.text)
+		return rel + ": the content before the edit is not known, so only the current content is recorded", Observe(tx, rel, "hook", &t.text)
 	}
 	steps, final, ok := editSteps(*before, e.OldString, e.NewString, e.ReplaceAll)
 	if !ok || final != t.text {
 		// Not what the edit says it did (changed by something else as well): the tape shows it as external.
-		return rel + " は Edit の内容と今のファイルが合わないので、external として記録する", Observe(tx, rel, "hook", &t.text)
+		return rel + ": the Edit does not match the current file, so it is recorded as external", Observe(tx, rel, "hook", &t.text)
 	}
 	if !haveKnown {
 		if err := appendSnapshot(tx, rel, *before); err != nil {

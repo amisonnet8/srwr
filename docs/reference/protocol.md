@@ -1,114 +1,117 @@
-# 表示サーバーのプロトコル
+# The protocol of the view server
 
-**読者**：srwr の表示を、新しいエディタ（IDE）に対応させたい人。VSCode と Vim は、この約束だけでテープを再生している。
+[日本語](protocol_ja.md)
 
-**テープを読んで、コマ送りに必要なデータを組み立てるのは、表示サーバー（`srwr view-server`）の仕事。** エディタ側は、サーバーから受け取ったデータを描くだけでよい。**テープの形式を知らなくてよく、テープも実ファイルも読み書きしない。** 鍵（`.srwr/key`）も読まない。
+**Readers**: people who want to make srwr's display work in a new editor (IDE). VSCode and Vim replay tapes with this promise alone.
 
-| 表示サーバー（Go） | クライアント（エディタ） |
+**Reading the tape and building the data needed for stepping is the job of the view server (`srwr view-server`).** The editor side only has to draw the data it receives from the server. **It need not know the format of the tape, and it neither reads nor writes the tape or the real files.** It does not read the key (`.srwr/key)` either.
+
+| View server (Go) | Client (editor) |
 |---|---|
-| テープの一覧と読み込み | サーバーの起動と終了 |
-| **コマの列の組み立て** | **描画**（範囲の色、`why` の行、diff 画面、サイドバー、ステータス） |
-| 各コマの時点の**文書の内容** | `why` の行を文書に差し込む |
-| 差分のコマの変更前・変更後、最後の差分（今のファイルとの比較） | コマ送り、キー操作 |
-| 設定（差分のコマを出すか）を受ける | 設定（差分のコマ）をサーバーに渡す（VSCode・Vim は、固定の値を送る） |
-| ライブ：今のテープを見張り、追記されたコマを通知する | ライブ：通知を受けて描く |
+| Lists and reads tapes | Starts and ends the server |
+| **Builds the frames** | **Draws** (the color of the range, the `why` line, the diff screen, the sidebar, the status) |
+| The **content of the document** at each frame | Inserts the `why` line into the document |
+| Before and after of a diff frame, the final diff (the comparison with the current file) | Stepping, key operations |
+| Receives a setting (whether to show diff frames) | Passes the setting (diff frames) to the server (VSCode and Vim send a fixed value) |
+| Live: watches the current tape and notifies of appended frames | Live: receives the notifications and draws |
 
-## 流れ
+## Flow
 
-クライアントが何をするか。
+What a client does.
 
-1. `srwr view-server --root <作業場>` を子プロセスとして起動する
-2. `initialize` を送る（これより前の要求は `not_initialized`）
-3. **リプレイ**：`tapes/list` で一覧を出す → 選ばれたら `tape/open`（コマの列が返る）→ コマを移るたびに `frame/state`（そのコマの文書の内容）→ 閉じるとき `tape/close`
-4. **ライブ**：`live/start`（今のテープのここまでのコマが返り、見張りが始まる）→ 追記のたびにサーバーから `live/frame` が届く → やめるとき `live/stop`
-5. 終わるとき `shutdown` を送る
+1. Starts `srwr view-server --root <workspace>` as a child process
+2. Sends `initialize` (a request before it gets `not_initialized`)
+3. **Replay**: shows a list with `tapes/list` → when one is chosen, `tape/open` (the frames come back) → each time it moves to a frame, `frame/state` (the content of the document at that frame) → `tape/close` when closing
+4. **Live**: `live/start` (the frames of the current tape so far come back, and watching begins) → each time something is appended, `live/frame` arrives from the server → `live/stop` to stop
+5. Sends `shutdown` when finishing
 
-1つのクライアントにつき、1つのサーバーのプロセスを起動する（共有のデーモンにはしない。共有の媒体はテープそのもの）。
+One server process is started per client (there is no shared daemon. What is shared is the tape itself).
 
-## 通信
+## Communication
 
-- **stdio で JSON-RPC 2.0**。**1メッセージ＝1行**（改行区切りの JSON）。LSP のようなヘッダーはない
-- 標準エラー出力はログ。クライアントは表示しなくてよい
-- 改行区切りにしたのは、Vim の標準機能（`job` と `nl` モードのチャンネル）でも、VSCode の子プロセスでも、ライブラリなしで扱えるため
+- **JSON-RPC 2.0 over stdio.** **One message = one line** (newline-delimited JSON). There are no headers like those of LSP
+- Standard error is a log. A client need not show it
+- It is newline-delimited so that it can be handled with no library, both with the standard features of Vim (`job` and a channel in `nl` mode) and with a child process in VSCode
 
-## メソッド
+## Methods
 
-引数は JSON のオブジェクト（なければ `{}`）。
+The arguments are a JSON object (`{}` if none).
 
-| メソッド | 種類 | 引数 → 結果 |
+| Method | Kind | Arguments → result |
 |---|---|---|
-| `initialize` | 要求 | `{client:"vscode"\|"vim", protocolVersion:1, options:{diffFrames}}` → `{serverVersion, protocolVersion:1}`。`options` の既定は `diffFrames` が `true`。知らない `options` は無視する |
-| `tapes/list` | 要求 | `{}` → `{tapes:[TapeInfo…]}`。操作を1つ以上持つテープだけを、新しい順に（ファイル名の逆順）。読めないテープは載せない |
-| `tape/open` | 要求 | `{tapeId, withText?:false}` → `{tapeId, frames:[Frame…]}`。コマの列。`diffFrames` が真なら、作業場の今のファイルと比べた**最後の差分**（`final`）を末尾に含む。同じ `tapeId` をもう一度開くと、読み直す |
-| `frame/state` | 要求 | `{tapeId, index, file?}` → `{before, after, content}`。`index` のコマの変更前・変更後（`index` が −1 のときは両方 `""`）。`content` は `file`（省略時はそのコマのファイル）の、そのコマを終えた時点の内容。どのコマも触れていないファイルは `null` |
-| `tape/close` | 要求 | `{tapeId}` → `{}` |
-| `live/start` | 要求 | `{withText?:false}` → `{tapeId:string\|null, frames:[Frame…]}`。今のテープ（更新時刻が最新のもの）の、**ここまでのコマ**（クライアントは表示せず、一覧に載せるだけ）。返事のあと、見張りが始まる |
-| `live/frame` | 通知（サーバー→クライアント） | `{tapeId, frame:Frame}`。追記されたコマ。`tapeId` が今までと違う（別のテープに移った）ときは、クライアントは列を作り直す。そのテープのコマは先頭から送る |
-| `live/stop` | 要求 | `{}` → `{}`。見張りをやめる |
-| `shutdown` | 要求 | `{}` → `{}`。返事を書いたあと、サーバーは終了する |
+| `initialize` | request | `{client:"vscode"\|"vim", protocolVersion:1, options:{diffFrames}}` → `{serverVersion, protocolVersion:1}`. The default of `options` has `diffFrames` as `true`. Unknown `options` are ignored |
+| `tapes/list` | request | `{}` → `{tapes:[TapeInfo…]}`. Only tapes that have one or more operations, newest first (by the time the tape started; a tape without a header by its last update). Tapes that cannot be read are not listed |
+| `tape/open` | request | `{tapeId, withText?:false}` → `{tapeId, frames:[Frame…]}`. The frames. If `diffFrames` is true, the **final diff** (`final`), compared with the current file of the workspace, is included at the end. Opening the same `tapeId` again reads it again |
+| `frame/state` | request | `{tapeId, index, file?}` → `{before, after, content}`. The before and after of the frame at `index` (both `""` when `index` is −1). `content` is the content of `file` (the file of that frame if omitted) at the time that frame has finished. `null` for a file no frame has touched |
+| `tape/close` | request | `{tapeId}` → `{}` |
+| `live/start` | request | `{withText?:false}` → `{tapeId:string\|null, frames:[Frame…]}`. The **frames so far** of the current tape (the one with the newest update time) (the client does not show them, only lists them). Watching begins after the reply |
+| `live/frame` | notification (server → client) | `{tapeId, frame:Frame}`. An appended frame. When `tapeId` differs from before (it moved to another tape), the client rebuilds its list. The frames of that tape are sent from the beginning |
+| `live/stop` | request | `{}` → `{}`. Stops watching |
+| `shutdown` | request | `{}` → `{}`. The server exits after writing the reply |
 
-**`tapeId`**：テープのファイル名から `.tape.jsonl` を除いたもの（例：`20260929-1837-1359`）。`/` や `..` を含むものは `invalid_params`。
+**`tapeId`**: the file name of the tape without `.tape.jsonl` (for example `20260929-0237-1359`). One that contains `/` or `..` gives `invalid_params`.
 
-**TapeInfo**：`{tapeId, startedAt, updatedAt, ops, files}`。`startedAt` は header の値（header がなければ `""`）、`updatedAt` はテープのファイルの最終更新時刻（RFC 3339、ミリ秒まで、タイムゾーン付き）、`ops` は `select`・`replace`・`external` の数、`files` は触れたファイル（初めて触れた順）。
+**TapeInfo**: `{tapeId, startedAt, updatedAt, ops, files}`. `startedAt` is the value of the header (`""` if there is no header), `updatedAt` is the last update time of the tape's file (RFC 3339 in UTC with milliseconds, ending in `Z`), `ops` is the number of `select`, `replace` and `external`, and `files` are the files touched (in the order first touched). `startedAt` of a tape written by an older version may have an offset such as `+09:00`; it is the same moment. A client shows these times in the time zone of the machine.
 
-## コマ（Frame）
+## Frames
 
-**契約は「コマの列」と「各コマの時点の文書の内容」。** クライアントは、これだけを見て描く。
+**The contract is "the frames" and "the content of the document at each frame".** A client draws by looking at only these.
 
-| 種類（`kind`） | 元になるもの | 持つ情報（要点） |
+| Kind (`kind`) | Made from | Information it holds (the main points) |
 |---|---|---|
-| `select` | テープの `select`（`source` が `mcp` でも `hook` でも） | ファイル、範囲、`why`（`null` のことがある）、`seq`、系譜（`selection`） |
-| `replace` | テープの `replace` | ファイル、変更前後の範囲とテキスト、`why`（`null` のことがある）、`seq`、系譜（`from`→`selection`） |
-| `external` | テープの `external` | ファイル、変更前（直前の内容）と変更後（`text`）、削除されたか |
-| `final` | テープの最後の内容と、今のファイルの比較 | ファイル、変更前（テープの最後）と変更後（今のファイル）、今は存在しないか |
+| `select` | A `select` of the tape (whether `source` is `mcp` or `hook`) | File, range, `why` (may be `null`), `seq`, lineage (`selection`) |
+| `replace` | A `replace` of the tape | File, the range and text before and after, `why` (may be `null`), `seq`, lineage (`from` → `selection`) |
+| `external` | An `external` of the tape | File, before (the content just before) and after (`text`), whether it was deleted |
+| `final` | The last content of the tape compared with the current file | File, before (the end of the tape) and after (the current file), whether it no longer exists |
 
-Frame のフィールド：
+The fields of a Frame:
 
-| フィールド | 内容 |
+| Field | Content |
 |---|---|
-| `index` | 0 から始まる、列の中の位置 |
-| `kind` | `select`・`replace`・`external`・`final` |
-| `seq`・`ts` | テープの `seq`、時刻（エポックミリ秒。読めなければ前のコマの値、最初は 0）。`final` は最後のコマの値 |
-| `file` | 作業場からの相対パス（`/` 区切り） |
-| `range` | `{start, end}`。変更後の側の範囲（`select`＝その範囲、`replace`＝新しい範囲、`external`・`final`＝ファイル全体）。`end < start` は空範囲 |
-| `oldRange` | `replace` だけ。変更前の側の範囲 |
-| `why`・`selection`・`from` | 文字列または `null` |
-| `parent` | 系譜の親（`from` が指すコマの `index`）、なければ `null` |
-| `deleted` | 差分のコマだけ。変更後にファイルが存在しない（そのときだけ `true`。それ以外は出さない） |
-| `before`・`after` | **`withText` が真のときだけ**。変更前・変更後の全文。ふだんは `frame/state` で取る（大きいテープで、全コマが全文を持たないため） |
+| `index` | The position in the list, starting from 0 |
+| `kind` | `select`, `replace`, `external`, `final` |
+| `seq`, `ts` | The `seq` of the tape, and the time (epoch milliseconds; the value of the frame before if it cannot be read, 0 for the first). `final` has the value of the last frame |
+| `file` | A path relative to the workspace (separated by `/`) |
+| `range` | `{start, end}`. The range on the "after" side (`select` = that range, `replace` = the new range, `external` and `final` = the whole file). `end < start` is an empty range |
+| `oldRange` | `replace` only. The range on the "before" side |
+| `why`, `selection`, `from` | A string or `null` |
+| `parent` | The parent in the lineage (the `index` of the frame `from` points to), or `null` |
+| `deleted` | Diff frames only. The file does not exist after the change (`true` only then; not output otherwise) |
+| `before`, `after` | **Only when `withText` is true.** The whole text before and after. Usually it is fetched with `frame/state` (so that not every frame carries the whole text in a big tape) |
 
-- ライブのコマ（`live/start`・`live/frame`）に、最後の差分は含まれない（`external` はテープに書かれたものが出る）
-- **最後の差分は、サーバーが決める。** クライアントは出すだけ
-- テープの項目が増えても（`source`・`tool`・`vcs` など）、クライアントは使わなくてよい
-- **VSCode・Vim が使うフィールド**は、`index`・`kind`・`file`・`range`・`why`・`before`・`after`・`deleted` だけ。`seq`・`ts`・`selection`・`from`・`parent`・`oldRange` は使わない。ライブでも本文（`before`・`after`）を使うので、`live/start` に `withText: true` を渡す
+- The frames of live (`live/start`, `live/frame`) do not include the final diff (an `external` appears as written on the tape)
+- **The server decides the final diff.** The client only shows it
+- Even if items are added to the tape (`source`, `tool`, `vcs` and so on), the client need not use them
+- **The fields VSCode and Vim use** are only `index`, `kind`, `file`, `range`, `why`, `before`, `after` and `deleted`. They do not use `seq`, `ts`, `selection`, `from`, `parent` or `oldRange`. Live also uses the text (`before`, `after`), so pass `withText: true` to `live/start`
 
-## サーバーの振る舞い
+## Behavior of the server
 
-- 最後の差分で今のファイルを読むとき、作業場の外を指すパス（`..`・絶対パス・外を指すシンボリックリンク）は読まず、「存在しない」として扱う。共有されたテープに、任意のファイルを読まされないため
-- ライブの見張りは、テープの大きさのポーリング（間隔は200ミリ秒）。改行で終わっていない最後の行は、次に読むまで保留する
-- テープの場所は `<root>/.srwr/tapes/`
-- サーバーはテープを**読むだけ**。ロックを取らず、書かない
+- When reading the current file for the final diff, a path that points outside the workspace (`..`, an absolute path, a symbolic link that points outside) is not read and is treated as "does not exist". This is so that a shared tape cannot make it read an arbitrary file
+- The live watch polls the size of the tape (the interval is 200 milliseconds). A last line that does not end with a line break is held back until the next read
+- The tapes are at `<root>/.srwr/tapes/`
+- The server only **reads** tapes. It takes no lock and writes nothing
+- The messages of errors are English, for developers. A client that shows an error to a person says the ones a person can meet (`tape_not_found`, `tape_unreadable`) in its own words, from the code
 
-## バージョンとエラー
+## Versions and errors
 
-- `protocolVersion` は整数。`initialize` で食い違ったらサーバーはエラーを返す。クライアントは「srwr とエディタ側のバージョンが合っていない」と分かる文言を出す
-- エラーは JSON-RPC のエラーで返す。`error.data.code` に srwr のエラーコードが入る
+- `protocolVersion` is an integer. If it does not match in `initialize`, the server returns an error. The client shows words that make clear that "srwr and the editor side do not match"
+- Errors come back as JSON-RPC errors. The error code of srwr goes in `error.data.code`
 
-| `data.code` | JSON-RPC の `code` | 意味 |
+| `data.code` | `code` of JSON-RPC | Meaning |
 |---|---|---|
-| `protocol_mismatch` | −32000 | `initialize` の `protocolVersion` が合わない |
-| `not_initialized` | −32000 | `initialize` の前に要求が来た |
-| `tape_not_found` | −32000 | `tapeId` のテープがない（開いていない・存在しない） |
-| `tape_unreadable` | −32000 | テープを読めない |
-| `invalid_params` | −32602 | 引数の誤り（型、`index` の範囲、不正な `tapeId`） |
-| （なし） | −32601 | 知らないメソッド |
+| `protocol_mismatch` | −32000 | The `protocolVersion` of `initialize` does not match |
+| `not_initialized` | −32000 | A request came before `initialize` |
+| `tape_not_found` | −32000 | There is no tape with that `tapeId` (not open, or does not exist) |
+| `tape_unreadable` | −32000 | The tape cannot be read |
+| `invalid_params` | −32602 | A mistake in the arguments (type, range of `index`, an invalid `tapeId`) |
+| (none) | −32601 | An unknown method |
 
-## 互換性
+## Compatibility
 
-- 足すのはよい。**古いクライアントが無視しても壊れない項目は、`protocolVersion` を上げずに足す。** 既存の項目の意味を変える・消すときは上げる
-- クライアントは、知らないフィールドを無視する
+- Adding is fine. **An item that old clients can ignore without breaking is added without raising `protocolVersion`.** Raise it when changing or removing the meaning of an existing item
+- A client ignores fields it does not know
 
-## 対応するエディタを作るとき
+## When you make a supported editor
 
-- 描き方の基準は [vscode.md](vscode.md)。コマの種類ごとの見せ方（範囲の色、`why` の行、差分のコマ）を、同じ情報・同じ順で出す
-- 動くやり取りの例は [examples/](../examples/) にある
+- The standard for how to draw is [vscode.md](vscode.md). Show each kind of frame (the color of the range, the `why` line, the diff frame) with the same information in the same order
+- Examples of working exchanges are in [examples/](../examples/)

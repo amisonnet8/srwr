@@ -1,6 +1,6 @@
 # baseline（Vim の画面の基準）
 
-承認した画像（`handoff/design/images/vim/`）から、`go run ./tools/ui-check vim-baseline handoff/design/images/vim vim/test/baseline` で作った。`vim/screen_test.go` が、疑似端末で本物の Vim を動かして取った画面と比べる。
+**`ja/`**（日本語の画面）は、承認した画像（`handoff/design/images/vim/`）から、`go run ./tools/ui-check vim-baseline handoff/design/images/vim vim/test/baseline/ja` で作った。**`en/`**（英語の画面。既定）は、R10.5 のゲート（`dev/review/R10.5/`）で文言を承認し、`qsoku ui-check` の画面を `qsoku ui-accept` で取ったもの。`vim/screen_test.go` が、疑似端末で本物の Vim を動かして取った画面と比べる。
 
 - 比べるのは、全部のセルの**文字と背景**と、srwr が決める色（理由の行・範囲・今のコマの行の上の文字、丸、ステータス行）の**前景**。Vim の構文の色は版で変わるので比べない
 - **書き換えない。** 食い違えば実装を直す。直せない違いは、理由を書いて人間の了承をもらってから更新する

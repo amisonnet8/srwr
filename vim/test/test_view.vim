@@ -45,7 +45,7 @@ t.Equal([], Types(s.buf, 36)->filter((_, v) => v !=# 'srwr_num'), 'other rows ar
 t.Equal(len(lines), len(filter(mapnew(range(1, len(lines)), (_, l) => Types(s.buf, l)), (_, v) => index(v, 'srwr_num') >= 0)), 'a number on every row')
 t.Equal(false, getwinvar(s.win, '&number'), 'standard numbers are off while there are why rows')
 # prop_list() does not return the text of virtual text; the labels are tested in test_pure.vim and on the screen (test_screen).
-t.True(getwinvar(s.win, '&statusline') =~# 'srwr  1/7  %#SrwrDim#\[\[ 戻る%\*  \]\] 進む  text.go:37', 'status line at the first frame')
+t.True(getwinvar(s.win, '&statusline') =~# 'srwr  1/7  %#SrwrDim#\[\[ 戻る%\*  \]\] 進む%<  text.go:37', 'status line at the first frame')
 const info = getwininfo(s.win)[0]
 t.True(info.topline <= 37 && 38 <= info.topline + info.height - 1, 'the why row and the range are on the screen')
 

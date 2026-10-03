@@ -146,12 +146,26 @@ func TestTapesList(t *testing.T) {
 	if b.StartedAt != "2026-10-02T10:00:00.000+09:00" || b.Ops != 2 || !slices.Equal(b.Files, []string{"a.go"}) {
 		t.Errorf("entry = %+v", b)
 	}
-	// updatedAt is written in the time zone of the machine, so compare the moment, not the text.
-	if at, err := time.Parse(time.RFC3339, b.UpdatedAt); err != nil || !at.Equal(mod) || !strings.Contains(b.UpdatedAt, ".026") {
+	// updatedAt is in UTC, whatever the time zone of the machine.
+	if at, err := time.Parse(time.RFC3339, b.UpdatedAt); err != nil || !at.Equal(mod) || !strings.Contains(b.UpdatedAt, ".026") || !strings.HasSuffix(b.UpdatedAt, "Z") {
 		t.Errorf("updatedAt = %q (%v), want the moment %s with milliseconds", b.UpdatedAt, err, mod.Format(time.RFC3339Nano))
 	}
 	if f := list.Tapes[0]; f.StartedAt != "" || f.Ops != 1 || !slices.Equal(f.Files, []string{"b.go"}) {
 		t.Errorf("a tape without a header: %+v", f)
+	}
+}
+
+// An older tape is named in the local zone, a new one in UTC; the list goes by when they started, not by the name.
+func TestTapesListIsOrderedByStartTime(t *testing.T) {
+	root := workspace(t, map[string][]string{
+		"20261003-1500-old1": smallTape("2026-10-03T15:00:00.000+09:00"), // 06:00 UTC
+		"20261003-0900-new1": smallTape("2026-10-03T09:00:00.000Z"),
+	}, nil)
+	got := exchange(t, &Server{Root: root}, initReq(1, nil), req(2, "tapes/list", map[string]any{}))
+	var list struct{ Tapes []struct{ TapeID string } }
+	resultOf(t, got[1], &list)
+	if len(list.Tapes) != 2 || list.Tapes[0].TapeID != "20261003-0900-new1" || list.Tapes[1].TapeID != "20261003-1500-old1" {
+		t.Errorf("tapes = %+v", list.Tapes)
 	}
 }
 

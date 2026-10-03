@@ -50,7 +50,7 @@ func Run(stdin io.Reader, c *core.Core) (notes []string, err error) {
 	var in input
 	dec := json.NewDecoder(stdin)
 	if err := dec.Decode(&in); err != nil {
-		return nil, fmt.Errorf("hook の入力が JSON として読めない: %w", err)
+		return nil, fmt.Errorf("the hook input is not valid JSON: %w", err)
 	}
 	if in.Event != "" && in.Event != "PostToolUse" {
 		return nil, nil
@@ -74,11 +74,11 @@ func request(in input, root string) (req core.HookRequest, notes []string) {
 			Limit  flexInt `json:"limit"`
 		}
 		if json.Unmarshal(in.Input, &t) != nil {
-			return req, []string{"Read の入力が読めない"}
+			return req, []string{"cannot read the Read input"}
 		}
 		f, ok := rel(t.File)
 		if !ok {
-			return req, []string{t.File + " は作業場の外なので記録しない"}
+			return req, []string{t.File + " is outside the workspace, so it is not recorded"}
 		}
 		r := core.HookRange{Mode: core.RangeAll}
 		if t.Offset > 0 || t.Limit > 0 {
@@ -98,11 +98,11 @@ func request(in input, root string) (req core.HookRequest, notes []string) {
 			ReplaceAll bool   `json:"replace_all"`
 		}
 		if json.Unmarshal(in.Input, &t) != nil {
-			return req, []string{"Edit の入力が読めない"}
+			return req, []string{"cannot read the Edit input"}
 		}
 		f, ok := rel(t.File)
 		if !ok {
-			return req, []string{t.File + " は作業場の外なので記録しない"}
+			return req, []string{t.File + " is outside the workspace, so it is not recorded"}
 		}
 		e := &core.HookEdit{File: f, OldString: t.Old, NewString: t.New, ReplaceAll: t.ReplaceAll}
 		var resp struct {
@@ -117,13 +117,13 @@ func request(in input, root string) (req core.HookRequest, notes []string) {
 			Command string `json:"command"`
 		}
 		if json.Unmarshal(in.Input, &t) != nil {
-			return req, []string{"Bash の入力が読めない"}
+			return req, []string{"cannot read the Bash input"}
 		}
 		req.ObserveAll = true // whatever the command was, it may have changed the files
 		if r, ok := parseBashRead(t.Command); ok {
 			f, ok := rel(r.File)
 			if !ok {
-				return req, []string{r.File + " は作業場の外なので記録しない"}
+				return req, []string{r.File + " is outside the workspace, so it is not recorded"}
 			}
 			if !r.Numbers {
 				req.Selects = []core.HookSelect{{File: f, Range: r.Range, Tool: "Bash"}}
@@ -137,7 +137,7 @@ func request(in input, root string) (req core.HookRequest, notes []string) {
 			Mode string `json:"output_mode"`
 		}
 		if json.Unmarshal(in.Input, &t) != nil {
-			return req, []string{"Grep の入力が読めない"}
+			return req, []string{"cannot read the Grep input"}
 		}
 		if t.Mode != "content" {
 			return req, nil // only the files or the counts were shown: no lines to record
@@ -166,12 +166,12 @@ func grepSelects(byFile map[string][]int, tool string, rel func(string) (string,
 	for _, name := range names {
 		f, ok := rel(name)
 		if !ok {
-			notes = append(notes, name+" は作業場の外なので記録しない")
+			notes = append(notes, name+" is outside the workspace, so it is not recorded")
 			continue
 		}
 		for _, r := range runsOf(byFile[name]) {
 			if len(out) >= maxSelects {
-				return out, append(notes, fmt.Sprintf("一度に記録するのは %d 件まで。残りは記録しない", maxSelects))
+				return out, append(notes, fmt.Sprintf("at most %d are recorded at a time; the rest are not recorded", maxSelects))
 			}
 			out = append(out, core.HookSelect{File: f, Range: core.HookRange{Mode: core.RangeLines, A: r[0], B: r[1]}, Tool: tool})
 		}

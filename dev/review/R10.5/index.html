@@ -12,7 +12,7 @@ figure{background:var(--card);border:1px solid var(--line);border-radius:8px;pad
 <tr><td>英語だけにするもの</td><td>MCP のツールの説明とエラー文、hook の注記、表示サーバーのエラー文。人に見せるもの（テープが無い・版の不一致など）は、クライアントがエラーコードから自分の言語の文を作る</td><td>読むのは AI か開発者。プロトコルは変えない</td></tr>
 <tr><td>時刻の持ち方</td><td>テープの <code>startedAt</code>・<code>ts</code>、表示サーバーの <code>updatedAt</code>、<b>テープID</b> は UTC（<code>…Z</code>）。古い <code>+09:00</code> のテープもそのまま読める。ファイル名の日時（<code>20261003-0812-k3f9</code> の <code>0812</code>）も UTC で、<code>Z</code> は付けない。日本の機械では、一覧の <code>17:12</code> と 9 時間ずれて見える（ファイル名は一意な名前で、時刻は一覧で見る）。今あるテープの名前は変えない</td><td>共有したとき、どの機械でも同じ意味になる</td></tr>
 <tr><td>時刻の見せ方</td><td>その機械の時間帯（<code>TZ</code>）に直して見せる。<code>srwr tapes</code> は英語 <code>Oct 03 17:12</code>・日本語 <code>10/03 17:12</code>。Vim の一覧と VSCode のテープ選びは両言語とも <code>2026-10-03 17:12</code></td><td>年も見えて並べやすい形を残す</td></tr>
-<tr><td>docs</td><td><code>docs/名前.md</code> を英語、<code>docs/名前_ja.md</code> を日本語。先頭に相手の言語へのリンク。<code>README.md</code> は R11 で同じ形に</td><td>人間の決定</td></tr>
+<tr><td>docs</td><td>docs の各文書は、英語を <code>名前.md</code>、日本語を <code>名前_ja.md</code>。先頭に相手の言語へのリンク。<code>README.md</code> は R11 で同じ形に</td><td>人間の決定</td></tr>
 </table>
 <h2>時刻の表示の例</h2><p>同じテープ（<code>startedAt</code> が <code>2026-10-03T08:12:10.000Z</code>）を見たとき。</p><table><tr><th>設定</th><th>srwr tapes（英語）</th><th>srwr tapes（日本語）</th><th>Vim の一覧・VSCode のテープ選び</th></tr><tr><td><code>TZ=Asia/Tokyo</code></td><td>Oct 03 17:12</td><td>10/03 17:12</td><td>2026-10-03 17:12</td></tr><tr><td><code>TZ=UTC</code>（CI など）</td><td>Oct 03 08:12</td><td>10/03 08:12</td><td>2026-10-03 08:12</td></tr></table>
 <h2>CLI（端末の出力。SRWR_LANG が無ければ英語）</h2>

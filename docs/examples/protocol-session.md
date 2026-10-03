@@ -1,59 +1,61 @@
-# 表示サーバーとのやり取りの例
+# An example of an exchange with the view server
 
-**読者**：srwr の表示を、新しいエディタに対応させたい人。クライアントが `srwr view-server` と、どんなやり取りをするかを、実際の出力で見る。決まりは [protocol.md](../reference/protocol.md)。
+[日本語](protocol-session_ja.md)
 
-この例は、`srwr view-server` を実際に動かして取ったもの。バージョンの表記と、テープの更新時刻 `updatedAt` は、環境で変わる。
+**Readers**: people who want to make srwr's display work in a new editor. See, in real output, what exchange a client has with `srwr view-server`. The rules are in [protocol.md](../reference/protocol.md).
 
-## 題材
+This example was taken by actually running `srwr view-server`. The way the version is written and the update time of the tape, `updatedAt`, change with the environment.
 
-[select-replace.md](select-replace.md) の作業が記録されたテープ `20261001-1706-1795` を持つ作業場（`internal/docs/testdata/demo/`）。操作は2つ（`select` と `replace`）。クライアントは `srwr view-server --root <作業場>` を起動し、標準入力に1行ずつ書き、標準出力から1行ずつ読む。下の `→` がクライアントから、`←` がサーバーからの1行。
+## The subject
 
-## リプレイ
+A workspace that has the tape `20261001-0806-1795`, which recorded the work of [select-replace.md](select-replace.md) (`internal/docs/testdata/demo-en/`; the date and time in the name are UTC). There are two operations (`select` and `replace`). The client starts `srwr view-server --root <workspace>`, writes to standard input one line at a time, and reads from standard output one line at a time. In what follows `→` is a line from the client and `←` is a line from the server.
+
+## Replay
 
 ```jsonrpc
 → {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"client":"vim","protocolVersion":1,"options":{"diffFrames":true}}}
 ← {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":1,"serverVersion":"(devel)"}}
 → {"jsonrpc":"2.0","id":2,"method":"tapes/list","params":{}}
-← {"jsonrpc":"2.0","id":2,"result":{"tapes":[{"tapeId":"20261001-1706-1795","startedAt":"2026-10-01T17:06:15.381+09:00","updatedAt":"2026-10-01T17:06:21.026+09:00","ops":2,"files":["cmd/main.go"]}]}}
-→ {"jsonrpc":"2.0","id":3,"method":"tape/open","params":{"tapeId":"20261001-1706-1795"}}
-← {"jsonrpc":"2.0","id":3,"result":{"frames":[{"index":0,"kind":"select","seq":2,"ts":1790841975381,"file":"cmd/main.go","range":{"start":3,"end":5},"why":"main に初期化の呼び出しを足せるか確認する","selection":"sel_041061E48KVH3K24RN324MN2","from":null,"parent":null},{"index":1,"kind":"replace","seq":3,"ts":1790841975384,"file":"cmd/main.go","range":{"start":3,"end":6},"oldRange":{"start":3,"end":5},"why":"run の前に設定の読み込みが要るので setup を呼ぶ","selection":"sel_041G61P48KVH3AYWAY6Q99GP","from":"sel_041061E48KVH3K24RN324MN2","parent":0}],"tapeId":"20261001-1706-1795"}}
-→ {"jsonrpc":"2.0","id":4,"method":"frame/state","params":{"tapeId":"20261001-1706-1795","index":1}}
+← {"jsonrpc":"2.0","id":2,"result":{"tapes":[{"tapeId":"20261001-0806-1795","startedAt":"2026-10-01T08:06:15.381Z","updatedAt":"2026-10-01T08:06:21.026Z","ops":2,"files":["cmd/main.go"]}]}}
+→ {"jsonrpc":"2.0","id":3,"method":"tape/open","params":{"tapeId":"20261001-0806-1795"}}
+← {"jsonrpc":"2.0","id":3,"result":{"frames":[{"index":0,"kind":"select","seq":2,"ts":1790841975381,"file":"cmd/main.go","range":{"start":3,"end":5},"why":"Check whether a call to initialization can be added to main","selection":"sel_041061E48KVH3K24RN324MN2","from":null,"parent":null},{"index":1,"kind":"replace","seq":3,"ts":1790841975384,"file":"cmd/main.go","range":{"start":3,"end":6},"oldRange":{"start":3,"end":5},"why":"run needs the settings loaded first, so call setup","selection":"sel_041G61P48KVH3AYWAY6Q99GP","from":"sel_041061E48KVH3K24RN324MN2","parent":0}],"tapeId":"20261001-0806-1795"}}
+→ {"jsonrpc":"2.0","id":4,"method":"frame/state","params":{"tapeId":"20261001-0806-1795","index":1}}
 ← {"jsonrpc":"2.0","id":4,"result":{"after":"package main\n\nfunc main() {\n\tsetup()\n\trun()\n}\n","before":"package main\n\nfunc main() {\n\trun()\n}\n","content":"package main\n\nfunc main() {\n\tsetup()\n\trun()\n}\n"}}
-→ {"jsonrpc":"2.0","id":5,"method":"tape/close","params":{"tapeId":"20261001-1706-1795"}}
+→ {"jsonrpc":"2.0","id":5,"method":"tape/close","params":{"tapeId":"20261001-0806-1795"}}
 ← {"jsonrpc":"2.0","id":5,"result":{}}
 ```
 
-- `initialize`（id 1）：クライアントの種類と、設定（差分のコマ）を渡す。これより前の要求は `not_initialized`
-- `tapes/list`（id 2）：操作を1つ以上持つテープの一覧
-- `tape/open`（id 3）：**コマの列**。2つのコマが返る。`replace` のコマ（`index` 1）は、`oldRange`（変更前の3〜5行目）と `range`（変更後の3〜6行目）を持ち、`parent` が `select` のコマ（`index` 0）を指す。実ファイルが、テープの最後の内容と同じなので、`final`（最後の差分）のコマは付かない
-- `frame/state`（id 4）：`index` 1 のコマの、変更前（`before`）と変更後（`after`）の全文と、そのコマを終えた時点のファイルの内容（`content`）。クライアントは、コマを移るたびにこれを取り、バッファの内容を差し替える
-- `tape/close`（id 5）：閉じる
+- `initialize` (id 1): passes the kind of the client and the setting (diff frames). A request before it gets `not_initialized`
+- `tapes/list` (id 2): the list of tapes that have one or more operations. Times are in UTC (`…Z`); a client shows them in the time zone of the machine
+- `tape/open` (id 3): **the frames**. Two frames come back. The `replace` frame (`index` 1) has `oldRange` (lines 3 to 5 before the change) and `range` (lines 3 to 6 after the change), and its `parent` points to the `select` frame (`index` 0). The real file is the same as the last content of the tape, so no `final` (final diff) frame is added
+- `frame/state` (id 4): the whole text before (`before`) and after (`after`) the frame at `index` 1, and the content of the file at the time that frame has finished (`content`). The client fetches this each time it moves to a frame, and replaces the content of its buffer
+- `tape/close` (id 5): close
 
-コマの形（`why` の行に使うフィールドなど）は [protocol.md](../reference/protocol.md)、見せ方は [vscode.md](../reference/vscode.md)。
+The shape of a frame (the fields used for the `why` line and so on) is in [protocol.md](../reference/protocol.md), and how to show it is in [vscode.md](../reference/vscode.md).
 
-## エラー
+## Errors
 
-存在しないテープを開くと、JSON-RPC のエラーが返る。`error.data.code` が、srwr のエラーコード。
+Opening a tape that does not exist returns a JSON-RPC error. `error.data.code` is the error code of srwr.
 
 ```jsonrpc
 → {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"client":"vim","protocolVersion":1,"options":{}}}
 ← {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":1,"serverVersion":"(devel)"}}
 → {"jsonrpc":"2.0","id":2,"method":"tape/open","params":{"tapeId":"nothing"}}
-← {"jsonrpc":"2.0","id":2,"error":{"code":-32000,"message":"テープがない: nothing","data":{"code":"tape_not_found"}}}
+← {"jsonrpc":"2.0","id":2,"error":{"code":-32000,"message":"no such tape: nothing","data":{"code":"tape_not_found"}}}
 → {"jsonrpc":"2.0","id":3,"method":"shutdown","params":{}}
 ← {"jsonrpc":"2.0","id":3,"result":{}}
 ```
 
-終わるときは `shutdown`。サーバーは、返事を書いたあとに終了する。
+To finish, `shutdown`. The server exits after writing the reply.
 
-## ライブ
+## Live
 
-`live/start` の返事のあと、サーバーはテープを見張り、追記されたコマを、返事の要求とは別に、通知 `live/frame` として送る。通知には `id` がない。
+After the reply to `live/start`, the server watches the tape and sends each appended frame as a notification `live/frame`, separately from any request. A notification has no `id`.
 
 ```
 → {"jsonrpc":"2.0","id":2,"method":"live/start","params":{}}
-← {"jsonrpc":"2.0","id":2,"result":{"tapeId":"…","frames":[ …ここまでのコマ… ]}}
-← {"jsonrpc":"2.0","method":"live/frame","params":{"tapeId":"…","frame":{ …追記されたコマ… }}}
+← {"jsonrpc":"2.0","id":2,"result":{"tapeId":"…","frames":[ …the frames so far… ]}}
+← {"jsonrpc":"2.0","method":"live/frame","params":{"tapeId":"…","frame":{ …the appended frame… }}}
 ```
 
-ライブは、時間に依存する（AI の操作を待つ）ので、この例には載せない。通知の形は [protocol.md](../reference/protocol.md) の `live/frame`。
+Live depends on time (it waits for the AI's operations), so it is not in this example. The shape of the notification is `live/frame` in [protocol.md](../reference/protocol.md).

@@ -154,7 +154,8 @@ func writeCapture(b *strings.Builder, set string, c CaptureResult) {
 }
 
 // tapeOf is the name `qsoku ui-open` knows for the capture of that name.
-func tapeOf(name string) string {
+func tapeOf(full string) string {
+	name := strings.Fields(full)[0] // "replay-why-basic en dark" and "all_basic en" are named by their first word
 	switch {
 	case strings.Contains(name, "long-why") || name == "long_why":
 		return "long-why"
@@ -191,6 +192,11 @@ func lookSteps(r *Report) []string {
 		if c.Status != statusNew && c.Status != statusDiff {
 			continue
 		}
+		// A real VSCode is looked at for the two tapes that show every part of the screen (the diff frames, the list, the picker, the
+		// bar; the live bar). The other captures are the same texts, which the machine compares.
+		if t := tapeOf(c.Name); t != "external" && t != "live" {
+			continue
+		}
 		steps = append(steps, fmt.Sprintf("実物の VSCode で「VSCode・%s」を見る。手順：\n%s", html.EscapeString(c.Name), vscodeSteps(tapeOf(c.Name), c.Name)))
 	}
 	return steps
@@ -202,14 +208,14 @@ func vscodeSteps(tape, _ string) string {
 	look := html.EscapeString(t.Look)
 	steps := []string{
 		fmt.Sprintf("日本語入力を切り、ターミナルで <code>qsoku ui-open vscode %s</code> と打って Enter を押す。新しい VSCode が開く（数十秒かかることがある）", tape),
-		fmt.Sprintf("開いた VSCode で、左端のカセットのアイコンを押し、「テープを開く」を選ぶ。出てきた一覧から「%s」を選ぶ", html.EscapeString(t.Started)),
+		fmt.Sprintf("開いた VSCode で、左端のカセットのアイコンを押し、「Open a tape」を選ぶ（VSCode の表示は英語）。出てきた一覧から「%s」を選ぶ", html.EscapeString(t.Started)),
 		"1 コマ目が開く。見る：" + look,
-		"下のバーの「進む」を押して次のコマへ進み、同じように見る。「戻る」で戻れる",
+		"下のバーの「Forward」を押して次のコマへ進み、同じように見る。「Back」で戻れる",
 	}
 	if tape == "live" {
 		steps = []string{
 			fmt.Sprintf("日本語入力を切り、ターミナルで <code>qsoku ui-open vscode %s</code> と打って Enter を押す。新しい VSCode が開く", tape),
-			"開いた VSCode で、左端のカセットのアイコンを押し、「ライブ視聴を開始」を押す",
+			"開いた VSCode で、左端のカセットのアイコンを押し、「Start live view」を押す（VSCode の表示は英語）",
 			"ターミナルに戻り、Enter を押す。3 秒ごとに 1 コマずつ追記される",
 			"見る：" + look,
 		}

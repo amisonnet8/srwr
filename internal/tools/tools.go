@@ -15,25 +15,25 @@ const (
 	Replace = "replace"
 )
 
-const whyDescription = "理由を1文で。ユーザーとの会話と同じ言語で書く。人が読むためのもの。空や空白だけは不可"
+const whyDescription = "The reason, in one sentence, in the language of the conversation with the user. It is for people to read. Empty or blank is not allowed"
 
 // List returns the tools srwr provides.
 func List() []Tool {
 	return []Tool{
 		{
 			Name: Select,
-			Description: "編集したい範囲を宣言する。ファイルの startLine から endLine 行（1始まり、両端を含む）を見て、" +
-				"その範囲を編集するための範囲トークン（selection）と、範囲の現在の内容（lines）を返す。" +
-				"replace には、このトークンをそのまま渡す（行番号や内容は渡さなくてよい）。" +
-				"挿入したい位置は、endLine = startLine - 1 の空範囲で指す（startLine 行目の直前。ファイルの末尾への追記は startLine = 行数 + 1）。" +
-				"既存のファイルだけが対象で、新しいファイルは作れない。" +
-				"why は必須。なぜここを見るのかを書く（何をしているかの言い換えではなく、理由）。ユーザーとの会話と同じ言語で書く。",
+			Description: "Declare the range you want to edit. Looks at lines startLine to endLine of the file (1-based, both inclusive) and returns " +
+				"a selection token for editing that range (selection) and the current content of the range (lines). " +
+				"Pass the token to replace as it is (no line numbers or content needed). " +
+				"To point at a place to insert, use an empty range with endLine = startLine - 1 (just before line startLine; to append to the end of the file, startLine = number of lines + 1). " +
+				"Only existing files can be selected; a new file cannot be created. " +
+				"why is required: say why you look here (the reason, not a rephrasing of what you do), in the language of the conversation with the user.",
 			InputSchema: map[string]any{
 				"type": "object",
 				"properties": map[string]any{
-					"file":      map[string]any{"type": "string", "minLength": 1, "description": "作業場からの相対パス"},
-					"startLine": map[string]any{"type": "integer", "minimum": 1, "description": "開始行（1始まり）"},
-					"endLine":   map[string]any{"type": "integer", "minimum": 0, "description": "終了行（両端を含む）。空範囲なら startLine - 1"},
+					"file":      map[string]any{"type": "string", "minLength": 1, "description": "Path relative to the workspace"},
+					"startLine": map[string]any{"type": "integer", "minimum": 1, "description": "First line (1-based)"},
+					"endLine":   map[string]any{"type": "integer", "minimum": 0, "description": "Last line (inclusive); startLine - 1 for an empty range"},
 					"why":       map[string]any{"type": "string", "minLength": 1, "pattern": `\S`, "description": whyDescription},
 				},
 				"required": []string{"file", "startLine", "endLine", "why"},
@@ -41,16 +41,16 @@ func List() []Tool {
 		},
 		{
 			Name: Replace,
-			Description: "select（または直前の replace）が返した範囲トークンの範囲を、newText に置き換える。" +
-				"ファイルや行番号は渡さない。削除は newText を空文字列にする。挿入は、空範囲を select してから replace する。" +
-				"戻り値の selection は置き換え後の範囲のトークンで、同じ箇所を続けて直すときは select し直さずに使える。" +
-				"別の場所の編集で行がずれても、行番号は srwr が補正する。範囲と重なる編集があったときだけ selection_stale になるので、select し直す。" +
-				"why は必須。なぜこう変えるのかを書く。ユーザーとの会話と同じ言語で書く。",
+			Description: "Replace the range of the selection token returned by select (or by the previous replace) with newText. " +
+				"Do not pass a file or line numbers. To delete, make newText an empty string. To insert, select an empty range and then replace. " +
+				"The selection in the result is the token of the range after the replacement; use it to go on fixing the same place without calling select again. " +
+				"If edits elsewhere shift the lines, srwr corrects the line numbers. Only an edit that overlaps the range makes the result selection_stale; then call select again. " +
+				"why is required: say why you change it this way, in the language of the conversation with the user.",
 			InputSchema: map[string]any{
 				"type": "object",
 				"properties": map[string]any{
-					"selection": map[string]any{"type": "string", "minLength": 1, "description": "select または replace が返した範囲トークン（sel_…）"},
-					"newText":   map[string]any{"type": "string", "description": "置き換え後のテキスト。空文字列は削除。改行は LF"},
+					"selection": map[string]any{"type": "string", "minLength": 1, "description": "The selection token (sel_…) returned by select or replace"},
+					"newText":   map[string]any{"type": "string", "description": "The text to put in. An empty string deletes. Line breaks are LF"},
 					"why":       map[string]any{"type": "string", "minLength": 1, "pattern": `\S`, "description": whyDescription},
 				},
 				"required": []string{"selection", "newText", "why"},

@@ -9,6 +9,12 @@ import (
 	"time"
 )
 
+func TestMain(m *testing.M) {
+	// The texts these tests expect are the Japanese ones; english_test.go sets SRWR_LANG back for the English ones.
+	_ = os.Setenv("SRWR_LANG", "ja")
+	os.Exit(m.Run())
+}
+
 var fixedNow = func() time.Time { return time.Date(2026, 10, 3, 17, 12, 4, 0, time.Local) }
 
 func ws(t *testing.T, git bool, files map[string]string) string {

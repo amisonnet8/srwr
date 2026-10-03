@@ -138,3 +138,17 @@ test("server.ts and timeline.ts do not import vscode", () => {
     assert.ok(!sources.find(([n]) => n === f)![1].includes('from "vscode"'), f);
   }
 });
+
+// The texts of package.json are %keys%; each key has an English text (package.nls.json) and a Japanese one (package.nls.ja.json).
+test("every %key% of package.json has an English and a Japanese text, and none is left over", () => {
+  const used = new Set([...JSON.stringify(pkg).matchAll(/%([A-Za-z0-9_.-]+)%/g)].map((m) => m[1]));
+  const read = (f: string): Record<string, string> => JSON.parse(fs.readFileSync(path.join(extDir, f), "utf8"));
+  const en = read("package.nls.json");
+  const ja = read("package.nls.ja.json");
+  assert.deepEqual([...used].sort(), Object.keys(en).sort(), "English");
+  assert.deepEqual([...used].sort(), Object.keys(ja).sort(), "Japanese");
+  assert.ok(Object.values(en).every((v) => !/[぀-ヿ一-鿿]/.test(v)), "the English texts have no Japanese");
+  assert.ok(!/[぀-ヿ一-鿿]/.test(JSON.stringify({ ...pkg, contributes: undefined })), "package.json itself has no Japanese");
+  const vsix = fs.readFileSync(path.join(extDir, ".vscodeignore"), "utf8");
+  assert.ok(vsix.includes("!package.nls*.json"), "the texts are in the .vsix");
+});

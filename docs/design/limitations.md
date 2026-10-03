@@ -1,36 +1,38 @@
-# 制限と未定事項
+# Limits and open points
 
-**読者**：srwr を使う人、開発に加わる人。設計上の割り切り、決めていないこと、追加の候補。
+[日本語](limitations_ja.md)
 
-## 1. 制限（設計上の割り切り）
+**Readers**: people who use srwr, and people who join the development. Trade-offs of the design, what is not decided, and candidates to add.
 
-- **一度も触れないファイルの変更は見えない。** `external` になるのは、テープがすでに内容を持つファイルだけ（基準を持つとテープが大きくなる）
-- **外部変更で行数が変わったあとは、それ以前の範囲トークンが使えない。** 内容の照合で `selection_mismatch` になる。外部変更の中身から、行のずれを推定することはしない
-- LF 以外の改行（CRLF）を含むファイルと、バイナリは扱えない（`unsupported_file`）
-- Edit/Write の禁止と hook は、Claude Code の設定に依存する。他のエージェントでも、`select` / `replace` 自体は MCP なので使える
-- **VSCode の差分**：行をそろえる空白行がなく、左右のスクロールは連動しない（標準の差分画面を使わないため）
-- **VSCode の行番号**：理由の行があるコマでは、実ファイルどおりの番号が、ガターではなく本文の左端に出る
-- **理由の折り返し幅**：VSCode は表示の幅100で固定、Vim はウィンドウの幅
+## 1. Limits (trade-offs of the design)
 
-## 2. 未定
+- **A change to a file that was never touched cannot be seen.** Only a file whose content the tape already holds can become `external` (holding a base for every file would make the tape big)
+- **After an external change that changes the number of lines, the selection tokens issued before it cannot be used.** The content check gives `selection_mismatch`. srwr does not estimate the shift of lines from the content of the external change
+- Files with line breaks other than LF (CRLF) and binary files cannot be handled (`unsupported_file`)
+- The ban on Edit/Write and the hook depend on the settings of Claude Code. With other agents, `select` / `replace` themselves can still be used, because they are MCP
+- **Diffs in VSCode**: there are no blank lines to align the lines, and the left and right sides do not scroll together (because the standard diff screen is not used)
+- **Line numbers in VSCode**: on a frame with a reason line, the real file's own numbers appear at the left edge of the text, not in the gutter
+- **Wrapping width of the reason**: VSCode uses a fixed display width of 100; Vim uses the width of the window
 
-決まっていないこと。決まったら、該当の文書に書き、ここから消す。
+## 2. Open points
 
-- セッションを区切る時間を、利用者が変えられるようにするか（決まっているのは、最後のイベントから30分）
-- ライブの見張りの間隔を、利用者が変えられるようにするか（決まっているのは、200ミリ秒）
-- 緩いモードで、AI が新しいファイルを作ったときの見せ方
-- 調べる過程のコマが多いときの見せ方
-- VSCode の拡張にバイナリを同梱するか（同梱すると、テープを受け取っただけの人も拡張だけで見られる。OS ごとの `.vsix` が要る）
-- テープの保存期間と自動整理を設けるか（決まっているのは、利用者が明示的に消す）
-- 範囲トークンの HMAC の長さ（3バイト。書き写しミスの検出率と文字数のトレードオフ）
-- `select` が `lines` を常に返すことの見直し（トークン消費とのトレードオフ）
+Things not yet decided. When one is decided, it is written in the proper document and removed from here.
 
-## 3. 追加の候補
+- Whether the user can change the time that separates sessions (decided so far: 30 minutes after the last event)
+- Whether the user can change the interval of the live watch (decided so far: 200 milliseconds)
+- How to show it in lenient mode when the AI creates a new file
+- How to show it when there are many frames of the investigation
+- Whether to bundle the binary in the VSCode extension (bundling lets a person who has only received a tape view it with the extension alone; a `.vsix` for each OS is needed)
+- Whether to set a retention period and automatic cleanup of tapes (decided so far: the user deletes them explicitly)
+- The length of the HMAC of the selection token (3 bytes; a trade-off between the rate of catching copying mistakes and the number of characters)
+- Reconsidering that `select` always returns `lines` (a trade-off with token consumption)
 
-作ると決めたものではない。画面に足すときは、VSCode と Vim の画面の仕様（[vscode.md](../reference/vscode.md)・[vim.md](../reference/vim.md)）を、先に直す。
+## 3. Candidates to add
 
-- **調べる過程のコマを飛ばす設定**：hook の記録で `why` なしのコマが多くなったとき、`why` のあるコマだけを追えるようにする
-- **人間の編集のコマ**（`author.kind: human`）：エディタが同じ作業場で動いているので、編集のその場で一言メモを付けられるようにする。付いたメモは `why` の行と同じ形で出す。途中の外部変更に `why` がない問題への答えになりうる
-- **途中の外部変更に説明を付ける方法**：`external` の `author` は固定で、誰が変えたか分からない。コミットメッセージや、人が付けるメモの利用が候補
-- 他のエディタへの対応（[protocol.md](../reference/protocol.md) に合わせたクライアントを足す）
-- Claude Code 以外のエージェントへの対応
+None of these is decided. When adding to the screen, fix the screen specifications of VSCode and Vim ([vscode.md](../reference/vscode.md), [vim.md](../reference/vim.md)) first.
+
+- **A setting to skip the frames of the investigation**: when the hook records many frames without a `why`, follow only the frames that have one
+- **Frames of human edits** (`author.kind: human`): since the editor runs in the same workspace, let a person add a short note on the spot at the time of the edit. The note is shown in the same form as the `why` line. It could answer the problem that an external change in the middle has no `why`
+- **A way to explain an external change in the middle**: the `author` of `external` is fixed and does not tell who changed it. Using a commit message or a note added by a person are candidates
+- Support for other editors (add a client that follows [protocol.md](../reference/protocol.md))
+- Support for agents other than Claude Code

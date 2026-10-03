@@ -24,9 +24,9 @@ var vimGuide = map[string][]string{
 	"external": {
 		"左に操作一覧（11コマ）、右にコマが開きます",
 		"`]]` を6回押して、6コマ目（外部変更）まで進みます",
-		"見る：左右2つのウィンドウに分かれ、左（前）は青、右（後）は橙で、変わった行だけが塗られているか。左下に「前 ⚠ srwrの外で変更：stats.go」。`]c` で次の変更へ飛べます",
+		"見る：左右2つのウィンドウに分かれ、左（前）は青、右（後）は橙で、変わった行だけが塗られているか。左下に「Before  ⚠ Changed outside srwr: stats.go」。`]c` で次の変更へ飛べます",
 		"`]]` を押して7コマ目へ。右のウィンドウが消えて、1つの画面に戻るか見ます",
-		"`]]` を押して10・11コマ目（録画後）まで進み、同じ形の差分（見出しは「録画のあとで変更」）が出るか見ます",
+		"`]]` を押して10・11コマ目（録画後）まで進み、同じ形の差分（見出しは「⚠ Changed after recording …」）が出るか見ます",
 		"`q` で閉じます",
 	},
 	"no-why": {
@@ -41,9 +41,9 @@ var vimGuide = map[string][]string{
 		"`q` で閉じます",
 	},
 	"live": {
-		"Vim が開いて約5秒後から、3秒ごとに1コマずつ追記されます（全部で6コマ、約20秒）。それまでは「ライブ視聴中（AI の操作を待っています）」と出ます",
+		"Vim が開いて約5秒後から、3秒ごとに1コマずつ追記されます（全部で6コマ、約20秒）。それまでは「Live view (waiting for the AI's operations)」と出ます",
 		"見る（追っている間）：コマが届くたびに画面が最新のコマに替わり、ステータス行に「● LIVE」が出続けるか。ちらつかないか",
-		"追記が続いている間に `[[` を押します。画面は動かず、ステータス行に橙の背景で「L：LIVE に戻る（新着 N）」が出て、N が増えるか見ます（100桁ほどの幅でも読めます）",
+		"追記が続いている間に `[[` を押します。画面は動かず、ステータス行に橙の背景で「L: Back to LIVE (N new)」が出て、N が増えるか見ます（100桁ほどの幅でも読めます）",
 		"`L` を押します。最新のコマに移り、「● LIVE」に戻るか見ます",
 		"追記が終わったら `q` で閉じます。見逃したら、`q` で閉じて、もう一度 `qsoku ui-open vim live`",
 	},
@@ -109,7 +109,7 @@ func openVim(root, name string, out io.Writer) error {
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
 	// VIMINIT is read instead of the vimrc: a plain Vim whose Normal colors are the ones of the images (and of the screen
 	// tests), whatever the colors of the person's terminal and vimrc are.
-	cmd.Env = append(os.Environ(), "VIMINIT="+vimInit(light))
+	cmd.Env = append(os.Environ(), "VIMINIT="+vimInit(light), "SRWR_LANG=en") // the screens are in English
 	if name == "live" {
 		return runLiveVim(cmd, workspace, fixture)
 	}

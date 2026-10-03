@@ -47,6 +47,16 @@ func (s *Server) tapeIDs() []string {
 	return ids
 }
 
+// startTime is when the tape started: the header's time, or the last update for a tape without a header.
+func (t tapeInfo) startTime() time.Time {
+	for _, s := range []string{t.StartedAt, t.UpdatedAt} {
+		if v, err := time.Parse(time.RFC3339, s); err == nil {
+			return v
+		}
+	}
+	return time.Time{}
+}
+
 func (c *conn) tapesList() (any, *jsonrpc.Error) {
 	infos := []tapeInfo{}
 	for _, id := range c.srv.tapeIDs() {
@@ -54,6 +64,8 @@ func (c *conn) tapesList() (any, *jsonrpc.Error) {
 			infos = append(infos, *info)
 		}
 	}
+	// Newest first by the time the tape started (older tapes were named in the local zone, so the ID is not enough).
+	sort.SliceStable(infos, func(i, j int) bool { return infos[i].startTime().After(infos[j].startTime()) })
 	return struct {
 		Tapes []tapeInfo `json:"tapes"`
 	}{infos}, nil
@@ -90,7 +102,7 @@ func (c *conn) info(id string) *tapeInfo {
 // tapeParam reads and checks a tapeId.
 func tapeParam(id string) *jsonrpc.Error {
 	if !tape.ValidID(id) {
-		return invalidParams("tapeId が不正: " + id)
+		return invalidParams("invalid tapeId: " + id)
 	}
 	return nil
 }
@@ -99,10 +111,10 @@ func tapeParam(id string) *jsonrpc.Error {
 func (s *Server) readTape(id string) (tape.Result, *jsonrpc.Error) {
 	data, err := os.ReadFile(filepath.Join(s.tapesDir(), tape.FileName(id)))
 	if errors.Is(err, fs.ErrNotExist) {
-		return tape.Result{}, rpcError(serverError, codeTapeNotFound, "テープがない: "+id)
+		return tape.Result{}, rpcError(serverError, codeTapeNotFound, "no such tape: "+id)
 	}
 	if err != nil {
-		return tape.Result{}, rpcError(serverError, codeTapeUnreadable, "テープを読めない: "+id+": "+err.Error())
+		return tape.Result{}, rpcError(serverError, codeTapeUnreadable, "cannot read the tape: "+id+": "+err.Error())
 	}
 	return tape.Parse(data), nil
 }
@@ -145,7 +157,7 @@ func (c *conn) tapeClose(raw []byte) (any, *jsonrpc.Error) {
 		return nil, err
 	}
 	if _, ok := c.opened[p.TapeID]; !ok {
-		return nil, rpcError(serverError, codeTapeNotFound, "開いていないテープ: "+p.TapeID)
+		return nil, rpcError(serverError, codeTapeNotFound, "the tape is not open: "+p.TapeID)
 	}
 	delete(c.opened, p.TapeID)
 	return struct{}{}, nil
@@ -164,15 +176,15 @@ func (c *conn) frameState(raw []byte) (any, *jsonrpc.Error) {
 		return nil, err
 	}
 	if p.Index == nil {
-		return nil, invalidParams("index がない")
+		return nil, invalidParams("index is missing")
 	}
 	t, ok := c.opened[p.TapeID]
 	if !ok {
-		return nil, rpcError(serverError, codeTapeNotFound, "開いていないテープ: "+p.TapeID)
+		return nil, rpcError(serverError, codeTapeNotFound, "the tape is not open: "+p.TapeID)
 	}
 	i := *p.Index
 	if i < -1 || i >= len(t.frames) {
-		return nil, invalidParams("index が範囲外: " + itoa(i))
+		return nil, invalidParams("index is out of range: " + itoa(i))
 	}
 
 	res := struct {

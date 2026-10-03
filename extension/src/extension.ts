@@ -1,11 +1,13 @@
 import * as vscode from "vscode";
 import { settings } from "./config";
 import { Controls } from "./controls";
+import { setJapanese, pick } from "./lang";
 import { LiveView } from "./live";
 import { Presenter } from "./present";
 import { REPLAY_SCHEME, ReplayProvider, ReplaySession } from "./replay";
 import { ServerClient, ServerError, ServerProcess, TapeInfo, resolveCommand } from "./server";
 import { OpsView } from "./sidebar";
+import { localStamp } from "./times";
 
 const TAPE_SUFFIX = ".tape.jsonl";
 
@@ -21,6 +23,7 @@ export interface Api {
 }
 
 export function activate(context: vscode.ExtensionContext, createServer: ServerFactory = defaultServerFactory): Api {
+  setJapanese(vscode.env.language.toLowerCase().startsWith("ja"));
   const output = vscode.window.createOutputChannel("srwr");
   const presenter = new Presenter();
   const provider = new ReplayProvider();
@@ -46,16 +49,20 @@ export function activate(context: vscode.ExtensionContext, createServer: ServerF
 
   const showServerError = async (e: unknown): Promise<void> => {
     if (e instanceof ServerError && e.code === "binary_not_found") {
-      const pick = await vscode.window.showErrorMessage(
-        `srwr: ${e.message}\nsrwr を入れる（go install github.com/amisonnet8/srwr/cmd/srwr@latest）か、設定「srwr.path」に場所を指定してください。`,
-        "設定を開く",
+      const openSettings = pick("Open Settings", "設定を開く");
+      const choice = await vscode.window.showErrorMessage(
+        pick(
+          `srwr: ${e.message}\nInstall srwr (go install github.com/amisonnet8/srwr/cmd/srwr@latest) or set its location in the setting "srwr.path".`,
+          `srwr: ${e.message}\nsrwr を入れる（go install github.com/amisonnet8/srwr/cmd/srwr@latest）か、設定「srwr.path」に場所を指定してください。`,
+        ),
+        openSettings,
       );
-      if (pick === "設定を開く") {
+      if (choice === openSettings) {
         await vscode.commands.executeCommand("workbench.action.openSettings", "srwr.path");
       }
       return;
     }
-    void vscode.window.showErrorMessage(`srwr: ${e instanceof Error ? e.message : String(e)}`);
+    void vscode.window.showErrorMessage(`srwr: ${shownMessage(e)}`);
   };
 
   const stopLive = (): void => {
@@ -80,7 +87,7 @@ export function activate(context: vscode.ExtensionContext, createServer: ServerF
   const openTape = async (): Promise<void> => {
     const root = workspaceRoot();
     if (!root) {
-      void vscode.window.showWarningMessage("srwr: フォルダを開いてから実行してください");
+      void vscode.window.showWarningMessage(pick("srwr: Open a folder first", "srwr: フォルダを開いてから実行してください"));
       return;
     }
     let tapes: TapeInfo[];
@@ -91,29 +98,29 @@ export function activate(context: vscode.ExtensionContext, createServer: ServerF
       return;
     }
     if (tapes.length === 0) {
-      void vscode.window.showInformationMessage("srwr: 操作を記録したテープがありません（.srwr/tapes/）");
+      void vscode.window.showInformationMessage(pick("srwr: No tape with recorded operations yet (.srwr/tapes/)", "srwr: 操作を記録したテープがありません（.srwr/tapes/）"));
       return;
     }
     const items = tapes.map((t) => ({
       label: startedLabel(t),
-      description: `${t.ops}操作 · ${t.files.join(", ")}`,
+      description: `${pick(`${t.ops} ${t.ops === 1 ? "operation" : "operations"}`, `${t.ops}操作`)} · ${t.files.join(", ")}`,
       detail: t.tapeId + TAPE_SUFFIX,
       tape: t,
     }));
-    const pick = await vscode.window.showQuickPick(items, { placeHolder: "再生するテープを選ぶ" });
-    if (!pick) {
+    const chosen = await vscode.window.showQuickPick(items, { placeHolder: pick("Pick a tape to replay", "再生するテープを選ぶ") });
+    if (!chosen) {
       return;
     }
     stopLive();
     closeReplay();
     let frames;
     try {
-      frames = await serverFor(root).openTape(pick.tape.tapeId);
+      frames = await serverFor(root).openTape(chosen.tape.tapeId);
     } catch (e) {
       await showServerError(e);
       return;
     }
-    replay = new ReplaySession(pick.tape.tapeId, frames, provider, presenter);
+    replay = new ReplaySession(chosen.tape.tapeId, frames, provider, presenter);
     ops.setSource(replay);
     controls.bind(replay);
     await replay.goto(0);
@@ -139,7 +146,7 @@ export function activate(context: vscode.ExtensionContext, createServer: ServerF
     vscode.commands.registerCommand("srwr.liveStart", () => {
       const root = workspaceRoot();
       if (!root) {
-        void vscode.window.showWarningMessage("srwr: フォルダを開いてから実行してください");
+        void vscode.window.showWarningMessage(pick("srwr: Open a folder first", "srwr: フォルダを開いてから実行してください"));
         return;
       }
       closeReplay();
@@ -172,7 +179,19 @@ export function activate(context: vscode.ExtensionContext, createServer: ServerF
 
 export function deactivate(): void {}
 
-// The heading of a tape in the picker: "2026-09-29 18:37:12". Without a header, the name of the tape file.
+// What a person is told of an error: the view server's messages are in English and meant for developers, so the ones a person
+// can meet (no such tape, an unreadable tape) are said again here in the language of the screen.
+function shownMessage(e: unknown): string {
+  if (e instanceof ServerError && e.code === "tape_not_found") {
+    return pick("Tape not found", "テープが見つからない");
+  }
+  if (e instanceof ServerError && e.code === "tape_unreadable") {
+    return pick("Cannot read the tape", "テープを読めない");
+  }
+  return e instanceof Error ? e.message : String(e);
+}
+
+// The heading of a tape in the picker: "2026-09-29 18:37:12", in the time zone of the machine. Without a header, the name of the tape file.
 function startedLabel(t: TapeInfo): string {
-  return t.startedAt ? t.startedAt.replace("T", " ").slice(0, 19) : t.tapeId + TAPE_SUFFIX;
+  return (t.startedAt && localStamp(t.startedAt)) || t.tapeId + TAPE_SUFFIX;
 }

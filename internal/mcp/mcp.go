@@ -139,7 +139,7 @@ func (s *Server) callSelect(raw json.RawMessage) toolResult {
 	}
 	if missing := firstMissing(map[string]bool{"file": a.File == nil, "startLine": a.StartLine == nil, "endLine": a.EndLine == nil, "why": a.Why == nil},
 		"file", "startLine", "endLine", "why"); missing != "" {
-		return failure(core.Error{Code: core.CodeInvalidInput, Message: "必須の入力がない: " + missing})
+		return failure(core.Error{Code: core.CodeInvalidInput, Message: "missing required input: " + missing})
 	}
 	res, cerr := s.Core.Select(core.SelectInput{File: *a.File, StartLine: *a.StartLine, EndLine: *a.EndLine, Why: *a.Why})
 	if cerr != nil {
@@ -168,7 +168,7 @@ func (s *Server) callReplace(raw json.RawMessage) toolResult {
 	}
 	if missing := firstMissing(map[string]bool{"selection": a.Selection == nil, "newText": a.NewText == nil, "why": a.Why == nil},
 		"selection", "newText", "why"); missing != "" {
-		return failure(core.Error{Code: core.CodeInvalidInput, Message: "必須の入力がない: " + missing})
+		return failure(core.Error{Code: core.CodeInvalidInput, Message: "missing required input: " + missing})
 	}
 	res, cerr := s.Core.Replace(core.ReplaceInput{Selection: *a.Selection, NewText: *a.NewText, Why: *a.Why})
 	if cerr != nil {
@@ -183,7 +183,7 @@ func decodeArgs(raw json.RawMessage, into any) *core.Error {
 		raw = json.RawMessage("{}")
 	}
 	if err := json.Unmarshal(raw, into); err != nil {
-		return &core.Error{Code: core.CodeInvalidInput, Message: "入力の型が違う: " + err.Error()}
+		return &core.Error{Code: core.CodeInvalidInput, Message: "input has the wrong type: " + err.Error()}
 	}
 	return nil
 }

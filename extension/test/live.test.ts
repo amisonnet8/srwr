@@ -7,6 +7,9 @@ import { state } from "./fakevscode";
 import { start } from "./harness";
 import { goldenFrames, loadGolden } from "./helpers";
 
+// These tests look at the Japanese texts (english.test.ts looks at the English ones).
+process.env.SRWR_TEST_LANG = "ja";
+
 const WHY = goldenFrames(loadGolden("ui-check-why-basic"));
 const EXT = goldenFrames(loadGolden("ui-check-external"));
 

@@ -1,5 +1,6 @@
 // Live: the same screen as replay, but the frames keep arriving. The view follows the latest frame unless the user went back.
 import * as vscode from "vscode";
+import { pick } from "./lang";
 import { Nav } from "./controls";
 import { Presenter } from "./present";
 import { ReplayProvider, ReplaySession } from "./replay";
@@ -8,7 +9,7 @@ import { OpsSource } from "./sidebar";
 import { Frame, Timeline } from "./timeline";
 
 export class LiveView implements OpsSource, Nav, vscode.Disposable {
-  readonly title = "ライブ視聴";
+  readonly title = pick("Live view", "ライブ視聴");
   readonly closeCommand = "srwr.liveStop";
 
   private readonly session: ReplaySession;

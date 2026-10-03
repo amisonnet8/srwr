@@ -1,98 +1,106 @@
-# VSCode（srwr-view）
+# VSCode (srwr-view)
 
-**読者**：VSCode でテープを見る人。
+[日本語](vscode_ja.md)
 
-VSCode の拡張 **srwr-view** で、AI の操作をコマ送りで見る。見た目と振る舞いは固定されている。見るのは**コマ送りだけ**で、自動再生はない。
+**Readers**: people who view tapes in VSCode.
 
-## 使い始める
+With the VSCode extension **srwr-view**, you step through the AI's operations frame by frame. The look and behavior are fixed. You view by **stepping only**; there is no autoplay.
 
-1. `srwr` のバイナリを入れる（[cli.md](cli.md)）。拡張はこれを起動して、テープを読む
-2. 拡張 srwr-view を入れる（`.vsix`）
-3. 作業場を VSCode で開く。左端の「srwr」→「操作一覧」から、「テープを開く」か「ライブ視聴を開始」
+## Getting started
 
-- `srwr` の場所は設定 `srwr.path`（既定は `srwr`＝PATH から探す）。見つからないとき・バージョンが合わないときは、入れ方と「設定を開く」ボタンつきで案内する
-- 設定は `srwr.path` だけ。見た目の設定はない
-- 表示サーバー（`srwr view-server`）は、最初に必要になったときに起動する。作業場ごとに1つ
-- 拡張は、テープも実ファイルも書き込まない。鍵（`.srwr/key`）も読まない
-- 古い形式のテープも読める
+1. Install the `srwr` binary ([cli.md](cli.md)). The extension starts it to read tapes
+2. Install the extension srwr-view (the `.vsix`)
+3. Open the workspace in VSCode. From "srwr" at the left edge → "Operations", choose "Open a tape" or "Start live view"
 
-## 画面の仕様
+- Where `srwr` is, is the setting `srwr.path` (the default `srwr` is searched for on the PATH). When it is not found or the versions do not match, the extension says how to install it, with an "Open Settings" button
+- The only setting is `srwr.path`. There are no settings for the look
+- The view server (`srwr view-server`) is started when it is first needed. One per workspace
+- The extension writes neither tapes nor real files. It does not read the key (`.srwr/key`) either
+- Tapes of old formats can be read too
 
-### 1. 色
+## Language and time
 
-**select は青、ファイルを変えたもの（replace、外部変更）は橙。** 理由の行は濃い色に白の太字、範囲は同じ色の薄い色。
+- The texts the extension shows are **English**, and **Japanese when VSCode's display language is Japanese** (install the Japanese language pack). The names of the commands in the command palette follow the same language. There is no setting of srwr for this
+- The times in the tape picker are shown in the time zone of the machine. The tape holds UTC
 
-| 部分 | select（青） | replace（橙） |
+## Screen specification
+
+### 1. Colors
+
+**select is blue, and what changes a file (replace, external change) is orange.** The reason line is a dark color with white bold text, and the range is the lighter version of the same color.
+
+| Part | select (blue) | replace (orange) |
 |---|---|---|
-| 理由（why）の行 | 背景 `#0b61a4`、白の太字 | 背景 `#b45f06`、白の太字 |
-| 範囲 | 暗いテーマ `#1d3a5c`／明るいテーマ `#cfe3fb` | 暗いテーマ `#583c27`／明るいテーマ `#fde3c8` |
+| Reason (why) line | Background `#0b61a4`, white bold | Background `#b45f06`, white bold |
+| Range | Dark theme `#1d3a5c` / light theme `#cfe3fb` | Dark theme `#583c27` / light theme `#fde3c8` |
 
-- 理由の行の色は、どちらのテーマでも同じ（白い太字の読みやすさを保つ）。範囲だけテーマで替える
-- 外部変更（srwr の外での変更）は、操作一覧の丸だけ**紫**（`charts.purple`）にする。範囲の色は、差分の見せ方に従う（下の 3）
+- The color of the reason line is the same in both themes (to keep the white bold text readable). Only the range changes with the theme
+- For an external change (a change made outside srwr), only the dot in the operation list is **purple** (`charts.purple`). The color of the range follows how diffs are shown (3 below)
 
-### 2. select と replace のコマ
+### 2. Frames of select and replace
 
-- テープを仮想ドキュメント（`srwr-replay:/<テープ名>/<ファイル>`）に展開して見せる。実ファイルには触れない。元ファイルの拡張子を保つので、構文ハイライトが効く
-- **範囲の直前に、理由（`why`）の行を実際に差し込む。** 青か橙の背景に白の太字。長い理由は、幅（表示の幅100）で何行かに折り返し、全文を出す。2行目からは字下げする。`why` が `null` のコマは、理由の行を出さない（範囲の色だけ）
-- 範囲の行を、薄い色で塗る（空範囲は塗らない）
-- コマを移るたびに差し替え、理由の行は常に今のコマの分だけ
-- replace は、**書き換えたあとの内容を、最初から橙で見せる**（赤→緑の動きはない）
-- **行番号**：理由の行を差し込むと、標準の行番号が合わなくなる。そのため、理由の行があるコマでは標準の行番号を消し、**実ファイルどおりの番号**を本文の左端に出す（理由の行は空白）。理由の行がないコマ・差分のコマは、標準の行番号
+- The tape is expanded into a virtual document (`srwr-replay:/<tape name>/<file>`) and shown. Real files are not touched. The extension of the original file is kept, so syntax highlighting works
+- **A reason (`why`) line is actually inserted just before the range.** White bold text on a blue or orange background. A long reason is wrapped into several lines at the width (a display width of 100) and shown in full. From the second line it is indented. A frame whose `why` is `null` shows no reason line (only the color of the range)
+- The lines of the range are painted in the lighter color (an empty range is not painted)
+- It is replaced each time the frame changes, and the reason line is always only that of the current frame
+- A replace shows **the content after the rewrite, in orange from the start** (there is no red → green motion)
+- **Line numbers**: inserting the reason line makes the standard line numbers wrong. So in a frame that has a reason line the standard numbers are turned off, and **the real file's own numbers** are shown at the left edge of the text (blank for the reason line). Frames without a reason line and diff frames use the standard line numbers
 
-### 3. 差分のコマ（外部変更・最後の差分）
+### 3. Diff frames (external change, final diff)
 
-- `external`（テープの途中の、srwr の外での変更）と `final`（録画のあとの、今のファイルとの差分）は、**左右2つのエディタ**で見せる。左＝変更前、右＝変更後
-- **変わった行だけを塗る：左は青、右は橙。** 変わった行は、拡張が前後を行で比べて決める。標準の diff 画面は使わない（標準の色を替えられないため）。行をそろえる空白行や、左右のスクロールの連動はない
-- 最初に変わった行が、画面の上から**3割ぐらい**に来るようにスクロールする。片方に変わった行がなければ（足しただけ、消しただけ）、もう片方の行に合わせる
-- 見出しは、左のタブに出す
-  - 「前 ⚠ srwrの外で変更：main.go」
-  - 「前 ⚠ 録画のあとで変更（今のファイルとの差分）：main.go」
-  - 今は存在しないファイルは「…（今は存在しない）」。右のタブは「後 main.go」
-- ふつうのコマに戻ると、右側のエディタを閉じる。**行き来しても、タブは増えない**
-- 1回の変更につき1コマ。変更がなければ出さない
+- An `external` (a change made outside srwr, in the middle of the tape) and a `final` (the difference from the current file, after the recording) are shown in **two editors, left and right**. Left = before, right = after
+- **Only the changed lines are painted: blue on the left, orange on the right.** The extension decides the changed lines by comparing before and after line by line. The standard diff screen is not used (its colors cannot be changed). There are no blank lines to align the lines, and the two sides do not scroll together
+- It scrolls so that the first changed line comes about **30%** from the top of the screen. If one side has no changed line (only added, or only removed), it follows the lines of the other side
+- The heading is shown on the left tab
+  - "Before ⚠ Changed outside srwr: main.go"
+  - "Before ⚠ Changed after recording (diff from current file): main.go"
+  - For a file that no longer exists: "… (no longer exists)", and "… (deleted)" for a deleted file. The right tab is "After main.go"
+- When it goes back to an ordinary frame, the editor on the right is closed. **Tabs do not pile up when you move back and forth**
+- One frame per change. If there is no change, none is shown
 
-### 4. 操作一覧（左のパネル）
+### 4. The operation list (the left panel)
 
-- 左端の「srwr」→「操作一覧」。コマを、**記録された順に、上から1、2、3…と並べる**。番号は、下のバーの位置（5/7）と同じ。親子の字下げはしない
-- 各行：`番号  種類  ファイル:範囲`、説明は `why`。先頭の丸の色で見分ける：select＝青、replace＝橙、外部変更・録画後＝紫
-- クリックで、そのコマへ移る。今のコマの行を選択状態にする
-- 右上の ☓ で、テープ（またはライブ）を閉じる
+- "srwr" at the left edge → "Operations". The frames are listed **in the order recorded, 1, 2, 3… from the top**. The number is the same as the position in the bottom bar (5/7). There is no indenting by parent and child
+- Each row: `number  kind  file:range`, with the `why` as the description. The color of the dot at the front tells them apart: select = blue, replace = orange, external and final = purple. The kinds are written `select`, `replace`, `external` and `final`
+- Clicking moves to that frame. The row of the current frame is selected
+- The ☓ at the top right closes the tape (or the live view)
 
-### 5. 下のバー（ステータスバー）
+### 5. The bottom bar (status bar)
 
-- **「戻る」「進む」と位置（5/7）が、いつも出る。** 行けない側（最初のコマの戻る、最後のコマの進む）は薄くする（消さない）
-- 再生・速度・実時間／等間隔のボタンはない
-- 右端の ☓ で閉じる
+- **"Back" and "Forward" and the position (5/7) are always shown.** The side that cannot be taken (Back at the first frame, Forward at the last) is dimmed (not hidden)
+- There are no buttons for play, speed, or real-time / even spacing
+- The ☓ at the right edge closes it
 
-### 6. ライブ
+### 6. Live
 
-- **録画と同じ画面**（理由の行、色、行番号、差分のコマ）。実ファイルには触れない。見せるのは、サーバーが渡す本文（`withText`）
-- 起動時までのコマは、一覧に載せるだけで、見せない。起動後に追記されたコマから見せる
-- **最新を追っている間**は、新しいコマをすぐ見せる。下のバーに「● LIVE」。コマが続けて届いても追いかける
-- **コマ送りで古いコマに戻ると**、画面は動かさず、新しいコマの数だけ数える。下のバーに「LIVE に戻る（新着 N）」（橙の背景）が出る。押すと最新へ移り、また追いかける
-- 別のテープに移ったら、一覧を作り直して、先頭から見せる
+- **The same screen as replay** (reason line, colors, line numbers, diff frames). Real files are not touched. What is shown is the text the server hands over (`withText`)
+- The frames up to the start are only listed, not shown. Frames appended after the start are shown
+- **While following the newest**, a new frame is shown at once. The bottom bar shows "● LIVE". It follows even when frames arrive one after another
+- **When you step back to an old frame with the stepping**, the screen does not move and only the number of new frames is counted. The bottom bar shows "Back to LIVE (N new)" (on an orange background). Pressing it moves to the newest and follows again
+- When it moves to another tape, the list is rebuilt and shown from the beginning
 
-### 7. テープ一覧
+### 7. The tape picker
 
-- 「テープを開く」で、操作を1つ以上持つテープを、新しい順に出す（日時・操作数・ファイル）。選ぶと1コマ目から見せる
+- "Open a tape" shows the tapes that have one or more operations, newest first (date and time, number of operations, files). Choosing one shows it from the first frame
 
-## コマンドと設定
+## Commands and settings
 
-| コマンド | 動き |
+| Command | Action |
 |---|---|
-| srwr: テープを開く（`srwr.openTape`） | 一覧から選んで開く |
-| srwr: 閉じる（テープ・ライブ）（`srwr.closeTape`） | 録画かライブ、開いているほうを閉じる |
-| srwr: 進む／戻る（`srwr.stepForward`・`srwr.stepBack`） | コマ送り（ライブでも効く） |
-| srwr: ライブ視聴を開始／停止（`srwr.liveStart`・`srwr.liveStop`） | |
-| srwr: LIVE に戻る（`srwr.liveLatest`） | 最新へ移り、また追う |
-| `srwr.goto` | 内部用（操作一覧のクリック）。コマンドパレットには出さない |
+| srwr: Open Tape (`srwr.openTape`) | Choose from the list and open |
+| srwr: Close (Tape or Live) (`srwr.closeTape`) | Closes whichever of replay and live is open |
+| srwr: Forward / Back (`srwr.stepForward`, `srwr.stepBack`) | Stepping (works in live too) |
+| srwr: Start Live View / Stop Live View (`srwr.liveStart`, `srwr.liveStop`) | |
+| srwr: Back to LIVE (`srwr.liveLatest`) | Moves to the newest and follows again |
+| `srwr.goto` | Internal (a click in the operation list). Not shown in the command palette |
 
-| 設定 | 既定 | 意味 |
+| Setting | Default | Meaning |
 |---|---|---|
-| `srwr.path` | `srwr` | `srwr` のバイナリの場所（開発では環境変数 `SRWR_PATH`） |
+| `srwr.path` | `srwr` | Where the `srwr` binary is (in development, the environment variable `SRWR_PATH`) |
 
-## 動きの仕組み（作る人向け）
+## How it works (for those who build)
 
-- コマの列は、表示サーバーが作る（[protocol.md](protocol.md)）。拡張は描くだけ
-- 範囲・理由の行・差分の行の色は、`TextEditorDecorationType`。標準の行番号は、`editor.options.lineNumbers` を切り替え、自前の番号は装飾の `before`（`contentText`）で出す
-- 設計の判断は [decisions.md](../design/decisions.md)
+- The frames are built by the view server ([protocol.md](protocol.md)). The extension only draws
+- The colors of the range, the reason line and the lines of a diff are `TextEditorDecorationType`s. The standard line numbers are switched with `editor.options.lineNumbers`, and the extension's own numbers are shown with the `before` (`contentText`) of a decoration
+- The texts of the screen are chosen by `vscode.env.language` (`src/lang.ts`); the names in `package.json` are `%keys%` of `package.nls.json` (English) and `package.nls.ja.json` (Japanese)
+- Reasons for the design decisions are in [decisions.md](../design/decisions.md)

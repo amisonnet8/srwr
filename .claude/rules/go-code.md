@@ -2,6 +2,14 @@
 
 一般的な lint・整形・テストは `.claude/rules/testing.md` と `.golangci.yaml` に任せる。ここには srwr 固有の決まりだけを書く。前のリポジトリで踏んだ落とし穴を含む。
 
+## 言語と時刻（R10.5）
+
+- 利用者に見せる文言は `internal/lang`（環境変数 `SRWR_LANG` が `ja` で始まれば日本語。呼ぶたびに読む）の `Pick(en, ja)`・`Sprintf(en, ja, …)` で、**使う場所に英語と日本語を並べて**書く。文言を足すときは、両方を書く
+- **AI が読むもの**（`internal/tools` のツールの説明、`internal/core`・`internal/mcp` のエラー文）、**hook の注記**（`internal/hook`・`core/hook.go`）、**表示サーバーのエラー文**（`internal/viewserver`）は、英語だけ（`lang` を使わない）
+- テスト：`internal/cli`・`internal/setup` は `TestMain` で `SRWR_LANG=ja` にして（今までの日本語の文言を確かめる）、英語は `lang_test.go`・`english_test.go` が `t.Setenv("SRWR_LANG", "")` で確かめる
+- **時刻**：`tape.FormatTS` が UTC で書く。テープIDの日時（`session.newID`）も UTC。読む側は `time.Parse(time.RFC3339, …)` で両方（`Z`・オフセット）を読む。人に見せるのは `Local()`（`TZ` に従う）。テストは `time.Local` を替えて確かめる（`internal/cli/lang_test.go`）
+- テープの一覧の並びは、ID でなく**始めた時刻**（`internal/cli/tapes.go`・`internal/viewserver/tapes.go`）
+
 ## 依存
 
 - **外部依存ゼロを保つ。** 範囲トークン（varint・Crockford Base32・HMAC）、テープ（JSONL）、ハッシュ、MCP と表示サーバー（JSON-RPC over stdio）はすべて標準ライブラリで書く

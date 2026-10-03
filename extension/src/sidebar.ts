@@ -1,6 +1,7 @@
 // The side panel "操作一覧": frames in recorded order, numbered from 1 (the number is the position in the status bar).
 // No indentation for parents. A colored dot tells the kind: select blue, replace orange, changes from outside purple.
 import * as vscode from "vscode";
+import { pick } from "./lang";
 import { basename, formatRange, Frame, Timeline } from "./timeline";
 
 // What the list shows. A replay session and the live view implement it.
@@ -16,7 +17,10 @@ export function dotColor(f: Frame): string {
   return f.kind === "select" ? "charts.blue" : f.kind === "replace" ? "charts.orange" : "charts.purple";
 }
 
-const KIND_LABEL: Record<Frame["kind"], string> = { select: "select", replace: "replace", external: "外部変更", final: "録画後" };
+// The label of a kind: the words select and replace are the names of the two commands; external and final are srwr's own.
+function kindLabel(kind: Frame["kind"]): string {
+  return { select: "select", replace: "replace", external: pick("external", "外部変更"), final: pick("final", "録画後") }[kind];
+}
 
 export class OpsView implements vscode.TreeDataProvider<Frame>, vscode.Disposable {
   readonly view: vscode.TreeView<Frame>;
@@ -60,12 +64,12 @@ export class OpsView implements vscode.TreeDataProvider<Frame>, vscode.Disposabl
 
   getTreeItem(f: Frame): vscode.TreeItem {
     const where = formatRange(f.range);
-    const item = new vscode.TreeItem(`${f.index + 1}  ${KIND_LABEL[f.kind]}  ${basename(f.file)}:${where}`, vscode.TreeItemCollapsibleState.None);
+    const item = new vscode.TreeItem(`${f.index + 1}  ${kindLabel(f.kind)}  ${basename(f.file)}:${where}`, vscode.TreeItemCollapsibleState.None);
     item.id = `${this.source?.title ?? ""}#${f.index}`;
-    item.description = f.why ?? (f.kind === "external" ? "srwr の外でファイルが変わった" : "");
+    item.description = f.why ?? (f.kind === "external" ? pick("File changed outside srwr", "srwr の外でファイルが変わった") : "");
     item.iconPath = new vscode.ThemeIcon("circle-filled", new vscode.ThemeColor(dotColor(f)));
-    item.tooltip = new vscode.MarkdownString().appendText([`${f.index + 1}  ${KIND_LABEL[f.kind]}  ${f.file}:${where}`, f.why ?? ""].filter(Boolean).join("\n"));
-    item.command = { command: "srwr.goto", title: "この操作へ移動", arguments: [f.index] };
+    item.tooltip = new vscode.MarkdownString().appendText([`${f.index + 1}  ${kindLabel(f.kind)}  ${f.file}:${where}`, f.why ?? ""].filter(Boolean).join("\n"));
+    item.command = { command: "srwr.goto", title: pick("Go to this operation", "この操作へ移動"), arguments: [f.index] };
     return item;
   }
 

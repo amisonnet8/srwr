@@ -25,6 +25,15 @@
 - **コマの移動は1つずつ順に処理し、古い移動は飛ばす**（`ReplaySession.goto`）。移動のたびに世代番号を増やすだけだと、古い移動が、新しい移動の後始末のあとで右のエディタを開いてしまう。右のタブを閉じるかは、フラグでなく、毎回タブを調べて決める（R4 で見つけた。`view.test.ts` の「quick successive steps」）
 - 画面の更新を待つテストは、`sleep` でなく、`activate` が返す `settled()`（ライブの描画が追いついたら解決する）か、`until(条件)` で待つ
 
+## 言語と時刻（R10.5）
+
+- 文言は英語が既定で、`vscode.env.language` が `ja` で始まれば日本語。`src/lang.ts` の `pick(en, ja)` を、**呼ぶときに**評価する（モジュールの定数に `pick` の結果を置くと、言語が決まる前に評価される。`sidebar.ts` の種類の名前で踏んだ）。`activate` の最初で `setJapanese` を呼ぶ
+- `package.json` の文言は `%キー%` で、`package.nls.json`（英語）と `package.nls.ja.json`。`wiring.test.ts` が、キーの過不足を確かめる。`.vscodeignore` に `!package.nls*.json`
+- 表示サーバーのエラー文は英語で開発者向け。人に見せるもの（`tape_not_found`・`tape_unreadable`）は `extension.ts` の `shownMessage` が自分の言語で言い直す
+- テープ選びの時刻は `src/times.ts` の `localStamp`（その機械の時間帯）。テストの `setup.ts` は `TZ=Asia/Tokyo` に固定する（固定テープは `+09:00`）。時間帯の振る舞いは `english.test.ts` が `process.env.TZ` を替えて確かめる
+- 偽の `vscode` の言語は `state.language`。`reset()` が環境変数 `SRWR_TEST_LANG`（既定 `en`）で決める。`view.test.ts`・`live.test.ts` は日本語の文言を確かめるので `ja` にし、英語は `english.test.ts`
+- 画面の基準は `test/baseline/{ja,en}/`。`capture.test.ts` が両方を比べる
+
 ## 構成
 
 - TypeScript（`strict: true`）。ビルドは `tsc` のみ。バンドラーは使わない

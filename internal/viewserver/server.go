@@ -91,7 +91,7 @@ func decode(raw json.RawMessage, into any) *jsonrpc.Error {
 		raw = json.RawMessage("{}")
 	}
 	if err := json.Unmarshal(raw, into); err != nil {
-		return invalidParams("引数が不正: " + err.Error())
+		return invalidParams("invalid parameters: " + err.Error())
 	}
 	return nil
 }
@@ -102,7 +102,7 @@ func (c *conn) handle(req jsonrpc.Request) (any, *jsonrpc.Error) {
 		return c.initialize(req.Params)
 	case "tapes/list", "tape/open", "frame/state", "tape/close", "live/start", "live/stop", "shutdown":
 		if !c.initialized {
-			return nil, rpcError(serverError, codeNotInitialized, "initialize の前に要求が来た: "+req.Method)
+			return nil, rpcError(serverError, codeNotInitialized, "a request came before initialize: "+req.Method)
 		}
 	default:
 		return nil, &jsonrpc.Error{Code: jsonrpc.MethodNotFound, Message: "method not found: " + req.Method}
@@ -150,10 +150,10 @@ func (c *conn) initialize(raw json.RawMessage) (any, *jsonrpc.Error) {
 		return nil, err
 	}
 	if p.ProtocolVersion == nil {
-		return nil, invalidParams("protocolVersion がない")
+		return nil, invalidParams("protocolVersion is missing")
 	}
 	if *p.ProtocolVersion != ProtocolVersion {
-		return nil, rpcError(serverError, codeProtocolMismatch, "srwr とエディタ側のバージョンが合っていない（サーバーは protocolVersion "+itoa(ProtocolVersion)+"）")
+		return nil, rpcError(serverError, codeProtocolMismatch, "srwr and the editor side do not match (the server is protocolVersion "+itoa(ProtocolVersion)+")")
 	}
 	c.initialized = true
 	c.diffFrames = p.Options.DiffFrames == nil || *p.Options.DiffFrames

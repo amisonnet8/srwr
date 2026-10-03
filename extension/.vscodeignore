@@ -4,3 +4,4 @@
 !media/**
 !out/src/**
 !LICENSE
+!package.nls*.json

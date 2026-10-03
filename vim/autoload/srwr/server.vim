@@ -1,6 +1,7 @@
 vim9script
 
 import autoload './config.vim'
+import autoload './lang.vim'
 
 # The only place that talks to the display server (docs/reference/protocol.md):
 # `srwr view-server` as a job, newline-delimited JSON-RPC 2.0 on a channel in "nl" mode.
@@ -59,7 +60,7 @@ def HandleExit(_job: job, status: number)
   const waiting = pending
   pending = {}
   for Cb in values(waiting)
-    Cb(v:null, Fail('server_exited', 'srwr view-server が終了した（終了コード ' .. status .. '）。' .. join(stderrLines[-3 :], ' ')))
+    Cb(v:null, Fail('server_exited', lang.Pick('srwr view-server exited (exit code ' .. status .. '). ', 'srwr view-server が終了した（終了コード ' .. status .. '）。') .. join(stderrLines[-3 :], ' ')))
   endfor
   OnExit('exited')
 enddef
@@ -88,7 +89,7 @@ export def Start(root: string, Done: func(any, any))
   endif
   const cmd = config.Path()
   if !executable(cmd)
-    Done(v:null, Fail('binary_not_found', 'srwr のバイナリが見つからない（g:srwr_path = ' .. string(cmd) .. '）。srwr を入れるか、g:srwr_path に場所を指定する'))
+    Done(v:null, Fail('binary_not_found', lang.Pick('srwr binary not found (g:srwr_path = ' .. string(cmd) .. '). Install srwr or set g:srwr_path', 'srwr のバイナリが見つからない（g:srwr_path = ' .. string(cmd) .. '）。srwr を入れるか、g:srwr_path に場所を指定する')))
     return
   endif
   stderrLines = []
@@ -104,7 +105,7 @@ export def Start(root: string, Done: func(any, any))
   })
   if job_status(job) ==# 'fail'
     job = v:null
-    Done(v:null, Fail('binary_not_found', 'srwr view-server を起動できない: ' .. cmd))
+    Done(v:null, Fail('binary_not_found', lang.Pick('Cannot start srwr view-server: ', 'srwr view-server を起動できない: ') .. cmd))
     return
   endif
   Initialize(Done)
@@ -118,7 +119,7 @@ enddef
 # FixMismatch gives protocol_mismatch a message a person can act on.
 def FixMismatch(err: any): any
   if err != v:null && err.code ==# 'protocol_mismatch'
-    return Fail('protocol_mismatch', 'srwr（' .. config.Path() .. '）と、この Vim スクリプトのバージョンが合っていません（protocolVersion ' .. PROTOCOL_VERSION .. '）。srwr を更新してください。')
+    return Fail('protocol_mismatch', lang.Pick('srwr (' .. config.Path() .. ') and this Vim script do not match (protocolVersion ' .. PROTOCOL_VERSION .. '). Update srwr.', 'srwr（' .. config.Path() .. '）と、この Vim スクリプトのバージョンが合っていません（protocolVersion ' .. PROTOCOL_VERSION .. '）。srwr を更新してください。'))
   endif
   return err
 enddef
@@ -126,7 +127,7 @@ enddef
 # Request sends a request. Cb is called with the result, or with an error.
 export def Request(method: string, params: dict<any>, Cb: func(any, any))
   if !Running()
-    Cb(v:null, Fail('server_exited', 'srwr view-server は動いていない'))
+    Cb(v:null, Fail('server_exited', lang.Pick('srwr view-server is not running', 'srwr view-server は動いていない')))
     return
   endif
   nextId += 1

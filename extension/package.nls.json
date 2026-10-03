@@ -1,0 +1,14 @@
+{
+  "extension.description": "Step through the AI's operations (srwr tapes) frame by frame, with the reasons",
+  "srwr.openTape.title": "srwr: Open Tape",
+  "srwr.closeTape.title": "srwr: Close (Tape or Live)",
+  "srwr.stepForward.title": "srwr: Forward",
+  "srwr.stepBack.title": "srwr: Back",
+  "srwr.goto.title": "srwr: Go to This Operation",
+  "srwr.liveStart.title": "srwr: Start Live View",
+  "srwr.liveStop.title": "srwr: Stop Live View",
+  "srwr.liveLatest.title": "srwr: Back to LIVE",
+  "view.ops.name": "Operations",
+  "view.ops.welcome": "No tape is open.\n[Open a tape](command:srwr.openTape)\n[Start live view](command:srwr.liveStart)",
+  "config.path.description": "Location of the srwr binary (the view server). The default, \"srwr\", is searched for on the PATH. If it is not found, give an absolute path."
+}

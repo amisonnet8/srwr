@@ -527,7 +527,7 @@ func TestSelectErrors(t *testing.T) {
 	if got, ok := err.Actual.(map[string]int); !ok || got["lineCount"] != 3 {
 		t.Errorf("actual = %#v, want lineCount 3", err.Actual)
 	}
-	if want := "f.txt は 3 行。startLine=9 endLine=9 は範囲外"; err.Message != want {
+	if want := "f.txt has 3 lines; startLine=9 endLine=9 is out of range"; err.Message != want {
 		t.Errorf("message = %q, want %q", err.Message, want)
 	}
 	// Nothing of a refused call reaches the tape, except what was noticed about the file itself.

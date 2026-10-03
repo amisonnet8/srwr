@@ -16,15 +16,15 @@ import (
 // cleanPath turns a path the client gave into a slash-separated path relative to the workspace.
 func cleanPath(in string) (string, *Error) {
 	if strings.TrimSpace(in) == "" || strings.ContainsRune(in, 0) {
-		return "", newError(CodeInvalidInput, "file が空、または不正です")
+		return "", newError(CodeInvalidInput, "file is empty or not valid")
 	}
 	p := filepath.ToSlash(in)
 	if strings.HasPrefix(p, "/") || (len(p) >= 2 && p[1] == ':') {
-		return "", newError(CodeInvalidRange, "%s は作業場の外のパス（作業場からの相対パスで指定してください）", in)
+		return "", newError(CodeInvalidRange, "%s is a path outside the workspace (give a path relative to the workspace)", in)
 	}
 	p = path.Clean(p)
 	if p == "." || p == ".." || strings.HasPrefix(p, "../") {
-		return "", newError(CodeInvalidRange, "%s は作業場の外のパス", in)
+		return "", newError(CodeInvalidRange, "%s is a path outside the workspace", in)
 	}
 	return p, nil
 }
@@ -64,7 +64,7 @@ func (c *Core) readTarget(rel string) (target, *Error) {
 		return target{}, internal(err)
 	}
 	if within, err := filepath.Rel(realRoot, real); err != nil || within == ".." || strings.HasPrefix(within, ".."+string(filepath.Separator)) {
-		return target{}, newError(CodeInvalidRange, "%s は作業場の外を指している", rel)
+		return target{}, newError(CodeInvalidRange, "%s points outside the workspace", rel)
 	}
 	if within, err := filepath.Rel(realRoot, real); err == nil && m.Match(filepath.ToSlash(within)) {
 		return target{}, ignoredError(rel)
@@ -74,20 +74,20 @@ func (c *Core) readTarget(rel string) (target, *Error) {
 		return target{}, internal(err)
 	}
 	if !info.Mode().IsRegular() {
-		return target{}, newError(CodeFileNotFound, "%s は通常のファイルではない", rel)
+		return target{}, newError(CodeFileNotFound, "%s is not a regular file", rel)
 	}
 	b, err := os.ReadFile(real)
 	if err != nil {
 		return target{}, internal(err)
 	}
 	if bytes.IndexByte(b, 0) >= 0 || !utf8.Valid(b) || bytes.IndexByte(b, '\r') >= 0 {
-		return target{}, newError(CodeUnsupportedFile, "%s は CRLF などLF以外の改行、またはバイナリを含むため扱えない", rel)
+		return target{}, newError(CodeUnsupportedFile, "%s cannot be handled: it has line breaks other than LF (CRLF, for example) or is binary", rel)
 	}
 	return target{real: real, text: string(b), exists: true}, nil
 }
 
 func ignoredError(rel string) *Error {
-	return newError(CodeIgnoredFile, "%s は記録しないファイルなので、srwr では扱えない。ユーザーに頼んでください", rel)
+	return newError(CodeIgnoredFile, "%s is a file that is not recorded, so srwr cannot handle it. Ask the user", rel)
 }
 
 // writeFile replaces the file at real with text: it writes a temporary file next to it and renames

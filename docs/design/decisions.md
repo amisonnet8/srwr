@@ -1,95 +1,97 @@
-# 設計上の判断と理由
+# Design decisions and their reasons
 
-**読者**：srwr の作りを知りたい人、開発に加わる人。「なぜそうなっているか」を知りたいとき。決まりそのものは [reference/](../reference/cli.md)、範囲トークンの理由は [token.md](token.md)。
+[日本語](decisions_ja.md)
 
-## 編集の仕組み
+**Readers**: people who want to know how srwr is built, and people who join the development. Read this when you want to know "why is it like this". The rules themselves are in [reference/](../reference/cli.md); the reasons for the selection token are in [token.md](token.md).
 
-### Edit / Write は、指示ではなく設定で禁止する
+## How editing works
 
-最大のリスクは、「AI が必ず2コマンド経由で編集するか」を、指示文書だけで守らせることだった。Claude Code なら、プロジェクトの `.claude/settings.json` で組み込みの編集ツールを禁止できる。
+### Edit / Write are forbidden by settings, not by instructions
+
+The biggest risk was that "the AI always edits through the two commands" would be enforced by an instruction document alone. In Claude Code, the project's `.claude/settings.json` can forbid the built-in editing tools.
 
 ```json
 { "permissions": { "deny": ["Edit", "Write", "MultiEdit", "NotebookEdit"] } }
 ```
 
-これでファイルを変える正規の手段は srwr だけになる。確かめたいことも、「ルールを守るか」から「**2コマンドだけで仕事ができるか**」に変わる。Bash 経由の編集（`sed -i`、リダイレクトなど）は塞げないので、`external` で検知して見せる。これが厳格モード（[cli.md](../reference/cli.md)）。利用者が好むなら、禁止せず hook で記録する緩いモードも選べる。
+With this, srwr is the only proper way to change a file. What there is to check also changes, from "does it obey the rule" to "**can the work be done with just two commands**". Editing through Bash (`sed -i`, redirects, and so on) cannot be shut out, so it is detected as `external` and shown. This is strict mode ([cli.md](../reference/cli.md)). If the user prefers, lenient mode is also available: nothing is forbidden, and a hook records instead.
 
-### `select` を `replace` の前提にする
+### `select` is the precondition of `replace`
 
-中身を返すだけの `select` は、AI から見ると「手間だけで得るものがない」呼び出しになり、省略されやすい。範囲トークン方式では、`select` しないと `replace` できない。`select` は省略できない手順になり、テープには必ず「見る → 変える」が残る。AI にとっても、行番号やハッシュを自分で扱わずに、受け取った文字列をそのまま渡すだけで済む。
+A `select` that only returns content looks to the AI like a call with "cost and no gain", and tends to be skipped. With the selection token, `replace` is impossible without `select`. `select` becomes a step that cannot be skipped, so the tape always holds "look, then change". For the AI too, there is no need to handle line numbers or hashes: it just passes the string it received.
 
-### 行番号のずれは、srwr が吸収する
+### srwr absorbs the shifting of line numbers
 
-行番号で範囲を指定すると、編集を重ねるうちにずれる。Claude Code の Edit が `old_string` 方式を採っているのもこのため。srwr では、トークンに発行時点の `seq` を埋め込み、その後の編集履歴から自動で補正する。そのうえで内容のハッシュを照合し、一致しなければ編集しない（[token.md](token.md)）。
+When a range is given by line numbers, it drifts as edits pile up. This is why the Edit of Claude Code takes the `old_string` form. In srwr the token carries the `seq` at the time it was issued, and srwr corrects the numbers automatically from the later edit history. Then it checks the hash of the content, and edits nothing if it does not match ([token.md](token.md)).
 
-### コマンドを2つに絞る
+### Only two commands
 
-カーソル移動系・取得系・検索系は持たない。検索や読み取りは、AI がもともと持つ Read・grep に任せる。srwr の責務は「実際にファイルが変わる瞬間と、その直前に見ている範囲を記録すること」だけ。可視化が単純になるだけでなく、似たツールが多いと LLM は選択を誤りやすいので、AI の利用精度にも効く。
+There are no commands for moving a cursor, fetching or searching. Searching and reading are left to the Read and grep the AI already has. srwr's responsibility is only "to record the moment a file really changes, and the range being looked at just before". This keeps visualization simple, and also helps the AI use the tool well, because an LLM tends to choose wrongly when there are many similar tools.
 
-### `why` を必須にする
+### `why` is required
 
-`why` 付きの操作列でないと、人は AI の作業を理解しにくい。任意にすると、この価値が失われ、実際にも抜け落ちる。言語は、ユーザーとの会話と同じにする。人が読めない言語で書かれると、効果が出ない。
+Without a series of operations with a `why`, a person can hardly understand the AI's work. If it were optional, this value would be lost, and in practice it would be left out. The language is the same as the conversation with the user. If it is written in a language people cannot read, it has no effect.
 
-### 調べる過程も、同じテープに載せる
+### The investigation goes on the same tape
 
-AI は、Bash・Read で調べ終えてから、直す箇所だけを `select` することが多く、調べる過程がテープの外に残る。そこで、hook で既存ツールの操作も同じテープに記録する。`srwr mcp` と `srwr hook` を1つのバイナリにまとめ、同じテープに書く。`why` のない（`null` の）コマとして表示される。
+The AI often finishes investigating with Bash and Read and then `select`s only the place to fix, so the investigation stays outside the tape. Therefore a hook records the operations of the existing tools on the same tape. `srwr mcp` and `srwr hook` are one binary and write to the same tape. They are shown as frames without a `why` (`null`).
 
-## テープと実ファイル
+## The tape and the real files
 
-### 先に実ファイルを書き、そのあとテープに追記する
+### Write the real file first, then append to the tape
 
-途中で落ちても、次に触れたとき実ファイルとテープの食い違いが `external` として見える。逆の順だと、テープにあるのに実ファイルにはない操作が残る。
+Even if the process dies in between, the next time srwr touches the files, the mismatch between the real file and the tape shows up as `external`. In the opposite order, an operation would stay on the tape that is not in the real file.
 
-### テープが内容を持つファイルだけを `external` の対象にする
+### Only files whose content the tape holds are subject to `external`
 
-一度も触れないファイルの変更は、基準がないので見えない。基準を持つ（セッション開始時に全ファイルのハッシュを持つ）と、テープが大きくなる。限界として受け入れている（[limitations.md](limitations.md)）。
+A change to a file that was never touched cannot be seen, because there is no base. Holding a base (the hash of every file at the start of a session) would make the tape big. This is accepted as a limit ([limitations.md](limitations.md)).
 
-### 外部変更は、中身が見える形で挟む
+### An external change is inserted in a form that shows its content
 
-ラベルだけでは、何が変わったか分からない。そのため、`external` と `final` は左右に並べた差分で見せる。ラベルは見出し（タブのタイトル）に出す。`why` の行と同じ形の行は、差分の画面では作れない。
+A label alone does not tell what changed. So `external` and `final` are shown as a side-by-side diff. The label goes in the heading (the tab title). A line shaped like the `why` line cannot be made on a diff screen.
 
-### 表示サーバーは、テープに書かれたパスを信用しない
+### The view server does not trust the paths written on the tape
 
-共有されたテープに、任意のファイルを読ませないため。最後の差分で今のファイルを読むとき、作業場の外を指すパス（`..`・絶対パス・外を指すシンボリックリンク）は読まず、「存在しない」として扱う。
+So that a shared tape cannot make it read an arbitrary file. When the current file is read for the final diff, a path that points outside the workspace (`..`, an absolute path, a symbolic link that points outside) is not read and is treated as "does not exist".
 
-## 表示の仕組み
+## How display works
 
-### テープの形式は Go の中だけの約束にする
+### The tape format is a promise inside Go only
 
-テープを読んでコマを組み立てる処理を、エディタごとに持つと、VSCode と Vim で食い違い、形式を変えるたびに全部を直すことになる。そこで、読む側を表示サーバー（Go）に1つに集め、エディタとの約束は [プロトコル](../reference/protocol.md) だけにした。テープの形式の変更は、サーバーの中で吸収する。
+If each editor had its own code to read the tape and build the frames, VSCode and Vim would disagree, and every change of the format would mean fixing everything. So the reading side is gathered in one place, the view server (Go), and the promise with the editors is only the [protocol](../reference/protocol.md). A change of the tape format is absorbed in the server.
 
-### 通信は改行区切りの JSON
+### Communication is newline-delimited JSON
 
-LSP 形式（ヘッダー付き）は、Vim が標準では扱えない。改行区切りなら、Vim 標準の `job` と `nl` モードのチャンネルでそのまま扱え、VSCode もライブラリなしで書ける。MCP と同じ形式なので、実装も共有できる。
+The LSP format (with headers) is not handled by Vim as it is. Newline-delimited JSON is handled by Vim's own `job` and a channel in `nl` mode as it is, and VSCode can write it without a library. It is the same format as MCP, so the implementation can be shared.
 
-### 1つのクライアントに1つのサーバー
+### One server per client
 
-共有のデーモンにはしない。共有の媒体は、テープそのもの。
+It is not a shared daemon. What is shared is the tape itself.
 
-### 外部依存を増やさない
+### No more external dependencies
 
-Go は標準ライブラリだけ（MCP も表示サーバーも自前の JSON-RPC、ライブはポーリング）。VSCode 拡張はランタイム依存ゼロ。Vim は他のプラグインに頼らない。配布が単純になり（`go install` で入る、cgo なし）、依存の脆弱性・ライセンスを気にしなくてよい。
+Go uses only the standard library (MCP and the view server use our own JSON-RPC, and live uses polling). The VSCode extension has zero runtime dependencies. Vim relies on no other plugin. Distribution is simple (`go install` is enough, no cgo), and there is no need to worry about the vulnerabilities and licenses of dependencies.
 
-## UI の判断
+## UI decisions
 
-画面の仕様は [vscode.md](../reference/vscode.md)・[vim.md](../reference/vim.md)。ここには、そう決めた理由を書く。
+The screen specifications are in [vscode.md](../reference/vscode.md) and [vim.md](../reference/vim.md). This part says why they were decided so.
 
-| 決めたこと | 理由 |
+| Decision | Reason |
 |---|---|
-| **見るのはコマ送りだけ**。自動再生・速度・実時間のボタンはない | 見る人は、理由を読みながら1つずつ進める。動きは理解の助けにならず、確かめる部分も増える |
-| **select は青、replace は橙**の2色。外部変更・録画後の丸だけ紫 | 少ない色で、種類を見分けられる |
-| **理由の行は、範囲の直前に、実際の行として差し込む**（濃い背景に白の太字）。範囲は同じ色の薄い色 | 理由とコードを、同じ場所で続けて読める。差し込むのは仮想ドキュメントなので、実ファイルには影響しない。代わりに行番号が合わなくなるので、実ファイルどおりの番号を自前で出す |
-| **差分は左右に並べ、変わった行だけ塗る（前＝青、後＝橙）** | 何が変わったかが、中身で分かる。VSCode の標準の差分画面は色を替えられないので、左右2つのエディタに自前の色を付ける |
-| **操作一覧は、1から順の平らな一覧** | 親子の字下げは見づらく、使いどころがない。番号は、下のバーの位置と同じ |
-| **「戻る」「進む」と位置を、いつも出す**。行けない側は消さずに薄くする | 位置が動かないので、操作を覚えやすい |
-| **ライブは録画と同じ画面**。追っている間は「● LIVE」、古いコマでは「LIVE に戻る（新着 N）」 | 別の画面を覚えなくてよい。古いコマを読んでいる最中に、画面を動かさない |
-| **見た目の設定は持たない**（設定は `srwr` の場所だけ） | 同じ見た目で共有でき、設定の組み合わせを確かめなくてよい |
-| **実ファイルは開かない。ジャンプの表示もない** | テープだけで完結する。足りない情報は、コマの列に足す |
-| **最後の差分を、差分のコマの1つとして残す** | 録画のあとのファイルの変更を、同じ見方で確かめられる |
+| **Viewing is frame-by-frame stepping only.** There is no autoplay, speed or real-time button | The viewer steps one frame at a time while reading the reason. Motion does not help understanding, and adds things to verify |
+| **select is blue, replace is orange**, two colors. Only the dots of external and final changes are purple | A few colors are enough to tell the kinds apart |
+| **The reason line is inserted before the range, as a real line** (white bold text on a dark background). The range has the lighter version of the same color | The reason and the code can be read one after the other in the same place. What is inserted is in a virtual document, so the real file is not affected. In return the line numbers would not match, so the real file's own numbers are drawn by the extension |
+| **A diff is side by side, with only the changed lines painted (before = blue, after = orange)** | What changed is clear from the content. The standard diff screen of VSCode cannot change its colors, so two editors, left and right, get our own colors |
+| **The operation list is flat, numbered from 1** | Indenting by parent and child is hard to read and has no use. The number is the same as the position in the bottom bar |
+| **"Back" and "Forward" and the position are always shown.** The side that cannot be taken is dimmed, not hidden | The position does not move, so the operations are easy to remember |
+| **Live is the same screen as replay.** "● LIVE" while following, "Back to LIVE (N new)" on an old frame | There is no other screen to learn. The screen does not move while an old frame is being read |
+| **There are no settings for the look** (the only setting is where `srwr` is) | The same look can be shared, and combinations of settings need not be checked |
+| **Real files are not opened. There is no jump display** | The tape is self-contained. What is missing is added to the frames |
+| **The final diff stays as one of the diff frames** | A change to the files after the recording can be checked in the same way |
 
-## テストの考え方
+## How to think about tests
 
-- Go は表駆動。**わざとロジックを壊して、テストが落ちることを確かめる**。`t.TempDir()` の中で行う
-- 表示サーバーは、全 fixture のテープで、コマの列が固定の正解データと一致することを確かめる
-- 拡張のテストは、Go が書いた**実物のテープ**を fixture にする。手で書いたテープを使わない
-- 見た目は自動のテストでは確かめにくい。画面の中身（文書、色の付け方、画面の数）はテストで、見た目そのものは目で確かめる
+- Go tests are table-driven. **Break the logic on purpose and check that the tests fail.** They run inside `t.TempDir()`
+- For the view server, every fixture tape is checked: the frames must match the fixed golden data
+- The extension's tests use **real tapes** written by Go as fixtures. Hand-written tapes are not used
+- The look is hard to check with automatic tests. The content of the screen (documents, how colors are applied, the number of screens) is tested; the look itself is checked by eye

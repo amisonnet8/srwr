@@ -26,9 +26,17 @@
 
 ## 書き方
 
-- 文書は**日本語**で書く
+- **`docs/` の文書は英語が基準。** 日本語版は、同じ名前に `_ja` を付ける（`reference/cli.md` と `reference/cli_ja.md`）。2つは対で、どちらも先頭（3行目）に相手へのリンクを置く。**仕様を直すときは、同じ変更の中で両方を直す**（`internal/docs` のテストが、対になっていること・英語版に日本語が混ざっていないことを確かめる）
+- `docs/examples/` の英語版は英語の出力、日本語版は日本語の入力（`why` など）で、サーバーが返す文言（MCP のエラーなど）は、どちらも英語。両方を `internal/docs` のテストが本物と照合する
+- `dev/`・`.claude/rules/`・`CLAUDE.md`・mtqg は、開発のうちうちなので日本語のまま。人間とのやり取りも日本語
 - コード中のコメントは英語（Go・TypeScript・Vim script・シェルとも）
-- UI の文言は日本語。VSCode と Vim で同じ文言にする。`docs/reference/vscode.md`・`vim.md`（文言の一覧は `handoff/design/DESIGN.md` 10章）に従う
+- **利用者に見せる文言（CLI の出力・usage・エラー文・VSCode と Vim の画面）は、英語が既定で、日本語に切り替えられる**。VSCode と Vim で同じ文言にする。`docs/reference/vscode.md`・`vim.md`（文言の一覧は `handoff/design/DESIGN.md` 10章）に従う
+  - Go：`internal/lang`（環境変数 `SRWR_LANG` が `ja` で始まれば日本語）の `Pick`・`Sprintf`。英語と日本語を、使う場所に並べて書く
+  - VSCode：`vscode.env.language`（`src/lang.ts` の `pick`）。`package.json` の文言は `package.nls.json`（英語）と `package.nls.ja.json`
+  - Vim：`$SRWR_LANG`（`autoload/srwr/lang.vim` の `Pick`）
+  - **AI が読むもの（MCP のツールの説明・エラー文）、hook の注記、表示サーバーのエラー文は、英語だけ**。人に見せるエラー（テープが無い、など）は、クライアントがエラーコードから自分の言語の文を作る
+  - 文言を足すときは、英語と日本語の両方を書く。テストは、英語（既定）と `SRWR_LANG=ja` の両方で確かめる
+- **時刻**：テープは UTC（`…Z`）で持ち、人に見せるときにその機械の時間帯（`TZ`）に直す。古い `+09:00` のテープも読める
 - 文は短く、1文1つのこと。結論を先に書く
 - 用語は `.claude/rules/naming.md` の表に揃える
 - 表と箇条書きを使ってよい。ただし、理由は文で書く

@@ -100,7 +100,7 @@ func (c *Core) selectIn(tx *session.Tx, rel string, in SelectInput) (*SelectResu
 	if in.StartLine < 1 || in.StartLine > n+1 || in.EndLine < in.StartLine-1 || in.EndLine > n {
 		return nil, &Error{
 			Code:    CodeInvalidRange,
-			Message: fmt.Sprintf("%s は %d 行。startLine=%d endLine=%d は範囲外", rel, n, in.StartLine, in.EndLine),
+			Message: fmt.Sprintf("%s has %d lines; startLine=%d endLine=%d is out of range", rel, n, in.StartLine, in.EndLine),
 			Actual:  map[string]int{"lineCount": n},
 		}
 	}
@@ -126,13 +126,13 @@ func (c *Core) selectIn(tx *session.Tx, rel string, in SelectInput) (*SelectResu
 // Replace puts new text in the range a token stands for.
 func (c *Core) Replace(in ReplaceInput) (*ReplaceResult, *Error) {
 	if strings.TrimSpace(in.Selection) == "" {
-		return nil, newError(CodeInvalidInput, "selection が空です")
+		return nil, newError(CodeInvalidInput, "selection is empty")
 	}
 	if err := checkWhy(in.Why); err != nil {
 		return nil, err
 	}
 	if strings.ContainsRune(in.NewText, '\r') {
-		return nil, newError(CodeInvalidInput, "newText に CR を含めることはできません（改行は LF だけ）")
+		return nil, newError(CodeInvalidInput, "newText must not contain CR (line breaks are LF only)")
 	}
 	var res *ReplaceResult
 	cerr := c.run(func(tx *session.Tx) error {
@@ -149,11 +149,11 @@ func (c *Core) Replace(in ReplaceInput) (*ReplaceResult, *Error) {
 func (c *Core) replaceIn(tx *session.Tx, in ReplaceInput) (*ReplaceResult, error) {
 	tok, err := token.Decode(in.Selection, tx.TapeID(), tx.Key())
 	if err != nil {
-		return nil, newError(CodeInvalidSelection, "範囲トークンが不正です。書き換えられたか、別のセッションで発行されたものです。select し直してください")
+		return nil, newError(CodeInvalidSelection, "the selection token is not valid: it was altered, or issued in another session. Call select again")
 	}
 	rel, ok := findFile(tx.State(), tok.FileHash)
 	if !ok {
-		return nil, newError(CodeInvalidSelection, "範囲トークンのファイルがテープにありません。select し直してください")
+		return nil, newError(CodeInvalidSelection, "the file of the selection token is not on the tape. Call select again")
 	}
 	t, cerr := c.readTarget(rel)
 	if cerr != nil {
@@ -167,7 +167,7 @@ func (c *Core) replaceIn(tx *session.Tx, in ReplaceInput) (*ReplaceResult, error
 	if !ok {
 		return nil, &Error{
 			Code:    CodeSelectionStale,
-			Message: "select 後に、その範囲と重なる編集があった。select し直してください",
+			Message: "an edit overlapped the range after the select. Call select again",
 			Actual:  rangeLines(t.text, a, b),
 		}
 	}
@@ -176,7 +176,7 @@ func (c *Core) replaceIn(tx *session.Tx, in ReplaceInput) (*ReplaceResult, error
 	if a < 1 || b > n || b < a-1 || token.Hash4(oldText) != tok.TextHash {
 		return nil, &Error{
 			Code:    CodeSelectionMismatch,
-			Message: "行番号を補正しても、範囲の内容が select したときと違う（srwr の外で変更された可能性がある）。内容を確認して select し直してください",
+			Message: "even with the line numbers corrected, the range differs from what select returned (it may have been changed outside srwr). Check the content and call select again",
 			Actual:  rangeLines(t.text, a, b),
 		}
 	}
@@ -215,7 +215,7 @@ func (c *Core) observeTarget(tx *session.Tx, rel, detectedBy string, t target) e
 		if err := Observe(tx, rel, detectedBy, nil); err != nil {
 			return err
 		}
-		return newError(CodeFileNotFound, "%s が見つからない", rel)
+		return newError(CodeFileNotFound, "%s not found", rel)
 	}
 	return Observe(tx, rel, detectedBy, &t.text)
 }
@@ -233,7 +233,7 @@ func findFile(st *tape.State, fileHash [4]byte) (string, bool) {
 
 func checkWhy(why string) *Error {
 	if strings.TrimSpace(why) == "" {
-		return newError(CodeInvalidInput, "why は必須です（空白だけも不可）。なぜこうするのかを1文で書いてください")
+		return newError(CodeInvalidInput, "why is required (blank is not allowed). Say in one sentence why you are doing this")
 	}
 	return nil
 }

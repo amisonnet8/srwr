@@ -1,0 +1,14 @@
+{
+  "extension.description": "AI の操作（srwr のテープ）を、理由と一緒にコマ送りで見る",
+  "srwr.openTape.title": "srwr: テープを開く",
+  "srwr.closeTape.title": "srwr: 閉じる（テープ・ライブ）",
+  "srwr.stepForward.title": "srwr: 進む",
+  "srwr.stepBack.title": "srwr: 戻る",
+  "srwr.goto.title": "srwr: この操作へ移動",
+  "srwr.liveStart.title": "srwr: ライブ視聴を開始",
+  "srwr.liveStop.title": "srwr: ライブ視聴を停止",
+  "srwr.liveLatest.title": "srwr: LIVE に戻る",
+  "view.ops.name": "操作一覧",
+  "view.ops.welcome": "テープが開かれていません。\n[テープを開く](command:srwr.openTape)\n[ライブ視聴を開始](command:srwr.liveStart)",
+  "config.path.description": "srwr のバイナリ（表示サーバー）の場所。既定の「srwr」は、PATH から探す。見つからないときは、絶対パスを指定する。"
+}

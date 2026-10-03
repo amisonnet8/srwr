@@ -28,6 +28,9 @@
 - `:file` でバッファの名前を替えると、古い名前が非表示のバッファで残る。`bwipeout` で片付ける
 - `win_execute()` に渡す文字列は Vim9 として動く。`let` は E1126 になるので `legacy let`。関数参照の変数名は大文字で始める。`hlget()` は名前を1つずつ渡す
 - ラベルや文言は、コマの `file`・`range` から作る。クライアントはテープの形式を知らない
+- **文言は英語が既定。** `autoload/srwr/lang.vim` の `Pick(en, ja)` で、環境変数 `$SRWR_LANG` が `ja` で始まれば日本語。呼ぶたびに読むので、テストが途中で替えられる。テストは `helpers.vim` の `Setup()` が `SRWR_LANG=ja`・`TZ=Asia/Tokyo` に固定し、英語は `test_lang.vim` が確かめる
+- **時刻**：一覧の時刻は、RFC 3339（`Z` か `+09:00`）を自前で瞬間に直して `strftime()`（その機械の時間帯）。`strptime()` は Windows に無いので使わない
+- **ステータス行が窓に収まらないとき**は、ファイルと範囲を切る（`%<` を `where` の前に置く）。既定の切り方（行頭から切る）だと、英語では「srwr」が欠けて位置が読めなくなった
 - **ユーザーコマンドの中からは、スクリプトの `import` が見えない**（`command! SrwrNext ui.Next()` は E121）。`plugin/srwr.vim` の中に `def Next()` を書き、`command! SrwrNext call <SID>Next()` で呼ぶ。さらに **`vim9script noclear`** にする（同じスクリプトをもう一度読むと、普通は `def` が消えて、コマンドだけが残る）
 - **`'compatible'`（`vim -u NONE`）では行の継続（行頭の `\`）が使えない。** `plugin/srwr.vim` の最初の検査は1行で書く
 - **autocmd の中は `Setup()` でなく `call Setup()`**（`autocmd OptionSet background Setup()` は何も起こさない）。`-Es` の Vim は `OptionSet` を送らないので、テストでは `doautocmd OptionSet background` を自分で送る
@@ -37,7 +40,7 @@
 - **コマごとに、先頭（`topline: 1`）から表示してから、見えなければ動かす。** 前のコマの位置が残ると、同じコマが違う画面になる。動かすときは `zz` と同じ（理由の行を真ん中、ファイルの終わりより下は見せない）。承認した画像はこの動き
 - `hlset()` の `default: true` は、設定のあるグループを替えない。自分が付けた値をおぼえておき（`applied`）、それと同じ間だけ `background` の変更で付け直す。**付けた値を、おぼえる前に利用者が替えていても、おぼえない**（おぼえると、次の `Setup()` で利用者の色を消す）
 - **`WinResized` は 9.0.0784 に無い**（E216）。窓の大きさの変化は `VimResized,WinScrolled` で受ける。最も古い Vim で動かして初めて分かった
-- **Vim の文言は言語で替わる**：タブ行の `[無名]`／`[No Name]`、diff の折りたたみの `行`／`lines`。画面の比較では、タブ行は比べず、折りたたみの文言は自前（`diff.FoldText`）にして、テストは `LC_ALL=C.UTF-8` で動かす
+- **Vim 自身の文言は、Vim の言語で替わる**：タブ行の `[無名]`／`[No Name]`、diff の折りたたみの `行`／`lines`。画面の比較では、タブ行は比べず、折りたたみの文言は srwr の言語（`diff.FoldText`）にして、テストは `LC_ALL=C.UTF-8` で動かす
 - 仮想テキストの本文は `prop_list()` で取れない。行番号の文字は、疑似端末の画面（`term_scrape()`）で確かめる
 - Vim 9.0.0784 の環境は、`pkill` が効かないことがある。サーバーを止めるテストは `server.Pid()` を `kill` する
 
@@ -61,7 +64,7 @@
 - テストは、失敗したら `cquit`（終了コード 1）、成功したら `qall!` で終わる。`v:errors` を使い、最後に空でなければ失敗にする
 - **スクリプトが途中でエラーになると、Ex モードで標準入力を待って固まる。** そのため `-c 'cquit 2' </dev/null` を付けて動かす（`qsoku vim-test` はそうしてある）。`-V1` でエラーの内容が標準エラー出力に出る
 - 表示サーバーを使うテストは、`qsoku bin` で作った `bin/srwr` を起動する（`qsoku vim-test` が先に作る）
-- **画面の取得と基準**（部品は `internal/uicheck/vimcap.go` の `CaptureVim`。`vim/screen_test.go` と `qsoku ui-check` が使う）：疑似端末（`script -qec`）の外側の Vim が、`term_start()` で内側の Vim（srwr-view.vim）を 140桁×50行の端末で動かし、`term_scrape()` でコマごとの画面を取る（`vim/test/screen/capture.vim`）。待ちは画面の条件（`sleep` で時間を待たない）。基準 `vim/test/baseline/*.json` は、承認した画像（`handoff/design/images/vim/`）から `go run ./tools/ui-check vim-baseline` で作ったもので、文字と背景は全部、前景は srwr が決める色（理由の行・範囲・丸・ステータス行）だけを比べる。Vim の構文の色は版で変わるので比べない。基準を替えるときは、理由を書いて人間の了承をもらう（`vim/test/baseline/README.md`）
+- **画面の取得と基準**（部品は `internal/uicheck/vimcap.go` の `CaptureVim`。`vim/screen_test.go` と `qsoku ui-check` が使う）：疑似端末（`script -qec`）の外側の Vim が、`term_start()` で内側の Vim（srwr-view.vim）を 140桁×50行の端末で動かし、`term_scrape()` でコマごとの画面を取る（`vim/test/screen/capture.vim`）。待ちは画面の条件（`sleep` で時間を待たない）。基準 `vim/test/baseline/<言語>/*.json`（`ja/` は、承認した画像（`handoff/design/images/vim/`）から `go run ./tools/ui-check vim-baseline` で作ったもの。`en/` は R10.5 のゲートで承認した英語の画面を `qsoku ui-accept` で取ったもの）で、文字と背景は全部、前景は srwr が決める色（理由の行・範囲・丸・ステータス行）だけを比べる。Vim の構文の色は版で変わるので比べない。基準を替えるときは、理由を書いて人間の了承をもらう（`vim/test/baseline/README.md`）
 - `term_scrape()` が返す文字は、全角が1つで幅 2。反転（`reverse`）は、色を入れ替えて見た目どおりにして記録する（ステータス行）
 - 承認した画像の背景は、一番多い色が全体の下地になる。`Normal` の背景とは限らない（範囲が画面いっぱいのコマ）。`Normal` の背景は呼ぶ側が渡す
 - **画面なしの Vim では、スクロール位置（`topline`）や見た目は確かめられない。** 疑似端末で本物の Vim を動かして `term_scrape()` で取る（R5 の画面の取得。例：`TERM=xterm script -qec "vim -Nu NONE -S 確認用.vim" /dev/null`）

@@ -3,7 +3,7 @@
 // (qsoku ui-live) is the same for the live view only; `ui-check accept [ng <note>]` (qsoku ui-accept) records the decision.
 // `ui-check hook-try` (qsoku hook-try) and `ui-check init-try` (qsoku init-try) are the human checks of R7 and R9.
 // `ui-check open <vscode|vim> <why-basic|external|no-why|live>` is called by `qsoku ui-open`.
-// `ui-check vim-baseline <images> <out>` makes vim/test/baseline from the approved Vim images (done once, at R5).
+// `ui-check vim-baseline <images> <out>` makes vim/test/baseline/ja from the approved Vim images (done once, at R5).
 package main
 
 import (
@@ -115,7 +115,7 @@ func openVSCode(root, name string, out io.Writer) error {
 	if err := command(root, out, "code", "--install-extension", vsix, "--force"); err != nil {
 		return fmt.Errorf("installing the extension: %w", err)
 	}
-	if err := command(root, out, "code", "-n", workspace); err != nil {
+	if err := command(root, out, "code", "-n", "--locale", "en", workspace); err != nil {
 		return fmt.Errorf("opening VSCode: %w", err)
 	}
 	guide(out, name, workspace)
@@ -140,12 +140,12 @@ func command(dir string, out io.Writer, name string, args ...string) error {
 func guide(out io.Writer, name, workspace string) {
 	_, _ = fmt.Fprintf(out, "\n作業場：%s\n", workspace)
 	if name == "live" {
-		_, _ = fmt.Fprintln(out, "【ライブ】開いた VSCode で、左端のカセット →「ライブ視聴を開始」。")
-		_, _ = fmt.Fprintln(out, "見るところ：追っている間は「● LIVE」で、ちらつかず、すぐ出る。「戻る」を押すと「LIVE に戻る（新着 N）」が橙で出る。")
+		_, _ = fmt.Fprintln(out, "【ライブ】開いた VSCode で、左端のカセット →「Start live view」（VSCode の表示は英語）。")
+		_, _ = fmt.Fprintln(out, "見るところ：追っている間は「● LIVE」で、ちらつかず、すぐ出る。「Back」を押すと「Back to LIVE (N new)」が橙で出る。")
 		return
 	}
 	t := tapes[name]
-	_, _ = fmt.Fprintf(out, "【%s】開いた VSCode で、左端のカセット →「テープを開く」→「%s」を選ぶ。\n", name, t.Started)
+	_, _ = fmt.Fprintf(out, "【%s】開いた VSCode で、左端のカセット →「Open a tape」→「%s」を選ぶ（VSCode の表示は英語）。\n", name, t.Started)
 	_, _ = fmt.Fprintf(out, "見るところ：%s。パネル・下のバー・タブ・アイコンが崩れていないか。\n", t.Look)
 	_, _ = fmt.Fprintln(out, "light で見るとき：Ctrl+K Ctrl+T →「Light Modern」。")
 }

@@ -1,6 +1,7 @@
 // Talks to the display server (`srwr view-server`, docs/reference/protocol.md): a child process, newline-delimited
 // JSON-RPC 2.0 on its standard input and output. This file does not import vscode, so tests can run it as it is.
 import { ChildProcessWithoutNullStreams, spawn } from "node:child_process";
+import { pick } from "./lang";
 import { Frame, toFrame } from "./timeline";
 
 export const PROTOCOL_VERSION = 1;
@@ -120,7 +121,7 @@ export class ServerProcess implements ServerClient {
     this.onFrame = undefined;
     const child = this.child;
     this.child = undefined;
-    this.failAll(new ServerError("server_exited", "拡張は終了している"));
+    this.failAll(new ServerError("server_exited", pick("the extension has shut down", "拡張は終了している")));
     if (child) {
       child.stdin.write(JSON.stringify({ jsonrpc: "2.0", id: ++this.nextId, method: "shutdown", params: {} }) + "\n");
       child.stdin.end();
@@ -138,7 +139,10 @@ export class ServerProcess implements ServerClient {
         if (e instanceof ServerError && e.code === "protocol_mismatch") {
           throw new ServerError(
             "protocol_mismatch",
-            `srwr（${this.command}）と、この拡張のバージョンが合っていません（拡張は protocolVersion ${PROTOCOL_VERSION}）。どちらかを更新してください。`,
+            pick(
+              `srwr (${this.command}) and this extension do not match (the extension is protocolVersion ${PROTOCOL_VERSION}). Update one of them.`,
+              `srwr（${this.command}）と、この拡張のバージョンが合っていません（拡張は protocolVersion ${PROTOCOL_VERSION}）。どちらかを更新してください。`,
+            ),
           );
         }
         throw e;
@@ -148,7 +152,7 @@ export class ServerProcess implements ServerClient {
 
   private start(): Promise<void> {
     if (this.disposed) {
-      return Promise.reject(new ServerError("server_exited", "拡張は終了している"));
+      return Promise.reject(new ServerError("server_exited", pick("the extension has shut down", "拡張は終了している")));
     }
     if (this.child) {
       return Promise.resolve();
@@ -167,7 +171,7 @@ export class ServerProcess implements ServerClient {
       try {
         child = spawn(this.command, args, { stdio: ["pipe", "pipe", "pipe"], windowsHide: true });
       } catch (e) {
-        reject(new ServerError("binary_not_found", `srwr を起動できません（${this.command}）: ${(e as Error).message}`));
+        reject(new ServerError("binary_not_found", pick(`Cannot start srwr (${this.command}): ${(e as Error).message}`, `srwr を起動できません（${this.command}）: ${(e as Error).message}`)));
         return;
       }
       let settled = false;
@@ -177,7 +181,7 @@ export class ServerProcess implements ServerClient {
         resolve();
       });
       child.once("error", (e: NodeJS.ErrnoException) => {
-        const err = new ServerError("binary_not_found", `srwr を起動できません（${this.command}）: ${e.code ?? e.message}`);
+        const err = new ServerError("binary_not_found", pick(`Cannot start srwr (${this.command}): ${e.code ?? e.message}`, `srwr を起動できません（${this.command}）: ${e.code ?? e.message}`));
         if (!settled) {
           settled = true;
           reject(err);
@@ -193,7 +197,7 @@ export class ServerProcess implements ServerClient {
         }
         this.buffer = "";
         const tail = this.stderrTail.join("\n");
-        this.failAll(new ServerError("server_exited", `表示サーバーが終了しました（${signal ?? `コード ${code}`}）${tail ? `\n${tail}` : ""}`));
+        this.failAll(new ServerError("server_exited", pick(`The view server exited (${signal ?? `code ${code}`})${tail ? `\n${tail}` : ""}`, `表示サーバーが終了しました（${signal ?? `コード ${code}`}）${tail ? `\n${tail}` : ""}`)));
       });
       child.stdout.setEncoding("utf8");
       child.stdout.on("data", (chunk: string) => this.onData(chunk));
@@ -212,13 +216,13 @@ export class ServerProcess implements ServerClient {
   private request(method: string, params: unknown): Promise<unknown> {
     const child = this.child;
     if (!child) {
-      return Promise.reject(new ServerError("server_exited", "表示サーバーが動いていない"));
+      return Promise.reject(new ServerError("server_exited", pick("the view server is not running", "表示サーバーが動いていない")));
     }
     const id = ++this.nextId;
     return new Promise<unknown>((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(id);
-        reject(new ServerError("request_timeout", `表示サーバーが応答しません（${method}）`));
+        reject(new ServerError("request_timeout", pick(`The view server does not respond (${method})`, `表示サーバーが応答しません（${method}）`)));
       }, this.cfg.timeoutMs ?? 15000);
       this.pending.set(id, { method, resolve, reject, timer });
       child.stdin.write(JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n");
@@ -245,7 +249,7 @@ export class ServerProcess implements ServerClient {
     try {
       m = JSON.parse(line) as Message;
     } catch {
-      this.cfg.log?.(`読めないメッセージ: ${line.slice(0, 200)}`);
+      this.cfg.log?.(`unreadable message: ${line.slice(0, 200)}`);
       return;
     }
     if (m.id === undefined) {

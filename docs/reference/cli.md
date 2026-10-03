@@ -1,68 +1,72 @@
-# コマンドライン（srwr）
+# The command line (srwr)
 
-**読者**：srwr を使う人。
+[日本語](cli_ja.md)
 
-`srwr` は Go の単一バイナリ。サブコマンドで役割が分かれる。
+**Readers**: people who use srwr.
 
-| コマンド | 使う人 | 役割 |
+`srwr` is a single Go binary. Its subcommands divide the roles.
+
+| Command | Used by | Role |
 |---|---|---|
-| `srwr mcp` | AI（MCP クライアント） | MCP サーバー（stdio）。[`select` / `replace`](mcp.md) を提供する |
-| `srwr hook` | Claude Code の hook | Read・Bash・Grep・Edit を、`srwr mcp` と同じ[テープ](tape.md)に記録する |
-| `srwr view-server` | エディタ（VSCode 拡張・Vim スクリプト） | 表示サーバー。人は直接使わない（[protocol.md](protocol.md)） |
-| `srwr view [テープ]` | 人 | Vim で再生する（[vim.md](vim.md)） |
-| `srwr init` | 人 | 作業場を srwr 用に準備する |
-| `srwr tapes` | 人 | テープの一覧・整理 |
+| `srwr mcp` | The AI (an MCP client) | The MCP server (stdio). Provides [`select` / `replace`](mcp.md) |
+| `srwr hook` | The hook of Claude Code | Records Read, Bash, Grep and Edit on the same [tape](tape.md) as `srwr mcp` |
+| `srwr view-server` | The editors (the VSCode extension, the Vim script) | The view server. People do not use it directly ([protocol.md](protocol.md)) |
+| `srwr view [tape]` | People | Replays in Vim ([vim.md](vim.md)) |
+| `srwr init` | People | Sets up a workspace for srwr |
+| `srwr tapes` | People | Lists and tidies tapes |
 
-`srwr --version` でバージョン、`srwr --help` で使い方が出る。
+`srwr --version` shows the version and `srwr --help` shows the usage.
 
-## 導入
+What srwr prints is English by default. Set the environment variable `SRWR_LANG=ja` for Japanese ([settings.md](settings.md)).
+
+## Installation
 
 ```
 go install github.com/amisonnet8/srwr/cmd/srwr@latest
 ```
 
-ビルド済みのバイナリは、Linux・macOS・Windows 向けを GitHub Releases で配る。cgo は使わないので、どの OS でも単一のバイナリで動く。
+Prebuilt binaries for Linux, macOS and Windows are distributed on GitHub Releases. cgo is not used, so it runs as a single binary on any OS.
 
-見る道具は、好みで選ぶ。
+Choose the tool for viewing as you like.
 
-| 見る場所 | 入れるもの |
+| Where to view | What to install |
 |---|---|
-| VSCode | 拡張 srwr-view（[vscode.md](vscode.md)） |
-| Vim | なし。`srwr view` が、バイナリに埋め込んだ Vim スクリプトで起動する（[vim.md](vim.md)） |
+| VSCode | The extension srwr-view ([vscode.md](vscode.md)) |
+| Vim | Nothing. `srwr view` starts Vim with the Vim scripts embedded in the binary ([vim.md](vim.md)) |
 
-## 作業場のディレクトリ
+## The workspace directory
 
-srwr を使うディレクトリを**作業場**と呼ぶ。srwr は作業場の中に次を作る。
+The directory where srwr is used is called the **workspace**. srwr makes the following in the workspace.
 
 ```
-<作業場>/
+<workspace>/
 ├── .srwr/
-│   ├── key                 HMAC の鍵（32バイト、0600）。共有しない
-│   ├── lock                書き込みの排他用（flock）
-│   ├── active              今のセッションのテープID
+│   ├── key                 The HMAC key (32 bytes, 0600). Do not share
+│   ├── lock                For exclusive writing (flock)
+│   ├── active              The tape ID of the current session
 │   └── tapes/
-│       └── <id>.tape.jsonl   テープ
-├── .srwrignore             記録しないファイルの指定（任意）
-├── .mcp.json               srwr mcp の登録（srwr init が書く）
-└── .claude/settings.json   hook の登録、Edit/Write の禁止（srwr init が書く）
+│       └── <id>.tape.jsonl   A tape
+├── .srwrignore             Files not to record (optional)
+├── .mcp.json               Registers srwr mcp (written by srwr init)
+└── .claude/settings.json   Registers the hook, forbids Edit/Write (written by srwr init)
 ```
 
 ## srwr mcp
 
-AI に使わせる MCP サーバー。AI エージェント（MCP クライアント）が起動する。作業場は `--root <作業場>`（省略時はカレントディレクトリ）。ツールは `select`・`replace` の2つ（[mcp.md](mcp.md)）。同じ作業場で複数起動してもよい。同じセッション（同じテープ）に書き、片方が発行した範囲トークンをもう片方で使える（[tape.md](tape.md)）。
+The MCP server the AI uses. It is started by the AI agent (the MCP client). The workspace is `--root <workspace>` (the current directory if omitted). There are two tools, `select` and `replace` ([mcp.md](mcp.md)). Several may be started in the same workspace. They write to the same session (the same tape), and a selection token issued by one can be used by another ([tape.md](tape.md)).
 
 ## srwr hook
 
 ```
-srwr hook [--root <作業場>]
+srwr hook [--root <workspace>]
 ```
 
-Claude Code の hook から呼ばれ、AI が持つ既存のツールの操作を、同じテープに記録する。調べる過程（どこを読んだか）も、テープに載せるため。標準入力から hook の JSON を読む。動かした例は [hook.md](../examples/hook.md)。
+Called from a hook of Claude Code, it records the operations of the tools the AI already has on the same tape, so that the investigation (where it read) is on the tape too. It reads the JSON of the hook from standard input. A recorded run is in [hook.md](../examples/hook.md).
 
-- 作業場は `--root`。省略すると環境変数 `CLAUDE_PROJECT_DIR`、それも無ければカレントディレクトリ
-- 記録するのは `PostToolUse`（道具を使い終えたあと）の JSON だけ。使う項目は `hook_event_name`・`tool_name`・`tool_input`・`tool_response`・`cwd`。相対パスは `cwd` からの相対として読み、作業場の外のパスは記録しない
-- **AI の作業を止めない。** 読めない JSON、無いファイル、扱えないファイル（バイナリ・CRLF）があっても、標準エラー出力に理由を出して終了コード 0 で終わる（終了コード 2 は Claude Code が道具の実行を止めるため、使わない）
-- 登録は `.claude/settings.json`（`srwr init` が書く）：
+- The workspace is `--root`. If omitted, the environment variable `CLAUDE_PROJECT_DIR`, and then the current directory
+- Only the JSON of `PostToolUse` (after a tool has been used) is recorded. The items used are `hook_event_name`, `tool_name`, `tool_input`, `tool_response` and `cwd`. A relative path is read relative to `cwd`, and a path outside the workspace is not recorded
+- **It does not stop the AI's work.** If the JSON cannot be read, a file is missing, or a file cannot be handled (binary, CRLF), it prints the reason to standard error and exits with code 0 (code 2 is not used, because Claude Code would stop running the tool)
+- It is registered in `.claude/settings.json` (written by `srwr init`):
 
 ```json
 {
@@ -74,127 +78,127 @@ Claude Code の hook から呼ばれ、AI が持つ既存のツールの操作�
 }
 ```
 
-| Claude Code の操作 | テープへの記録 |
+| Operation of Claude Code | Recorded on the tape as |
 |---|---|
-| Read | `select`（`offset`・`limit` なしは全体） |
-| Bash の読み取り（`cat`・`nl`・`head`・`tail`・`sed -n 'A,Bp'`・`grep -n`） | `select` |
-| Grep（内容モード） | `select`（連続する行は1つにまとめる） |
-| Edit | `replace`（範囲は置換位置を含む行全体。`replace_all` は一致ごとに1件） |
-| Write・MultiEdit・NotebookEdit | 記録しない（次に srwr が触れたとき、`external` として見える） |
+| Read | `select` (the whole file when there is no `offset` or `limit`) |
+| A reading Bash command (`cat`, `nl`, `head`, `tail`, `sed -n 'A,Bp'`, `grep -n`) | `select` |
+| Grep (content mode) | `select` (consecutive lines are put together into one) |
+| Edit | `replace` (the range is the whole lines that contain the replaced place; with `replace_all`, one per match) |
+| Write, MultiEdit, NotebookEdit | Not recorded (the next time srwr touches the file, it shows up as `external`) |
 
-- Bash のあとは（読み取りでなくても）、テープが内容を持つ全ファイルを読み直し、違えば `external`（`detectedBy` は `hook`）を記録する
-- Edit は、編集前の内容（テープが持つもの。無ければ `tool_response.originalFile`）に `old_string` → `new_string` を当てて、今のファイルと一致すれば `replace`。一致しなければ（ほかの変更も混ざっているなど）`external` として記録する
-- 一度の呼び出しで記録する `select` は100件まで（広い範囲の検索で、テープが膨らまないように）
-- パイプは先頭のコマンドだけを見る。`$( )`・書き込みのリダイレクト・`sed -i`・`tail -f`・`-n` なしの `grep` は記録しない
-- hook が記録したコマは、`why` が `null` で表示される（`why` の行が出ない）。範囲トークンは持たない（`selection`・`from` は `null`）。`srwr mcp` が先に発行したトークンは、hook の `replace` のあとも、行番号が補正されて使える
+- After a Bash command (even one that does not read), every file whose content the tape holds is read again, and a difference is recorded as `external` (`detectedBy` is `hook`)
+- For an Edit, `old_string` → `new_string` is applied to the content before the edit (what the tape holds; if there is none, `tool_response.originalFile`), and if the result equals the current file it is a `replace`. If it does not (other changes are mixed in, for example), it is recorded as `external`
+- A single call records at most 100 `select`s (so that a search over a wide range does not swell the tape)
+- For a pipe, only the first command is looked at. `$( )`, redirects that write, `sed -i`, `tail -f` and `grep` without `-n` are not recorded
+- A frame recorded by the hook is shown with a `why` of `null` (no `why` line). It has no selection token (`selection` and `from` are `null`). A token issued earlier by `srwr mcp` can still be used after a `replace` by the hook; its line numbers are corrected
 
 ## srwr view-server
 
-エディタが子プロセスとして起動する表示サーバー。テープを読んで、コマ送りに必要なデータを組み立てる。
+The view server that an editor starts as a child process. It reads the tape and builds the data needed for stepping.
 
 ```
-srwr view-server --root <作業場>
+srwr view-server --root <workspace>
 ```
 
-人が直接使うものではない。エディタの対応を作る人は [protocol.md](protocol.md) を読む。
+It is not for people to use directly. Those who add support for an editor read [protocol.md](protocol.md).
 
 ## srwr view
 
-`srwr view [テープ]` は、バイナリに埋め込んだ Vim スクリプトを使って、プラグインなしの Vim でテープを再生する。テープを省くと一覧から選ぶ。`--live` でライブ。作業場以外から実行するときは `--root <作業場>`。Vim 9.0.0784 以上が要る。使い方は [vim.md](vim.md)。
+`srwr view [tape]` replays a tape in a plain Vim, with no plugin, using the Vim scripts embedded in the binary. If the tape is left out, you choose from the list. `--live` is live viewing. When running from outside the workspace, give `--root <workspace>`. Vim 9.0.0784 or later is needed. For how to use it, see [vim.md](vim.md).
 
 ## srwr init
 
 ```
-srwr init [--lenient] [--root <作業場>]
+srwr init [--lenient] [--root <workspace>]
 ```
 
-作業場を srwr 用に準備する。何回動かしても同じ結果になり、変えるものがなければ何も書き換えない。
+Sets up the workspace for srwr. It gives the same result however many times it runs, and writes nothing when there is nothing to change.
 
-| 項目 | 内容 |
+| Item | Content |
 |---|---|
-| `.srwr/` | ディレクトリと鍵を作る |
-| `.mcp.json` | `srwr mcp` を登録する（既存のサーバーは残して追記。すでに `srwr` があれば触らない） |
-| `.claude/settings.json` | hook の登録、Claude Code が聞かずに使えるようにする設定（`enabledMcpjsonServers` と、`select`・`replace` の許可）、厳格モードなら Edit/Write の禁止（既存の内容は残して追記） |
-| `.gitignore` | `.srwr/key`・`.srwr/lock`・`.srwr/active`・`.srwr/init-backup/` を足す（git の管理下の場合）。テープ（`.srwr/tapes/`）は共有できるよう無視しない |
+| `.srwr/` | Makes the directory and the key |
+| `.mcp.json` | Registers `srwr mcp` (existing servers are kept and this is added; if `srwr` is already there, it is left alone) |
+| `.claude/settings.json` | Registers the hook, the setting that lets Claude Code use the tools without asking (`enabledMcpjsonServers`, and the permission of `select` and `replace`), and in strict mode the ban on Edit/Write (existing content is kept and this is added) |
+| `.gitignore` | Adds `.srwr/key`, `.srwr/lock`, `.srwr/active` and `.srwr/init-backup/` (when under git). Tapes (`.srwr/tapes/`) are not ignored, so that they can be shared |
 
-- 既存のファイルを壊さない。キーの順や、ほかの設定・サーバー・hook はそのまま残す。書式は2字下げの JSON に整える
-- 書き換える前の内容は `.srwr/init-backup/<日時>/` に残す（変えるファイルがあるときだけ）
-- JSON として読めないファイルがあるとき（またはオブジェクト・配列の形が違うとき）は、何も書き換えずに終了コード 1 で止まる
-- `srwr` が PATH にないときは、最後に注意を出す（`.mcp.json` と hook は `srwr` を呼ぶ）
-- 対象のエージェントは **Claude Code のみ**（MCP 自体は他のエージェントでも使えるが、Edit/Write の禁止と hook は Claude Code の設定に依存する）
+- It does not break existing files. The order of keys and the other settings, servers and hooks are kept as they are. The format is tidied to JSON with a 2-space indent
+- What a file held before the rewrite is kept in `.srwr/init-backup/<date and time>/` (only when there is a file to change)
+- If a file cannot be read as JSON (or the shape of an object or array is wrong), nothing is rewritten and it stops with exit code 1
+- If `srwr` is not on the PATH, a note is printed at the end (`.mcp.json` and the hook run `srwr`)
+- The only target agent is **Claude Code** (MCP itself can be used by other agents, but the ban on Edit/Write and the hook depend on the settings of Claude Code)
 
-出力の例（空の作業場）：
+An example of the output (an empty workspace):
 
 ```
-作業場：/home/me/project
+Workspace: /home/me/project
 
-  作った   .srwr/                鍵 .srwr/key を作りました
-  作った   .mcp.json             srwr mcp を登録しました
-  作った   .claude/settings.json hook を登録し、Edit・Write などを禁止しました（厳格モード）
-  作った   .gitignore            .srwr/key .srwr/lock .srwr/active .srwr/init-backup/
+  created    .srwr/                key .srwr/key created
+  created    .mcp.json             registered srwr mcp
+  created    .claude/settings.json registered the hook; forbade Edit, Write, etc. (strict mode)
+  created    .gitignore            .srwr/key .srwr/lock .srwr/active .srwr/init-backup/
 
-準備できました。Claude Code を開き直すと、select / replace が使えます。
-緩いモード（Edit・Write を禁止しない）にするときは、srwr init --lenient。
+Ready. Reopen Claude Code and select / replace are available.
+For lenient mode (Edit and Write stay allowed), run: srwr init --lenient.
 ```
 
-### 厳格モードと緩いモード
+### Strict mode and lenient mode
 
-| モード | 内容 |
+| Mode | Content |
 |---|---|
-| **厳格モード**（既定） | Claude Code の Edit・Write・MultiEdit・NotebookEdit を禁止する。AI がファイルを変える手段は `select` / `replace` だけになり、テープには必ず `why` が残る |
-| **緩いモード**（`srwr init --lenient`） | Edit・Write を禁止しない。hook が Edit を `replace`（`why` は `null`）として記録する。Write は記録せず、`external` として見える |
+| **Strict mode** (the default) | Forbids Edit, Write, MultiEdit and NotebookEdit of Claude Code. The only way for the AI to change a file is `select` / `replace`, so the tape always holds a `why` |
+| **Lenient mode** (`srwr init --lenient`) | Does not forbid Edit and Write. The hook records an Edit as a `replace` (with a `why` of `null`). A Write is not recorded and shows up as `external` |
 
-- 厳格 ⇄ 緩いは、`srwr init` と `srwr init --lenient` で切り替えられる。緩いモードにすると、`permissions.deny` から上の4つ（`Edit`・`Write`・`MultiEdit`・`NotebookEdit`）を外す。それ以外の禁止は残す（利用者が自分で足した `Edit` の禁止も、同じ名前なので外れる）
-- 厳格モードでも塞げないものがある。Bash 経由の編集（`sed -i`、リダイレクトなど）は、`external` として検知して見せる
+- Strict ⇄ lenient is switched with `srwr init` and `srwr init --lenient`. Lenient mode removes the four above (`Edit`, `Write`, `MultiEdit`, `NotebookEdit`) from `permissions.deny`. Other bans are left (a ban on `Edit` the user added by themselves has the same name, so it is removed too)
+- Even strict mode cannot shut out everything. Editing through Bash (`sed -i`, redirects and so on) is detected and shown as `external`
 
 ## srwr tapes
 
 ```
-srwr tapes [new | prune (--keep N | --older-than 30d) | path <テープID>] [--root <作業場>]
+srwr tapes [new | prune (--keep N | --older-than 30d) | path <tape ID>] [--root <workspace>]
 ```
 
-| コマンド | 内容 |
+| Command | Content |
 |---|---|
-| `srwr tapes` | 一覧（テープID、開始、最後の更新、イベント数、ファイル数、大きさ、今のセッションか）。新しい順。時刻はその機械の時間帯 |
-| `srwr tapes new` | 今のセッションを閉じ、次の書き込みから新しいセッションにする。閉じる前に発行した範囲トークンは使えなくなる |
-| `srwr tapes prune --keep N` / `--older-than 30d` | 古いテープを消す。`--keep N` は新しい方から N 本を残す。`--older-than` は `30d`・`12h` の形。確認は聞かず、消したテープを1行ずつ出す。**今のセッションのテープは消さない** |
-| `srwr tapes path <id>` | テープのパスを表示（共有するときに使う） |
+| `srwr tapes` | A list (tape ID, start, last update, number of events, number of files, size, whether it is the current session). Newest first (by the time the tape started). Times are in the time zone of the machine |
+| `srwr tapes new` | Closes the current session, and the next write starts a new session. Selection tokens issued before the closing can no longer be used |
+| `srwr tapes prune --keep N` / `--older-than 30d` | Deletes old tapes. `--keep N` keeps the newest N. `--older-than` takes the form `30d` or `12h`. It does not ask for confirmation, and prints each deleted tape on a line. **It does not delete the tape of the current session** |
+| `srwr tapes path <id>` | Prints the path of a tape (used when sharing) |
 
-自動の整理はしない。消すのは利用者が明示的に行う。
+There is no automatic cleanup. Deleting is done explicitly by the user.
 
-出力の例：
+An example of the output (the time zone is `Asia/Tokyo`; the date and time in a tape ID are UTC):
 
 ```
-  テープ              開始         最後の更新   イベント  ファイル  大きさ
-  20261003-1712-k3f9  10/03 17:12  10/03 17:48  14        3          5.1 KB  ← 今のセッション
-  20261002-0930-a8z1  10/02 09:30  10/02 11:05  62        7         21.4 KB
+  Tape                Started       Last update   Events    Files     Size
+  20261003-0812-k3f9  Oct 03 17:12  Oct 03 17:48  14        3          5.1 KB  <- current session
+  20261002-0030-a8z1  Oct 02 09:30  Oct 02 11:05  62        7         21.4 KB
 
-2 本（合計 26.5 KB）。再生は srwr view <テープ>、共有は srwr tapes path <テープ>。
+2 tapes (26.5 KB in all). Replay one with srwr view <tape>; share one with srwr tapes path <tape>.
 ```
 
-## 記録しないファイル
+## Files that are not recorded
 
-テープはファイルの全文を持ち、共有するときはテープそのものを渡す。そのため、**秘密情報を含むファイルはテープに入れない**。
+A tape holds the whole text of files, and to share, the tape itself is handed over. So **files that contain secrets are not put on the tape**.
 
-- **既定の対象**：`.env`、`.env.*`、`*.pem`、`*.key`、`id_rsa*`、`id_ed25519*`、`*.p12`、`*.pfx`、`.srwr/` の中
-- **追加の指定**：作業場の `.srwrignore`（`.gitignore` と同じ書式）。`.gitignore` には従わない（生成物など、AI が扱ってよいファイルも含まれるため）
+- **The default targets**: `.env`, `.env.*`, `*.pem`, `*.key`, `id_rsa*`, `id_ed25519*`, `*.p12`, `*.pfx`, and anything inside `.srwr/`
+- **Additional targets**: `.srwrignore` in the workspace (the same format as `.gitignore`). `.gitignore` is not followed (it also holds generated files and the like, which the AI may handle)
 
-| 場面 | 振る舞い |
+| Situation | Behavior |
 |---|---|
-| `select` / `replace` | `ignored_file` エラー。テープには何も書かない |
-| hook（Read・Bash・Grep・Edit） | 記録しない。`external` の検知の対象にもしない |
-| 緩いモードで AI が Edit した | 記録しない |
+| `select` / `replace` | An `ignored_file` error. Nothing is written on the tape |
+| The hook (Read, Bash, Grep, Edit) | Not recorded. Not subject to the detection of `external` either |
+| The AI edited with Edit in lenient mode | Not recorded |
 
-細かい決まり：
+Details:
 
-- **既定の対象は、`.srwrignore` の `!` でも戻せない。** `!` が打ち消せるのは、`.srwrignore` 自身の指定だけ。ディレクトリが対象なら、その中のファイルも対象で、`!` で戻せない
-- **大文字・小文字は区別しない。** macOS・Windows では `.ENV` で `.env` が開けるため、どの OS でも同じ判定にする
-- **シンボリックリンクは、リンクの名前とリンク先の両方を調べる。** `notes.txt` が `.env` へのリンクなら、記録しない
-- **`.srwrignore` は、作業場の直下のものだけを、呼ばれるたびに読む。** 書き足すとすぐ効く。すでにテープにあるファイルを書き足した場合も、以後は `select`・`replace` が `ignored_file` になり、`external` の検知も飛ばす
-- **`.srwrignore` が読めないとき（権限がない、ディレクトリになっている）は、何も記録しない。** `select`・`replace` は `internal_error`、hook は標準エラー出力に一言だけ出す
+- **The default targets cannot be brought back with `!` in `.srwrignore`.** `!` can cancel only what `.srwrignore` itself specifies. If a directory is a target, the files in it are targets too and cannot be brought back with `!`
+- **Case is not distinguished.** On macOS and Windows `.ENV` opens `.env`, so the judgment is the same on every OS
+- **For a symbolic link, both the name of the link and its target are checked.** If `notes.txt` is a link to `.env`, it is not recorded
+- **`.srwrignore` is read every time it is needed, and only the one directly under the workspace.** An addition takes effect at once. If you add a file that is already on the tape, from then on `select` and `replace` give `ignored_file` and the detection of `external` skips it
+- **If `.srwrignore` cannot be read (no permission, or it is a directory), nothing is recorded.** `select` and `replace` give `internal_error`, and the hook prints one line to standard error
 
-### テープを共有する前に
+### Before sharing a tape
 
-- `.srwrignore` を見直す
-- テープの中身を確認する（`srwr tapes` の一覧で、大きさとファイル数が分かる）
-- 鍵（`.srwr/key`）は、再生に不要。共有しない
+- Review `.srwrignore`
+- Check the content of the tape (the list of `srwr tapes` shows the size and the number of files)
+- The key (`.srwr/key`) is not needed for replay. Do not share it

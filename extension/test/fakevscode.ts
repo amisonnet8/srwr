@@ -222,6 +222,7 @@ export const state = {
   opens: 0, // how many times a document was opened
   paintOrder: [] as DecorationType[], // decoration types in the order they were first painted (a screen lists them in this order)
   // knobs
+  language: "en", // vscode.env.language; SRWR_TEST_LANG=ja starts a run in Japanese (the screens are captured in both)
   config: { path: "srwr" } as Record<string, string>,
   workspaceFolders: undefined as Array<{ uri: Uri }> | undefined,
   pickQuickPick: ((items: any[]) => items[0]) as (items: any[]) => any,
@@ -244,6 +245,7 @@ export function reset(): void {
   state.paintOrder.length = 0;
   state.carry.clear();
   state.opens = 0;
+  state.language = process.env.SRWR_TEST_LANG ?? "en";
   state.config = { path: "srwr" };
   state.workspaceFolders = undefined;
   state.pickQuickPick = (items) => items[0];
@@ -354,6 +356,12 @@ export const workspace = {
   getConfiguration: (_section: string) => ({
     get: <T>(key: string, dflt: T): T => (state.config[key] as unknown as T) ?? dflt,
   }),
+};
+
+export const env = {
+  get language(): string {
+    return state.language;
+  },
 };
 
 export const commands = {

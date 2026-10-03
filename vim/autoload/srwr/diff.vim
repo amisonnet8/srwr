@@ -1,6 +1,7 @@
 vim9script
 
 import autoload './buf.vim'
+import autoload './lang.vim'
 import autoload './paint.vim'
 
 # A diff frame (external, final): two windows side by side, before on the left (blue) and after on the right (orange),
@@ -14,9 +15,15 @@ var taken = false
 export def Label(f: dict<any>): string
   const name = fnamemodify(f.file, ':t')
   if f.kind ==# 'final'
-    return '⚠ 録画のあとで変更（' .. (get(f, 'deleted', false) ? '今は存在しない' : '今のファイルとの差分') .. '）：' .. name
+    const gone = get(f, 'deleted', false)
+    return lang.Pick(
+      '⚠ Changed after recording (' .. (gone ? 'no longer exists' : 'diff from current file') .. '): ' .. name,
+      '⚠ 録画のあとで変更（' .. (gone ? '今は存在しない' : '今のファイルとの差分') .. '）：' .. name)
   endif
-  return '⚠ srwrの外で変更' .. (get(f, 'deleted', false) ? '（削除）' : '') .. '：' .. name
+  const deleted = get(f, 'deleted', false)
+  return lang.Pick(
+    '⚠ Changed outside srwr' .. (deleted ? ' (deleted)' : '') .. ': ' .. name,
+    '⚠ srwrの外で変更' .. (deleted ? '（削除）' : '') .. '：' .. name)
 enddef
 
 # Active tells whether the right-hand window of the session exists.
@@ -45,10 +52,10 @@ def GiveBackDiffColors()
   savedColors = []
 enddef
 
-# FoldText is the text of a folded stretch of unchanged lines: "+-- 17 行: the first line". It is Vim's own text, but the
-# word after the number ("lines" or "行" by the language of the Vim) is always the Japanese one, like every word of srwr.
+# FoldText is the text of a folded stretch of unchanged lines: "+-- 17 lines: the first line". It is Vim's own text, but the
+# word after the number ("lines" or "行" by the language of the Vim) is the one of the language of srwr, like every word of srwr.
 export def FoldText(): string
-  return substitute(foldtext(), '^\(+-*\s*\d\+\) \S\+:', '\1 行:', '')
+  return substitute(foldtext(), '^\(+-*\s*\d\+\) \S\+:', '\1 ' .. lang.Pick('lines', '行') .. ':', '')
 enddef
 
 # Changed returns the lines of the window's buffer that differ from the other side.

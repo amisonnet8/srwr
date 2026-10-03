@@ -1,5 +1,6 @@
 vim9script
 
+import autoload './lang.vim'
 import autoload './list.vim'
 import autoload './live.vim'
 import autoload './replay.vim'
@@ -49,7 +50,7 @@ export def Open(arg: string)
     endif
     server.Request('tape/open', {tapeId: tape, withText: true}, (res, err2) => {
       if err2 != v:null
-        Warn(err2.code ==# 'tape_not_found' ? 'テープが見つからない: ' .. tape : err2.message)
+        Warn(err2.code ==# 'tape_not_found' ? lang.Pick('Tape not found: ', 'テープが見つからない: ') .. tape : err2.message)
         return
       endif
       live.Close()
@@ -82,7 +83,7 @@ enddef
 def OnServerExit(_why: string)
   if live.Active()
     live.Close()
-    Warn('表示サーバーが終了したので、ライブ視聴を閉じた')
+    Warn(lang.Pick('The view server exited, so the live view was closed', '表示サーバーが終了したので、ライブ視聴を閉じた'))
   endif
 enddef
 

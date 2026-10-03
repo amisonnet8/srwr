@@ -18,10 +18,7 @@
 </p>
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: light)" srcset="docs/images/demo-vim_light.svg">
-    <img alt="srwr view in Vim: the AI's select and replace, with the reason of each, stepping frame by frame" src="docs/images/demo-vim_dark.svg" width="900">
-  </picture>
+  <img alt="srwr view in Vim: the AI's select and replace, with the reason of each, stepping frame by frame" src="docs/images/demo-vim_dark.svg" width="900">
   <br>
   <sub>The real <code>srwr view</code> in Vim, stepping through a session: a reason line, then the code it is about.</sub>
 </p>

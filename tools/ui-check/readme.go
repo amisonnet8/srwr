@@ -142,7 +142,8 @@ func runReadme(root string, out io.Writer) error {
 	if err := os.MkdirAll(images, 0o750); err != nil {
 		return err
 	}
-	for _, theme := range []string{"dark", "light"} {
+	// The README shows the dark pictures only (a decision of the person who reads them first).
+	for _, theme := range []string{"dark"} {
 		svg, err := vimDemo(root, bin, work, theme)
 		if err != nil {
 			return fmt.Errorf("the Vim demo (%s): %w", theme, err)

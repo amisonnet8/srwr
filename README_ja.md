@@ -18,10 +18,7 @@
 </p>
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: light)" srcset="docs/images/demo-vim_light.svg">
-    <img alt="Vim での srwr view：AI の select と replace を、それぞれの理由とともにコマ送りで見る" src="docs/images/demo-vim_dark.svg" width="900">
-  </picture>
+  <img alt="Vim での srwr view：AI の select と replace を、それぞれの理由とともにコマ送りで見る" src="docs/images/demo-vim_dark.svg" width="900">
   <br>
   <sub>本物の <code>srwr view</code>（Vim）が、あるセッションをコマ送りで再生しているところ。理由の行と、その理由が指すコードが並びます。</sub>
 </p>

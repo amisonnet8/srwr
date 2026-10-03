@@ -15,7 +15,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 )
@@ -114,7 +113,10 @@ func openVSCode(root, name string, out io.Writer) error {
 	if _, err := exec.LookPath("code"); err != nil {
 		return fmt.Errorf("the code command was not found. Open %s in VSCode by hand and install %s", workspace, vsix)
 	}
-	_, _ = fmt.Fprintf(out, "▶ 拡張を VSCode に入れる（接続先：%s）\n", ipcInUse())
+	if err := checkCodeTerminal(os.Getenv("VSCODE_IPC_HOOK_CLI")); err != nil {
+		return err
+	}
+	_, _ = fmt.Fprintln(out, "▶ 拡張を VSCode に入れる")
 	if err := command(root, out, "code", "--install-extension", vsix, "--force"); err != nil {
 		return fmt.Errorf("installing the extension: %w", err)
 	}
@@ -133,52 +135,26 @@ func openVSCode(root, name string, out io.Writer) error {
 	return feedLive(workspace, fixture, wait, 3*time.Second, out)
 }
 
-// liveIPC finds the socket the `code` command talks to. The terminal keeps the one it was opened with in VSCODE_IPC_HOOK_CLI,
-// and after VSCode restarts (switching the display language does) that socket is gone ("Unable to connect to VS Code server");
-// then the newest socket in dir that answers is used. It returns "" when the current one works or none does.
-func liveIPC(dir, current string) string {
-	works := func(p string) bool {
-		c, err := net.DialTimeout("unix", p, time.Second) //nolint:gosec // a socket in the temporary directory, not a network address
-		if err != nil {
-			return false
-		}
-		_ = c.Close()
-		return true
+// checkCodeTerminal stops with a plain message when this terminal cannot reach the VSCode that is open. The terminal keeps the
+// socket it was opened with in VSCODE_IPC_HOOK_CLI; after VSCode restarts (switching the display language does) a terminal that
+// came back with the window still has the old one, and `code` then fails or opens nothing. Another socket is not guessed: it may
+// belong to a window nobody is looking at.
+func checkCodeTerminal(ipc string) error {
+	if ipc == "" {
+		return errors.New("この端末は VSCode の中の端末ではありません。VSCode の端末（Ctrl+Shift+`）で動かしてください")
 	}
-	if current != "" && works(current) {
-		return ""
+	c, err := net.DialTimeout("unix", ipc, time.Second) //nolint:gosec // a socket path the terminal was given, not a network address
+	if err != nil {
+		return errors.New("この端末は、いまの VSCode につながっていません（VSCode を再起動する前に開いた端末です）。端末の「+」で新しい端末を開き、古い端末は閉じて、もう一度動かしてください")
 	}
-	socks, _ := filepath.Glob(filepath.Join(dir, "vscode-ipc-*.sock"))
-	sort.Slice(socks, func(i, j int) bool {
-		a, errA := os.Stat(socks[i])
-		b, errB := os.Stat(socks[j])
-		return errA == nil && errB == nil && a.ModTime().After(b.ModTime())
-	})
-	for _, p := range socks {
-		if works(p) {
-			return p
-		}
-	}
-	return ""
-}
-
-// ipcInUse is the socket `code` is given, for the person to read when no window comes up.
-func ipcInUse() string {
-	current := os.Getenv("VSCODE_IPC_HOOK_CLI")
-	if p := liveIPC(os.TempDir(), current); p != "" {
-		return p + "（端末のものは使えないので、答えるものを探した）"
-	}
-	return current
+	_ = c.Close()
+	return nil
 }
 
 func command(dir string, out io.Writer, name string, args ...string) error {
 	cmd := exec.Command(name, args...) //nolint:gosec // fixed commands: npx, code
 	cmd.Dir = dir
-	if name == "code" {
-		if p := liveIPC(os.TempDir(), os.Getenv("VSCODE_IPC_HOOK_CLI")); p != "" {
-			cmd.Env = append(os.Environ(), "VSCODE_IPC_HOOK_CLI="+p)
-		}
-	}
+
 	cmd.Stdout = out
 	cmd.Stderr = out
 	return cmd.Run()

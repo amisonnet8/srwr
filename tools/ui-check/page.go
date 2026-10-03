@@ -208,7 +208,7 @@ func lookSteps(r *Report) []string {
 // enRunning is the first step of a look at a real VSCode: the extension shows English only when the display language of VSCode is
 // English. `code` here asks the person's own VSCode to open a window (a --locale or a profile of its own is ignored), so the person
 // switches the display language.
-const enRunning = "VSCode の表示言語を英語にする（すでに英語なら飛ばす）。VSCode で Ctrl+Shift+P を押し、「Configure Display Language」と打って Enter、「English (en)」を選び、出てくる「Restart」を押す。見終わったら、同じ手順で「日本語 (ja)」に戻す"
+const enRunning = "VSCode の表示言語を英語にする（すでに英語なら飛ばす）。VSCode で Ctrl+Shift+P を押し、「Configure Display Language」と打って Enter、「English (en)」を選び、出てくる「Restart」を押す。再起動のあと、端末の「+」で新しい端末を開き、古い端末は閉じる（再起動の前の端末は、VSCode につながらない）。見終わったら、同じ手順で「日本語 (ja)」に戻す"
 
 // vscodeSteps are the steps to look at a tape in a real VSCode, written out in full (HTML, an ordered list).
 func vscodeSteps(tape, _ string) string {

@@ -266,18 +266,17 @@ func TestLongWhyTapeHasTheSameTimesEveryRun(t *testing.T) {
 	}
 }
 
-func TestLiveIPCFindsASocketThatAnswers(t *testing.T) {
+func TestACodeTerminalMustReachTheOpenVSCode(t *testing.T) {
 	dir, err := os.MkdirTemp("", "ipc") // a short path: a unix socket path is limited in length
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer func() { _ = os.RemoveAll(dir) }()
-	gone := filepath.Join(dir, "vscode-ipc-gone.sock")
-	if err := os.WriteFile(gone, nil, 0o600); err != nil { // a leftover file nobody listens on
-		t.Fatal(err)
+	if err := checkCodeTerminal(""); err == nil || !strings.Contains(err.Error(), "VSCode の中の端末ではありません") {
+		t.Errorf("no socket: %v", err)
 	}
-	if got := liveIPC(dir, gone); got != "" {
-		t.Errorf("no socket answers, got %q", got)
+	if err := checkCodeTerminal(filepath.Join(dir, "vscode-ipc-gone.sock")); err == nil || !strings.Contains(err.Error(), "新しい端末") {
+		t.Errorf("a socket that is gone: %v", err)
 	}
 	live := filepath.Join(dir, "vscode-ipc-live.sock")
 	l, err := net.Listen("unix", live)
@@ -285,10 +284,7 @@ func TestLiveIPCFindsASocketThatAnswers(t *testing.T) {
 		t.Skip("no unix sockets here:", err)
 	}
 	defer func() { _ = l.Close() }()
-	if got := liveIPC(dir, filepath.Join(dir, "vscode-ipc-old.sock")); got != live {
-		t.Errorf("the old socket is gone: got %q, want %q", got, live)
-	}
-	if got := liveIPC(dir, live); got != "" {
-		t.Errorf("the current socket works, so nothing is replaced, got %q", got)
+	if err := checkCodeTerminal(live); err != nil {
+		t.Errorf("a socket that answers: %v", err)
 	}
 }

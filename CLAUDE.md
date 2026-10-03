@@ -11,7 +11,7 @@
 
 ### 最初に読むもの
 
-1. **`dev/roadmap.md`** — 段階（R0〜R12）。**この順に進める**。今どこかは `mtqg context`
+1. **`dev/roadmap.md`** — 段階（R0〜R14）。**この順に進める**。今どこかは `mtqg context`
 2. **`docs/README.md` → `docs/design/overview.md`** — 何を作るか。正本は `docs/reference/`
 3. **`handoff/README.md`** — 確定したデザイン（`design/`）、UI の振る舞い（`ui/`）、確認の方針（`checklist/`）、前の決まりと落とし穴（`reference/`）。**読むだけ。git に入れない。デザインは変えない・足さない**
 4. **`.claude/rules/working-with-human.md`** — 人間とのやり取り（下の3原則の詳細）

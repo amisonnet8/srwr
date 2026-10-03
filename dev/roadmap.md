@@ -28,8 +28,12 @@ srwr は、前のリポジトリで一度作った（段階 P0〜P5 と、UI の
 | R4 | P3・P10 | VSCode クライアント |
 | R5 | P4・P10 | Vim クライアント |
 | R6 | （新規） | UI の確認の一本化（`qsoku ui-check`） |
-| R7〜R11 | P6〜P9・P11 | hook、記録しないファイル、`init`・`tapes`、`vcs`、配布 |
-| R12 | — | 片付け |
+| R7〜R10 | P6〜P9・P11 | hook、記録しないファイル、`init`・`tapes`、`vcs` |
+| R10.5 | — | 言語・時間対応 |
+| R11 | — | docs 最終確定 |
+| R12 | P11 | README |
+| R13 | P11 | 配布 |
+| R14 | — | 片付け |
 
 ---
 
@@ -165,18 +169,33 @@ R10 までは、確認者が日本語の方が得意なので、日本語で作�
 **完了条件**：テープの時刻が UTC で書かれ、`TZ` を替えると表示の時刻が替わる。何も設定しない環境で表示がすべて英語、日本語に切り替えると今までの日本語と同じ。`qsoku check`・`qsoku ui-check` が通る。
 **人間の確認**：英語の画面を1コマンドで見せる（`qsoku ui-check`）。
 
-## R11：配布
+## R11：docs 最終確定
+
+- [ ] `docs/` の英語版と日本語版を通して読み直す（食い違い・古い記述・リンク）。`handoff/` との食い違いは `handoff/design/`・`handoff/ui/` を正とする
+- [ ] **決定済み：`.vsix` に `srwr` のバイナリを同梱しない**（`srwr` は `go install` か GitHub Releases で別に入れ、`srwr.path` か PATH で知らせる）。`docs/reference/cli.md` の導入、`docs/design/limitations.md` の未定、`.claude/rules/distribution.md` に反映する
+- [ ] 拡張が `srwr` を見つけられないときの案内文を、同梱しない前提で確かめる（英語・日本語）
+- [ ] `internal/docs` のテストが通る
+
+**完了条件**：`docs/` に未定・食い違いが無く、`qsoku check` が通る。
+
+## R12：README
+
+- [ ] ルートの `README.md`（導入：`srwr` を先に入れる、VSCode と Vim での見方、共有前の注意）。英語を基準に `README_ja.md` を付ける。冒頭の1文は GitHub の Description と同じ
+- [ ] `extension/README.md`（英語と `_ja`）。対応する表示サーバーの `protocolVersion` を書く
+
+**完了条件**：書いた手順どおりに、新しい環境で導入できる。リンク切れが無い（`internal/docs`）。
+
+## R13：配布
 
 参照：`.claude/rules/distribution.md`
 
-- [ ] `srwr` のビルド（Linux・macOS・Windows）
-- [ ] 拡張の `.vsix`。バイナリを同梱するかを決める（重要な判断。推奨案つきで聞く）
-- [ ] `README.md`（導入、VSCode と Vim での見方、共有前の注意）
+- [ ] `srwr` のビルド（Linux・macOS・Windows、amd64・arm64、`CGO_ENABLED=0`）
+- [ ] 拡張の `.vsix`（`npx @vscode/vsce package`）。`package.json` の `description`・`keywords` を決めた言葉にそろえる
 
 **完了条件**：手元で作った `.vsix` と `srwr` で、固定テープを VSCode と Vim の両方で開ける。
 **人間の確認**：入れて開くまでを1コマンドに。
 
-## R12：片付け
+## R14：片付け
 
 - [ ] `handoff/` の中で、まだリポジトリに取り込んでいない決まり・落とし穴が無いか確かめる
 - [ ] `handoff/` を消す（了承をもらってから）

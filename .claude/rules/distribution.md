@@ -1,6 +1,6 @@
 # 配布方法
 
-配布物は2つ（`srwr` のバイナリと、VSCode 拡張）。Vim スクリプトはバイナリに埋め込むので、別には配らない。`docs/reference/cli.md`（導入）・`docs/reference/vim.md`・`dev/roadmap.md` の R11。
+配布物は2つ（`srwr` のバイナリと、VSCode 拡張）。Vim スクリプトはバイナリに埋め込むので、別には配らない。`docs/reference/cli.md`（導入）・`docs/reference/vim.md`・`dev/roadmap.md` の R13。
 
 ## srwr（Go のバイナリ）
 
@@ -16,7 +16,7 @@
 
 - `.vsix` を作って配る（`npx @vscode/vsce package`）。`@vscode/vsce` は devDependencies に入れず、使うときに `npx` で呼ぶ（依存を増やさない）
 - VSCode Marketplace・Open VSX への公開は、人間が判断して行う。公開前に Marketplace で `srwr` の名前が空いているかを手で確かめる
-- 拡張は `srwr` のバイナリ（表示サーバー）を必要とする。場所は設定 `srwr.path`。OS ごとの `.vsix` にバイナリを同梱するかは R11 で決める（`docs/design/limitations.md` の未定）
+- 拡張は `srwr` のバイナリ（表示サーバー）を必要とする。場所は設定 `srwr.path`。OS ごとの `.vsix` にバイナリを同梱しない（R10.5 後に決定。`srwr` は `go install` か GitHub Releases で別に入れる）
 - 拡張のバージョンは `extension/package.json` の `version`。srwr のバイナリとは別に上げてよい。ただし、**対応する表示サーバーの `protocolVersion`** を拡張の README に書く
 
 ## srwr-view.vim（Vim スクリプト）

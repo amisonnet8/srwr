@@ -57,7 +57,7 @@ dist: (cd //; qsoku ext-build && go run ./tools/dist)
 dist-try: (cd //; qsoku dist && go run ./tools/ui-check dist-try)
 
 # qsoku publish-check: checks the newest dist/*.vsix before a person uploads it to the Marketplace by hand (dev/publish.md).
-publish-check: (cd //; go run ./tools/dist publish-check)
+publish-check: (cd //; go run ./tools/dist publish-check "$@")
 
 # qsoku readme-media: makes the pictures of the README (docs/images/, extension/media/readme/) and the page to look at
 readme-media: (cd //; qsoku bin && go run ./tools/ui-check readme)

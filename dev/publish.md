@@ -30,7 +30,7 @@ AI は公開しない（`git push`・`gh release create`・Marketplace へのア
 
 1. main に push しておく。**README の画像は main の URL から読まれる**（`https://github.com/amisonnet8/srwr/raw/main/extension/media/readme/…`）
 2. https://marketplace.visualstudio.com/manage で、Publisher `amisonnet8` を作る（無ければ）。Marketplace で `srwr-view` の名前が空いているかも見る
-3. 公開に使う `.vsix` は、Release に付いたものと**同じもの**（`dist/srwr-view-<版>.vsix`）。`qsoku publish-check` を通す
+3. 公開に使う `.vsix` は、**Release の *Assets* に付いた `srwr-view-<版>.vsix`**（`release.yml` がタグのコミットから作ったもの）。ブラウザで Release のページからダウンロードする。手元の `dist/` のものは、作った時点の作業ツリーによって中身が変わりうるので、公開には使わない。ダウンロードしたものと `checksums.txt` が合うことは、AI が確かめられる。`qsoku publish-check <ファイル>` で検査もできる（devcontainer の中に置いたファイルを指す）
 4. *New extension* → *Visual Studio Code* で `.vsix` を選ぶ。更新は、拡張の *…* → *Update*
 5. 検証が終わるのを待ち、拡張のページを見る：アイコン、README の画像、バッジ（版・評価は、公開されて初めて出る）、「Prerequisites」のリンク
 6. 公開後に、インストール数のバッジ（`img.shields.io/visual-studio-marketplace/i/amisonnet8.srwr-view`）を README に足し直すかを決める（今は外してある。ルートと拡張の README の英語・日本語の4つ）

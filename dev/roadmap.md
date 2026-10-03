@@ -171,10 +171,10 @@ R10 までは、確認者が日本語の方が得意なので、日本語で作�
 
 ## R11：docs 最終確定
 
-- [ ] `docs/` の英語版と日本語版を通して読み直す（食い違い・古い記述・リンク）。`handoff/` との食い違いは `handoff/design/`・`handoff/ui/` を正とする
-- [ ] **決定済み：`.vsix` に `srwr` のバイナリを同梱しない**（`srwr` は `go install` か GitHub Releases で別に入れ、`srwr.path` か PATH で知らせる）。`docs/reference/cli.md` の導入、`docs/design/limitations.md` の未定、`.claude/rules/distribution.md` に反映する
-- [ ] 拡張が `srwr` を見つけられないときの案内文を、同梱しない前提で確かめる（英語・日本語）
-- [ ] `internal/docs` のテストが通る
+- [x] `docs/` の英語版と日本語版を通して読み直す（食い違い・古い記述・リンク）。`handoff/` との食い違いは `handoff/design/`・`handoff/ui/` を正とする
+- [x] **決定済み：`.vsix` に `srwr` のバイナリを同梱しない**（`srwr` は `go install` か GitHub Releases で別に入れ、`srwr.path` か PATH で知らせる）。`docs/reference/cli.md` の導入、`docs/design/limitations.md` の未定、`.claude/rules/distribution.md` に反映する
+- [x] 拡張が `srwr` を見つけられないときの案内文を、同梱しない前提で確かめる（英語・日本語）
+- [x] `internal/docs` のテストが通る
 
 **完了条件**：`docs/` に未定・食い違いが無く、`qsoku check` が通る。
 

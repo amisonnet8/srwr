@@ -227,10 +227,15 @@ func runVimTests(root string, files []string, results map[string]*outcome) {
 	}
 }
 
+// lastLines is the end of the output of a test for a message: the last n lines, cut to 240 characters.
 func lastLines(s string, n int) string {
 	lines := strings.Split(strings.TrimSpace(s), "\n")
 	if len(lines) > n {
 		lines = lines[len(lines)-n:]
 	}
-	return strings.Join(lines, " / ")
+	out := []rune(strings.Join(lines, " / "))
+	if len(out) > 240 {
+		return string(out[:240]) + "…"
+	}
+	return string(out)
 }

@@ -1,5 +1,5 @@
 {
-  "extension.description": "Step through the AI's operations (srwr tapes) frame by frame, with the reasons",
+  "extension.description": "Replay what an AI agent did with srwr, frame by frame, with the reason of each step",
   "srwr.openTape.title": "srwr: Open Tape",
   "srwr.closeTape.title": "srwr: Close (Tape or Live)",
   "srwr.stepForward.title": "srwr: Forward",

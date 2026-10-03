@@ -1,5 +1,5 @@
 {
-  "extension.description": "AI の操作（srwr のテープ）を、理由と一緒にコマ送りで見る",
+  "extension.description": "AI エージェントが srwr でしたことを、各操作の理由とともにコマ送りで再生する",
   "srwr.openTape.title": "srwr: テープを開く",
   "srwr.closeTape.title": "srwr: 閉じる（テープ・ライブ）",
   "srwr.stepForward.title": "srwr: 進む",

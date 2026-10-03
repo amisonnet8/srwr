@@ -164,6 +164,8 @@ func runReadme(root string, out io.Writer) error {
 	jobs := []pngJob{
 		{filepath.Join(images, "vscode_dark.svg"), filepath.Join(media, "replay.png"), "2"},
 		{filepath.Join(images, "banner.svg"), filepath.Join(media, "banner.png"), "1"},
+		// The icon of the extension in the Marketplace (a PNG of 128 pixels or more is asked for), made at twice the size.
+		{filepath.Join(root, "extension", "media", "icon.svg"), filepath.Join(root, "extension", "media", "icon.png"), "2"},
 	}
 	if err := renderPNGs(jobs, out); err != nil {
 		return err

@@ -126,3 +126,18 @@ jobs:
           version: v0.71.2
       - name: qsoku trivy
         run: qsoku trivy
+
+  # What is handed to the users: the binary for six machines and the .vsix (qsoku dist builds them and checks what it made).
+  dist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Install qsoku
+        run: go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
+      - name: qsoku dist
+        run: qsoku dist

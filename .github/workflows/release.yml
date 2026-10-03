@@ -1,0 +1,31 @@
+name: Release
+
+# A person makes the release (the tag and the Release on GitHub). When it is published, this builds what is handed to the users
+# from the tagged commit and attaches it: the binary for six machines, checksums.txt and the .vsix (.claude/rules/distribution.md).
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  assets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The version of the binary (srwr --version) is the tag Go finds in the checkout.
+          fetch-depth: 0
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Install qsoku
+        run: go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
+      - name: qsoku dist
+        run: qsoku dist
+      - name: Attach to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$TAG" dist/* --clobber

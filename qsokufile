@@ -49,6 +49,16 @@ hook-try: (cd //; qsoku bin && go run ./tools/ui-check hook-try)
 # For a person to run in their terminal.
 init-try: (cd //; qsoku bin && go run ./tools/ui-check init-try)
 
+# qsoku dist: what is handed to the users, into dist/: the srwr binary for six machines (archives and checksums.txt) and the .vsix.
+# It checks what it made (the format and CPU of each binary, the contents of the .vsix). The version is the tag of HEAD, if any.
+dist: (cd //; qsoku ext-build && go run ./tools/dist)
+
+# qsoku dist-try: for a person (R13). Puts what dist/ holds to use: the srwr of this machine out of its archive and the .vsix, in VSCode and in Vim.
+dist-try: (cd //; qsoku dist && go run ./tools/ui-check dist-try)
+
+# qsoku publish-check: checks the newest dist/*.vsix before a person uploads it to the Marketplace by hand (dev/publish.md).
+publish-check: (cd //; go run ./tools/dist publish-check)
+
 # qsoku readme-media: makes the pictures of the README (docs/images/, extension/media/readme/) and the page to look at
 readme-media: (cd //; qsoku bin && go run ./tools/ui-check readme)
 

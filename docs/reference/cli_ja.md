@@ -25,7 +25,7 @@ srwr が出す文言は英語が既定。日本語にするには、環境変数
 go install github.com/amisonnet8/srwr/cmd/srwr@latest
 ```
 
-ビルド済みのバイナリは、Linux・macOS・Windows 向けを GitHub Releases で配る。cgo は使わないので、どの OS でも単一のバイナリで動く。
+ビルド済みのバイナリは、Linux・macOS・Windows（amd64・arm64）向けを GitHub Releases で配る。ファイル名は `srwr_<版>_<os>_<arch>.tar.gz`（Windows は `.zip`）で、中に `srwr`（`srwr.exe`）・`LICENSE`・`README.md` が入る。`checksums.txt` に全ファイルの SHA-256 が並ぶ（`sha256sum -c checksums.txt`）。cgo は使わないので、どの OS でも単一のバイナリで動く。
 
 見る道具は、好みで選ぶ。
 

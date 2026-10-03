@@ -1,7 +1,8 @@
 // Command ui-check prepares what a person needs to look at the UI by eye (docs: .claude/rules/working-with-human.md 3章).
 // `ui-check run` (qsoku ui-check) does all the checks and makes the page to look at; `ui-check live [--watch <vscode|vim>]`
 // (qsoku ui-live) is the same for the live view only; `ui-check accept [ng <note>]` (qsoku ui-accept) records the decision.
-// `ui-check hook-try` (qsoku hook-try) and `ui-check init-try` (qsoku init-try) are the human checks of R7 and R9.
+// `ui-check hook-try` (qsoku hook-try), `ui-check init-try` (qsoku init-try) and `ui-check dist-try` (qsoku dist-try) are the
+// human checks of R7, R9 and R13.
 // `ui-check open <vscode|vim> <why-basic|external|no-why|live>` is called by `qsoku ui-open`.
 // `ui-check vim-baseline <images> <out>` makes vim/test/baseline/ja from the approved Vim images (done once, at R5).
 package main
@@ -51,6 +52,12 @@ func run(args []string, out io.Writer) error {
 				return err
 			}
 			return runInitTry(root, out)
+		case "dist-try":
+			root, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+			return runDistTry(root, os.Stdin, out)
 		case "readme":
 			root, err := os.Getwd()
 			if err != nil {

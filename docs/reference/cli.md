@@ -25,7 +25,7 @@ What srwr prints is English by default. Set the environment variable `SRWR_LANG=
 go install github.com/amisonnet8/srwr/cmd/srwr@latest
 ```
 
-Prebuilt binaries for Linux, macOS and Windows are distributed on GitHub Releases. cgo is not used, so it runs as a single binary on any OS.
+Prebuilt binaries for Linux, macOS and Windows (amd64 and arm64) are distributed on GitHub Releases. Each file is named `srwr_<version>_<os>_<arch>.tar.gz` (`.zip` for Windows) and holds `srwr` (`srwr.exe`), `LICENSE` and `README.md`; `checksums.txt` lists the SHA-256 of every file (`sha256sum -c checksums.txt`). cgo is not used, so it runs as a single binary on any OS.
 
 Choose the tool for viewing as you like.
 

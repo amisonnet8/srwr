@@ -152,3 +152,27 @@ test("every %key% of package.json has an English and a Japanese text, and none i
   const vsix = fs.readFileSync(path.join(extDir, ".vscodeignore"), "utf8");
   assert.ok(vsix.includes("!package.nls*.json"), "the texts are in the .vsix");
 });
+
+// What the Marketplace asks of a listing (docs: .claude/rules/distribution.md).
+test("the listing has an icon (a PNG of 128 pixels or more), keywords and a homepage", () => {
+  assert.equal(pkg.icon, "media/icon.png");
+  const png = fs.readFileSync(path.join(extDir, pkg.icon));
+  assert.equal(png.subarray(0, 8).toString("hex"), "89504e470d0a1a0a", "not a PNG");
+  assert.ok(png.readUInt32BE(16) >= 128 && png.readUInt32BE(20) >= 128, "the icon is smaller than 128 pixels");
+  assert.ok(Array.isArray(pkg.keywords) && pkg.keywords.length > 0 && pkg.keywords.every((k: unknown) => typeof k === "string" && k !== ""));
+  assert.match(pkg.homepage, /^https:\/\/github\.com\/amisonnet8\/srwr/);
+  assert.match(pkg.bugs.url, /^https:\/\/github\.com\/amisonnet8\/srwr\/issues$/);
+  assert.ok(pkg.categories.length > 0);
+});
+
+test("the pictures the README of the extension shows are packaged (and are PNG, which vsce accepts)", () => {
+  const readme = fs.readFileSync(path.join(extDir, "README.md"), "utf8");
+  const local = [...readme.matchAll(/(?:src="|\]\()(media\/[^")\s]+)/g)].map((m) => m[1]);
+  assert.ok(local.length > 0, "the README shows no picture of its own");
+  const ignore = fs.readFileSync(path.join(extDir, ".vscodeignore"), "utf8");
+  assert.ok(ignore.includes("!media/**"), "media/ is not packaged");
+  for (const f of local) {
+    assert.ok(f.endsWith(".png"), `${f}: vsce does not accept an SVG in a README`);
+    assert.ok(fs.existsSync(path.join(extDir, f)), `${f} is missing`);
+  }
+});

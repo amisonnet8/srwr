@@ -46,13 +46,6 @@ func TestCompareShotsNamesWhatDiffers(t *testing.T) {
 	}
 }
 
-func TestShotSVGDrawsThePaintedLines(t *testing.T) {
-	svg := ShotSVG(shotOf(t, strings.ReplaceAll(shotTab, "COLOR", "#b45f06")), "t")
-	if !strings.Contains(svg, `fill="#b45f06"`) || !strings.Contains(svg, "two") || !strings.Contains(svg, "5/7") {
-		t.Errorf("the picture lacks the color, the text or the bar:\n%s", svg)
-	}
-}
-
 func TestGridOfAndDiffCells(t *testing.T) {
 	f := Frame{Text: []string{"ab", "あい"}, BG: []Run{{1, 0, 2, "#0b61a4"}}, FG: []Run{{0, 0, 1, "#ff0000"}}}
 	g := GridOf(f, 6, 2, "#1e1e1e", "#d4d4d4")
@@ -99,22 +92,5 @@ func TestCompareBaselineNamesTheScreen(t *testing.T) {
 	}
 	if d := CompareBaseline(want, &Capture{Labels: []string{"1"}, Grids: []*Grid{grid("x", "abc", "#0b61a4")}}); len(d) != 1 || d[0].Index != 0 || !strings.Contains(d[0].Diffs[0], "1 screens") {
 		t.Errorf("a different number of screens: %+v", d)
-	}
-}
-
-func TestShotSVGLeavesTheWhyRowsWithoutNumbers(t *testing.T) {
-	js := `{"frame":0,"tree":[],"status":[],"tabs":[{"uri":"srwr-replay:/t/a.go","text":"one\n◆ why\n  more\ntwo","reveal":1,"options":{"lineNumbers":0},
-"decorations":[{"opts":{"before":{}},"ranges":[{"line":0,"before":"\u00a0\u00a01\u00a0\u00a0"},{"line":1,"before":"\u00a0\u00a0\u00a0\u00a0\u00a0"},{"line":2,"before":"\u00a0\u00a0\u00a0\u00a0\u00a0"},{"line":3,"before":"\u00a0\u00a02\u00a0\u00a0"}]}]}]}`
-	svg := ShotSVG(shotOf(t, js), "t")
-	// The numbers are 1 for "one" and 2 for "two" (not 4): the two why rows have none.
-	for _, want := range []string{">  1<", ">  2<"} {
-		if !strings.Contains(svg, want) {
-			t.Errorf("the picture lacks the number %q:\n%s", want, svg)
-		}
-	}
-	for _, not := range []string{">  3<", ">  4<"} {
-		if strings.Contains(svg, not) {
-			t.Errorf("a why row has the number %q", not)
-		}
 	}
 }

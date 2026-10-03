@@ -71,7 +71,7 @@ func renderPage(r *Report) string {
 	for _, set := range []struct {
 		title string
 		res   []CaptureResult
-	}{{"Vim", r.Vim}, {"VSCode（拡張。VSCode 風の簡素な図）", r.VSCode}} {
+	}{{"Vim", r.Vim}, {"VSCode（拡張）", r.VSCode}} {
 		for _, c := range set.res {
 			if c.Status == statusSame {
 				continue
@@ -117,6 +117,11 @@ func writeCapture(b *strings.Builder, set string, c CaptureResult) {
 		fmt.Fprintf(b, `<h3 class="new">%s・%s：新しい画面（基準がありません。OK なら今の画面が基準になります）</h3>`+"\n", html.EscapeString(set), html.EscapeString(c.Name))
 	default:
 		fmt.Fprintf(b, `<h3 class="ng">%s・%s：基準と違う</h3>`+"\n", html.EscapeString(set), html.EscapeString(c.Name))
+	}
+	if c.Status == statusNew && len(c.Frames) > 0 && c.Frames[0].Got == "" {
+		// No picture of the extension: what it shows is compared as text, and how it looks is judged in a real VSCode.
+		fmt.Fprintf(b, "<p>%d コマ。見た目は実物で見てください：<code>qsoku ui-open vscode …</code></p>\n", len(c.Frames))
+		return
 	}
 	for i, f := range c.Frames {
 		if i >= maxFramesShown {

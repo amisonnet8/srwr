@@ -84,7 +84,7 @@
 - `vim/embed.go` は Go のパッケージ（`go:embed` は親ディレクトリを参照できないので、埋め込む側を `vim/` に置く）。`internal/cli` の `view` がこれを使う
 
 ### 確認の自動化
-- 画面の取得・比較・確認ページの生成は `tools/ui-check/`（Go で書く。シェルスクリプトは最小限）。`qsoku ui-check`・`ui-live`・`ui-open` から呼ぶ。今あるのは `run`（`qsoku ui-check`）・`live`（`ui-live`）・`accept`（`ui-accept`）・`open vscode|vim`（`ui-open`。作業場づくり、VSCode／Vim を開く、ライブの追記）と `vim-baseline`（承認した Vim の画像から基準を作る。一度だけ）。画面の取得は、Vim が `internal/uicheck` の `CaptureVim`（`vim/screen_test.go` も同じ部品を使う）、VSCode が `extension/test/capture.ts`（`node --require ./out/test/setup.js out/test/capture.js <出力先> [<追加の作業場>]`）。比較・描画は `internal/uicheck`（`CompareBaseline`・`CompareShots`・`Grid.SVG`・`ShotSVG`）
+- 画面の取得・比較・確認ページの生成は `tools/ui-check/`（Go で書く。シェルスクリプトは最小限）。`qsoku ui-check`・`ui-live`・`ui-open` から呼ぶ。今あるのは `run`（`qsoku ui-check`）・`live`（`ui-live`）・`accept`（`ui-accept`）・`open vscode|vim`（`ui-open`。作業場づくり、VSCode／Vim を開く、ライブの追記）と `vim-baseline`（承認した Vim の画像から基準を作る。一度だけ）。画面の取得は、Vim が `internal/uicheck` の `CaptureVim`（`vim/screen_test.go` も同じ部品を使う）、VSCode が `extension/test/capture.ts`（`node --require ./out/test/setup.js out/test/capture.js <出力先> [<追加の作業場>]`）。比較・描画は `internal/uicheck`（`CompareBaseline`・`CompareShots`・`Grid.SVG`）
 - 基準（前回 OK だった画面の記録）はリポジトリに入れる。結果（`ui-check-result/`）は入れない
 
 ## 各ファイル・ディレクトリの補足

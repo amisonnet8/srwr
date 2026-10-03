@@ -99,6 +99,10 @@ func TestPageSaysWhatHappened(t *testing.T) {
 			[]string{"自動の検証が 1 件失敗", "差分のコマ", "test_diff.vim"}, []string{"違いなし</div>"}},
 		"a new one": {Report{Checks: okChecks(), Vim: []CaptureResult{{Name: "replay-long-why dark", Status: statusNew, Frames: []FrameInfo{{Index: 1, Label: "1", Got: "<svg>n</svg>"}}}}},
 			[]string{"新しいコマ", "基準がありません", "<svg>n</svg>"}, []string{"違いなし</div>"}},
+		"the extension, new": {Report{Checks: okChecks(), VSCode: []CaptureResult{{Name: "long_why", Status: statusNew, Frames: []FrameInfo{{Index: 1, Label: "1"}, {Index: 2, Label: "2"}}}}},
+			[]string{"2 コマ。見た目は実物で見てください", "qsoku ui-open vscode"}, []string{"<svg"}},
+		"the extension, differs": {Report{Checks: okChecks(), VSCode: []CaptureResult{{Name: "all_basic", Status: statusDiff, Frames: []FrameInfo{{Index: 5, Label: "frame 4", Diffs: []string{"editor 1 decorations: baseline only line 36 #b45f06; now only line 36 #c05f06"}}}}}},
+			[]string{"VSCode（拡張）", "5 コマ目", "#c05f06"}, []string{"<svg", "簡素な図"}},
 		"an error":  {Report{Checks: okChecks(), VSCode: []CaptureResult{{Name: "all_basic", Status: statusError, Error: "no capture"}}}, []string{"取れなかった", "no capture"}, []string{"違いなし</div>"}},
 		"a problem": {Report{Checks: okChecks(), Problems: []string{"長い理由（x）：one row"}}, []string{"見つかった問題", "one row"}, []string{"違いなし</div>"}},
 	} {

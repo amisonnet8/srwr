@@ -401,7 +401,7 @@ func captureVSCode(root, dir, extra string, haveLong, liveOnly bool) []CaptureRe
 		if os.IsNotExist(rerr) {
 			res.Status = statusNew
 			for i, s := range got {
-				res.Frames = append(res.Frames, FrameInfo{Index: i + 1, Label: shotLabel(s, i), Got: uicheck.ShotSVG(s, f.Name+" "+shotLabel(s, i))})
+				res.Frames = append(res.Frames, FrameInfo{Index: i + 1, Label: shotLabel(s, i)})
 			}
 			out = append(out, res)
 			continue
@@ -421,10 +421,6 @@ func captureVSCode(root, dir, extra string, haveLong, liveOnly bool) []CaptureRe
 		res.Status = statusDiff
 		for _, d := range diffs {
 			fi := FrameInfo{Index: d.Index, Label: d.Label, Diffs: d.Diffs}
-			if d.Index >= 1 && d.Index <= len(want) && d.Index <= len(got) {
-				fi.Want = uicheck.ShotSVG(want[d.Index-1], "baseline "+d.Label)
-				fi.Got = uicheck.ShotSVG(got[d.Index-1], "now "+d.Label)
-			}
 			res.Frames = append(res.Frames, fi)
 		}
 		out = append(out, res)

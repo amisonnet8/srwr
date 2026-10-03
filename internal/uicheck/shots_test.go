@@ -101,3 +101,20 @@ func TestCompareBaselineNamesTheScreen(t *testing.T) {
 		t.Errorf("a different number of screens: %+v", d)
 	}
 }
+
+func TestShotSVGLeavesTheWhyRowsWithoutNumbers(t *testing.T) {
+	js := `{"frame":0,"tree":[],"status":[],"tabs":[{"uri":"srwr-replay:/t/a.go","text":"one\n◆ why\n  more\ntwo","reveal":1,"options":{"lineNumbers":0},
+"decorations":[{"opts":{"before":{}},"ranges":[{"line":0,"before":"\u00a0\u00a01\u00a0\u00a0"},{"line":1,"before":"\u00a0\u00a0\u00a0\u00a0\u00a0"},{"line":2,"before":"\u00a0\u00a0\u00a0\u00a0\u00a0"},{"line":3,"before":"\u00a0\u00a02\u00a0\u00a0"}]}]}]}`
+	svg := ShotSVG(shotOf(t, js), "t")
+	// The numbers are 1 for "one" and 2 for "two" (not 4): the two why rows have none.
+	for _, want := range []string{">  1<", ">  2<"} {
+		if !strings.Contains(svg, want) {
+			t.Errorf("the picture lacks the number %q:\n%s", want, svg)
+		}
+	}
+	for _, not := range []string{">  3<", ">  4<"} {
+		if strings.Contains(svg, not) {
+			t.Errorf("a why row has the number %q", not)
+		}
+	}
+}

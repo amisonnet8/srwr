@@ -67,6 +67,7 @@ func ShotSVG(s Shot, title string) string {
 		text(float64(x0+10), 17, fg, sansFB, 12, uri)
 		lines := strings.Split(fmt.Sprint(tab["text"]), "\n")
 		painted := paintedLines(tab["decorations"])
+		labels := lineLabels(tab["decorations"])
 		reveal := 1
 		if r, ok := tab["reveal"].(float64); ok {
 			reveal = int(r)
@@ -78,7 +79,11 @@ func ShotSVG(s Shot, title string) string {
 			if p, ok := painted[ln]; ok {
 				fmt.Fprintf(&b, `<rect x="%d" y="%d" width="%d" height="%d" fill="%s"/>`+"\n", x0, y, colW, lineH, p.bg)
 			}
-			text(float64(x0+6), float64(y+14), dimFG, mono, 12, fmt.Sprintf("%3d", ln+1))
+			number := fmt.Sprintf("%3d", ln+1)
+			if l, ok := labels[ln]; ok {
+				number = l // the extension's own numbers: the why rows have none
+			}
+			text(float64(x0+6), float64(y+14), dimFG, mono, 12, number)
 			col := fg
 			if p, ok := painted[ln]; ok && p.fg != "" {
 				col = p.fg
@@ -119,6 +124,27 @@ func paintedLines(v any) map[int]paint {
 			rm, _ := r.(map[string]any)
 			if line, ok := rm["line"].(float64); ok {
 				out[int(line)] = paint{bg, fg}
+			}
+		}
+	}
+	return out
+}
+
+// lineLabels are the line numbers the extension draws itself (a decoration with a text before the line): line (0-based) to
+// the text, without the padding. A line with an empty text has no number. Without such decorations, the editor's own numbers
+// count and the map is empty.
+func lineLabels(v any) map[int]string {
+	out := map[int]string{}
+	list, _ := v.([]any)
+	for _, d := range list {
+		m, _ := d.(map[string]any)
+		ranges, _ := m["ranges"].([]any)
+		for _, r := range ranges {
+			rm, _ := r.(map[string]any)
+			before, ok := rm["before"].(string)
+			line, lok := rm["line"].(float64)
+			if ok && lok {
+				out[int(line)] = fmt.Sprintf("%3s", strings.TrimSpace(strings.ReplaceAll(before, "\u00a0", " ")))
 			}
 		}
 	}

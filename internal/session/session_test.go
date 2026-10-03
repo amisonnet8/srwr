@@ -2,12 +2,14 @@ package session
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
 	"regexp"
 	"runtime"
 	"slices"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -479,5 +481,63 @@ func TestConcurrentWriters(t *testing.T) {
 	slices.Sort(names)
 	if want := []string{"active", "key", "lock", "tapes"}; !slices.Equal(names, want) {
 		t.Errorf(".srwr holds %v, want %v (no temporary files left)", names, want)
+	}
+}
+
+// The vcs of the header is asked for once for each tape, when the tape is made, and goes into the header as it is.
+func TestHeaderGetsTheVCS(t *testing.T) {
+	root := t.TempDir()
+	c := newClock()
+	calls := 0
+	var askedAbout string
+	w, err := Open(root, Options{Now: c.Now, Version: "v-test", VCS: func(r string) json.RawMessage {
+		calls++
+		askedAbout = r
+		return json.RawMessage(`{"type":"git","head":"` + strings.Repeat("ab", 20) + `","dirty":true}`)
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := w.Do(func(tx *Tx) error { return nil }); err != nil || calls != 0 {
+		t.Fatalf("a call that writes nothing asked for the vcs: calls %d err %v", calls, err)
+	}
+	var id string
+	for i := 1; i <= 3; i++ {
+		if err := w.Do(func(tx *Tx) error { id = tx.TapeID(); return tx.Append(selectEvent(i)) }); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if calls != 1 || askedAbout != w.Root() {
+		t.Errorf("calls = %d about %q, want 1 about %q", calls, askedAbout, w.Root())
+	}
+	h := readTape(t, w, id).Events[0]
+	if string(h.VCS) != `{"type":"git","head":"`+strings.Repeat("ab", 20)+`","dirty":true}` {
+		t.Errorf("vcs = %s", h.VCS)
+	}
+	// A second process on the same tape does not make another header.
+	w2, _ := Open(root, Options{Now: c.Now, VCS: func(string) json.RawMessage { calls++; return nil }})
+	if err := w2.Do(func(tx *Tx) error { return tx.Append(selectEvent(4)) }); err != nil || calls != 1 {
+		t.Errorf("calls = %d err %v", calls, err)
+	}
+	// A new session (after the gap) asks again.
+	c.t = c.t.Add(time.Hour)
+	if err := w.Do(func(tx *Tx) error { return tx.Append(selectEvent(1)) }); err != nil || calls != 2 {
+		t.Errorf("calls = %d err %v", calls, err)
+	}
+}
+
+// Without a VCS function the header asks git (internal/vcs); when git cannot answer, the header says null.
+func TestHeaderVCSDefaultsToAskingGit(t *testing.T) {
+	t.Setenv("PATH", t.TempDir()) // no git
+	root := t.TempDir()
+	w := open(t, root, newClock())
+	var id string
+	if err := w.Do(func(tx *Tx) error { id = tx.TapeID(); return tx.Append(selectEvent(1)) }); err != nil {
+		t.Fatal(err)
+	}
+	b, _ := os.ReadFile(w.TapePath(id))
+	first, _, _ := bytes.Cut(b, []byte("\n"))
+	if !strings.Contains(string(first), `"vcs":null`) {
+		t.Errorf("header line = %s", first)
 	}
 }

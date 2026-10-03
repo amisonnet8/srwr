@@ -30,6 +30,7 @@
 │   ├── viewserver/         ← 表示サーバー（メソッド、ライブの見張り）（R3）
 │   ├── hook/               ← `srwr hook`：hook の JSON と Bash の読み取り・Grep の出力を読んで `core.HookRequest` を作る（R7）
 │   ├── ignore/             ← 記録しないファイル（R8）
+│   ├── vcs/                ← header の vcs：git の HEAD と未コミットの有無（R10）
 │   ├── setup/              ← `srwr init`：`.mcp.json`・`.claude/settings.json`・`.gitignore` への追記、順序を保つ JSON、バックアップ（R9）
 │   ├── uicheck/            ← 画面を比べる道具（端末の画面・承認した画像 SVG を同じ形にし、セルごとに比べる）（R5）
 │   └── cli/                ← サブコマンド（R2 から順に）

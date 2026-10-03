@@ -1,6 +1,7 @@
 package timeline
 
 import (
+	"encoding/json"
 	"slices"
 	"strings"
 	"testing"
@@ -290,5 +291,32 @@ func TestContentAt(t *testing.T) {
 	}
 	if _, ok := ContentAt(nil, "a", 0); ok {
 		t.Error("ContentAt of no frames should be none")
+	}
+}
+
+// The vcs of the header is for people who look at the tape; the frames are the same with it, without it, and with null.
+func TestVCSOfTheHeaderDoesNotChangeTheFrames(t *testing.T) {
+	body := []string{
+		`{"v":1,"seq":1,"ts":"2026-09-29T03:00:01.000Z","type":"snapshot","file":"a.go","text":"1\n2\n3\n"}`,
+		`{"v":1,"seq":2,"ts":"2026-09-29T03:00:02.000Z","type":"select","file":"a.go","startLine":2,"endLine":3,"why":"見る","selection":"sel_1"}`,
+	}
+	headers := []string{
+		`{"v":1,"type":"header","session":"a1b2","startedAt":"2026-09-29T03:00:00.000Z","author":{"kind":"ai","name":"claude"}}`,
+		`{"v":1,"type":"header","session":"a1b2","startedAt":"2026-09-29T03:00:00.000Z","author":{"kind":"ai","name":"claude"},"vcs":null}`,
+		`{"v":1,"type":"header","session":"a1b2","startedAt":"2026-09-29T03:00:00.000Z","author":{"kind":"ai","name":"claude"},"vcs":{"type":"git","head":"` + strings.Repeat("0", 40) + `","dirty":true,"future":[1]}}`,
+		`{"v":1,"type":"header","session":"a1b2","startedAt":"2026-09-29T03:00:00.000Z","author":{"kind":"ai","name":"claude"},"vcs":{"type":"git","head":null,"dirty":false}}`,
+	}
+	var want []Frame
+	for i, h := range headers {
+		got := Build(parse(t, append([]string{h}, body...)...)).Frames()
+		if i == 0 {
+			want = got
+			continue
+		}
+		gj, _ := json.Marshal(got)
+		wj, _ := json.Marshal(want)
+		if string(gj) != string(wj) || got[0].Before != want[0].Before || got[0].After != want[0].After {
+			t.Errorf("header %d: frames %s, want %s", i, gj, wj)
+		}
 	}
 }

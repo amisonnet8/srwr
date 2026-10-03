@@ -8,6 +8,7 @@ package session
 
 import (
 	"crypto/rand"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -18,6 +19,7 @@ import (
 	"time"
 
 	"github.com/amisonnet8/srwr/internal/tape"
+	"github.com/amisonnet8/srwr/internal/vcs"
 )
 
 // DefaultGap is how long after its last event a session is still the current one.
@@ -28,6 +30,8 @@ type Options struct {
 	Now     func() time.Time // for tests; default time.Now
 	Gap     time.Duration    // default DefaultGap
 	Version string           // written to the header of new tapes
+	// VCS says what to write as the vcs of the header of a new tape; default vcs.Detect. It is called once for each tape.
+	VCS func(root string) json.RawMessage
 }
 
 // Workspace is the .srwr directory of a working directory.
@@ -52,6 +56,9 @@ func Open(root string, opts Options) (*Workspace, error) {
 	}
 	if opts.Now == nil {
 		opts.Now = time.Now
+	}
+	if opts.VCS == nil {
+		opts.VCS = vcs.Detect
 	}
 	if opts.Gap <= 0 {
 		opts.Gap = DefaultGap
@@ -335,6 +342,7 @@ func (t *Tx) createTape(path string) error {
 		Session:   t.tc.id[strings.LastIndexByte(t.tc.id, '-')+1:],
 		StartedAt: tape.FormatTS(t.Now()),
 		Author:    t.w.author.Load(),
+		VCS:       t.w.opts.VCS(t.w.root),
 		Tool:      &tape.ToolInfo{Name: "srwr", Version: t.w.opts.Version},
 	}
 	line, err := tape.Marshal(header)

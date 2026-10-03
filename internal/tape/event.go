@@ -54,7 +54,7 @@ type Event struct {
 	// header
 	Session   string
 	StartedAt string
-	VCS       json.RawMessage // null or an object; written by a later stage
+	VCS       json.RawMessage // null, or {"type":"git","head":…,"dirty":…} (internal/vcs)
 	Tool      *ToolInfo
 
 	// Author is also set on external events.

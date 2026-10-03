@@ -35,6 +35,12 @@
 - Bash の読み取りは、**先頭のコマンドだけ**を見る。`$( )`・書き込みのリダイレクト・`sed -i`・`tail -f` などは読み取りとして扱わない。Bash のあとは、読み取りでなくても `ObserveAll`
 - 実際の Claude Code の形：Read・Edit・Bash の `tool_response` は過去の記録（`~/.claude/projects/*.jsonl` の `toolUseResult`）で確かめた。**Grep の形は確かめていない**ので、複数の書式を受け、実機で確かめる
 
+## header の vcs
+
+- `internal/vcs` の `Detect` が、テープを作るとき（`session` の `createTape`）に1回だけ、`git` を読み取りで動かす。`-c core.fsmonitor=false --no-optional-locks`、`GIT_OPTIONAL_LOCKS=0`、`LC_ALL=C`、`GIT_TERMINAL_PROMPT=0`、5秒の時間切れ。**失敗は黙って `null`**（AI の作業を止めない）
+- `dirty` は `.srwr/` を数えない（`:(exclude).srwr`）。テストは `session.Options.VCS` で差し替えられる
+- git が使えない環境でも、テストは `t.Skip` でなく、`null` になることを確かめる
+
 ## init・tapes（`srwr init`・`srwr tapes`）
 
 - `internal/setup` は、ファイルを**全部読んで計画を立ててから**書く。JSON として読めない・形が違うファイルが1つでもあれば `*UserError` で止まり、何も書かない（鍵も作らない）

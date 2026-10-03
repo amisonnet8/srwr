@@ -246,6 +246,8 @@ func TestParseOldFormats(t *testing.T) {
 func TestMarshalRoundTrip(t *testing.T) {
 	events := []Event{
 		{Type: TypeHeader, Session: "a1b2", StartedAt: "2026-09-29T11:20:00.000+09:00", Author: &Author{Kind: "ai", Name: "claude"}, Tool: &ToolInfo{Name: "srwr", Version: "(devel)"}},
+		{Type: TypeHeader, Session: "c3d4", StartedAt: "2026-10-03T11:20:00.000Z", Author: &Author{Kind: "ai", Name: "claude"}, VCS: json.RawMessage(`{"type":"git","head":"` + strings.Repeat("0123456789", 4) + `","dirty":true}`), Tool: &ToolInfo{Name: "srwr", Version: "(devel)"}},
+		{Type: TypeHeader, Session: "e5f6", StartedAt: "2026-10-03T11:20:00.000Z", Author: &Author{Kind: "ai", Name: "claude"}, VCS: json.RawMessage(`{"type":"git","head":null,"dirty":false}`), Tool: &ToolInfo{Name: "srwr", Version: "(devel)"}},
 		{Type: TypeSnapshot, Seq: 1, TS: "t", File: "a.go", FileHash: FileHash("a.go"), Text: Str("x <b> & y\n"), Sha: Sha("x <b> & y\n")},
 		{Type: TypeSelect, Seq: 2, TS: "t", File: "a.go", StartLine: 1, EndLine: 1, Why: Str("見る"), Selection: Str("sel_1"), Source: SourceMCP},
 		{Type: TypeSelect, Seq: 3, TS: "t", File: "a.go", StartLine: 1, EndLine: 1, Source: SourceHook, HookTool: "Grep"},

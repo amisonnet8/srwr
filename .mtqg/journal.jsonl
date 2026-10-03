@@ -156,3 +156,4 @@
 {"id":"cfafec9da59c437fa40202666e5fff3d","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T03:13:26Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"ed7b6b1f61764824b7f0fe8fc1488521","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T03:13:26Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"c5e0a4ccd4a24518b76b21f6a88a6b88","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T03:13:26Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"38590b125df343e3b7b554fe00a23121","op":"create","type":"memo","text":"R5 確認で『打った文字が出ない』。原因は日本語入力(IME)の可能性が高い(手元の疑似端末では ]]・: とも動く)。手順に IME を切る注意を追加し、light は qsoku ui-open vim <テープ>-light(VIMINIT で background=light)にして、: を打たせない形に直した。人間はチャットの文字をコピーできないので、打たせるものは短く(working-with-human.md 3章)。","v":1,"ts":"2026-10-03T03:29:52Z","author":{"kind":"ai","name":"claude-code"}}

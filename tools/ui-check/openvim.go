@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -17,7 +18,6 @@ var vimGuide = map[string][]string{
 		"左に操作一覧（7コマ）、右にコマが開きます。1コマ目は text.go の select です",
 		"`]]` を押して進み、5コマ目（replace）まで進みます。`[[` で戻れます",
 		"見る：select は青の理由の行＋薄い青の範囲、replace は橙。理由の行の下の行が範囲です。行番号は理由の行だけ空白です",
-		"`:set background=light` と打って Enter。色が light 用（薄い色）に変わっても、読めるか見ます。戻すには `:set background=dark`",
 		"左の一覧で `<CR>`（Enter）を押すと、その行のコマに移ります",
 		"`q` で閉じます",
 	},
@@ -27,7 +27,7 @@ var vimGuide = map[string][]string{
 		"見る：左右2つのウィンドウに分かれ、左（前）は青、右（後）は橙で、変わった行だけが塗られているか。左下に「前 ⚠ srwrの外で変更：stats.go」。`]c` で次の変更へ飛べます",
 		"`]]` を押して7コマ目へ。右のウィンドウが消えて、1つの画面に戻るか見ます",
 		"`]]` を押して10・11コマ目（録画後）まで進み、同じ形の差分（見出しは「録画のあとで変更」）が出るか見ます",
-		"`:set background=light` で light でも差分の青と橙が読めるか見ます。`q` で閉じます",
+		"`q` で閉じます",
 	},
 	"no-why": {
 		"左に操作一覧（12コマ）、右にコマが開きます。理由が無いので、理由の行は出ません",
@@ -43,7 +43,20 @@ var vimGuide = map[string][]string{
 	},
 }
 
+// vimNote comes after the steps of every tape.
+const vimNote = `
+・キーは、日本語入力（IME）を切って、半角英数で押します（IME が入っていると、]] や : が Vim に届きません）
+・light（白い背景）で見るときは、名前の後ろに -light を付けて、もう一度動かします。例：qsoku ui-open vim why-basic-light
+`
+
+// splitLight splits "why-basic-light" into the tape and whether Vim is told to use a light background.
+func splitLight(name string) (base string, light bool) {
+	base = strings.TrimSuffix(name, "-light")
+	return base, base != name
+}
+
 func openVim(root, name string, out io.Writer) error {
+	name, light := splitLight(name)
 	bin := filepath.Join(root, "bin", "srwr")
 	fixture := filepath.Join(root, "extension", "test", "fixtures", "ui-check")
 	base := os.Getenv("SRWR_UI_OPEN_DIR")
@@ -58,6 +71,10 @@ func openVim(root, name string, out io.Writer) error {
 	for i, step := range vimGuide[name] {
 		_, _ = fmt.Fprintf(out, "%d. %s\n", i+1, step)
 	}
+	_, _ = fmt.Fprint(out, vimNote)
+	if light {
+		_, _ = fmt.Fprintln(out, "（この Vim は、light の背景で開きます）")
+	}
 	_, _ = fmt.Fprint(out, "\n読んだら Enter を押してください（Vim が開きます）: ")
 	_, _ = bufio.NewReader(os.Stdin).ReadString('\n')
 
@@ -70,6 +87,10 @@ func openVim(root, name string, out io.Writer) error {
 	cmd := exec.Command(bin, args...) //nolint:gosec // the binary this repository built
 	cmd.Dir = workspace
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
+	if light {
+		// VIMINIT is read instead of the vimrc: a plain Vim, whose colors are the ones of the images.
+		cmd.Env = append(os.Environ(), "VIMINIT=set background=light")
+	}
 	if name == "live" {
 		return runLiveVim(cmd, workspace, fixture)
 	}

@@ -30,8 +30,12 @@ func run(args []string, out io.Writer) error {
 		return errors.New("usage: ui-check open <vscode|vim> <why-basic|external|no-why|live>")
 	}
 	name := args[2]
-	if _, ok := tapes[name]; !ok && name != "live" {
-		return fmt.Errorf("unknown tape %q: why-basic, external, no-why or live", name)
+	check := name
+	if args[1] == "vim" {
+		check, _ = splitLight(name)
+	}
+	if _, ok := tapes[check]; !ok && check != "live" {
+		return fmt.Errorf("unknown tape %q: why-basic, external, no-why or live (Vim: and the same with -light)", name)
 	}
 	root, err := os.Getwd()
 	if err != nil {

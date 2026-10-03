@@ -131,3 +131,19 @@ func TestVimGuideCoversEveryTape(t *testing.T) {
 		t.Error("the live guide must say how to go back and how to return to the latest")
 	}
 }
+
+func TestSplitLight(t *testing.T) {
+	for name, want := range map[string][2]any{"why-basic": {"why-basic", false}, "why-basic-light": {"why-basic", true}, "live": {"live", false}} {
+		base, light := splitLight(name)
+		if base != want[0] || light != want[1] {
+			t.Errorf("splitLight(%q) = %q, %v", name, base, light)
+		}
+	}
+	for _, name := range []string{"why-basic", "external", "no-why", "live"} {
+		for _, step := range vimGuide[name] {
+			if strings.Contains(step, "background=light") {
+				t.Errorf("%s: a step asks the person to type %q; the -light name does it", name, step)
+			}
+		}
+	}
+}

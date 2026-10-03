@@ -13,7 +13,6 @@
   <img alt="Go" src="https://img.shields.io/github/go-mod/go-version/amisonnet8/srwr?logo=go&logoColor=white">
   <img alt="Vim 9.0.0784+" src="https://img.shields.io/badge/Vim-9.0.0784%2B-019733?logo=vim&logoColor=white">
   <a href="https://marketplace.visualstudio.com/items?itemName=amisonnet8.srwr-view"><img alt="VSCode Marketplace" src="https://img.shields.io/visual-studio-marketplace/v/amisonnet8.srwr-view?label=VSCode&logo=visualstudiocode&logoColor=white"></a>
-  <a href="https://marketplace.visualstudio.com/items?itemName=amisonnet8.srwr-view"><img alt="Installs" src="https://img.shields.io/visual-studio-marketplace/i/amisonnet8.srwr-view"></a>
   <a href="https://marketplace.visualstudio.com/items?itemName=amisonnet8.srwr-view"><img alt="Rating" src="https://img.shields.io/visual-studio-marketplace/r/amisonnet8.srwr-view"></a>
 </p>
 

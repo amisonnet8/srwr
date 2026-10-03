@@ -135,3 +135,4 @@
 {"id":"3169ec16d42c4aa099e222a50b6993a5","op":"status","from":"open","status":"done","basis":3,"v":1,"ts":"2026-10-03T00:01:50Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"40c2dc7da04a4e7e8ccaba10b60d1a0f","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T00:15:34Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"423ed63b81f148c79f076903025eeed1","op":"create","type":"memo","text":"R4 完了：人間が実物の VSCode で 4-2 の 1〜4（色が dark/light で読める、差分の左右が見やすい、パネル・バー・タブ・アイコンが崩れない、ライブの ● LIVE と橙の LIVE に戻る）を確認し OK。push 後の CI も通った。基準は extension/test/baseline/（前の実装の記録の写しと全コマ一致）。","v":1,"ts":"2026-10-03T00:15:34Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"c9029f1746974e9da8e8453f36d7fb26","op":"create","type":"rule","text":"人間に確認を頼むときは、確認してほしい項目すべてについて、操作の手順（打つコマンド、押す場所、待つもの、見る時点）まで番号つきで書く。見るところだけを渡して、手順を聞き返させない。","v":1,"ts":"2026-10-03T00:16:48Z","author":{"kind":"ai","name":"claude-code"}}

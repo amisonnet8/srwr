@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -218,5 +219,55 @@ func TestHookTryReportFindsAnEditWithWrongLines(t *testing.T) {
 	lines, _, ok := hookTryReport(root)
 	if ok || !strings.Contains(strings.Join(lines, "\n"), "× Edit の記録の行番号が、直した行を指している（合わないもの 1 件）") {
 		t.Errorf("%v %v", lines, ok)
+	}
+}
+
+func TestRenderHookTryPage(t *testing.T) {
+	ok := []string{"○ 記録（テープ）が1本できた：x", "○ AI が Edit（いつもの編集）で直した記録：1 件"}
+	rows := []hookTryRow{{1, "snapshot", "", "f.go", ""}, {2, "select", "AI の道具 Read", "f.go:1-3", ""}, {3, "replace", "srwr（select / replace）", "f.go:2-2", "直す <理由>"}}
+	good := renderHookTryPage(ok, rows, "done <b>", nil)
+	for _, want := range []string{"全部 ○ でした", "「OK」", "AI の道具 Read", "f.go:1-3", "直す &lt;理由&gt;", "done &lt;b&gt;"} {
+		if !strings.Contains(good, want) {
+			t.Errorf("the page lacks %q", want)
+		}
+	}
+	bad := renderHookTryPage(append(ok, "× AI がファイルを読んだ・探した記録：0 件"), rows, "", nil)
+	if !strings.Contains(bad, "足りないものがあります") || !strings.Contains(bad, "「NG」") || strings.Contains(bad, "全部 ○ でした") {
+		t.Error("a × must make the page say NG")
+	}
+	failed := renderHookTryPage(ok, rows, "", errors.New("exit status 1"))
+	if !strings.Contains(failed, "足りないものがあります") || !strings.Contains(failed, "exit status 1") {
+		t.Error("a Claude Code that failed must make the page say NG and why")
+	}
+}
+
+func TestClaudeBinaryIsFoundInTheVSCodeExtension(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	t.Setenv("PATH", t.TempDir())
+	t.Setenv("CLAUDE_CODE_EXECPATH", "")
+	if _, ok := claudeBinary(); ok {
+		t.Fatal("found a claude that is not there")
+	}
+	for _, v := range []string{"2.1.9", "2.1.287"} {
+		dir := filepath.Join(home, ".vscode-server", "extensions", "anthropic.claude-code-"+v+"-linux-x64", "resources", "native-binary")
+		if err := os.MkdirAll(dir, 0o750); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, "claude"), nil, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	got, ok := claudeBinary()
+	if !ok || !strings.Contains(got, "claude-code-2.1.9") && !strings.Contains(got, "claude-code-2.1.287") {
+		t.Errorf("claude = %q %v", got, ok)
+	}
+	t.Setenv("CLAUDE_CODE_EXECPATH", filepath.Join(home, "elsewhere"))
+	if err := os.WriteFile(filepath.Join(home, "elsewhere"), nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := claudeBinary(); got != filepath.Join(home, "elsewhere") {
+		t.Errorf("the path of the running Claude Code comes first: %q", got)
 	}
 }

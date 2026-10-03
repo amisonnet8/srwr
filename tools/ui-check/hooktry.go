@@ -1,15 +1,19 @@
 package main
 
 import (
-	"bufio"
+	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"html"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/amisonnet8/srwr/internal/tape"
 )
@@ -207,7 +211,30 @@ func hookTryReport(workspace string) (lines []string, tapeID string, ok bool) {
 	return lines, id, ok
 }
 
-// runHookTry is `ui-check hook-try`.
+// claudeBinary finds Claude Code: `claude` on the PATH, the one that started this tool's shell, or the one of the VSCode extension.
+func claudeBinary() (string, bool) {
+	if p, err := exec.LookPath("claude"); err == nil {
+		return p, true
+	}
+	if p := os.Getenv("CLAUDE_CODE_EXECPATH"); p != "" {
+		if _, err := os.Stat(p); err == nil { //nolint:gosec // the path of the running Claude Code, from its environment
+			return p, true
+		}
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", false
+	}
+	found, _ := filepath.Glob(filepath.Join(home, ".vscode-server", "extensions", "anthropic.claude-code-*", "resources", "native-binary", "claude"))
+	sort.Strings(found)
+	if len(found) == 0 {
+		return "", false
+	}
+	return found[len(found)-1], true
+}
+
+// runHookTry is `ui-check hook-try`: it makes the workspace, lets Claude Code work in it (the person's own Claude Code, with the
+// person's own sign-in: this runs in the person's terminal), checks the tape, and writes the page to look at.
 func runHookTry(root string, out io.Writer) error {
 	bin := filepath.Join(root, "bin", "srwr")
 	base := os.Getenv("SRWR_UI_OPEN_DIR")
@@ -218,34 +245,102 @@ func runHookTry(root string, out io.Writer) error {
 	if err := prepareHookTry(workspace, bin); err != nil {
 		return err
 	}
-	if _, err := exec.LookPath("code"); err != nil {
-		return fmt.Errorf("the code command was not found. Open %s in VSCode by hand", workspace)
-	}
-	if err := command(root, out, "code", "-n", workspace); err != nil {
-		return fmt.Errorf("opening VSCode: %w", err)
-	}
-	_, _ = fmt.Fprintf(out, "\n作業場：%s\n\n【手順】新しい VSCode が開きます。そこで次のようにします（日本語入力は切る）\n", workspace)
-	for i, s := range hookTrySteps {
-		_, _ = fmt.Fprintf(out, "%d. %s\n", i+1, s)
-	}
-	_, _ = fmt.Fprint(out, "\nAI の作業が終わったら、このターミナルに戻って Enter を押してください: ")
-	_, _ = bufio.NewReader(os.Stdin).ReadString('\n')
-
-	lines, _, ok := hookTryReport(workspace)
-	_, _ = fmt.Fprintln(out, "\n【記録されたもの】")
-	for _, l := range lines {
-		_, _ = fmt.Fprintln(out, l)
-	}
+	claude, ok := claudeBinary()
 	if !ok {
-		return fmt.Errorf("記録に足りないものがあります（上の × ）。この結果を AI に伝えてください")
+		return errors.New("claude（Claude Code の実行ファイル）が見つかりません。この文を AI に伝えてください")
 	}
-	_, _ = fmt.Fprintln(out, "\n全部 ○ なら、確認は終わりです。結果をチャットで教えてください。")
+	_, _ = fmt.Fprintln(out, "Claude Code に作業させています（数分かかります）…")
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, claude, "-p", "Do what TASK.md says") //nolint:gosec // Claude Code, found above
+	cmd.Dir = workspace
+	var said bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &said, &said
+	runErr := cmd.Run()
+
+	lines, _, allOK := hookTryReport(workspace)
+	page := filepath.Join(root, "ui-check-result", "hook-try", "index.html")
+	if err := os.MkdirAll(filepath.Dir(page), 0o750); err != nil {
+		return err
+	}
+	if err := os.WriteFile(page, []byte(renderHookTryPage(lines, hookTryRows(workspace), said.String(), runErr)), 0o600); err != nil {
+		return err
+	}
+	_, _ = fmt.Fprintf(out, "確認ページ：%s\n", page)
+	if !allOK || runErr != nil {
+		return errors.New("記録に足りないものがあります。ページを見てください")
+	}
+	_, _ = fmt.Fprintln(out, "全部 ○ でした")
 	return nil
 }
 
-var hookTrySteps = []string{
-	"左端の Claude Code のアイコンを押して、新しい会話を開く（このフォルダを信頼するか聞かれたら「信頼する」）",
-	"「MCP サーバー srwr を使うか」と聞かれたら、許可する",
-	"入力欄に英数字で `Do what TASK.md says` と打って Enter を押す",
-	"AI が作業を終えて、`go test` が通ったと言うまで待つ。許可を聞かれたら、許可する",
+// hookTryRow is an event of the tape, as the page shows it.
+type hookTryRow struct {
+	Seq             int
+	Kind, By, Where string
+	Why             string
+}
+
+func hookTryRows(workspace string) []hookTryRow {
+	files, _ := filepath.Glob(filepath.Join(workspace, ".srwr", "tapes", "*"+tape.FileSuffix))
+	if len(files) != 1 {
+		return nil
+	}
+	b, err := os.ReadFile(files[0]) //nolint:gosec // found by Glob in the workspace of this tool
+	if err != nil {
+		return nil
+	}
+	var rows []hookTryRow
+	for _, e := range tape.Parse(b).Events {
+		if e.Type == tape.TypeHeader {
+			continue
+		}
+		r := hookTryRow{Seq: e.Seq, Kind: e.Type, Where: e.File}
+		if e.Type == tape.TypeSelect || e.Type == tape.TypeReplace {
+			r.Where = fmt.Sprintf("%s:%d-%d", e.File, e.StartLine, e.EndLine)
+			r.By = "srwr（select / replace）"
+			if e.Source == tape.SourceHook {
+				r.By = "AI の道具 " + e.HookTool
+			}
+			if e.Why != nil {
+				r.Why = *e.Why
+			}
+		}
+		rows = append(rows, r)
+	}
+	return rows
+}
+
+func renderHookTryPage(lines []string, rows []hookTryRow, said string, runErr error) string {
+	var b strings.Builder
+	allOK := runErr == nil
+	for _, l := range lines {
+		if strings.HasPrefix(l, "×") {
+			allOK = false
+		}
+	}
+	b.WriteString(`<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>hook の確認</title><style>` + pageCSS + `</style></head><body>` + "\n")
+	if allOK {
+		b.WriteString(`<div class="big ok">全部 ○ でした</div><p>確認は終わりです。結果をチャットで「OK」と伝えてください。</p>` + "\n")
+	} else {
+		b.WriteString(`<div class="big ng">足りないものがあります</div><p>この画面のまま、チャットで「NG」と伝えてください（AI が原因を調べます）。</p>` + "\n")
+	}
+	if runErr != nil {
+		fmt.Fprintf(&b, `<p class="ng">Claude Code の実行が失敗しました：%s</p>`+"\n", html.EscapeString(runErr.Error()))
+	}
+	b.WriteString("<h2>AI の作業の記録の検査</h2><table><tr><th>結果</th><th>確かめたこと</th></tr>\n")
+	for _, l := range lines {
+		cls := "ok"
+		if strings.HasPrefix(l, "×") {
+			cls = "ng"
+		}
+		mark, text, _ := strings.Cut(l, " ")
+		fmt.Fprintf(&b, `<tr class="%s"><td>%s</td><td>%s</td></tr>`+"\n", cls, html.EscapeString(mark), html.EscapeString(text))
+	}
+	b.WriteString("</table>\n<h2>記録された操作（上から順）</h2><table><tr><th>番号</th><th>種類</th><th>だれが</th><th>ファイル:行</th><th>理由（why）</th></tr>\n")
+	for _, r := range rows {
+		fmt.Fprintf(&b, "<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n", r.Seq, html.EscapeString(r.Kind), html.EscapeString(r.By), html.EscapeString(r.Where), html.EscapeString(r.Why))
+	}
+	b.WriteString("</table>\n<h2>AI の最後の返事</h2><pre>" + html.EscapeString(said) + "</pre>\n</body></html>\n")
+	return b.String()
 }

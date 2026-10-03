@@ -21,7 +21,7 @@
 | `qsoku ui-check` | **UI の確認を1コマンドで**。自動の検証（CHECKLIST 2章の14項目。名前の付いた既存のテストを走らせる）、Vim と拡張の画面の取得、基準との比較、長い理由のテープ（本物の `srwr mcp` でその場で作る）、確認ページ `ui-check-result/latest/index.html` と `result.json` の保存。数十秒。違い・失敗があれば終了コード 1 | **人間に UI を見てもらう前**。人間に渡すのはこの1コマンドと、できたページだけ |
 | `qsoku ui-live` | `ui-check` のライブだけ（Vim の live-basic・live-external、拡張の live_basic・live_ext）。`qsoku ui-live --watch vim`（`vscode`）は、人間が流し込みを見て体感するために、ライブを開く（`ui-open … live` と同じ） | ライブに関わる変更 |
 | `qsoku ui-accept` | 最後の `ui-check` の結果に、人間の判断を記録する。引数なしが OK（違う画面・新しい画面が次の基準になり、基準の README に日付が付く）。`qsoku ui-accept ng <ひとこと>` は NG（基準はそのまま）。自動の検証が落ちている結果は OK にできない | 人間がチャットで OK／NG を答えたあと、AI が動かす |
-| `qsoku hook-try` | R7 の確認。Claude Code が働く作業場（バグが2つの小さな Go のプロジェクト、`.mcp.json` に `srwr mcp`、`.claude/settings.json` に hook と許可）を作り、VSCode で開く。AI の作業のあと、記録されたもの（hook の select・replace、mcp の select・replace の件数）を ○ × で出し、Enter で Vim が開いてそのテープを再生する | **人間に hook の動きを見てもらう前**。人間の端末で動かす。AI は Claude Code を動かさない |
+| `qsoku hook-try` | R7 の確認を1コマンドで。Claude Code が働く作業場（バグが2つの小さな Go のプロジェクト、`.mcp.json` に `srwr mcp`、`.claude/settings.json` に hook と許可）を作り、人間の Claude Code（`claude -p`）を自分で動かして作業させ、テープを自動で検査（読んだ記録・Edit・mcp の記録の有無、Edit の行番号、再生するとファイルと同じか）して、ページ `ui-check-result/hook-try/index.html` に ○ × と記録された操作を出す。数分 | **人間に hook の動きを見てもらう前**。人間の端末で動かす（人間の認証で Claude Code が動く）。AI は動かさない |
 | `qsoku vim-test` | `bin/srwr` を作り、`vim/test/test_*.vim`を画面なしのVimで実行。続けて、疑似端末で本物のVimの画面を取り、基準と比べる（`vim/screen_test.go`） | Vimスクリプトを触ったとき（CI の vim ジョブ） |
 | `qsoku vim-oldest` | Vim 9.0.0784 をソースからビルドして（初回だけ）、それで `vim-test` | Vim に関わる変更の区切り（CI の vim-oldest ジョブ）。`SRWR_VIM_OLDEST_DIR` でビルド先を替えられる |
 | `qsoku check` | `go-check`・`cross`・`ext`・`vim-test`をまとめて実行 | **作業の区切りで必ず通す**（`.claude/rules/testing.md`） |

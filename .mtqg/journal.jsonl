@@ -214,3 +214,4 @@
 {"id":"0e3ba30ced0a461ab7c2c18d1384591c","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T06:25:12Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"eb30093afe114659a025f5dccd293f79","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T06:27:13Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"a99e8c04d5cd433fa404fceb7d19f14d","op":"create","type":"memo","text":"R7 実装完了（コミット済み）。qsoku check・race・shellcheck・ui-check 通過。壊して確かめる：変異22件中、同じ意味の2件を除き全て検出（足したテスト：リダイレクト、100件の上限）。人間の確認は qsoku hook-try（Claude Code を使う）。","v":1,"ts":"2026-10-03T06:27:13Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"b703615f793b471fb64c711e3053153a","op":"create","type":"rule","text":"人間への確認の手順は2行以内。3行以上の手順は人間に頼まない。収まるまで自動にし、結果はターミナルの出力でなくページ（ui-check-result/…/index.html）に出す（.claude/rules/working-with-human.md 3章）。","v":1,"ts":"2026-10-03T07:16:01Z","author":{"kind":"ai","name":"claude-code"}}

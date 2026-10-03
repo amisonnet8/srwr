@@ -189,3 +189,10 @@
 {"id":"942a9ab9a346410a876a371301e0e082","op":"create","type":"rule","text":"人間への手順・確認ページには、『…』や『ほか』『適宜』など考えさせる書き方をしない。打つコマンドは完全な形で、見るものと OK／NG の基準を文で書き、機械的にやれば確認できるようにする。","v":1,"ts":"2026-10-03T04:51:08Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"e18daf8f041244c982f5ea0c31c378b1","op":"create","type":"bug","status":"open","text":"qsoku ui-check の長い理由のテープの時刻が毎回変わり、拡張の画面（テープ一覧の quickPick）が毎回違って見えた。人間の OK の直後に ui-check が『違い』を出して発覚。テープの時刻を固定して直した","v":1,"ts":"2026-10-03T05:01:23Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"6cac525115b24f2d99e6e11690428851","op":"create","type":"memo","text":"R6 の人間の確認：長い理由の画面（Vim 3、VSCode 実物）OK、確認ページの見え方（新しい画面のとき・変わったとき）OK。基準は ui-accept で差し替え済み。次は push と CI。","v":1,"ts":"2026-10-03T05:16:13Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"fe34c7d05d4e411cbb8abdfc6d0421ec","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T05:20:04Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"62acc776163c4e7aa786c5e6a7284648","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T05:20:04Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"c4bd09719bc44f7db237e8dc0065d02b","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T05:20:04Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"3aecbb033dd642ebae766f5da908819f","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T05:20:04Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"4243227e8b6e4afc8901a48a0a9b16a8","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T05:20:04Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"e18daf8f041244c982f5ea0c31c378b1","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T05:20:04Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"e376eb5c096945c2a1c5b05156786e92","op":"create","type":"memo","text":"R6 完了：見た目の確認 OK、push 後の CI green。確認ページ・ui-check・ui-accept・ui-live・ui-open long-why が使える。次は R7（「R7開始」の合図を待つ）。","v":1,"ts":"2026-10-03T05:20:04Z","author":{"kind":"ai","name":"claude-code"}}

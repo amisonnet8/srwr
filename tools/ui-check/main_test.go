@@ -28,7 +28,10 @@ func TestPrepareWorkspace(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(dst, "old.txt")); err == nil {
 		t.Error("a file of the last run is still there")
 	}
-	for _, f := range tapes {
+	for name, f := range tapes {
+		if name == "long-why" {
+			continue // added by addLongWhy
+		}
 		if _, err := os.Stat(filepath.Join(dst, ".srwr", "tapes", f.ID+".tape.jsonl")); err != nil {
 			t.Errorf("tape %s: %v", f.ID, err)
 		}
@@ -62,6 +65,9 @@ func TestPrepareWorkspaceLiveHasNoTapes(t *testing.T) {
 
 func TestFixedTapesAreWhereTheNamesSay(t *testing.T) {
 	for name, f := range tapes {
+		if name == "long-why" {
+			continue // made on the spot (TestLongWhyTapeIsMadeByTheRealMCP)
+		}
 		if _, err := os.Stat(filepath.Join(fixture, ".srwr", "tapes", f.ID+".tape.jsonl")); err != nil {
 			t.Errorf("%s: %v", name, err)
 		}

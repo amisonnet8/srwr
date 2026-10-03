@@ -55,7 +55,7 @@ func run(args []string, out io.Writer) error {
 		return makeVimBaseline(args[1], args[2])
 	}
 	if len(args) != 3 || args[0] != "open" || (args[1] != "vscode" && args[1] != "vim") {
-		return errors.New("usage: ui-check open <vscode|vim> <why-basic|external|no-why|live>")
+		return errors.New("usage: ui-check open <vscode|vim> <why-basic|external|no-why|long-why|live>")
 	}
 	name := args[2]
 	check := name
@@ -63,7 +63,7 @@ func run(args []string, out io.Writer) error {
 		check, _ = splitLight(name)
 	}
 	if _, ok := tapes[check]; !ok && check != "live" {
-		return fmt.Errorf("unknown tape %q: why-basic, external, no-why or live (Vim: and the same with -light)", name)
+		return fmt.Errorf("unknown tape %q: why-basic, external, no-why, long-why or live (Vim: and the same with -light)", name)
 	}
 	root, err := os.Getwd()
 	if err != nil {
@@ -85,6 +85,11 @@ func openVSCode(root, name string, out io.Writer) error {
 	workspace := filepath.Join(base, name)
 	if err := prepareWorkspace(fixture, workspace, bin, name == "live"); err != nil {
 		return err
+	}
+	if name == "long-why" {
+		if err := addLongWhy(bin, workspace); err != nil {
+			return err
+		}
 	}
 	vsix := filepath.Join(base, "srwr-view.vsix")
 	var vsceOut strings.Builder

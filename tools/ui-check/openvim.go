@@ -34,6 +34,12 @@ var vimGuide = map[string][]string{
 		"`]]` で進みながら、範囲だけが薄い青（select）・薄い橙（replace）で塗られ、行番号が Vim 標準のままか見ます",
 		"11・12コマ目（録画後）は左右の差分になります。`q` で閉じます",
 	},
+	"long-why": {
+		"左に操作一覧（3コマ）、右にコマが開きます。1コマ目は a.go の select で、理由が長いので青い理由の行が複数行に折り返されます",
+		"見る：2行目以降が字下げされ、全文が読めるか。行番号は理由の行だけ空白か。理由の行のすぐ下の行が範囲（薄い青）か",
+		"`]]` を押して2コマ目（replace）へ。橙の理由の行が同じように折り返され、その直下に範囲（薄い橙）があるか見ます",
+		"`q` で閉じます",
+	},
 	"live": {
 		"Vim が開いて約5秒後から、3秒ごとに1コマずつ追記されます（全部で6コマ、約20秒）。それまでは「ライブ視聴中（AI の操作を待っています）」と出ます",
 		"見る（追っている間）：コマが届くたびに画面が最新のコマに替わり、ステータス行に「● LIVE」が出続けるか。ちらつかないか",
@@ -75,6 +81,11 @@ func openVim(root, name string, out io.Writer) error {
 	workspace := filepath.Join(base, "vim-"+name)
 	if err := prepareWorkspace(fixture, workspace, bin, name == "live"); err != nil {
 		return err
+	}
+	if name == "long-why" {
+		if err := addLongWhy(bin, workspace); err != nil {
+			return err
+		}
 	}
 	_, _ = fmt.Fprintf(out, "作業場：%s\n\n【%s】手順\n", workspace, name)
 	for i, step := range vimGuide[name] {

@@ -19,6 +19,21 @@ var tapes = map[string]struct {
 	"why-basic": {"20260930-0054-why-basic", "2026-09-30 00:54:08", "7コマ。select は青の理由の行＋薄い青、replace（5〜7）は橙。dark と light の両方で読めるか"},
 	"external":  {"20260930-0949-external", "2026-09-30 09:49:46", "11コマ。6コマ目の外部変更、10・11の録画後は左右の差分（前＝青、後＝橙、変わった行だけ）。見やすいか"},
 	"no-why":    {"20260930-0053-no-why", "2026-09-30 00:53:32", "12コマ。理由の行が無く、範囲の色だけ。11・12は録画後の差分"},
+	// long-why is made on the spot by the real srwr mcp (addLongWhy), not kept in the fixtures. It is the newest tape of its workspace.
+	"long-why": {longWhyTape, "一覧の一番上（20260101-0000-long-why.tape.jsonl）", "2コマ。select（青）と replace（橙）の理由の行が、複数行に折り返され、2行目以降が字下げされ、全文が読めて、行番号は理由の行だけ空白。範囲がその直下に見えるか"},
+}
+
+// addLongWhy makes the tape of a long why with the real `srwr mcp` and puts it, and the file it changed, in the workspace.
+func addLongWhy(bin, workspace string) error {
+	extra, err := os.MkdirTemp("", "srwr-ui-extra-")
+	if err != nil {
+		return err
+	}
+	defer func() { _ = os.RemoveAll(extra) }()
+	if err := makeLongWhyTape(bin, extra); err != nil {
+		return err
+	}
+	return copyTree(extra+"/.", workspace)
 }
 
 // prepareWorkspace makes a new workspace in dst from the fixed one in src: the real files and the tapes. dst is removed first,

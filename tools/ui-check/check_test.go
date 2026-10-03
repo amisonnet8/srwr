@@ -94,13 +94,13 @@ func TestPageSaysWhatHappened(t *testing.T) {
 		not  []string
 	}{
 		"clean":  {Report{Checks: okChecks(), Decision: Decision{State: "pending"}}, []string{"違いなし", "自動の検証 1/1 通過", "変更が無いので、確認は要りません"}, []string{"基準と違うコマ 1"}},
-		"a diff": {Report{Checks: okChecks(), Vim: []CaptureResult{diff}}, []string{"基準と違うコマ 1", "replay-why-basic dark", "5 コマ目", "background: 3 cells differ", "<svg>a</svg>", "<svg>b</svg>", "qsoku ui-accept"}, []string{"違いなし</div>"}},
+		"a diff": {Report{Checks: okChecks(), Vim: []CaptureResult{diff}}, []string{"基準と違うコマ 1", "replay-why-basic dark", "5 コマ目", "background: 3 cells differ", "<svg>a</svg>", "<svg>b</svg>", "上の画像「Vim・replay-why-basic dark」を見る"}, []string{"違いなし</div>"}},
 		"a failed check": {Report{Checks: []CheckResult{{Name: "差分のコマ", What: "x", OK: false, Notes: []string{"vim のテスト \"test_diff.vim\" が落ちた"}}}},
 			[]string{"自動の検証が 1 件失敗", "差分のコマ", "test_diff.vim"}, []string{"違いなし</div>"}},
 		"a new one": {Report{Checks: okChecks(), Vim: []CaptureResult{{Name: "replay-long-why dark", Status: statusNew, Frames: []FrameInfo{{Index: 1, Label: "1", Got: "<svg>n</svg>"}}}}},
 			[]string{"新しいコマ", "基準がありません", "<svg>n</svg>"}, []string{"違いなし</div>"}},
 		"the extension, new": {Report{Checks: okChecks(), VSCode: []CaptureResult{{Name: "long_why", Status: statusNew, Frames: []FrameInfo{{Index: 1, Label: "1"}, {Index: 2, Label: "2"}}}}},
-			[]string{"2 コマ。見た目は実物で見てください", "qsoku ui-open vscode"}, []string{"<svg"}},
+			[]string{"2 コマ。画像はありません", "qsoku ui-open vscode long-why</code>"}, []string{"<svg", "…"}},
 		"the extension, differs": {Report{Checks: okChecks(), VSCode: []CaptureResult{{Name: "all_basic", Status: statusDiff, Frames: []FrameInfo{{Index: 5, Label: "frame 4", Diffs: []string{"editor 1 decorations: baseline only line 36 #b45f06; now only line 36 #c05f06"}}}}}},
 			[]string{"VSCode（拡張）", "5 コマ目", "#c05f06"}, []string{"<svg", "簡素な図"}},
 		"an error":  {Report{Checks: okChecks(), VSCode: []CaptureResult{{Name: "all_basic", Status: statusError, Error: "no capture"}}}, []string{"取れなかった", "no capture"}, []string{"違いなし</div>"}},
@@ -347,6 +347,50 @@ func TestCleanAndCounts(t *testing.T) {
 		}
 		if got := tc.rep.NewCount(); got != tc.newScreens {
 			t.Errorf("%s: NewCount = %d", name, got)
+		}
+	}
+}
+
+func TestLookStepsAreExactAndNeedNoThinking(t *testing.T) {
+	rep := &Report{Checks: okChecks(),
+		Vim:    []CaptureResult{{Name: "replay-long-why dark", Status: statusNew}, {Name: "replay-external light", Status: statusDiff}, {Name: "live-basic dark", Status: statusSame}},
+		VSCode: []CaptureResult{{Name: "long_why", Status: statusNew, Frames: []FrameInfo{{Index: 1}}}, {Name: "all_ext", Status: statusDiff, Frames: []FrameInfo{{Index: 1}}}}}
+	steps := lookSteps(rep)
+	if len(steps) != 4 {
+		t.Fatalf("%d steps: %q", len(steps), steps)
+	}
+	all := strings.Join(steps, "\n")
+	for _, want := range []string{"Vim・replay-long-why dark", "折り返され", "Vim・replay-external light", "赤枠", "<code>qsoku ui-open vscode long-why</code>", "<code>qsoku ui-open vscode external</code>"} {
+		if !strings.Contains(all, want) {
+			t.Errorf("the steps lack %q:\n%s", want, all)
+		}
+	}
+	if strings.Contains(all, "…") || strings.Contains(all, "live-basic") {
+		t.Errorf("a step has an ellipsis or is about a screen that did not change:\n%s", all)
+	}
+	if got := lookSteps(&Report{Checks: okChecks()}); len(got) != 0 {
+		t.Errorf("steps for a run without changes: %q", got)
+	}
+}
+
+func TestAddLongWhyPutsTheTapeAndFileInTheWorkspace(t *testing.T) {
+	bin, err := filepath.Abs("../../bin/srwr")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(bin); err != nil {
+		t.Skip("bin/srwr is not built (qsoku bin)")
+	}
+	ws := t.TempDir()
+	if err := prepareWorkspace(fixture, ws, bin, false); err != nil {
+		t.Fatal(err)
+	}
+	if err := addLongWhy(bin, ws); err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range []string{"a.go", filepath.Join(".srwr", "tapes", longWhyTape+".tape.jsonl"), filepath.Join(".srwr", "tapes", tapes["why-basic"].ID+".tape.jsonl")} {
+		if _, err := os.Stat(filepath.Join(ws, f)); err != nil {
+			t.Errorf("%s: %v", f, err)
 		}
 	}
 }

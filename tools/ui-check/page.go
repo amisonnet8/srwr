@@ -87,13 +87,16 @@ func renderPage(r *Report) string {
 		b.WriteString(`<p>どの画面も基準と同じです。</p>` + "\n")
 	}
 
-	b.WriteString(`<h2>人間が判断すること</h2>`)
-	if r.Clean() && r.NewCount() == 0 {
+	b.WriteString(`<h2>人間が見ること</h2>`)
+	steps := lookSteps(r)
+	if len(steps) == 0 {
 		b.WriteString("<p>変更が無いので、確認は要りません。</p>\n")
 	} else {
-		b.WriteString("<ol><li>色：青（select）と橙（replace）が見分けられ、理由の行と範囲が読めるか（dark と light）</li><li>差分：左（青）と右（橙）で、変わった行だけが塗られ、見やすいか</li><li>変えたところが、意図どおりに見えるか</li></ol>\n")
-		b.WriteString("<p>実物で見る：<code>qsoku ui-open vim why-basic</code>、<code>qsoku ui-open vscode why-basic</code>（ほかは <code>external</code>・<code>no-why</code>・<code>live</code>）</p>\n")
-		b.WriteString("<p class=\"meta\">OK／NG はチャットで答えてください。AI が <code>qsoku ui-accept</code> で記録し、OK なら今の画面が次の基準になります。</p>\n")
+		b.WriteString("<ol>\n")
+		for _, st := range steps {
+			fmt.Fprintf(&b, "<li>%s</li>\n", st)
+		}
+		b.WriteString("</ol>\n<p>見終わったら、OK か NG かをチャットで答えてください（NG のときは、どの画像のどこかを一言）。OK なら、AI が今の画面を次の基準にします。</p>\n")
 	}
 	b.WriteString("</body></html>\n")
 	return b.String()
@@ -120,7 +123,7 @@ func writeCapture(b *strings.Builder, set string, c CaptureResult) {
 	}
 	if c.Status == statusNew && len(c.Frames) > 0 && c.Frames[0].Got == "" {
 		// No picture of the extension: what it shows is compared as text, and how it looks is judged in a real VSCode.
-		fmt.Fprintf(b, "<p>%d コマ。見た目は実物で見てください：<code>qsoku ui-open vscode …</code></p>\n", len(c.Frames))
+		fmt.Fprintf(b, "<p>%d コマ。画像はありません（拡張の画面は文章で比べています）。見た目は実物の VSCode で見ます：<code>qsoku ui-open vscode %s</code></p>\n", len(c.Frames), tapeOf(c.Name))
 		return
 	}
 	for i, f := range c.Frames {
@@ -149,4 +152,48 @@ func writeCapture(b *strings.Builder, set string, c CaptureResult) {
 		}
 		b.WriteString("</div>\n")
 	}
+}
+
+// tapeOf is the name `qsoku ui-open` knows for the capture of that name.
+func tapeOf(name string) string {
+	switch {
+	case strings.Contains(name, "long-why") || name == "long_why":
+		return "long-why"
+	case strings.Contains(name, "why-basic") || name == "all_basic":
+		return "why-basic"
+	case strings.Contains(name, "no-why") || name == "all_nowhy":
+		return "no-why"
+	case strings.Contains(name, "external") || name == "all_ext":
+		return "external"
+	case strings.HasPrefix(name, "live"):
+		return "live"
+	}
+	return name
+}
+
+// lookSteps are what a person does, in order, with the exact words; nothing is left to think over. Each is HTML.
+func lookSteps(r *Report) []string {
+	var steps []string
+	for _, c := range r.Vim {
+		if c.Status != statusNew && c.Status != statusDiff {
+			continue
+		}
+		theme := "dark"
+		if strings.HasSuffix(c.Name, " light") {
+			theme = "light"
+		}
+		if c.Status == statusNew {
+			steps = append(steps, fmt.Sprintf("上の画像「Vim・%s」を見る：%s", html.EscapeString(c.Name), html.EscapeString(tapes[tapeOf(c.Name)].Look)))
+		} else {
+			steps = append(steps, fmt.Sprintf("上の画像「Vim・%s」を見る：右の「今」の赤枠の部分が、意図した変更か（色が読めるかも見る。%s の背景）", html.EscapeString(c.Name), theme))
+		}
+	}
+	for _, c := range r.VSCode {
+		if c.Status != statusNew && c.Status != statusDiff {
+			continue
+		}
+		cmd := "qsoku ui-open vscode " + tapeOf(c.Name)
+		steps = append(steps, fmt.Sprintf("ターミナルで <code>%s</code> と打って Enter を押す（日本語入力は切る）。画面に出る手順に従い、「VSCode・%s」を見る：%s", cmd, html.EscapeString(c.Name), html.EscapeString(tapes[tapeOf(c.Name)].Look)))
+	}
+	return steps
 }

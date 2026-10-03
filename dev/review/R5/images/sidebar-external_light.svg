@@ -25,8 +25,8 @@
 <text x="240.0" y="15" fill="#1f2328" font-weight="bold">o</text>
 <text x="1334.4" y="15" fill="#1f2328" text-decoration="underline">X</text>
 <rect x="384.0" y="20" width="9.6" height="20" fill="#1f2328"/>
-<text x="9.6" y="35" fill="#1f2328">1</text>
-<text x="28.8" y="35" fill="#0b61a4">●</text>
+<text x="28.8" y="35" fill="#1f2328">1</text>
+<text x="0.0" y="35" fill="#0b61a4">●</text>
 <text x="48.0" y="35" fill="#1f2328">s</text>
 <text x="57.6" y="35" fill="#1f2328">e</text>
 <text x="67.2" y="35" fill="#1f2328">l</text>
@@ -134,8 +134,8 @@
 <text x="1324.8" y="35" fill="#00008b">-</text>
 <text x="1334.4" y="35" fill="#00008b">-</text>
 <rect x="384.0" y="40" width="9.6" height="20" fill="#1f2328"/>
-<text x="9.6" y="55" fill="#1f2328">2</text>
-<text x="28.8" y="55" fill="#0b61a4">●</text>
+<text x="28.8" y="55" fill="#1f2328">2</text>
+<text x="0.0" y="55" fill="#0b61a4">●</text>
 <text x="48.0" y="55" fill="#1f2328">s</text>
 <text x="57.6" y="55" fill="#1f2328">e</text>
 <text x="67.2" y="55" fill="#1f2328">l</text>
@@ -213,8 +213,8 @@
 <text x="1228.8" y="55" fill="#0000ff" textLength="19.2" lengthAdjust="spacingAndGlyphs">る</text>
 <text x="1248.0" y="55" fill="#0000ff" textLength="19.2" lengthAdjust="spacingAndGlyphs">。</text>
 <rect x="384.0" y="60" width="9.6" height="20" fill="#1f2328"/>
-<text x="9.6" y="75" fill="#1f2328">3</text>
-<text x="28.8" y="75" fill="#0b61a4">●</text>
+<text x="28.8" y="75" fill="#1f2328">3</text>
+<text x="0.0" y="75" fill="#0b61a4">●</text>
 <text x="48.0" y="75" fill="#1f2328">s</text>
 <text x="57.6" y="75" fill="#1f2328">e</text>
 <text x="67.2" y="75" fill="#1f2328">l</text>
@@ -326,8 +326,8 @@
 <text x="1296.0" y="75" fill="#1f2328">y</text>
 <text x="1315.2" y="75" fill="#1f2328">{</text>
 <rect x="384.0" y="80" width="9.6" height="20" fill="#1f2328"/>
-<text x="9.6" y="95" fill="#1f2328">4</text>
-<text x="28.8" y="95" fill="#b45f06">●</text>
+<text x="28.8" y="95" fill="#1f2328">4</text>
+<text x="0.0" y="95" fill="#b45f06">●</text>
 <text x="48.0" y="95" fill="#1f2328">r</text>
 <text x="57.6" y="95" fill="#1f2328">e</text>
 <text x="67.2" y="95" fill="#1f2328">p</text>
@@ -423,8 +423,8 @@
 <text x="1305.6" y="95" fill="#1f2328">)</text>
 <text x="1315.2" y="95" fill="#1f2328">}</text>
 <rect x="384.0" y="100" width="9.6" height="20" fill="#1f2328"/>
-<text x="9.6" y="115" fill="#1f2328">5</text>
-<text x="28.8" y="115" fill="#b45f06">●</text>
+<text x="28.8" y="115" fill="#1f2328">5</text>
+<text x="0.0" y="115" fill="#b45f06">●</text>
 <text x="48.0" y="115" fill="#1f2328">r</text>
 <text x="57.6" y="115" fill="#1f2328">e</text>
 <text x="67.2" y="115" fill="#1f2328">p</text>
@@ -487,8 +487,8 @@
 <rect x="0.0" y="120" width="268.8" height="20" fill="#e5e5e5"/>
 <rect x="268.8" y="120" width="115.2" height="20" fill="#e4e6f1"/>
 <rect x="384.0" y="120" width="9.6" height="20" fill="#1f2328"/>
-<text x="9.6" y="135" fill="#1f2328" text-decoration="underline">6</text>
-<text x="28.8" y="135" fill="#652d90" text-decoration="underline">●</text>
+<text x="28.8" y="135" fill="#1f2328" text-decoration="underline">6</text>
+<text x="0.0" y="135" fill="#652d90" text-decoration="underline">●</text>
 <text x="48.0" y="135" fill="#1f2328" text-decoration="underline" textLength="19.2" lengthAdjust="spacingAndGlyphs">外</text>
 <text x="67.2" y="135" fill="#1f2328" text-decoration="underline" textLength="19.2" lengthAdjust="spacingAndGlyphs">部</text>
 <text x="86.4" y="135" fill="#1f2328" text-decoration="underline" textLength="19.2" lengthAdjust="spacingAndGlyphs">変</text>
@@ -528,8 +528,8 @@
 <text x="1132.8" y="135" fill="#a52a2a">n</text>
 <text x="1152.0" y="135" fill="#1f2328">s</text>
 <rect x="384.0" y="140" width="9.6" height="20" fill="#1f2328"/>
-<text x="9.6" y="155" fill="#1f2328">7</text>
-<text x="28.8" y="155" fill="#b45f06">●</text>
+<text x="28.8" y="155" fill="#1f2328">7</text>
+<text x="0.0" y="155" fill="#b45f06">●</text>
 <text x="48.0" y="155" fill="#1f2328">r</text>
 <text x="57.6" y="155" fill="#1f2328">e</text>
 <text x="67.2" y="155" fill="#1f2328">p</text>
@@ -566,8 +566,8 @@
 <text x="912.0" y="155" fill="#a52a2a">3</text>
 <text x="1008.0" y="155" fill="#1f2328">}</text>
 <rect x="384.0" y="160" width="9.6" height="20" fill="#1f2328"/>
-<text x="9.6" y="175" fill="#1f2328">8</text>
-<text x="28.8" y="175" fill="#0b61a4">●</text>
+<text x="28.8" y="175" fill="#1f2328">8</text>
+<text x="0.0" y="175" fill="#0b61a4">●</text>
 <text x="48.0" y="175" fill="#1f2328">s</text>
 <text x="57.6" y="175" fill="#1f2328">e</text>
 <text x="67.2" y="175" fill="#1f2328">l</text>
@@ -623,8 +623,8 @@
 <text x="1123.2" y="175" fill="#ff00ff">.</text>
 <text x="1132.8" y="175" fill="#ff00ff">0</text>
 <rect x="384.0" y="180" width="9.6" height="20" fill="#1f2328"/>
-<text x="9.6" y="195" fill="#1f2328">9</text>
-<text x="28.8" y="195" fill="#b45f06">●</text>
+<text x="28.8" y="195" fill="#1f2328">9</text>
+<text x="0.0" y="195" fill="#b45f06">●</text>
 <text x="48.0" y="195" fill="#1f2328">r</text>
 <text x="57.6" y="195" fill="#1f2328">e</text>
 <text x="67.2" y="195" fill="#1f2328">p</text>
@@ -701,9 +701,9 @@
 <text x="1238.4" y="195" fill="#1f2328">s</text>
 <text x="1257.6" y="195" fill="#1f2328">{</text>
 <rect x="384.0" y="200" width="9.6" height="20" fill="#1f2328"/>
-<text x="0.0" y="215" fill="#1f2328">1</text>
-<text x="9.6" y="215" fill="#1f2328">0</text>
-<text x="28.8" y="215" fill="#652d90">●</text>
+<text x="19.2" y="215" fill="#1f2328">1</text>
+<text x="28.8" y="215" fill="#1f2328">0</text>
+<text x="0.0" y="215" fill="#652d90">●</text>
 <text x="48.0" y="215" fill="#1f2328" textLength="19.2" lengthAdjust="spacingAndGlyphs">録</text>
 <text x="67.2" y="215" fill="#1f2328" textLength="19.2" lengthAdjust="spacingAndGlyphs">画</text>
 <text x="86.4" y="215" fill="#1f2328" textLength="19.2" lengthAdjust="spacingAndGlyphs">後</text>
@@ -760,9 +760,9 @@
 <text x="1248.0" y="215" fill="#ff00ff">0</text>
 <text x="1267.2" y="215" fill="#1f2328">{</text>
 <rect x="384.0" y="220" width="9.6" height="20" fill="#1f2328"/>
-<text x="0.0" y="235" fill="#1f2328">1</text>
-<text x="9.6" y="235" fill="#1f2328">1</text>
-<text x="28.8" y="235" fill="#652d90">●</text>
+<text x="19.2" y="235" fill="#1f2328">1</text>
+<text x="28.8" y="235" fill="#1f2328">1</text>
+<text x="0.0" y="235" fill="#652d90">●</text>
 <text x="48.0" y="235" fill="#1f2328" textLength="19.2" lengthAdjust="spacingAndGlyphs">録</text>
 <text x="67.2" y="235" fill="#1f2328" textLength="19.2" lengthAdjust="spacingAndGlyphs">画</text>
 <text x="86.4" y="235" fill="#1f2328" textLength="19.2" lengthAdjust="spacingAndGlyphs">後</text>

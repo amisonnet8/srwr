@@ -21,17 +21,17 @@ const usage = `srwr: AI に select / replace の2コマンドだけでファイ�
   srwr mcp [--root <作業場>]     MCP サーバー（select / replace）。AI のエージェントが起動する
   srwr hook                      Claude Code の hook の記録
   srwr view-server               表示サーバー（エディタが起動する）
-  srwr view [テープ]             Vim で再生する
+  srwr view [テープ] [--live]    Vim で再生する（--root <作業場>）
   srwr init                      作業場を srwr 用に準備する
   srwr tapes                     テープの一覧・整理
   srwr --version                 バージョン
   srwr --help                    この説明
 
-まだ使えるのは mcp と view-server だけです。
+まだ使えるのは mcp・view-server・view だけです。
 `
 
 // notYet are the subcommands that exist in docs/reference/cli.md and are made in later stages.
-var notYet = map[string]bool{"hook": true, "view": true, "init": true, "tapes": true}
+var notYet = map[string]bool{"hook": true, "init": true, "tapes": true}
 
 // Run runs srwr with the arguments (without the program name) and returns the exit code.
 func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
@@ -50,6 +50,8 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		return runMCP(args[1:], stdin, stdout, stderr)
 	case cmd == "view-server":
 		return runViewServer(args[1:], stdin, stdout, stderr)
+	case cmd == "view":
+		return runView(args[1:], stdin, stdout, stderr)
 	case notYet[cmd]:
 		_, _ = fmt.Fprintf(stderr, "srwr %s: まだ実装されていません\n", cmd)
 		return 2

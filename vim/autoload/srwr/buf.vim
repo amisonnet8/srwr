@@ -19,8 +19,12 @@ export def SetLines(buf: number, lines: list<string>)
   setbufvar(buf, '&modifiable', 1)
   const last = max([getbufinfo(buf)[0].linecount, 1])
   prop_clear(1, last, {bufnr: buf})
-  deletebufline(buf, 1, '$')
-  setbufline(buf, 1, empty(lines) ? [''] : lines)
+  # Overwrite first and cut the rest after: deleting every line would print "--No lines in buffer--".
+  const want = empty(lines) ? [''] : lines
+  setbufline(buf, 1, want)
+  if last > len(want)
+    deletebufline(buf, len(want) + 1, '$')
+  endif
   setbufvar(buf, '&modifiable', 0)
 enddef
 

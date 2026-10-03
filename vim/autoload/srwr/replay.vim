@@ -77,15 +77,19 @@ enddef
 
 # --- scrolling ---
 
-# RevealTop decides where the window must scroll so that the lines first..last (the why rows and the range) are all
-# on the screen. It returns -1 when they already are, else the line to put at the top: the block in the middle, or its
-# first line at the top when it does not fit. All numbers are line numbers of the buffer with the why rows put in.
+# RevealTop decides where the window must scroll so that the lines first..last (the why rows and the first line of the
+# range) are all on the screen. It returns -1 when they already are. Otherwise it returns the line to put at the top: the first line
+# of the block in the middle of the window (what `zz` does), but never so low that the window shows empty lines after the
+# end of the content; a block taller than the window starts at the top. All numbers are line numbers of the buffer with
+# the why rows put in.
 export def RevealTop(topline: number, height: number, first: number, last: number, total: number): number
   if height < 1 || (topline <= first && last <= topline + height - 1)
     return -1
   endif
-  const block = last - first + 1
-  var top = block >= height ? first : first - (height - block) / 2
+  if last - first + 1 >= height
+    return max([first, 1])
+  endif
+  var top = first - (height - 1) / 2
   top = min([top, max([total - height + 1, 1])])
   return max([min([top, first]), 1])
 enddef
@@ -114,6 +118,8 @@ def ShowFile(file: string)
   if s.file !=# file
     buf.Name(s.buf, s.win, 'srwr://' .. s.tape .. '/' .. file)
     s.file = file
+    # The filetype changed, and a filetype plugin may have mapped the same keys (markdown maps ]] and [[): ours go last.
+    MapKeys(s.win)
   endif
 enddef
 
@@ -134,9 +140,12 @@ def Render(f: dict<any>, content: any)
   if !empty(rows)
     paint.Numbers(s.buf, at, len(rows))
   endif
-  const rangeLen = max([f.range.end - f.range.start + 1, 0])
+  # What must be on the screen: the why rows and the first line of the range (a long range may run past the window).
   const first = at
-  const last = at + len(rows) + max([rangeLen, empty(rows) ? 1 : 0]) - 1
+  const last = at + len(rows)
+  # Every frame starts from the top of the content, so a frame whose range is near the top looks the same whatever the
+  # last frame showed; the window scrolls only when the why rows and the range do not fit from there.
+  win_execute(s.win, 'call winrestview({topline: 1, lnum: 1, col: 1, leftcol: 0})')
   win_execute(s.win, 'call cursor(' .. min([at + len(rows), line('$', s.win)]) .. ', 1)')
   Reveal(first, max([last, first]))
 enddef
@@ -164,9 +173,9 @@ enddef
 def ShowDiff(f: dict<any>)
   paint.Clear(s.buf)
   s.file = ''
-  if diff.Enter(s, f, f.before, f.after)
-    MapKeys(s.diffWin)
-  endif
+  diff.Enter(s, f, f.before, f.after)
+  MapKeys(s.win)
+  MapKeys(s.diffWin)
 enddef
 
 def LeaveDiff()
@@ -177,11 +186,15 @@ def LeaveDiff()
 enddef
 
 export def StepForward()
-  Goto(s.index + 1)
+  if Active()
+    Goto(s.index + 1)
+  endif
 enddef
 
 export def StepBack()
-  Goto(s.index - 1)
+  if Active()
+    Goto(s.index - 1)
+  endif
 enddef
 
 # Jump is used by the operation list.

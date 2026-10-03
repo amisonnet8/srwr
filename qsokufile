@@ -35,8 +35,9 @@ ui-open: (cd //; qsoku bin && qsoku ext-build && go run ./tools/ui-check open "$
 # Vim client tests (vim/test/test_*.vim) in a headless Vim. Each test ends with
 # qall! on success or cquit on failure. -c 'cquit 2' and </dev/null keep a test that
 # errors halfway from waiting for input in Ex mode. The tests talk to the real display server, so bin/srwr is built first.
+# Then the screens of a real Vim on a terminal (vim/screen_test.go) are compared with vim/test/baseline.
 # Skipped while vim/test/ does not exist yet.
-vim-test: (cd //; if [ -d vim/test ]; then qsoku bin && rc=0; for t in vim/test/test_*.vim; do [ -e "$t" ] || continue; echo "== $t"; vim -Nu NONE -i NONE -Es -V1 -S "$t" -c 'cquit 2' </dev/null || rc=1; done; [ "$rc" -eq 0 ]; else echo 'vim/test/ does not exist yet; skipped'; fi)
+vim-test: (cd //; if [ -d vim/test ]; then qsoku bin && rc=0; for t in vim/test/test_*.vim; do [ -e "$t" ] || continue; echo "== $t"; vim -Nu NONE -i NONE -Es -V1 -S "$t" -c 'cquit 2' </dev/null || rc=1; done; echo "== screens (a real Vim on a terminal)"; SRWR_SCREEN_TEST=1 go test -count=1 ./vim/ ./internal/uicheck/ || rc=1; [ "$rc" -eq 0 ]; else echo 'vim/test/ does not exist yet; skipped'; fi)
 
 # Everything to pass at each stopping point: Go, the other OSes, the extension and the Vim client.
 check: qsoku go-check && qsoku cross && qsoku ext && qsoku vim-test

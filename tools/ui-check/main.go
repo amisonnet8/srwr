@@ -1,5 +1,6 @@
 // Command ui-check prepares what a person needs to look at the UI by eye (docs: .claude/rules/working-with-human.md 3章).
-// So far: `ui-check open vscode <why-basic|external|no-why|live>`, called by `qsoku ui-open`.
+// `ui-check open vscode <why-basic|external|no-why|live>` is called by `qsoku ui-open`.
+// `ui-check vim-baseline <images> <out>` makes vim/test/baseline from the approved Vim images (done once, at R5).
 package main
 
 import (
@@ -22,6 +23,9 @@ func main() {
 }
 
 func run(args []string, out io.Writer) error {
+	if len(args) == 3 && args[0] == "vim-baseline" {
+		return makeVimBaseline(args[1], args[2])
+	}
 	if len(args) != 3 || args[0] != "open" || args[1] != "vscode" {
 		return errors.New("usage: ui-check open vscode <why-basic|external|no-why|live>")
 	}

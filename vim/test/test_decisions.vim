@@ -9,9 +9,11 @@ import autoload 'srwr/replay.vim'
 # --- 1. RevealTop(topline, height, first, last, total): where to scroll so first..last are all visible ---
 t.Equal(-1, replay.RevealTop(1, 37, 5, 6, 100), 'already visible: no scroll')
 t.Equal(-1, replay.RevealTop(1, 37, 36, 37, 100), 'the block ends on the last row: visible')
-t.Equal(20, replay.RevealTop(1, 37, 37, 38, 100), 'the why row on the last row and the range below it: centered (the carried-over bug)')
-t.Equal(21, replay.RevealTop(1, 37, 38, 39, 100), 'the block fully below: centered')
+t.Equal(19, replay.RevealTop(1, 37, 37, 38, 100), 'the why row on the last row and the range below it: the why row in the middle (the carried-over bug)')
+t.Equal(20, replay.RevealTop(1, 37, 38, 39, 100), 'the block fully below: the why row in the middle')
 t.Equal(14, replay.RevealTop(1, 37, 48, 49, 50), 'near the end of the file: the last page, not an empty gap')
+t.Equal(71, replay.RevealTop(1, 47, 103, 104, 117), 'the approved image of text.go:103: the last page of a 117-line file')
+t.Equal(58, replay.RevealTop(1, 47, 81, 90, 128), 'the approved image of stats.go:81-89: the why row in the middle')
 t.Equal(1, replay.RevealTop(30, 37, 2, 3, 100), 'above the window: centered, but not above line 1')
 t.Equal(10, replay.RevealTop(1, 20, 10, 100, 200), 'a block taller than the window: its first line at the top')
 t.Equal(-1, replay.RevealTop(1, 20, 1, 20, 200), 'a block exactly as tall as the window, in place')

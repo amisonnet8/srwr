@@ -26,7 +26,6 @@ func TestRun(t *testing.T) {
 		{"--version", []string{"--version"}, 0, "srwr (devel)", ""},
 		{"unknown command", []string{"frobnicate"}, 2, "", `知らないコマンド "frobnicate"`},
 		{"hook is not made yet", []string{"hook"}, 2, "", "まだ実装されていません"},
-		{"view is not made yet", []string{"view"}, 2, "", "まだ実装されていません"},
 		{"view-server with a root that is missing", []string{"view-server", "--root", "/no/such/dir/at/all"}, 1, "", "ディレクトリとして開けません"},
 		{"view-server with a stray argument", []string{"view-server", "x"}, 2, "", "余分な引数"},
 		{"mcp with an unknown flag", []string{"mcp", "--nope"}, 2, "", "nope"},

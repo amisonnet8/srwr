@@ -89,6 +89,9 @@ func (c *Core) observeAll(tx *session.Tx) (notes []string, err error) {
 	sort.Strings(names)
 	for _, name := range names {
 		t, cerr := c.readTarget(name)
+		if cerr != nil && cerr.Code == CodeIgnoredFile {
+			continue // a file that is not recorded is not looked at either
+		}
 		if cerr != nil {
 			notes = append(notes, fmt.Sprintf("%s は読み直せない：%s", name, cerr.Message))
 			continue
@@ -111,6 +114,9 @@ func (c *Core) readForHook(file string) (rel string, t target, note string) {
 		return "", target{}, fmt.Sprintf("%s は記録しない：%s", file, cerr.Message)
 	}
 	t, cerr = c.readTarget(rel)
+	if cerr != nil && cerr.Code == CodeIgnoredFile {
+		return rel, target{}, rel + " は記録しないファイルなので記録しない"
+	}
 	if cerr != nil {
 		return rel, target{}, fmt.Sprintf("%s は記録しない：%s", rel, cerr.Message)
 	}

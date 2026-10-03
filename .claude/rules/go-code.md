@@ -30,7 +30,7 @@
 
 - **AI の作業を止めない。** 失敗しても標準エラー出力に出して**終了コード 0**。終了コード 2 は Claude Code が道具の実行を止める。コマンドラインの誤りだけが 1（止めない失敗）
 - 記録は `internal/core` の `Hook` に集める（`mcp` と同じ `Workspace.Do` の中。ロック・セッション・テープの読み足しが同じ）。`internal/hook` は JSON と Bash の読み取りを読んで `core.HookRequest` を作るだけ
-- パスは `toRel` で作業場からの相対にし、`core.cleanPath`・`readTarget` を通す（外を指すパス・リンクは記録しない）。**R8（記録しないファイル）は、`core.readForHook` の1か所に判定を差し込む**
+- パスは `toRel` で作業場からの相対にし、`core.cleanPath`・`readTarget` を通す（外を指すパス・リンクは記録しない）。記録しないファイル（R8）の判定は `core.readTarget` の1か所（hook・`observeAll` も `select`・`replace` もここを通る）
 - **Edit は、ファイルを先に書いた後で呼ばれる（`PostToolUse`）。** 編集前の内容は、テープが持つもの、なければ `tool_response.originalFile`。`old_string` → `new_string` を当てて今のファイルと一致しなければ、`replace` を作らず `external` にする
 - Bash の読み取りは、**先頭のコマンドだけ**を見る。`$( )`・書き込みのリダイレクト・`sed -i`・`tail -f` などは読み取りとして扱わない。Bash のあとは、読み取りでなくても `ObserveAll`
 - 実際の Claude Code の形：Read・Edit・Bash の `tool_response` は過去の記録（`~/.claude/projects/*.jsonl` の `toolUseResult`）で確かめた。**Grep の形は確かめていない**ので、複数の書式を受け、実機で確かめる
@@ -49,7 +49,7 @@
 ## 記録しないファイル
 
 - `select`・`replace`・hook・external の検知の**すべての入口で**、`internal/ignore` を通す。1か所でも漏れると、秘密情報がテープに入る
-- 除外の判定を足したら、4つの入口それぞれについてテストを書く
+- 判定は `core.readTarget` の1か所に置いてある（`.srwrignore` は呼ばれるたびに読む。読めなければ何も記録しない）。**新しい入口を足すときは、`readTarget` を通ることを確かめ、その入口のテストを書く**
 
 ## テスト
 

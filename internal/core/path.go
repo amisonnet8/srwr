@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/amisonnet8/srwr/internal/ignore"
 )
 
 // cleanPath turns a path the client gave into a slash-separated path relative to the workspace.
@@ -36,7 +38,19 @@ type target struct {
 
 // readTarget finds the file rel and reads it. A file that does not exist is not an error here:
 // the caller records the deletion first.
+//
+// This is the one place every entrance goes through (select, replace, hook, the look for external changes), so it is where
+// the files that are never recorded are turned away, whether they exist or not and whether they are named directly or
+// through a symbolic link.
 func (c *Core) readTarget(rel string) (target, *Error) {
+	// A .srwrignore that cannot be read leaves us unable to say what is secret: nothing is recorded then.
+	m, err := ignore.Load(c.WS.Root())
+	if err != nil {
+		return target{}, internal(err)
+	}
+	if m.Match(rel) {
+		return target{}, ignoredError(rel)
+	}
 	full := filepath.Join(c.WS.Root(), filepath.FromSlash(rel))
 	real, err := filepath.EvalSymlinks(full)
 	if errors.Is(err, fs.ErrNotExist) {
@@ -51,6 +65,9 @@ func (c *Core) readTarget(rel string) (target, *Error) {
 	}
 	if within, err := filepath.Rel(realRoot, real); err != nil || within == ".." || strings.HasPrefix(within, ".."+string(filepath.Separator)) {
 		return target{}, newError(CodeInvalidRange, "%s は作業場の外を指している", rel)
+	}
+	if within, err := filepath.Rel(realRoot, real); err == nil && m.Match(filepath.ToSlash(within)) {
+		return target{}, ignoredError(rel)
 	}
 	info, err := os.Stat(real)
 	if err != nil {
@@ -67,6 +84,10 @@ func (c *Core) readTarget(rel string) (target, *Error) {
 		return target{}, newError(CodeUnsupportedFile, "%s は CRLF などLF以外の改行、またはバイナリを含むため扱えない", rel)
 	}
 	return target{real: real, text: string(b), exists: true}, nil
+}
+
+func ignoredError(rel string) *Error {
+	return newError(CodeIgnoredFile, "%s は記録しないファイルなので、srwr では扱えない。ユーザーに頼んでください", rel)
 }
 
 // writeFile replaces the file at real with text: it writes a temporary file next to it and renames

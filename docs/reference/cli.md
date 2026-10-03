@@ -149,6 +149,14 @@ srwr view-server --root <作業場>
 | hook（Read・Bash・Grep・Edit） | 記録しない。`external` の検知の対象にもしない |
 | 緩いモードで AI が Edit した | 記録しない |
 
+細かい決まり：
+
+- **既定の対象は、`.srwrignore` の `!` でも戻せない。** `!` が打ち消せるのは、`.srwrignore` 自身の指定だけ。ディレクトリが対象なら、その中のファイルも対象で、`!` で戻せない
+- **大文字・小文字は区別しない。** macOS・Windows では `.ENV` で `.env` が開けるため、どの OS でも同じ判定にする
+- **シンボリックリンクは、リンクの名前とリンク先の両方を調べる。** `notes.txt` が `.env` へのリンクなら、記録しない
+- **`.srwrignore` は、作業場の直下のものだけを、呼ばれるたびに読む。** 書き足すとすぐ効く。すでにテープにあるファイルを書き足した場合も、以後は `select`・`replace` が `ignored_file` になり、`external` の検知も飛ばす
+- **`.srwrignore` が読めないとき（権限がない、ディレクトリになっている）は、何も記録しない。** `select`・`replace` は `internal_error`、hook は標準エラー出力に一言だけ出す
+
 ### テープを共有する前に
 
 - `.srwrignore` を見直す

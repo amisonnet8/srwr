@@ -130,7 +130,7 @@ srwr は、前のリポジトリで一度作った（段階 P0〜P5 と、UI の
 
 参照：`docs/reference/cli.md`（記録しないファイル）
 
-- [ ] 既定の対象、`.srwrignore`、`ignored_file`。`select`・`replace`・hook・external の検知の4つの入口すべて
+- [x] 既定の対象、`.srwrignore`、`ignored_file`。`select`・`replace`・hook・external の検知の4つの入口すべて
 
 **完了条件**：4つの入口それぞれにテストがあり、`.env` がテープに残らない。
 **人間の確認**：なし。

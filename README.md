@@ -35,7 +35,7 @@
 - [🤝 Sharing a tape](#-sharing-a-tape)
 - [📚 Documentation](#-documentation)
 - [💬 Interactive guide](#-interactive-guide)
-- [🔧 Development and license](#-development-and-license)
+- [📄 License](#-license)
 
 ## ✨ Features
 
@@ -143,10 +143,7 @@ Everything is in [docs/](docs/README.md), in English and in Japanese.
 
 Ask questions and explore srwr in a conversation: **[the srwr guide, made with Gemini Notebook](https://notebook.google.com/notebook/e2afe5b3-fb70-4889-adb7-7f6bbe4d2912)**.
 
-## 🔧 Development and license
-
-- Open the repository in the devcontainer, then run `qsoku check` (Go, the extension and Vim, with their tests). The rules for working here are in [CLAUDE.md](CLAUDE.md)
-- The pictures above are made by `qsoku readme-media` from a real session, so they show what srwr really does
+## 📄 License
 
 [MIT](LICENSE) © amisonnet8
 

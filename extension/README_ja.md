@@ -102,4 +102,6 @@ go install github.com/amisonnet8/srwr/cmd/srwr@latest
 - [ドキュメント](https://github.com/amisonnet8/srwr/blob/main/docs/README_ja.md)：[この拡張の詳細](https://github.com/amisonnet8/srwr/blob/main/docs/reference/vscode_ja.md)・[すべての設定](https://github.com/amisonnet8/srwr/blob/main/docs/reference/settings_ja.md)・[テープの形式](https://github.com/amisonnet8/srwr/blob/main/docs/reference/tape_ja.md)
 - [不具合を知らせる](https://github.com/amisonnet8/srwr/issues)
 
-[MIT](https://github.com/amisonnet8/srwr/blob/main/LICENSE) © amisonnet8
+## 📄 ライセンス
+
+[MIT](LICENSE) © amisonnet8

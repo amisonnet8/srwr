@@ -102,4 +102,6 @@ There are no settings for the look: the colors and the layout are fixed so that 
 - [Documentation](https://github.com/amisonnet8/srwr/blob/main/docs/README.md): [this extension in detail](https://github.com/amisonnet8/srwr/blob/main/docs/reference/vscode.md), [all settings](https://github.com/amisonnet8/srwr/blob/main/docs/reference/settings.md), [the tape format](https://github.com/amisonnet8/srwr/blob/main/docs/reference/tape.md)
 - [Report a problem](https://github.com/amisonnet8/srwr/issues)
 
-[MIT](https://github.com/amisonnet8/srwr/blob/main/LICENSE) © amisonnet8
+## 📄 License
+
+[MIT](LICENSE) © amisonnet8

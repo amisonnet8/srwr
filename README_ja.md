@@ -35,7 +35,7 @@
 - [🤝 テープを共有する](#-テープを共有する)
 - [📚 ドキュメント](#-ドキュメント)
 - [💬 対話形式のガイド](#-対話形式のガイド)
-- [🔧 開発とライセンス](#-開発とライセンス)
+- [📄 ライセンス](#-ライセンス)
 
 ## ✨ 特徴
 
@@ -143,10 +143,7 @@ VSCode で見るなら、拡張 **srwr-view** も入れます（拡張は `srwr`
 
 質問しながら srwr を調べられます：**[Gemini Notebook で作った srwr のガイド](https://notebook.google.com/notebook/e2afe5b3-fb70-4889-adb7-7f6bbe4d2912)**。
 
-## 🔧 開発とライセンス
-
-- devcontainer でリポジトリを開き、`qsoku check`（Go・拡張・Vim の検査とテスト）を動かします。作業のルールは [CLAUDE.md](CLAUDE.md)
-- 上の画像は、本物のセッションから `qsoku readme-media` で作っています。srwr が実際にすることをそのまま見せるためです
+## 📄 ライセンス
 
 [MIT](LICENSE) © amisonnet8
 

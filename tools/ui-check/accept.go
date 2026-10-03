@@ -60,6 +60,9 @@ func acceptResult(root string, ok bool, note string, out io.Writer) error {
 			if err != nil {
 				return err
 			}
+			if err := os.MkdirAll(filepath.Dir(filepath.Join(root, c.Target)), 0o750); err != nil {
+				return err
+			}
 			if err := os.WriteFile(filepath.Join(root, c.Target), b, 0o600); err != nil { //nolint:gosec // the baseline of the extension
 				return err
 			}
@@ -119,6 +122,9 @@ func replaceVimBaseline(root, latest string, c CaptureResult) error {
 	}
 	out, err := uicheck.MarshalBaseline(now)
 	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(filepath.Join(root, c.Target)), 0o750); err != nil { // a language that has no baseline yet
 		return err
 	}
 	return os.WriteFile(filepath.Join(root, c.Target), out, 0o600) //nolint:gosec // the baseline of the Vim client

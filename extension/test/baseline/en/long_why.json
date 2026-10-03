@@ -95,12 +95,12 @@
   ],
   "status": [
    {
-    "text": "$(chevron-left) 戻る",
+    "text": "$(chevron-left) Back",
     "color": "rgba(255, 255, 255, 0.4)",
     "visible": true
    },
    {
-    "text": "進む $(chevron-right)",
+    "text": "Forward $(chevron-right)",
     "visible": true
    },
    {
@@ -114,26 +114,26 @@
   ],
   "viewDescription": "20260101-0000-long-why",
   "quickPick": {
-   "placeHolder": "再生するテープを選ぶ",
+   "placeHolder": "Pick a tape to replay",
    "items": [
     {
      "label": "2026-10-03 00:00:00",
-     "description": "2操作 · a.go",
+     "description": "2 operations · a.go",
      "detail": "20260101-0000-long-why.tape.jsonl"
     },
     {
      "label": "2026-09-30 09:49:46",
-     "description": "9操作 · entry.go, stats.go",
+     "description": "9 operations · entry.go, stats.go",
      "detail": "20260930-0949-external.tape.jsonl"
     },
     {
      "label": "2026-09-30 00:54:08",
-     "description": "7操作 · text.go, parse.go",
+     "description": "7 operations · text.go, parse.go",
      "detail": "20260930-0054-why-basic.tape.jsonl"
     },
     {
      "label": "2026-09-30 00:53:32",
-     "description": "10操作 · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "description": "10 operations · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
      "detail": "20260930-0053-no-why.tape.jsonl"
     }
    ]
@@ -243,11 +243,11 @@
   ],
   "status": [
    {
-    "text": "$(chevron-left) 戻る",
+    "text": "$(chevron-left) Back",
     "visible": true
    },
    {
-    "text": "進む $(chevron-right)",
+    "text": "Forward $(chevron-right)",
     "color": "rgba(255, 255, 255, 0.4)",
     "visible": true
    },
@@ -262,26 +262,26 @@
   ],
   "viewDescription": "20260101-0000-long-why",
   "quickPick": {
-   "placeHolder": "再生するテープを選ぶ",
+   "placeHolder": "Pick a tape to replay",
    "items": [
     {
      "label": "2026-10-03 00:00:00",
-     "description": "2操作 · a.go",
+     "description": "2 operations · a.go",
      "detail": "20260101-0000-long-why.tape.jsonl"
     },
     {
      "label": "2026-09-30 09:49:46",
-     "description": "9操作 · entry.go, stats.go",
+     "description": "9 operations · entry.go, stats.go",
      "detail": "20260930-0949-external.tape.jsonl"
     },
     {
      "label": "2026-09-30 00:54:08",
-     "description": "7操作 · text.go, parse.go",
+     "description": "7 operations · text.go, parse.go",
      "detail": "20260930-0054-why-basic.tape.jsonl"
     },
     {
      "label": "2026-09-30 00:53:32",
-     "description": "10操作 · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "description": "10 operations · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
      "detail": "20260930-0053-no-why.tape.jsonl"
     }
    ]

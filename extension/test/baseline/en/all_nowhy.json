@@ -1,0 +1,1776 @@
+[
+ {
+  "frame": 0,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0053-no-why/TASK.md",
+    "column": 1,
+    "text": "# タスク\n\n`go test ./...` が失敗します。原因を見つけて、コードを直してください。\n\n- テスト（`*_test.go`）は変更しないでください\n- 直したら `go test ./...` が通ることを確認して、何を直したかを一言で報告してください\n\n（対象: 作業時間の期間集計、`src/` 以下）\n",
+    "options": {
+     "lineNumbers": 1
+    },
+    "reveal": 1,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#1d3a5c",
+       "light": {
+        "backgroundColor": "#cfe3fb"
+       }
+      },
+      "ranges": [
+       {
+        "line": 0
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  TASK.md:1-8",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  go.mod:1-3",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  period.go:1-64",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  select  ledger.go:1-65",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "5  select  report.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "6  select  report_test.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "7  select  timesheet_test.go:1-198",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "8  replace  period.go:30",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "9  replace  ledger.go:40",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "10  replace  report.go:15",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "11  final  TASK.md:before 1",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   },
+   {
+    "label": "12  final  go.mod:1-3",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "color": "rgba(255, 255, 255, 0.4)",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "1/12",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0053-no-why",
+  "quickPick": {
+   "placeHolder": "Pick a tape to replay",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9 operations · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7 operations · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10 operations · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 1,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0053-no-why/go.mod",
+    "column": 1,
+    "text": "module timesheet\n\ngo 1.27\n",
+    "options": {
+     "lineNumbers": 1
+    },
+    "reveal": 1,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#1d3a5c",
+       "light": {
+        "backgroundColor": "#cfe3fb"
+       }
+      },
+      "ranges": [
+       {
+        "line": 0
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  TASK.md:1-8",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  go.mod:1-3",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  period.go:1-64",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  select  ledger.go:1-65",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "5  select  report.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "6  select  report_test.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "7  select  timesheet_test.go:1-198",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "8  replace  period.go:30",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "9  replace  ledger.go:40",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "10  replace  report.go:15",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "11  final  TASK.md:before 1",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   },
+   {
+    "label": "12  final  go.mod:1-3",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "2/12",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0053-no-why",
+  "quickPick": {
+   "placeHolder": "Pick a tape to replay",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9 operations · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7 operations · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10 operations · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 2,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0053-no-why/period.go",
+    "column": 1,
+    "text": "package timesheet\n\nimport \"time\"\n\n// Period は [Start, End) の半開区間。すべて UTC の 0 時で扱う。\ntype Period struct {\n\tStart time.Time\n\tEnd   time.Time\n}\n\n// Month は year 年 m 月の期間を返す。\nfunc Month(year int, m time.Month) Period {\n\ts := time.Date(year, m, 1, 0, 0, 0, 0, time.UTC)\n\treturn Period{Start: s, End: s.AddDate(0, 1, 0)}\n}\n\n// Contains は t が期間に含まれるかを返す。\nfunc (p Period) Contains(t time.Time) bool {\n\treturn !t.Before(p.Start) && t.Before(p.End)\n}\n\n// Days は期間の日数。\nfunc (p Period) Days() int {\n\treturn int(p.End.Sub(p.Start) / (24 * time.Hour))\n}\n\n// WeekStart は t を含む週の月曜 0 時を返す（週は月曜始まり）。\nfunc WeekStart(t time.Time) time.Time {\n\td := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)\n\toffset := int(d.Weekday()) - int(time.Monday)\n\treturn d.AddDate(0, 0, -offset)\n}\n\n// Weeks は期間を月曜始まりの週ごとに分ける。\n// 最初と最後の週は期間の端で切り詰められる。\nfunc (p Period) Weeks() []Period {\n\tvar out []Period\n\tcur := p.Start\n\tfor cur.Before(p.End) {\n\t\tnext := WeekStart(cur).AddDate(0, 0, 7)\n\t\tif next.After(p.End) {\n\t\t\tnext = p.End\n\t\t}\n\t\tout = append(out, Period{Start: cur, End: next})\n\t\tcur = next\n\t}\n\treturn out\n}\n\n// BusinessDays は期間内の平日（月〜金）の日数。holidays に含まれる日は除く。\n// holidays のキーは \"2006-01-02\" 形式。\nfunc (p Period) BusinessDays(holidays map[string]bool) int {\n\tn := 0\n\tfor d := p.Start; d.Before(p.End); d = d.AddDate(0, 0, 1) {\n\t\tif wd := d.Weekday(); wd == time.Saturday || wd == time.Sunday {\n\t\t\tcontinue\n\t\t}\n\t\tif holidays[d.Format(\"2006-01-02\")] {\n\t\t\tcontinue\n\t\t}\n\t\tn++\n\t}\n\treturn n\n}\n",
+    "options": {
+     "lineNumbers": 1
+    },
+    "reveal": 1,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#1d3a5c",
+       "light": {
+        "backgroundColor": "#cfe3fb"
+       }
+      },
+      "ranges": [
+       {
+        "line": 0
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  TASK.md:1-8",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  go.mod:1-3",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  period.go:1-64",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  select  ledger.go:1-65",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "5  select  report.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "6  select  report_test.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "7  select  timesheet_test.go:1-198",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "8  replace  period.go:30",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "9  replace  ledger.go:40",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "10  replace  report.go:15",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "11  final  TASK.md:before 1",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   },
+   {
+    "label": "12  final  go.mod:1-3",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "3/12",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0053-no-why",
+  "quickPick": {
+   "placeHolder": "Pick a tape to replay",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9 operations · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7 operations · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10 operations · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 3,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0053-no-why/ledger.go",
+    "column": 1,
+    "text": "package timesheet\n\nimport (\n\t\"fmt\"\n\t\"sort\"\n\t\"time\"\n)\n\nconst maxMinutesPerDay = 24 * 60\n\n// Record は1件の作業記録。Date は日付（時刻は無視される）。\ntype Record struct {\n\tDate    time.Time\n\tProject string\n\tMinutes int\n}\n\n// Ledger は作業記録の集まり。\ntype Ledger struct {\n\trecords []Record\n}\n\n// Add は記録を追加する。日付は UTC の 0 時にそろえる。\nfunc (l *Ledger) Add(r Record) error {\n\tif r.Project == \"\" {\n\t\treturn fmt.Errorf(\"プロジェクト名が空です\")\n\t}\n\tif r.Minutes <= 0 || r.Minutes > maxMinutesPerDay {\n\t\treturn fmt.Errorf(\"作業時間が範囲外です: %d分\", r.Minutes)\n\t}\n\tr.Date = time.Date(r.Date.Year(), r.Date.Month(), r.Date.Day(), 0, 0, 0, 0, time.UTC)\n\tl.records = append(l.records, r)\n\treturn nil\n}\n\n// Between は期間に含まれる記録を、日付、プロジェクト名の順に並べて返す。\nfunc (l *Ledger) Between(p Period) []Record {\n\tvar out []Record\n\tfor _, r := range l.records {\n\t\tif !r.Date.Before(p.Start) && !r.Date.After(p.End) {\n\t\t\tout = append(out, r)\n\t\t}\n\t}\n\tsort.SliceStable(out, func(i, j int) bool {\n\t\tif !out[i].Date.Equal(out[j].Date) {\n\t\t\treturn out[i].Date.Before(out[j].Date)\n\t\t}\n\t\treturn out[i].Project < out[j].Project\n\t})\n\treturn out\n}\n\n// Projects は記録に現れるプロジェクト名を昇順で返す。\nfunc (l *Ledger) Projects() []string {\n\tseen := map[string]bool{}\n\tvar out []string\n\tfor _, r := range l.records {\n\t\tif !seen[r.Project] {\n\t\t\tseen[r.Project] = true\n\t\t\tout = append(out, r.Project)\n\t\t}\n\t}\n\tsort.Strings(out)\n\treturn out\n}\n",
+    "options": {
+     "lineNumbers": 1
+    },
+    "reveal": 1,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#1d3a5c",
+       "light": {
+        "backgroundColor": "#cfe3fb"
+       }
+      },
+      "ranges": [
+       {
+        "line": 0
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  TASK.md:1-8",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  go.mod:1-3",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  period.go:1-64",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  select  ledger.go:1-65",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "5  select  report.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "6  select  report_test.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "7  select  timesheet_test.go:1-198",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "8  replace  period.go:30",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "9  replace  ledger.go:40",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "10  replace  report.go:15",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "11  final  TASK.md:before 1",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   },
+   {
+    "label": "12  final  go.mod:1-3",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "4/12",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0053-no-why",
+  "quickPick": {
+   "placeHolder": "Pick a tape to replay",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9 operations · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7 operations · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10 operations · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 4,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0053-no-why/report.go",
+    "column": 1,
+    "text": "package timesheet\n\nimport (\n\t\"sort\"\n\t\"time\"\n)\n\nconst (\n\tbillingUnit   = 15     // 請求は15分単位\n\tdailyStandard = 8 * 60 // 1営業日の所定時間（分）\n)\n\n// roundBilling は分を請求単位に切り上げる。\nfunc roundBilling(mins int) int {\n\treturn (mins + billingUnit/2) / billingUnit * billingUnit\n}\n\n// ProjectTotal はプロジェクトごとの月次集計。\ntype ProjectTotal struct {\n\tProject  string\n\tMinutes  int // 実作業時間\n\tBillable int // 請求時間。プロジェクトごと・日ごとに切り上げて合計する\n}\n\n// MonthlyReport は year 年 m 月のプロジェクト別集計をプロジェクト名順で返す。\nfunc MonthlyReport(l *Ledger, year int, m time.Month) []ProjectTotal {\n\ttype key struct {\n\t\tproject string\n\t\tday     string\n\t}\n\tperDay := map[key]int{}\n\traw := map[string]int{}\n\tfor _, r := range l.Between(Month(year, m)) {\n\t\tperDay[key{r.Project, r.Date.Format(\"2006-01-02\")}] += r.Minutes\n\t\traw[r.Project] += r.Minutes\n\t}\n\tbillable := map[string]int{}\n\tfor k, mins := range perDay {\n\t\tbillable[k.project] += roundBilling(mins)\n\t}\n\tvar out []ProjectTotal\n\tfor p, mins := range raw {\n\t\tout = append(out, ProjectTotal{Project: p, Minutes: mins, Billable: billable[p]})\n\t}\n\tsort.Slice(out, func(i, j int) bool { return out[i].Project < out[j].Project })\n\treturn out\n}\n\n// WeekSummary は1週間ぶんの作業時間と残業時間。\ntype WeekSummary struct {\n\tWeek     Period\n\tMinutes  int\n\tOvertime int // 所定時間（営業日数 x 8時間）を超えた分\n}\n\n// WeeklySummaries は期間を週ごとに区切って合計する。\nfunc WeeklySummaries(l *Ledger, p Period, holidays map[string]bool) []WeekSummary {\n\tvar out []WeekSummary\n\tfor _, w := range p.Weeks() {\n\t\ttotal := 0\n\t\tfor _, r := range l.Between(w) {\n\t\t\ttotal += r.Minutes\n\t\t}\n\t\tlimit := w.BusinessDays(holidays) * dailyStandard\n\t\tover := total - limit\n\t\tif over < 0 {\n\t\t\tover = 0\n\t\t}\n\t\tout = append(out, WeekSummary{Week: w, Minutes: total, Overtime: over})\n\t}\n\treturn out\n}\n",
+    "options": {
+     "lineNumbers": 1
+    },
+    "reveal": 1,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#1d3a5c",
+       "light": {
+        "backgroundColor": "#cfe3fb"
+       }
+      },
+      "ranges": [
+       {
+        "line": 0
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  TASK.md:1-8",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  go.mod:1-3",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  period.go:1-64",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  select  ledger.go:1-65",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "5  select  report.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "6  select  report_test.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "7  select  timesheet_test.go:1-198",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "8  replace  period.go:30",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "9  replace  ledger.go:40",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "10  replace  report.go:15",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "11  final  TASK.md:before 1",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   },
+   {
+    "label": "12  final  go.mod:1-3",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "5/12",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0053-no-why",
+  "quickPick": {
+   "placeHolder": "Pick a tape to replay",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9 operations · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7 operations · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10 operations · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 5,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0053-no-why/report_test.go",
+    "column": 1,
+    "text": "package timesheet\n\nimport (\n\t\"reflect\"\n\t\"testing\"\n\t\"time\"\n)\n\nfunc sampleLedger(t *testing.T) *Ledger {\n\tt.Helper()\n\tl := &Ledger{}\n\tadd := func(d time.Time, project string, mins int) {\n\t\tif err := l.Add(Record{d, project, mins}); err != nil {\n\t\t\tt.Fatal(err)\n\t\t}\n\t}\n\tadd(date(2026, 1, 31), \"beta\", 200)\n\tadd(date(2026, 2, 1), \"alpha\", 60)\n\tadd(date(2026, 2, 2), \"alpha\", 100)\n\tadd(date(2026, 2, 2), \"alpha\", 20)\n\tadd(date(2026, 2, 2), \"beta\", 30)\n\tadd(date(2026, 2, 3), \"alpha\", 50)\n\tadd(date(2026, 2, 4), \"beta\", 500)\n\tfor d := 9; d <= 13; d++ {\n\t\tadd(date(2026, 2, d), \"alpha\", 600)\n\t}\n\tadd(date(2026, 2, 27), \"beta\", 45)\n\tadd(date(2026, 2, 28), \"alpha\", 90)\n\tadd(date(2026, 3, 1), \"alpha\", 300)\n\treturn l\n}\n\nfunc TestMonthlyReport(t *testing.T) {\n\tgot := MonthlyReport(sampleLedger(t), 2026, time.February)\n\twant := []ProjectTotal{\n\t\t{\"alpha\", 3320, 3330},\n\t\t{\"beta\", 575, 585},\n\t}\n\tif !reflect.DeepEqual(got, want) {\n\t\tt.Errorf(\"MonthlyReport = %+v\\nwant           %+v\", got, want)\n\t}\n\tif got := MonthlyReport(sampleLedger(t), 2026, time.April); len(got) != 0 {\n\t\tt.Errorf(\"記録のない月のレポート = %+v\", got)\n\t}\n}\n\nfunc TestWeeklySummaries(t *testing.T) {\n\tfeb := Month(2026, time.February)\n\tgot := WeeklySummaries(sampleLedger(t), feb, nil)\n\twant := []WeekSummary{\n\t\t{Period{date(2026, 2, 1), date(2026, 2, 2)}, 60, 60},\n\t\t{Period{date(2026, 2, 2), date(2026, 2, 9)}, 700, 0},\n\t\t{Period{date(2026, 2, 9), date(2026, 2, 16)}, 3000, 600},\n\t\t{Period{date(2026, 2, 16), date(2026, 2, 23)}, 0, 0},\n\t\t{Period{date(2026, 2, 23), date(2026, 3, 1)}, 135, 0},\n\t}\n\tif !reflect.DeepEqual(got, want) {\n\t\tfor i := range got {\n\t\t\tt.Logf(\"got[%d] = %+v\", i, got[i])\n\t\t}\n\t\tt.Errorf(\"WeeklySummaries が期待と違う（%d 週, want %d 週）\", len(got), len(want))\n\t}\n\n\tholidays := map[string]bool{\"2026-02-11\": true}\n\tgot = WeeklySummaries(sampleLedger(t), feb, holidays)\n\tif len(got) != 5 {\n\t\tt.Fatalf(\"週の数 = %d, want 5\", len(got))\n\t}\n\tif got[2].Overtime != 1080 {\n\t\tt.Errorf(\"祝日のある週の残業 = %d, want 1080\", got[2].Overtime)\n\t}\n}\n",
+    "options": {
+     "lineNumbers": 1
+    },
+    "reveal": 1,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#1d3a5c",
+       "light": {
+        "backgroundColor": "#cfe3fb"
+       }
+      },
+      "ranges": [
+       {
+        "line": 0
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  TASK.md:1-8",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  go.mod:1-3",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  period.go:1-64",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  select  ledger.go:1-65",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "5  select  report.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "6  select  report_test.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "7  select  timesheet_test.go:1-198",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "8  replace  period.go:30",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "9  replace  ledger.go:40",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "10  replace  report.go:15",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "11  final  TASK.md:before 1",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   },
+   {
+    "label": "12  final  go.mod:1-3",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "6/12",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0053-no-why",
+  "quickPick": {
+   "placeHolder": "Pick a tape to replay",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9 operations · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7 operations · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10 operations · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 6,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0053-no-why/timesheet_test.go",
+    "column": 1,
+    "text": "package timesheet\n\nimport (\n\t\"reflect\"\n\t\"testing\"\n\t\"time\"\n)\n\nfunc date(y int, m time.Month, d int) time.Time {\n\treturn time.Date(y, m, d, 0, 0, 0, 0, time.UTC)\n}\n\nfunc TestMonth(t *testing.T) {\n\tcases := []struct {\n\t\tyear  int\n\t\tm     time.Month\n\t\tend   time.Time\n\t\tndays int\n\t}{\n\t\t{2026, time.February, date(2026, 3, 1), 28},\n\t\t{2024, time.February, date(2024, 3, 1), 29},\n\t\t{2025, time.December, date(2026, 1, 1), 31},\n\t}\n\tfor _, c := range cases {\n\t\tp := Month(c.year, c.m)\n\t\tif !p.Start.Equal(date(c.year, c.m, 1)) || !p.End.Equal(c.end) || p.Days() != c.ndays {\n\t\t\tt.Errorf(\"Month(%d, %v) = %v..%v (%d日)\", c.year, c.m, p.Start, p.End, p.Days())\n\t\t}\n\t}\n}\n\nfunc TestContains(t *testing.T) {\n\tp := Month(2026, time.February)\n\tcases := []struct {\n\t\tt    time.Time\n\t\twant bool\n\t}{\n\t\t{date(2026, 1, 31), false},\n\t\t{date(2026, 2, 1), true},\n\t\t{date(2026, 2, 28), true},\n\t\t{time.Date(2026, 2, 28, 23, 59, 59, 0, time.UTC), true},\n\t\t{date(2026, 3, 1), false},\n\t}\n\tfor _, c := range cases {\n\t\tif got := p.Contains(c.t); got != c.want {\n\t\t\tt.Errorf(\"Contains(%v) = %v, want %v\", c.t, got, c.want)\n\t\t}\n\t}\n}\n\nfunc TestWeekStart(t *testing.T) {\n\tcases := []struct {\n\t\tin, want time.Time\n\t}{\n\t\t{date(2026, 2, 2), date(2026, 2, 2)},  // 月\n\t\t{date(2026, 2, 4), date(2026, 2, 2)},  // 水\n\t\t{date(2026, 2, 7), date(2026, 2, 2)},  // 土\n\t\t{date(2026, 2, 8), date(2026, 2, 2)},  // 日\n\t\t{date(2026, 2, 1), date(2026, 1, 26)}, // 日、前の月へ\n\t\t{time.Date(2026, 2, 3, 15, 30, 0, 0, time.UTC), date(2026, 2, 2)},\n\t\t{date(2026, 3, 4), date(2026, 3, 2)},\n\t}\n\tfor _, c := range cases {\n\t\tif got := WeekStart(c.in); !got.Equal(c.want) {\n\t\t\tt.Errorf(\"WeekStart(%v) = %v, want %v\", c.in.Format(\"2006-01-02 Mon\"), got.Format(\"2006-01-02 Mon\"), c.want.Format(\"2006-01-02 Mon\"))\n\t\t}\n\t}\n}\n\nfunc TestWeeks(t *testing.T) {\n\tcases := []struct {\n\t\tname   string\n\t\tperiod Period\n\t\tstarts []time.Time\n\t}{\n\t\t{\"2026年2月（日曜始まりの月）\", Month(2026, time.February),\n\t\t\t[]time.Time{date(2026, 2, 1), date(2026, 2, 2), date(2026, 2, 9), date(2026, 2, 16), date(2026, 2, 23)}},\n\t\t{\"2026年4月（水曜始まりの月）\", Month(2026, time.April),\n\t\t\t[]time.Time{date(2026, 4, 1), date(2026, 4, 6), date(2026, 4, 13), date(2026, 4, 20), date(2026, 4, 27)}},\n\t\t{\"2026年3月\", Month(2026, time.March),\n\t\t\t[]time.Time{date(2026, 3, 1), date(2026, 3, 2), date(2026, 3, 9), date(2026, 3, 16), date(2026, 3, 23), date(2026, 3, 30)}},\n\t}\n\tfor _, c := range cases {\n\t\tweeks := c.period.Weeks()\n\t\tif len(weeks) != len(c.starts) {\n\t\t\tt.Errorf(\"%s: 週の数 = %d, want %d\", c.name, len(weeks), len(c.starts))\n\t\t\tcontinue\n\t\t}\n\t\tdays := 0\n\t\tfor i, w := range weeks {\n\t\t\tif !w.Start.Equal(c.starts[i]) {\n\t\t\t\tt.Errorf(\"%s: %d週目の開始 = %v, want %v\", c.name, i+1, w.Start.Format(\"01-02\"), c.starts[i].Format(\"01-02\"))\n\t\t\t}\n\t\t\tdays += w.Days()\n\t\t}\n\t\tif last := weeks[len(weeks)-1]; !last.End.Equal(c.period.End) {\n\t\t\tt.Errorf(\"%s: 最後の週の終わり = %v\", c.name, last.End)\n\t\t}\n\t\tif days != c.period.Days() {\n\t\t\tt.Errorf(\"%s: 週の日数の合計 = %d, want %d\", c.name, days, c.period.Days())\n\t\t}\n\t}\n}\n\nfunc TestBusinessDays(t *testing.T) {\n\tholidays := map[string]bool{\n\t\t\"2026-02-11\": true, // 水\n\t\t\"2026-02-14\": true, // 土（すでに休み）\n\t}\n\tcases := []struct {\n\t\tname     string\n\t\tp        Period\n\t\tholidays map[string]bool\n\t\twant     int\n\t}{\n\t\t{\"2026年2月\", Month(2026, time.February), nil, 20},\n\t\t{\"祝日あり\", Month(2026, time.February), holidays, 19},\n\t\t{\"2026年3月\", Month(2026, time.March), nil, 22},\n\t\t{\"日曜だけ\", Period{date(2026, 2, 1), date(2026, 2, 2)}, nil, 0},\n\t}\n\tfor _, c := range cases {\n\t\tif got := c.p.BusinessDays(c.holidays); got != c.want {\n\t\t\tt.Errorf(\"%s: BusinessDays = %d, want %d\", c.name, got, c.want)\n\t\t}\n\t}\n}\n\nfunc TestAddValidation(t *testing.T) {\n\tcases := []struct {\n\t\tname    string\n\t\tr       Record\n\t\twantErr bool\n\t}{\n\t\t{\"正常\", Record{date(2026, 2, 2), \"alpha\", 60}, false},\n\t\t{\"上限ちょうど\", Record{date(2026, 2, 2), \"alpha\", 1440}, false},\n\t\t{\"上限超え\", Record{date(2026, 2, 2), \"alpha\", 1441}, true},\n\t\t{\"0分\", Record{date(2026, 2, 2), \"alpha\", 0}, true},\n\t\t{\"負\", Record{date(2026, 2, 2), \"alpha\", -5}, true},\n\t\t{\"プロジェクト名なし\", Record{date(2026, 2, 2), \"\", 30}, true},\n\t}\n\tfor _, c := range cases {\n\t\tvar l Ledger\n\t\tif err := l.Add(c.r); (err != nil) != c.wantErr {\n\t\t\tt.Errorf(\"%s: err = %v, wantErr = %v\", c.name, err, c.wantErr)\n\t\t}\n\t}\n}\n\nfunc TestAddNormalizesDate(t *testing.T) {\n\tvar l Ledger\n\t_ = l.Add(Record{time.Date(2026, 2, 3, 17, 45, 0, 0, time.UTC), \"alpha\", 30})\n\tgot := l.Between(Month(2026, time.February))\n\tif len(got) != 1 || !got[0].Date.Equal(date(2026, 2, 3)) {\n\t\tt.Errorf(\"records = %+v\", got)\n\t}\n}\n\nfunc TestBetween(t *testing.T) {\n\tvar l Ledger\n\tfor _, r := range []Record{\n\t\t{date(2026, 3, 1), \"alpha\", 10},\n\t\t{date(2026, 2, 28), \"beta\", 20},\n\t\t{date(2026, 2, 10), \"beta\", 30},\n\t\t{date(2026, 2, 10), \"alpha\", 40},\n\t\t{date(2026, 2, 1), \"alpha\", 50},\n\t\t{date(2026, 1, 31), \"alpha\", 60},\n\t} {\n\t\tif err := l.Add(r); err != nil {\n\t\t\tt.Fatal(err)\n\t\t}\n\t}\n\tgot := l.Between(Month(2026, time.February))\n\twant := []Record{\n\t\t{date(2026, 2, 1), \"alpha\", 50},\n\t\t{date(2026, 2, 10), \"alpha\", 40},\n\t\t{date(2026, 2, 10), \"beta\", 30},\n\t\t{date(2026, 2, 28), \"beta\", 20},\n\t}\n\tif !reflect.DeepEqual(got, want) {\n\t\tt.Errorf(\"Between = %+v\\nwant     %+v\", got, want)\n\t}\n\tif n := len(l.Between(Period{date(2026, 4, 1), date(2026, 5, 1)})); n != 0 {\n\t\tt.Errorf(\"記録のない期間で %d 件返った\", n)\n\t}\n}\n\nfunc TestProjects(t *testing.T) {\n\tvar l Ledger\n\tif got := l.Projects(); len(got) != 0 {\n\t\tt.Errorf(\"空の台帳の Projects = %v\", got)\n\t}\n\t_ = l.Add(Record{date(2026, 2, 2), \"beta\", 10})\n\t_ = l.Add(Record{date(2026, 2, 3), \"alpha\", 10})\n\t_ = l.Add(Record{date(2026, 2, 4), \"beta\", 10})\n\tif got, want := l.Projects(), []string{\"alpha\", \"beta\"}; !reflect.DeepEqual(got, want) {\n\t\tt.Errorf(\"Projects = %v, want %v\", got, want)\n\t}\n}\n",
+    "options": {
+     "lineNumbers": 1
+    },
+    "reveal": 1,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#1d3a5c",
+       "light": {
+        "backgroundColor": "#cfe3fb"
+       }
+      },
+      "ranges": [
+       {
+        "line": 0
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  TASK.md:1-8",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  go.mod:1-3",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  period.go:1-64",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  select  ledger.go:1-65",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "5  select  report.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "6  select  report_test.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "7  select  timesheet_test.go:1-198",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "8  replace  period.go:30",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "9  replace  ledger.go:40",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "10  replace  report.go:15",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "11  final  TASK.md:before 1",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   },
+   {
+    "label": "12  final  go.mod:1-3",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "7/12",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0053-no-why",
+  "quickPick": {
+   "placeHolder": "Pick a tape to replay",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9 operations · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7 operations · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10 operations · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 7,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0053-no-why/period.go",
+    "column": 1,
+    "text": "package timesheet\n\nimport \"time\"\n\n// Period は [Start, End) の半開区間。すべて UTC の 0 時で扱う。\ntype Period struct {\n\tStart time.Time\n\tEnd   time.Time\n}\n\n// Month は year 年 m 月の期間を返す。\nfunc Month(year int, m time.Month) Period {\n\ts := time.Date(year, m, 1, 0, 0, 0, 0, time.UTC)\n\treturn Period{Start: s, End: s.AddDate(0, 1, 0)}\n}\n\n// Contains は t が期間に含まれるかを返す。\nfunc (p Period) Contains(t time.Time) bool {\n\treturn !t.Before(p.Start) && t.Before(p.End)\n}\n\n// Days は期間の日数。\nfunc (p Period) Days() int {\n\treturn int(p.End.Sub(p.Start) / (24 * time.Hour))\n}\n\n// WeekStart は t を含む週の月曜 0 時を返す（週は月曜始まり）。\nfunc WeekStart(t time.Time) time.Time {\n\td := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)\n\toffset := (int(d.Weekday()) - int(time.Monday) + 7) % 7\n\treturn d.AddDate(0, 0, -offset)\n}\n\n// Weeks は期間を月曜始まりの週ごとに分ける。\n// 最初と最後の週は期間の端で切り詰められる。\nfunc (p Period) Weeks() []Period {\n\tvar out []Period\n\tcur := p.Start\n\tfor cur.Before(p.End) {\n\t\tnext := WeekStart(cur).AddDate(0, 0, 7)\n\t\tif next.After(p.End) {\n\t\t\tnext = p.End\n\t\t}\n\t\tout = append(out, Period{Start: cur, End: next})\n\t\tcur = next\n\t}\n\treturn out\n}\n\n// BusinessDays は期間内の平日（月〜金）の日数。holidays に含まれる日は除く。\n// holidays のキーは \"2006-01-02\" 形式。\nfunc (p Period) BusinessDays(holidays map[string]bool) int {\n\tn := 0\n\tfor d := p.Start; d.Before(p.End); d = d.AddDate(0, 0, 1) {\n\t\tif wd := d.Weekday(); wd == time.Saturday || wd == time.Sunday {\n\t\t\tcontinue\n\t\t}\n\t\tif holidays[d.Format(\"2006-01-02\")] {\n\t\t\tcontinue\n\t\t}\n\t\tn++\n\t}\n\treturn n\n}\n",
+    "options": {
+     "lineNumbers": 1
+    },
+    "reveal": 30,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#583c27",
+       "light": {
+        "backgroundColor": "#fde3c8"
+       }
+      },
+      "ranges": [
+       {
+        "line": 29
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  TASK.md:1-8",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  go.mod:1-3",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  period.go:1-64",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  select  ledger.go:1-65",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "5  select  report.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "6  select  report_test.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "7  select  timesheet_test.go:1-198",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "8  replace  period.go:30",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "9  replace  ledger.go:40",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "10  replace  report.go:15",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "11  final  TASK.md:before 1",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   },
+   {
+    "label": "12  final  go.mod:1-3",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "8/12",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0053-no-why",
+  "quickPick": {
+   "placeHolder": "Pick a tape to replay",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9 operations · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7 operations · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10 operations · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 8,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0053-no-why/ledger.go",
+    "column": 1,
+    "text": "package timesheet\n\nimport (\n\t\"fmt\"\n\t\"sort\"\n\t\"time\"\n)\n\nconst maxMinutesPerDay = 24 * 60\n\n// Record は1件の作業記録。Date は日付（時刻は無視される）。\ntype Record struct {\n\tDate    time.Time\n\tProject string\n\tMinutes int\n}\n\n// Ledger は作業記録の集まり。\ntype Ledger struct {\n\trecords []Record\n}\n\n// Add は記録を追加する。日付は UTC の 0 時にそろえる。\nfunc (l *Ledger) Add(r Record) error {\n\tif r.Project == \"\" {\n\t\treturn fmt.Errorf(\"プロジェクト名が空です\")\n\t}\n\tif r.Minutes <= 0 || r.Minutes > maxMinutesPerDay {\n\t\treturn fmt.Errorf(\"作業時間が範囲外です: %d分\", r.Minutes)\n\t}\n\tr.Date = time.Date(r.Date.Year(), r.Date.Month(), r.Date.Day(), 0, 0, 0, 0, time.UTC)\n\tl.records = append(l.records, r)\n\treturn nil\n}\n\n// Between は期間に含まれる記録を、日付、プロジェクト名の順に並べて返す。\nfunc (l *Ledger) Between(p Period) []Record {\n\tvar out []Record\n\tfor _, r := range l.records {\n\t\tif p.Contains(r.Date) {\n\t\t\tout = append(out, r)\n\t\t}\n\t}\n\tsort.SliceStable(out, func(i, j int) bool {\n\t\tif !out[i].Date.Equal(out[j].Date) {\n\t\t\treturn out[i].Date.Before(out[j].Date)\n\t\t}\n\t\treturn out[i].Project < out[j].Project\n\t})\n\treturn out\n}\n\n// Projects は記録に現れるプロジェクト名を昇順で返す。\nfunc (l *Ledger) Projects() []string {\n\tseen := map[string]bool{}\n\tvar out []string\n\tfor _, r := range l.records {\n\t\tif !seen[r.Project] {\n\t\t\tseen[r.Project] = true\n\t\t\tout = append(out, r.Project)\n\t\t}\n\t}\n\tsort.Strings(out)\n\treturn out\n}\n",
+    "options": {
+     "lineNumbers": 1
+    },
+    "reveal": 40,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#583c27",
+       "light": {
+        "backgroundColor": "#fde3c8"
+       }
+      },
+      "ranges": [
+       {
+        "line": 39
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  TASK.md:1-8",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  go.mod:1-3",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  period.go:1-64",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  select  ledger.go:1-65",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "5  select  report.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "6  select  report_test.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "7  select  timesheet_test.go:1-198",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "8  replace  period.go:30",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "9  replace  ledger.go:40",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "10  replace  report.go:15",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "11  final  TASK.md:before 1",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   },
+   {
+    "label": "12  final  go.mod:1-3",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "9/12",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0053-no-why",
+  "quickPick": {
+   "placeHolder": "Pick a tape to replay",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9 operations · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7 operations · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10 operations · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 9,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0053-no-why/report.go",
+    "column": 1,
+    "text": "package timesheet\n\nimport (\n\t\"sort\"\n\t\"time\"\n)\n\nconst (\n\tbillingUnit   = 15     // 請求は15分単位\n\tdailyStandard = 8 * 60 // 1営業日の所定時間（分）\n)\n\n// roundBilling は分を請求単位に切り上げる。\nfunc roundBilling(mins int) int {\n\treturn (mins + billingUnit - 1) / billingUnit * billingUnit\n}\n\n// ProjectTotal はプロジェクトごとの月次集計。\ntype ProjectTotal struct {\n\tProject  string\n\tMinutes  int // 実作業時間\n\tBillable int // 請求時間。プロジェクトごと・日ごとに切り上げて合計する\n}\n\n// MonthlyReport は year 年 m 月のプロジェクト別集計をプロジェクト名順で返す。\nfunc MonthlyReport(l *Ledger, year int, m time.Month) []ProjectTotal {\n\ttype key struct {\n\t\tproject string\n\t\tday     string\n\t}\n\tperDay := map[key]int{}\n\traw := map[string]int{}\n\tfor _, r := range l.Between(Month(year, m)) {\n\t\tperDay[key{r.Project, r.Date.Format(\"2006-01-02\")}] += r.Minutes\n\t\traw[r.Project] += r.Minutes\n\t}\n\tbillable := map[string]int{}\n\tfor k, mins := range perDay {\n\t\tbillable[k.project] += roundBilling(mins)\n\t}\n\tvar out []ProjectTotal\n\tfor p, mins := range raw {\n\t\tout = append(out, ProjectTotal{Project: p, Minutes: mins, Billable: billable[p]})\n\t}\n\tsort.Slice(out, func(i, j int) bool { return out[i].Project < out[j].Project })\n\treturn out\n}\n\n// WeekSummary は1週間ぶんの作業時間と残業時間。\ntype WeekSummary struct {\n\tWeek     Period\n\tMinutes  int\n\tOvertime int // 所定時間（営業日数 x 8時間）を超えた分\n}\n\n// WeeklySummaries は期間を週ごとに区切って合計する。\nfunc WeeklySummaries(l *Ledger, p Period, holidays map[string]bool) []WeekSummary {\n\tvar out []WeekSummary\n\tfor _, w := range p.Weeks() {\n\t\ttotal := 0\n\t\tfor _, r := range l.Between(w) {\n\t\t\ttotal += r.Minutes\n\t\t}\n\t\tlimit := w.BusinessDays(holidays) * dailyStandard\n\t\tover := total - limit\n\t\tif over < 0 {\n\t\t\tover = 0\n\t\t}\n\t\tout = append(out, WeekSummary{Week: w, Minutes: total, Overtime: over})\n\t}\n\treturn out\n}\n",
+    "options": {
+     "lineNumbers": 1
+    },
+    "reveal": 15,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#583c27",
+       "light": {
+        "backgroundColor": "#fde3c8"
+       }
+      },
+      "ranges": [
+       {
+        "line": 14
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  TASK.md:1-8",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  go.mod:1-3",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  period.go:1-64",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  select  ledger.go:1-65",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "5  select  report.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "6  select  report_test.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "7  select  timesheet_test.go:1-198",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "8  replace  period.go:30",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "9  replace  ledger.go:40",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "10  replace  report.go:15",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "11  final  TASK.md:before 1",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   },
+   {
+    "label": "12  final  go.mod:1-3",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "10/12",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0053-no-why",
+  "quickPick": {
+   "placeHolder": "Pick a tape to replay",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9 operations · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7 operations · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10 operations · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 10,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0053-no-why/diff10/Before ⚠ Changed after recording (no longer exists): TASK.md?diff=10&side=before",
+    "column": 1,
+    "text": "# タスク\n\n`go test ./...` が失敗します。原因を見つけて、コードを直してください。\n\n- テスト（`*_test.go`）は変更しないでください\n- 直したら `go test ./...` が通ることを確認して、何を直したかを一言で報告してください\n\n（対象: 作業時間の期間集計、`src/` 以下）\n",
+    "options": {
+     "lineNumbers": 1
+    },
+    "reveal": 1,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#1d3a5c",
+       "light": {
+        "backgroundColor": "#cfe3fb"
+       }
+      },
+      "ranges": [
+       {
+        "line": 0
+       },
+       {
+        "line": 1
+       },
+       {
+        "line": 2
+       },
+       {
+        "line": 3
+       },
+       {
+        "line": 4
+       },
+       {
+        "line": 5
+       },
+       {
+        "line": 6
+       },
+       {
+        "line": 7
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "uri": "srwr-replay:/20260930-0053-no-why/diff10/After TASK.md?diff=10&side=after",
+    "column": 2,
+    "text": "",
+    "options": {
+     "lineNumbers": 1
+    },
+    "reveal": 1,
+    "decorations": []
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  TASK.md:1-8",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  go.mod:1-3",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  period.go:1-64",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  select  ledger.go:1-65",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "5  select  report.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "6  select  report_test.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "7  select  timesheet_test.go:1-198",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "8  replace  period.go:30",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "9  replace  ledger.go:40",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "10  replace  report.go:15",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "11  final  TASK.md:before 1",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   },
+   {
+    "label": "12  final  go.mod:1-3",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "11/12",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0053-no-why",
+  "quickPick": {
+   "placeHolder": "Pick a tape to replay",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9 operations · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7 operations · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10 operations · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 11,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0053-no-why/diff11/Before ⚠ Changed after recording (diff from current file): go.mod?diff=11&side=before",
+    "column": 1,
+    "text": "module timesheet\n\ngo 1.27\n",
+    "options": {
+     "lineNumbers": 1
+    },
+    "reveal": 1,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#1d3a5c",
+       "light": {
+        "backgroundColor": "#cfe3fb"
+       }
+      },
+      "ranges": [
+       {
+        "line": 0
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "uri": "srwr-replay:/20260930-0053-no-why/diff11/After go.mod?diff=11&side=after",
+    "column": 2,
+    "text": "module uicheck\n\ngo 1.27\n",
+    "options": {
+     "lineNumbers": 1
+    },
+    "reveal": 1,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#583c27",
+       "light": {
+        "backgroundColor": "#fde3c8"
+       }
+      },
+      "ranges": [
+       {
+        "line": 0
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  TASK.md:1-8",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  go.mod:1-3",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  period.go:1-64",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  select  ledger.go:1-65",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "5  select  report.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "6  select  report_test.go:1-72",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "7  select  timesheet_test.go:1-198",
+    "description": "",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "8  replace  period.go:30",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "9  replace  ledger.go:40",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "10  replace  report.go:15",
+    "description": "",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "11  final  TASK.md:before 1",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   },
+   {
+    "label": "12  final  go.mod:1-3",
+    "description": "",
+    "color": "charts.purple",
+    "kind": "final"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "color": "rgba(255, 255, 255, 0.4)",
+    "visible": true
+   },
+   {
+    "text": "12/12",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0053-no-why",
+  "quickPick": {
+   "placeHolder": "Pick a tape to replay",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9 operations · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7 operations · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10 operations · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ }
+]

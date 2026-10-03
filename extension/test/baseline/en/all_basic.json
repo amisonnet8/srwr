@@ -1,0 +1,3743 @@
+[
+ {
+  "frame": 0,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0054-why-basic/text.go",
+    "column": 1,
+    "text": "package textkit\n\nimport (\n\t\"strings\"\n)\n\nconst ellipsis = \"…\"\n\n// RuneWidth は端末での表示幅を返す。全角文字は 2、制御文字は 0、それ以外は 1。\nfunc RuneWidth(r rune) int {\n\tswitch {\n\tcase r < 0x20 || (r >= 0x7f && r < 0xa0):\n\t\treturn 0\n\tcase r >= 0x1100 && r <= 0x115f,\n\t\tr >= 0x2e80 && r <= 0xa4cf,\n\t\tr >= 0xac00 && r <= 0xd7a3,\n\t\tr >= 0xf900 && r <= 0xfaff,\n\t\tr >= 0xff00 && r <= 0xff60,\n\t\tr >= 0xffe0 && r <= 0xffe6:\n\t\treturn 2\n\t}\n\treturn 1\n}\n\n// DisplayWidth は文字列の表示幅の合計。\nfunc DisplayWidth(s string) int {\n\tw := 0\n\tfor _, r := range s {\n\t\tw += RuneWidth(r)\n\t}\n\treturn w\n}\n\n// Truncate は表示幅が w に収まるように文字列を切り詰める。\n// 収まらないときは末尾を \"…\"（幅1）に置き換える。\nfunc Truncate(s string, w int) string {\n◆ Truncate が幅ちょうどの文字列まで切り詰めてしまう原因の比較。\n\tif DisplayWidth(s) < w {\n\t\treturn s\n\t}\n\tif w <= 0 {\n\t\treturn \"\"\n\t}\n\tvar b strings.Builder\n\tused := 0\n\tfor _, r := range s {\n\t\trw := RuneWidth(r)\n\t\tif used+rw > w-1 {\n\t\t\tbreak\n\t\t}\n\t\tb.WriteRune(r)\n\t\tused += rw\n\t}\n\tb.WriteString(ellipsis)\n\treturn b.String()\n}\n\n// Align は列の寄せ方。\ntype Align int\n\nconst (\n\tLeft Align = iota\n\tRight\n\tCenter\n)\n\n// Pad は表示幅が w になるまで空白で埋める。すでに w 以上ならそのまま返す。\n// Center で余りが奇数のときは右側を1つ多くする。\nfunc Pad(s string, w int, a Align) string {\n\tgap := w - DisplayWidth(s)\n\tif gap <= 0 {\n\t\treturn s\n\t}\n\tswitch a {\n\tcase Right:\n\t\treturn strings.Repeat(\" \", gap) + s\n\tcase Center:\n\t\tleft := gap / 2\n\t\treturn strings.Repeat(\" \", left) + s + strings.Repeat(\" \", gap-left)\n\t}\n\treturn s + strings.Repeat(\" \", gap)\n}\n\n// Wrap は text を表示幅 width 以内の行に折り返す。\n// 単語は空白で区切られているものとし、幅より長い単語は折り返さずそのまま1行にする。\n// 元の改行は保たれ、空行は空行のまま残る。\nfunc Wrap(text string, width int) []string {\n\tvar lines []string\n\tfor _, para := range strings.Split(text, \"\\n\") {\n\t\tlines = append(lines, wrapParagraph(para, width)...)\n\t}\n\treturn lines\n}\n\nfunc wrapParagraph(p string, width int) []string {\n\twords := strings.Fields(p)\n\tif len(words) == 0 {\n\t\treturn []string{\"\"}\n\t}\n\tvar lines []string\n\tcur := \"\"\n\tcurW := 0\n\tfor _, w := range words {\n\t\tww := len(w)\n\t\tswitch {\n\t\tcase cur == \"\":\n\t\t\tcur, curW = w, ww\n\t\tcase curW+1+ww <= width:\n\t\t\tcur += \" \" + w\n\t\t\tcurW += 1 + ww\n\t\tdefault:\n\t\t\tlines = append(lines, cur)\n\t\t\tcur, curW = w, ww\n\t\t}\n\t}\n\treturn append(lines, cur)\n}\n",
+    "options": {
+     "lineNumbers": 0
+    },
+    "reveal": 38,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#1d3a5c",
+       "light": {
+        "backgroundColor": "#cfe3fb"
+       }
+      },
+      "ranges": [
+       {
+        "line": 37
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#0b61a4",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 36
+       }
+      ]
+     },
+     {
+      "opts": {
+       "before": {
+        "color": {
+         "id": "editorLineNumber.foreground"
+        }
+       }
+      },
+      "ranges": [
+       {
+        "line": 0,
+        "before": "  1  "
+       },
+       {
+        "line": 1,
+        "before": "  2  "
+       },
+       {
+        "line": 2,
+        "before": "  3  "
+       },
+       {
+        "line": 3,
+        "before": "  4  "
+       },
+       {
+        "line": 4,
+        "before": "  5  "
+       },
+       {
+        "line": 5,
+        "before": "  6  "
+       },
+       {
+        "line": 6,
+        "before": "  7  "
+       },
+       {
+        "line": 7,
+        "before": "  8  "
+       },
+       {
+        "line": 8,
+        "before": "  9  "
+       },
+       {
+        "line": 9,
+        "before": " 10  "
+       },
+       {
+        "line": 10,
+        "before": " 11  "
+       },
+       {
+        "line": 11,
+        "before": " 12  "
+       },
+       {
+        "line": 12,
+        "before": " 13  "
+       },
+       {
+        "line": 13,
+        "before": " 14  "
+       },
+       {
+        "line": 14,
+        "before": " 15  "
+       },
+       {
+        "line": 15,
+        "before": " 16  "
+       },
+       {
+        "line": 16,
+        "before": " 17  "
+       },
+       {
+        "line": 17,
+        "before": " 18  "
+       },
+       {
+        "line": 18,
+        "before": " 19  "
+       },
+       {
+        "line": 19,
+        "before": " 20  "
+       },
+       {
+        "line": 20,
+        "before": " 21  "
+       },
+       {
+        "line": 21,
+        "before": " 22  "
+       },
+       {
+        "line": 22,
+        "before": " 23  "
+       },
+       {
+        "line": 23,
+        "before": " 24  "
+       },
+       {
+        "line": 24,
+        "before": " 25  "
+       },
+       {
+        "line": 25,
+        "before": " 26  "
+       },
+       {
+        "line": 26,
+        "before": " 27  "
+       },
+       {
+        "line": 27,
+        "before": " 28  "
+       },
+       {
+        "line": 28,
+        "before": " 29  "
+       },
+       {
+        "line": 29,
+        "before": " 30  "
+       },
+       {
+        "line": 30,
+        "before": " 31  "
+       },
+       {
+        "line": 31,
+        "before": " 32  "
+       },
+       {
+        "line": 32,
+        "before": " 33  "
+       },
+       {
+        "line": 33,
+        "before": " 34  "
+       },
+       {
+        "line": 34,
+        "before": " 35  "
+       },
+       {
+        "line": 35,
+        "before": " 36  "
+       },
+       {
+        "line": 36,
+        "before": "     "
+       },
+       {
+        "line": 37,
+        "before": " 37  "
+       },
+       {
+        "line": 38,
+        "before": " 38  "
+       },
+       {
+        "line": 39,
+        "before": " 39  "
+       },
+       {
+        "line": 40,
+        "before": " 40  "
+       },
+       {
+        "line": 41,
+        "before": " 41  "
+       },
+       {
+        "line": 42,
+        "before": " 42  "
+       },
+       {
+        "line": 43,
+        "before": " 43  "
+       },
+       {
+        "line": 44,
+        "before": " 44  "
+       },
+       {
+        "line": 45,
+        "before": " 45  "
+       },
+       {
+        "line": 46,
+        "before": " 46  "
+       },
+       {
+        "line": 47,
+        "before": " 47  "
+       },
+       {
+        "line": 48,
+        "before": " 48  "
+       },
+       {
+        "line": 49,
+        "before": " 49  "
+       },
+       {
+        "line": 50,
+        "before": " 50  "
+       },
+       {
+        "line": 51,
+        "before": " 51  "
+       },
+       {
+        "line": 52,
+        "before": " 52  "
+       },
+       {
+        "line": 53,
+        "before": " 53  "
+       },
+       {
+        "line": 54,
+        "before": " 54  "
+       },
+       {
+        "line": 55,
+        "before": " 55  "
+       },
+       {
+        "line": 56,
+        "before": " 56  "
+       },
+       {
+        "line": 57,
+        "before": " 57  "
+       },
+       {
+        "line": 58,
+        "before": " 58  "
+       },
+       {
+        "line": 59,
+        "before": " 59  "
+       },
+       {
+        "line": 60,
+        "before": " 60  "
+       },
+       {
+        "line": 61,
+        "before": " 61  "
+       },
+       {
+        "line": 62,
+        "before": " 62  "
+       },
+       {
+        "line": 63,
+        "before": " 63  "
+       },
+       {
+        "line": 64,
+        "before": " 64  "
+       },
+       {
+        "line": 65,
+        "before": " 65  "
+       },
+       {
+        "line": 66,
+        "before": " 66  "
+       },
+       {
+        "line": 67,
+        "before": " 67  "
+       },
+       {
+        "line": 68,
+        "before": " 68  "
+       },
+       {
+        "line": 69,
+        "before": " 69  "
+       },
+       {
+        "line": 70,
+        "before": " 70  "
+       },
+       {
+        "line": 71,
+        "before": " 71  "
+       },
+       {
+        "line": 72,
+        "before": " 72  "
+       },
+       {
+        "line": 73,
+        "before": " 73  "
+       },
+       {
+        "line": 74,
+        "before": " 74  "
+       },
+       {
+        "line": 75,
+        "before": " 75  "
+       },
+       {
+        "line": 76,
+        "before": " 76  "
+       },
+       {
+        "line": 77,
+        "before": " 77  "
+       },
+       {
+        "line": 78,
+        "before": " 78  "
+       },
+       {
+        "line": 79,
+        "before": " 79  "
+       },
+       {
+        "line": 80,
+        "before": " 80  "
+       },
+       {
+        "line": 81,
+        "before": " 81  "
+       },
+       {
+        "line": 82,
+        "before": " 82  "
+       },
+       {
+        "line": 83,
+        "before": " 83  "
+       },
+       {
+        "line": 84,
+        "before": " 84  "
+       },
+       {
+        "line": 85,
+        "before": " 85  "
+       },
+       {
+        "line": 86,
+        "before": " 86  "
+       },
+       {
+        "line": 87,
+        "before": " 87  "
+       },
+       {
+        "line": 88,
+        "before": " 88  "
+       },
+       {
+        "line": 89,
+        "before": " 89  "
+       },
+       {
+        "line": 90,
+        "before": " 90  "
+       },
+       {
+        "line": 91,
+        "before": " 91  "
+       },
+       {
+        "line": 92,
+        "before": " 92  "
+       },
+       {
+        "line": 93,
+        "before": " 93  "
+       },
+       {
+        "line": 94,
+        "before": " 94  "
+       },
+       {
+        "line": 95,
+        "before": " 95  "
+       },
+       {
+        "line": 96,
+        "before": " 96  "
+       },
+       {
+        "line": 97,
+        "before": " 97  "
+       },
+       {
+        "line": 98,
+        "before": " 98  "
+       },
+       {
+        "line": 99,
+        "before": " 99  "
+       },
+       {
+        "line": 100,
+        "before": "100  "
+       },
+       {
+        "line": 101,
+        "before": "101  "
+       },
+       {
+        "line": 102,
+        "before": "102  "
+       },
+       {
+        "line": 103,
+        "before": "103  "
+       },
+       {
+        "line": 104,
+        "before": "104  "
+       },
+       {
+        "line": 105,
+        "before": "105  "
+       },
+       {
+        "line": 106,
+        "before": "106  "
+       },
+       {
+        "line": 107,
+        "before": "107  "
+       },
+       {
+        "line": 108,
+        "before": "108  "
+       },
+       {
+        "line": 109,
+        "before": "109  "
+       },
+       {
+        "line": 110,
+        "before": "110  "
+       },
+       {
+        "line": 111,
+        "before": "111  "
+       },
+       {
+        "line": 112,
+        "before": "112  "
+       },
+       {
+        "line": 113,
+        "before": "113  "
+       },
+       {
+        "line": 114,
+        "before": "114  "
+       },
+       {
+        "line": 115,
+        "before": "115  "
+       },
+       {
+        "line": 116,
+        "before": "116  "
+       },
+       {
+        "line": 117,
+        "before": "117  "
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  text.go:37",
+    "description": "Truncate が幅ちょうどの文字列まで切り詰めてしまう原因の比較。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  text.go:103",
+    "description": "Wrap が日本語で早く折り返すのは単語幅をバイト数で測っているため。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  parse.go:39-41",
+    "description": "末尾の空欄が落ちるのは、最後の欄を中身があるときだけ追加しているため。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  select  parse.go:40-42",
+    "description": "最後の欄の追加条件を if ブロックごと置き換えるため、そのブロックだけを対象にする。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "5  replace  text.go:37",
+    "description": "幅ちょうどの文字列は収まっているので、切り詰めずに返すべきだから。",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "6  replace  text.go:103",
+    "description": "折り返し幅は表示幅で定義されているので、バイト数ではなく表示幅で比べる必要があるから。",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "7  replace  parse.go:40",
+    "description": "区切りの数+1 が欄の数なので、最後の欄は空でも必ず1欄として数えるべきだから。",
+    "color": "charts.orange",
+    "kind": "replace"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "color": "rgba(255, 255, 255, 0.4)",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "1/7",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0054-why-basic",
+  "quickPick": {
+   "placeHolder": "Pick a tape to replay",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9 operations · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7 operations · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10 operations · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 1,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0054-why-basic/text.go",
+    "column": 1,
+    "text": "package textkit\n\nimport (\n\t\"strings\"\n)\n\nconst ellipsis = \"…\"\n\n// RuneWidth は端末での表示幅を返す。全角文字は 2、制御文字は 0、それ以外は 1。\nfunc RuneWidth(r rune) int {\n\tswitch {\n\tcase r < 0x20 || (r >= 0x7f && r < 0xa0):\n\t\treturn 0\n\tcase r >= 0x1100 && r <= 0x115f,\n\t\tr >= 0x2e80 && r <= 0xa4cf,\n\t\tr >= 0xac00 && r <= 0xd7a3,\n\t\tr >= 0xf900 && r <= 0xfaff,\n\t\tr >= 0xff00 && r <= 0xff60,\n\t\tr >= 0xffe0 && r <= 0xffe6:\n\t\treturn 2\n\t}\n\treturn 1\n}\n\n// DisplayWidth は文字列の表示幅の合計。\nfunc DisplayWidth(s string) int {\n\tw := 0\n\tfor _, r := range s {\n\t\tw += RuneWidth(r)\n\t}\n\treturn w\n}\n\n// Truncate は表示幅が w に収まるように文字列を切り詰める。\n// 収まらないときは末尾を \"…\"（幅1）に置き換える。\nfunc Truncate(s string, w int) string {\n\tif DisplayWidth(s) < w {\n\t\treturn s\n\t}\n\tif w <= 0 {\n\t\treturn \"\"\n\t}\n\tvar b strings.Builder\n\tused := 0\n\tfor _, r := range s {\n\t\trw := RuneWidth(r)\n\t\tif used+rw > w-1 {\n\t\t\tbreak\n\t\t}\n\t\tb.WriteRune(r)\n\t\tused += rw\n\t}\n\tb.WriteString(ellipsis)\n\treturn b.String()\n}\n\n// Align は列の寄せ方。\ntype Align int\n\nconst (\n\tLeft Align = iota\n\tRight\n\tCenter\n)\n\n// Pad は表示幅が w になるまで空白で埋める。すでに w 以上ならそのまま返す。\n// Center で余りが奇数のときは右側を1つ多くする。\nfunc Pad(s string, w int, a Align) string {\n\tgap := w - DisplayWidth(s)\n\tif gap <= 0 {\n\t\treturn s\n\t}\n\tswitch a {\n\tcase Right:\n\t\treturn strings.Repeat(\" \", gap) + s\n\tcase Center:\n\t\tleft := gap / 2\n\t\treturn strings.Repeat(\" \", left) + s + strings.Repeat(\" \", gap-left)\n\t}\n\treturn s + strings.Repeat(\" \", gap)\n}\n\n// Wrap は text を表示幅 width 以内の行に折り返す。\n// 単語は空白で区切られているものとし、幅より長い単語は折り返さずそのまま1行にする。\n// 元の改行は保たれ、空行は空行のまま残る。\nfunc Wrap(text string, width int) []string {\n\tvar lines []string\n\tfor _, para := range strings.Split(text, \"\\n\") {\n\t\tlines = append(lines, wrapParagraph(para, width)...)\n\t}\n\treturn lines\n}\n\nfunc wrapParagraph(p string, width int) []string {\n\twords := strings.Fields(p)\n\tif len(words) == 0 {\n\t\treturn []string{\"\"}\n\t}\n\tvar lines []string\n\tcur := \"\"\n\tcurW := 0\n\tfor _, w := range words {\n◆ Wrap が日本語で早く折り返すのは単語幅をバイト数で測っているため。\n\t\tww := len(w)\n\t\tswitch {\n\t\tcase cur == \"\":\n\t\t\tcur, curW = w, ww\n\t\tcase curW+1+ww <= width:\n\t\t\tcur += \" \" + w\n\t\t\tcurW += 1 + ww\n\t\tdefault:\n\t\t\tlines = append(lines, cur)\n\t\t\tcur, curW = w, ww\n\t\t}\n\t}\n\treturn append(lines, cur)\n}\n",
+    "options": {
+     "lineNumbers": 0
+    },
+    "reveal": 104,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#1d3a5c",
+       "light": {
+        "backgroundColor": "#cfe3fb"
+       }
+      },
+      "ranges": [
+       {
+        "line": 103
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#0b61a4",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 102
+       }
+      ]
+     },
+     {
+      "opts": {
+       "before": {
+        "color": {
+         "id": "editorLineNumber.foreground"
+        }
+       }
+      },
+      "ranges": [
+       {
+        "line": 0,
+        "before": "  1  "
+       },
+       {
+        "line": 1,
+        "before": "  2  "
+       },
+       {
+        "line": 2,
+        "before": "  3  "
+       },
+       {
+        "line": 3,
+        "before": "  4  "
+       },
+       {
+        "line": 4,
+        "before": "  5  "
+       },
+       {
+        "line": 5,
+        "before": "  6  "
+       },
+       {
+        "line": 6,
+        "before": "  7  "
+       },
+       {
+        "line": 7,
+        "before": "  8  "
+       },
+       {
+        "line": 8,
+        "before": "  9  "
+       },
+       {
+        "line": 9,
+        "before": " 10  "
+       },
+       {
+        "line": 10,
+        "before": " 11  "
+       },
+       {
+        "line": 11,
+        "before": " 12  "
+       },
+       {
+        "line": 12,
+        "before": " 13  "
+       },
+       {
+        "line": 13,
+        "before": " 14  "
+       },
+       {
+        "line": 14,
+        "before": " 15  "
+       },
+       {
+        "line": 15,
+        "before": " 16  "
+       },
+       {
+        "line": 16,
+        "before": " 17  "
+       },
+       {
+        "line": 17,
+        "before": " 18  "
+       },
+       {
+        "line": 18,
+        "before": " 19  "
+       },
+       {
+        "line": 19,
+        "before": " 20  "
+       },
+       {
+        "line": 20,
+        "before": " 21  "
+       },
+       {
+        "line": 21,
+        "before": " 22  "
+       },
+       {
+        "line": 22,
+        "before": " 23  "
+       },
+       {
+        "line": 23,
+        "before": " 24  "
+       },
+       {
+        "line": 24,
+        "before": " 25  "
+       },
+       {
+        "line": 25,
+        "before": " 26  "
+       },
+       {
+        "line": 26,
+        "before": " 27  "
+       },
+       {
+        "line": 27,
+        "before": " 28  "
+       },
+       {
+        "line": 28,
+        "before": " 29  "
+       },
+       {
+        "line": 29,
+        "before": " 30  "
+       },
+       {
+        "line": 30,
+        "before": " 31  "
+       },
+       {
+        "line": 31,
+        "before": " 32  "
+       },
+       {
+        "line": 32,
+        "before": " 33  "
+       },
+       {
+        "line": 33,
+        "before": " 34  "
+       },
+       {
+        "line": 34,
+        "before": " 35  "
+       },
+       {
+        "line": 35,
+        "before": " 36  "
+       },
+       {
+        "line": 36,
+        "before": " 37  "
+       },
+       {
+        "line": 37,
+        "before": " 38  "
+       },
+       {
+        "line": 38,
+        "before": " 39  "
+       },
+       {
+        "line": 39,
+        "before": " 40  "
+       },
+       {
+        "line": 40,
+        "before": " 41  "
+       },
+       {
+        "line": 41,
+        "before": " 42  "
+       },
+       {
+        "line": 42,
+        "before": " 43  "
+       },
+       {
+        "line": 43,
+        "before": " 44  "
+       },
+       {
+        "line": 44,
+        "before": " 45  "
+       },
+       {
+        "line": 45,
+        "before": " 46  "
+       },
+       {
+        "line": 46,
+        "before": " 47  "
+       },
+       {
+        "line": 47,
+        "before": " 48  "
+       },
+       {
+        "line": 48,
+        "before": " 49  "
+       },
+       {
+        "line": 49,
+        "before": " 50  "
+       },
+       {
+        "line": 50,
+        "before": " 51  "
+       },
+       {
+        "line": 51,
+        "before": " 52  "
+       },
+       {
+        "line": 52,
+        "before": " 53  "
+       },
+       {
+        "line": 53,
+        "before": " 54  "
+       },
+       {
+        "line": 54,
+        "before": " 55  "
+       },
+       {
+        "line": 55,
+        "before": " 56  "
+       },
+       {
+        "line": 56,
+        "before": " 57  "
+       },
+       {
+        "line": 57,
+        "before": " 58  "
+       },
+       {
+        "line": 58,
+        "before": " 59  "
+       },
+       {
+        "line": 59,
+        "before": " 60  "
+       },
+       {
+        "line": 60,
+        "before": " 61  "
+       },
+       {
+        "line": 61,
+        "before": " 62  "
+       },
+       {
+        "line": 62,
+        "before": " 63  "
+       },
+       {
+        "line": 63,
+        "before": " 64  "
+       },
+       {
+        "line": 64,
+        "before": " 65  "
+       },
+       {
+        "line": 65,
+        "before": " 66  "
+       },
+       {
+        "line": 66,
+        "before": " 67  "
+       },
+       {
+        "line": 67,
+        "before": " 68  "
+       },
+       {
+        "line": 68,
+        "before": " 69  "
+       },
+       {
+        "line": 69,
+        "before": " 70  "
+       },
+       {
+        "line": 70,
+        "before": " 71  "
+       },
+       {
+        "line": 71,
+        "before": " 72  "
+       },
+       {
+        "line": 72,
+        "before": " 73  "
+       },
+       {
+        "line": 73,
+        "before": " 74  "
+       },
+       {
+        "line": 74,
+        "before": " 75  "
+       },
+       {
+        "line": 75,
+        "before": " 76  "
+       },
+       {
+        "line": 76,
+        "before": " 77  "
+       },
+       {
+        "line": 77,
+        "before": " 78  "
+       },
+       {
+        "line": 78,
+        "before": " 79  "
+       },
+       {
+        "line": 79,
+        "before": " 80  "
+       },
+       {
+        "line": 80,
+        "before": " 81  "
+       },
+       {
+        "line": 81,
+        "before": " 82  "
+       },
+       {
+        "line": 82,
+        "before": " 83  "
+       },
+       {
+        "line": 83,
+        "before": " 84  "
+       },
+       {
+        "line": 84,
+        "before": " 85  "
+       },
+       {
+        "line": 85,
+        "before": " 86  "
+       },
+       {
+        "line": 86,
+        "before": " 87  "
+       },
+       {
+        "line": 87,
+        "before": " 88  "
+       },
+       {
+        "line": 88,
+        "before": " 89  "
+       },
+       {
+        "line": 89,
+        "before": " 90  "
+       },
+       {
+        "line": 90,
+        "before": " 91  "
+       },
+       {
+        "line": 91,
+        "before": " 92  "
+       },
+       {
+        "line": 92,
+        "before": " 93  "
+       },
+       {
+        "line": 93,
+        "before": " 94  "
+       },
+       {
+        "line": 94,
+        "before": " 95  "
+       },
+       {
+        "line": 95,
+        "before": " 96  "
+       },
+       {
+        "line": 96,
+        "before": " 97  "
+       },
+       {
+        "line": 97,
+        "before": " 98  "
+       },
+       {
+        "line": 98,
+        "before": " 99  "
+       },
+       {
+        "line": 99,
+        "before": "100  "
+       },
+       {
+        "line": 100,
+        "before": "101  "
+       },
+       {
+        "line": 101,
+        "before": "102  "
+       },
+       {
+        "line": 102,
+        "before": "     "
+       },
+       {
+        "line": 103,
+        "before": "103  "
+       },
+       {
+        "line": 104,
+        "before": "104  "
+       },
+       {
+        "line": 105,
+        "before": "105  "
+       },
+       {
+        "line": 106,
+        "before": "106  "
+       },
+       {
+        "line": 107,
+        "before": "107  "
+       },
+       {
+        "line": 108,
+        "before": "108  "
+       },
+       {
+        "line": 109,
+        "before": "109  "
+       },
+       {
+        "line": 110,
+        "before": "110  "
+       },
+       {
+        "line": 111,
+        "before": "111  "
+       },
+       {
+        "line": 112,
+        "before": "112  "
+       },
+       {
+        "line": 113,
+        "before": "113  "
+       },
+       {
+        "line": 114,
+        "before": "114  "
+       },
+       {
+        "line": 115,
+        "before": "115  "
+       },
+       {
+        "line": 116,
+        "before": "116  "
+       },
+       {
+        "line": 117,
+        "before": "117  "
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  text.go:37",
+    "description": "Truncate が幅ちょうどの文字列まで切り詰めてしまう原因の比較。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  text.go:103",
+    "description": "Wrap が日本語で早く折り返すのは単語幅をバイト数で測っているため。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  parse.go:39-41",
+    "description": "末尾の空欄が落ちるのは、最後の欄を中身があるときだけ追加しているため。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  select  parse.go:40-42",
+    "description": "最後の欄の追加条件を if ブロックごと置き換えるため、そのブロックだけを対象にする。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "5  replace  text.go:37",
+    "description": "幅ちょうどの文字列は収まっているので、切り詰めずに返すべきだから。",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "6  replace  text.go:103",
+    "description": "折り返し幅は表示幅で定義されているので、バイト数ではなく表示幅で比べる必要があるから。",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "7  replace  parse.go:40",
+    "description": "区切りの数+1 が欄の数なので、最後の欄は空でも必ず1欄として数えるべきだから。",
+    "color": "charts.orange",
+    "kind": "replace"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "2/7",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0054-why-basic",
+  "quickPick": {
+   "placeHolder": "Pick a tape to replay",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9 operations · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7 operations · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10 operations · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 2,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0054-why-basic/parse.go",
+    "column": 1,
+    "text": "package textkit\n\nimport (\n\t\"fmt\"\n\t\"strings\"\n)\n\n// ParseRecord は区切り文字 sep で区切られた1行を欄に分ける。\n// 欄は \"...\" で囲めて、中では sep や \"\" （二重引用符1つ）を書ける。\n// 空の欄も1つの欄として数える（\"a,,b\" は3欄、\"a,\" は2欄）。\nfunc ParseRecord(line string, sep rune) ([]string, error) {\n\tvar fields []string\n\tvar cur strings.Builder\n\tinQuote := false\n\trs := []rune(line)\n\tfor i := 0; i < len(rs); i++ {\n\t\tr := rs[i]\n\t\tswitch {\n\t\tcase inQuote && r == '\"':\n\t\t\tif i+1 < len(rs) && rs[i+1] == '\"' {\n\t\t\t\tcur.WriteRune('\"')\n\t\t\t\ti++\n\t\t\t} else {\n\t\t\t\tinQuote = false\n\t\t\t}\n\t\tcase inQuote:\n\t\t\tcur.WriteRune(r)\n\t\tcase r == '\"':\n\t\t\tinQuote = true\n\t\tcase r == sep:\n\t\t\tfields = append(fields, cur.String())\n\t\t\tcur.Reset()\n\t\tdefault:\n\t\t\tcur.WriteRune(r)\n\t\t}\n\t}\n\tif inQuote {\n\t\treturn nil, fmt.Errorf(\"引用符が閉じていません: %q\", line)\n◆ 末尾の空欄が落ちるのは、最後の欄を中身があるときだけ追加しているため。\n\t}\n\tif cur.Len() > 0 {\n\t\tfields = append(fields, cur.String())\n\t}\n\treturn fields, nil\n}\n\n// ParseTable は先頭行を見出しとする表を読み込む。\n// 空行は読み飛ばし、行末の \"\\r\" は取り除く。\nfunc ParseTable(src string, sep rune) (*Table, error) {\n\tvar t *Table\n\tfor n, line := range strings.Split(src, \"\\n\") {\n\t\tline = strings.TrimSuffix(line, \"\\r\")\n\t\tif strings.TrimSpace(line) == \"\" {\n\t\t\tcontinue\n\t\t}\n\t\tfields, err := ParseRecord(line, sep)\n\t\tif err != nil {\n\t\t\treturn nil, fmt.Errorf(\"%d行目: %w\", n+1, err)\n\t\t}\n\t\tif t == nil {\n\t\t\tcols := make([]Column, len(fields))\n\t\t\tfor i, f := range fields {\n\t\t\t\tcols[i] = Column{Header: f}\n\t\t\t}\n\t\t\tt = &Table{Columns: cols}\n\t\t\tcontinue\n\t\t}\n\t\tt.AddRow(fields...)\n\t}\n\tif t == nil {\n\t\treturn nil, fmt.Errorf(\"見出し行がありません\")\n\t}\n\treturn t, nil\n}\n",
+    "options": {
+     "lineNumbers": 0
+    },
+    "reveal": 40,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#1d3a5c",
+       "light": {
+        "backgroundColor": "#cfe3fb"
+       }
+      },
+      "ranges": [
+       {
+        "line": 39
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#0b61a4",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 38
+       }
+      ]
+     },
+     {
+      "opts": {
+       "before": {
+        "color": {
+         "id": "editorLineNumber.foreground"
+        }
+       }
+      },
+      "ranges": [
+       {
+        "line": 0,
+        "before": " 1  "
+       },
+       {
+        "line": 1,
+        "before": " 2  "
+       },
+       {
+        "line": 2,
+        "before": " 3  "
+       },
+       {
+        "line": 3,
+        "before": " 4  "
+       },
+       {
+        "line": 4,
+        "before": " 5  "
+       },
+       {
+        "line": 5,
+        "before": " 6  "
+       },
+       {
+        "line": 6,
+        "before": " 7  "
+       },
+       {
+        "line": 7,
+        "before": " 8  "
+       },
+       {
+        "line": 8,
+        "before": " 9  "
+       },
+       {
+        "line": 9,
+        "before": "10  "
+       },
+       {
+        "line": 10,
+        "before": "11  "
+       },
+       {
+        "line": 11,
+        "before": "12  "
+       },
+       {
+        "line": 12,
+        "before": "13  "
+       },
+       {
+        "line": 13,
+        "before": "14  "
+       },
+       {
+        "line": 14,
+        "before": "15  "
+       },
+       {
+        "line": 15,
+        "before": "16  "
+       },
+       {
+        "line": 16,
+        "before": "17  "
+       },
+       {
+        "line": 17,
+        "before": "18  "
+       },
+       {
+        "line": 18,
+        "before": "19  "
+       },
+       {
+        "line": 19,
+        "before": "20  "
+       },
+       {
+        "line": 20,
+        "before": "21  "
+       },
+       {
+        "line": 21,
+        "before": "22  "
+       },
+       {
+        "line": 22,
+        "before": "23  "
+       },
+       {
+        "line": 23,
+        "before": "24  "
+       },
+       {
+        "line": 24,
+        "before": "25  "
+       },
+       {
+        "line": 25,
+        "before": "26  "
+       },
+       {
+        "line": 26,
+        "before": "27  "
+       },
+       {
+        "line": 27,
+        "before": "28  "
+       },
+       {
+        "line": 28,
+        "before": "29  "
+       },
+       {
+        "line": 29,
+        "before": "30  "
+       },
+       {
+        "line": 30,
+        "before": "31  "
+       },
+       {
+        "line": 31,
+        "before": "32  "
+       },
+       {
+        "line": 32,
+        "before": "33  "
+       },
+       {
+        "line": 33,
+        "before": "34  "
+       },
+       {
+        "line": 34,
+        "before": "35  "
+       },
+       {
+        "line": 35,
+        "before": "36  "
+       },
+       {
+        "line": 36,
+        "before": "37  "
+       },
+       {
+        "line": 37,
+        "before": "38  "
+       },
+       {
+        "line": 38,
+        "before": "    "
+       },
+       {
+        "line": 39,
+        "before": "39  "
+       },
+       {
+        "line": 40,
+        "before": "40  "
+       },
+       {
+        "line": 41,
+        "before": "41  "
+       },
+       {
+        "line": 42,
+        "before": "42  "
+       },
+       {
+        "line": 43,
+        "before": "43  "
+       },
+       {
+        "line": 44,
+        "before": "44  "
+       },
+       {
+        "line": 45,
+        "before": "45  "
+       },
+       {
+        "line": 46,
+        "before": "46  "
+       },
+       {
+        "line": 47,
+        "before": "47  "
+       },
+       {
+        "line": 48,
+        "before": "48  "
+       },
+       {
+        "line": 49,
+        "before": "49  "
+       },
+       {
+        "line": 50,
+        "before": "50  "
+       },
+       {
+        "line": 51,
+        "before": "51  "
+       },
+       {
+        "line": 52,
+        "before": "52  "
+       },
+       {
+        "line": 53,
+        "before": "53  "
+       },
+       {
+        "line": 54,
+        "before": "54  "
+       },
+       {
+        "line": 55,
+        "before": "55  "
+       },
+       {
+        "line": 56,
+        "before": "56  "
+       },
+       {
+        "line": 57,
+        "before": "57  "
+       },
+       {
+        "line": 58,
+        "before": "58  "
+       },
+       {
+        "line": 59,
+        "before": "59  "
+       },
+       {
+        "line": 60,
+        "before": "60  "
+       },
+       {
+        "line": 61,
+        "before": "61  "
+       },
+       {
+        "line": 62,
+        "before": "62  "
+       },
+       {
+        "line": 63,
+        "before": "63  "
+       },
+       {
+        "line": 64,
+        "before": "64  "
+       },
+       {
+        "line": 65,
+        "before": "65  "
+       },
+       {
+        "line": 66,
+        "before": "66  "
+       },
+       {
+        "line": 67,
+        "before": "67  "
+       },
+       {
+        "line": 68,
+        "before": "68  "
+       },
+       {
+        "line": 69,
+        "before": "69  "
+       },
+       {
+        "line": 70,
+        "before": "70  "
+       },
+       {
+        "line": 71,
+        "before": "71  "
+       },
+       {
+        "line": 72,
+        "before": "72  "
+       },
+       {
+        "line": 73,
+        "before": "73  "
+       },
+       {
+        "line": 74,
+        "before": "74  "
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  text.go:37",
+    "description": "Truncate が幅ちょうどの文字列まで切り詰めてしまう原因の比較。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  text.go:103",
+    "description": "Wrap が日本語で早く折り返すのは単語幅をバイト数で測っているため。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  parse.go:39-41",
+    "description": "末尾の空欄が落ちるのは、最後の欄を中身があるときだけ追加しているため。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  select  parse.go:40-42",
+    "description": "最後の欄の追加条件を if ブロックごと置き換えるため、そのブロックだけを対象にする。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "5  replace  text.go:37",
+    "description": "幅ちょうどの文字列は収まっているので、切り詰めずに返すべきだから。",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "6  replace  text.go:103",
+    "description": "折り返し幅は表示幅で定義されているので、バイト数ではなく表示幅で比べる必要があるから。",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "7  replace  parse.go:40",
+    "description": "区切りの数+1 が欄の数なので、最後の欄は空でも必ず1欄として数えるべきだから。",
+    "color": "charts.orange",
+    "kind": "replace"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "3/7",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0054-why-basic",
+  "quickPick": {
+   "placeHolder": "Pick a tape to replay",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9 operations · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7 operations · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10 operations · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 3,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0054-why-basic/parse.go",
+    "column": 1,
+    "text": "package textkit\n\nimport (\n\t\"fmt\"\n\t\"strings\"\n)\n\n// ParseRecord は区切り文字 sep で区切られた1行を欄に分ける。\n// 欄は \"...\" で囲めて、中では sep や \"\" （二重引用符1つ）を書ける。\n// 空の欄も1つの欄として数える（\"a,,b\" は3欄、\"a,\" は2欄）。\nfunc ParseRecord(line string, sep rune) ([]string, error) {\n\tvar fields []string\n\tvar cur strings.Builder\n\tinQuote := false\n\trs := []rune(line)\n\tfor i := 0; i < len(rs); i++ {\n\t\tr := rs[i]\n\t\tswitch {\n\t\tcase inQuote && r == '\"':\n\t\t\tif i+1 < len(rs) && rs[i+1] == '\"' {\n\t\t\t\tcur.WriteRune('\"')\n\t\t\t\ti++\n\t\t\t} else {\n\t\t\t\tinQuote = false\n\t\t\t}\n\t\tcase inQuote:\n\t\t\tcur.WriteRune(r)\n\t\tcase r == '\"':\n\t\t\tinQuote = true\n\t\tcase r == sep:\n\t\t\tfields = append(fields, cur.String())\n\t\t\tcur.Reset()\n\t\tdefault:\n\t\t\tcur.WriteRune(r)\n\t\t}\n\t}\n\tif inQuote {\n\t\treturn nil, fmt.Errorf(\"引用符が閉じていません: %q\", line)\n\t}\n◆ 最後の欄の追加条件を if ブロックごと置き換えるため、そのブロックだけを対象にする。\n\tif cur.Len() > 0 {\n\t\tfields = append(fields, cur.String())\n\t}\n\treturn fields, nil\n}\n\n// ParseTable は先頭行を見出しとする表を読み込む。\n// 空行は読み飛ばし、行末の \"\\r\" は取り除く。\nfunc ParseTable(src string, sep rune) (*Table, error) {\n\tvar t *Table\n\tfor n, line := range strings.Split(src, \"\\n\") {\n\t\tline = strings.TrimSuffix(line, \"\\r\")\n\t\tif strings.TrimSpace(line) == \"\" {\n\t\t\tcontinue\n\t\t}\n\t\tfields, err := ParseRecord(line, sep)\n\t\tif err != nil {\n\t\t\treturn nil, fmt.Errorf(\"%d行目: %w\", n+1, err)\n\t\t}\n\t\tif t == nil {\n\t\t\tcols := make([]Column, len(fields))\n\t\t\tfor i, f := range fields {\n\t\t\t\tcols[i] = Column{Header: f}\n\t\t\t}\n\t\t\tt = &Table{Columns: cols}\n\t\t\tcontinue\n\t\t}\n\t\tt.AddRow(fields...)\n\t}\n\tif t == nil {\n\t\treturn nil, fmt.Errorf(\"見出し行がありません\")\n\t}\n\treturn t, nil\n}\n",
+    "options": {
+     "lineNumbers": 0
+    },
+    "reveal": 41,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#1d3a5c",
+       "light": {
+        "backgroundColor": "#cfe3fb"
+       }
+      },
+      "ranges": [
+       {
+        "line": 40
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#0b61a4",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 39
+       }
+      ]
+     },
+     {
+      "opts": {
+       "before": {
+        "color": {
+         "id": "editorLineNumber.foreground"
+        }
+       }
+      },
+      "ranges": [
+       {
+        "line": 0,
+        "before": " 1  "
+       },
+       {
+        "line": 1,
+        "before": " 2  "
+       },
+       {
+        "line": 2,
+        "before": " 3  "
+       },
+       {
+        "line": 3,
+        "before": " 4  "
+       },
+       {
+        "line": 4,
+        "before": " 5  "
+       },
+       {
+        "line": 5,
+        "before": " 6  "
+       },
+       {
+        "line": 6,
+        "before": " 7  "
+       },
+       {
+        "line": 7,
+        "before": " 8  "
+       },
+       {
+        "line": 8,
+        "before": " 9  "
+       },
+       {
+        "line": 9,
+        "before": "10  "
+       },
+       {
+        "line": 10,
+        "before": "11  "
+       },
+       {
+        "line": 11,
+        "before": "12  "
+       },
+       {
+        "line": 12,
+        "before": "13  "
+       },
+       {
+        "line": 13,
+        "before": "14  "
+       },
+       {
+        "line": 14,
+        "before": "15  "
+       },
+       {
+        "line": 15,
+        "before": "16  "
+       },
+       {
+        "line": 16,
+        "before": "17  "
+       },
+       {
+        "line": 17,
+        "before": "18  "
+       },
+       {
+        "line": 18,
+        "before": "19  "
+       },
+       {
+        "line": 19,
+        "before": "20  "
+       },
+       {
+        "line": 20,
+        "before": "21  "
+       },
+       {
+        "line": 21,
+        "before": "22  "
+       },
+       {
+        "line": 22,
+        "before": "23  "
+       },
+       {
+        "line": 23,
+        "before": "24  "
+       },
+       {
+        "line": 24,
+        "before": "25  "
+       },
+       {
+        "line": 25,
+        "before": "26  "
+       },
+       {
+        "line": 26,
+        "before": "27  "
+       },
+       {
+        "line": 27,
+        "before": "28  "
+       },
+       {
+        "line": 28,
+        "before": "29  "
+       },
+       {
+        "line": 29,
+        "before": "30  "
+       },
+       {
+        "line": 30,
+        "before": "31  "
+       },
+       {
+        "line": 31,
+        "before": "32  "
+       },
+       {
+        "line": 32,
+        "before": "33  "
+       },
+       {
+        "line": 33,
+        "before": "34  "
+       },
+       {
+        "line": 34,
+        "before": "35  "
+       },
+       {
+        "line": 35,
+        "before": "36  "
+       },
+       {
+        "line": 36,
+        "before": "37  "
+       },
+       {
+        "line": 37,
+        "before": "38  "
+       },
+       {
+        "line": 38,
+        "before": "39  "
+       },
+       {
+        "line": 39,
+        "before": "    "
+       },
+       {
+        "line": 40,
+        "before": "40  "
+       },
+       {
+        "line": 41,
+        "before": "41  "
+       },
+       {
+        "line": 42,
+        "before": "42  "
+       },
+       {
+        "line": 43,
+        "before": "43  "
+       },
+       {
+        "line": 44,
+        "before": "44  "
+       },
+       {
+        "line": 45,
+        "before": "45  "
+       },
+       {
+        "line": 46,
+        "before": "46  "
+       },
+       {
+        "line": 47,
+        "before": "47  "
+       },
+       {
+        "line": 48,
+        "before": "48  "
+       },
+       {
+        "line": 49,
+        "before": "49  "
+       },
+       {
+        "line": 50,
+        "before": "50  "
+       },
+       {
+        "line": 51,
+        "before": "51  "
+       },
+       {
+        "line": 52,
+        "before": "52  "
+       },
+       {
+        "line": 53,
+        "before": "53  "
+       },
+       {
+        "line": 54,
+        "before": "54  "
+       },
+       {
+        "line": 55,
+        "before": "55  "
+       },
+       {
+        "line": 56,
+        "before": "56  "
+       },
+       {
+        "line": 57,
+        "before": "57  "
+       },
+       {
+        "line": 58,
+        "before": "58  "
+       },
+       {
+        "line": 59,
+        "before": "59  "
+       },
+       {
+        "line": 60,
+        "before": "60  "
+       },
+       {
+        "line": 61,
+        "before": "61  "
+       },
+       {
+        "line": 62,
+        "before": "62  "
+       },
+       {
+        "line": 63,
+        "before": "63  "
+       },
+       {
+        "line": 64,
+        "before": "64  "
+       },
+       {
+        "line": 65,
+        "before": "65  "
+       },
+       {
+        "line": 66,
+        "before": "66  "
+       },
+       {
+        "line": 67,
+        "before": "67  "
+       },
+       {
+        "line": 68,
+        "before": "68  "
+       },
+       {
+        "line": 69,
+        "before": "69  "
+       },
+       {
+        "line": 70,
+        "before": "70  "
+       },
+       {
+        "line": 71,
+        "before": "71  "
+       },
+       {
+        "line": 72,
+        "before": "72  "
+       },
+       {
+        "line": 73,
+        "before": "73  "
+       },
+       {
+        "line": 74,
+        "before": "74  "
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  text.go:37",
+    "description": "Truncate が幅ちょうどの文字列まで切り詰めてしまう原因の比較。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  text.go:103",
+    "description": "Wrap が日本語で早く折り返すのは単語幅をバイト数で測っているため。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  parse.go:39-41",
+    "description": "末尾の空欄が落ちるのは、最後の欄を中身があるときだけ追加しているため。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  select  parse.go:40-42",
+    "description": "最後の欄の追加条件を if ブロックごと置き換えるため、そのブロックだけを対象にする。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "5  replace  text.go:37",
+    "description": "幅ちょうどの文字列は収まっているので、切り詰めずに返すべきだから。",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "6  replace  text.go:103",
+    "description": "折り返し幅は表示幅で定義されているので、バイト数ではなく表示幅で比べる必要があるから。",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "7  replace  parse.go:40",
+    "description": "区切りの数+1 が欄の数なので、最後の欄は空でも必ず1欄として数えるべきだから。",
+    "color": "charts.orange",
+    "kind": "replace"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "4/7",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0054-why-basic",
+  "quickPick": {
+   "placeHolder": "Pick a tape to replay",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9 operations · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7 operations · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10 operations · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 4,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0054-why-basic/text.go",
+    "column": 1,
+    "text": "package textkit\n\nimport (\n\t\"strings\"\n)\n\nconst ellipsis = \"…\"\n\n// RuneWidth は端末での表示幅を返す。全角文字は 2、制御文字は 0、それ以外は 1。\nfunc RuneWidth(r rune) int {\n\tswitch {\n\tcase r < 0x20 || (r >= 0x7f && r < 0xa0):\n\t\treturn 0\n\tcase r >= 0x1100 && r <= 0x115f,\n\t\tr >= 0x2e80 && r <= 0xa4cf,\n\t\tr >= 0xac00 && r <= 0xd7a3,\n\t\tr >= 0xf900 && r <= 0xfaff,\n\t\tr >= 0xff00 && r <= 0xff60,\n\t\tr >= 0xffe0 && r <= 0xffe6:\n\t\treturn 2\n\t}\n\treturn 1\n}\n\n// DisplayWidth は文字列の表示幅の合計。\nfunc DisplayWidth(s string) int {\n\tw := 0\n\tfor _, r := range s {\n\t\tw += RuneWidth(r)\n\t}\n\treturn w\n}\n\n// Truncate は表示幅が w に収まるように文字列を切り詰める。\n// 収まらないときは末尾を \"…\"（幅1）に置き換える。\nfunc Truncate(s string, w int) string {\n◆ 幅ちょうどの文字列は収まっているので、切り詰めずに返すべきだから。\n\tif DisplayWidth(s) <= w {\n\t\treturn s\n\t}\n\tif w <= 0 {\n\t\treturn \"\"\n\t}\n\tvar b strings.Builder\n\tused := 0\n\tfor _, r := range s {\n\t\trw := RuneWidth(r)\n\t\tif used+rw > w-1 {\n\t\t\tbreak\n\t\t}\n\t\tb.WriteRune(r)\n\t\tused += rw\n\t}\n\tb.WriteString(ellipsis)\n\treturn b.String()\n}\n\n// Align は列の寄せ方。\ntype Align int\n\nconst (\n\tLeft Align = iota\n\tRight\n\tCenter\n)\n\n// Pad は表示幅が w になるまで空白で埋める。すでに w 以上ならそのまま返す。\n// Center で余りが奇数のときは右側を1つ多くする。\nfunc Pad(s string, w int, a Align) string {\n\tgap := w - DisplayWidth(s)\n\tif gap <= 0 {\n\t\treturn s\n\t}\n\tswitch a {\n\tcase Right:\n\t\treturn strings.Repeat(\" \", gap) + s\n\tcase Center:\n\t\tleft := gap / 2\n\t\treturn strings.Repeat(\" \", left) + s + strings.Repeat(\" \", gap-left)\n\t}\n\treturn s + strings.Repeat(\" \", gap)\n}\n\n// Wrap は text を表示幅 width 以内の行に折り返す。\n// 単語は空白で区切られているものとし、幅より長い単語は折り返さずそのまま1行にする。\n// 元の改行は保たれ、空行は空行のまま残る。\nfunc Wrap(text string, width int) []string {\n\tvar lines []string\n\tfor _, para := range strings.Split(text, \"\\n\") {\n\t\tlines = append(lines, wrapParagraph(para, width)...)\n\t}\n\treturn lines\n}\n\nfunc wrapParagraph(p string, width int) []string {\n\twords := strings.Fields(p)\n\tif len(words) == 0 {\n\t\treturn []string{\"\"}\n\t}\n\tvar lines []string\n\tcur := \"\"\n\tcurW := 0\n\tfor _, w := range words {\n\t\tww := len(w)\n\t\tswitch {\n\t\tcase cur == \"\":\n\t\t\tcur, curW = w, ww\n\t\tcase curW+1+ww <= width:\n\t\t\tcur += \" \" + w\n\t\t\tcurW += 1 + ww\n\t\tdefault:\n\t\t\tlines = append(lines, cur)\n\t\t\tcur, curW = w, ww\n\t\t}\n\t}\n\treturn append(lines, cur)\n}\n",
+    "options": {
+     "lineNumbers": 0
+    },
+    "reveal": 38,
+    "decorations": [
+     {
+      "opts": {
+       "before": {
+        "color": {
+         "id": "editorLineNumber.foreground"
+        }
+       }
+      },
+      "ranges": [
+       {
+        "line": 0,
+        "before": "  1  "
+       },
+       {
+        "line": 1,
+        "before": "  2  "
+       },
+       {
+        "line": 2,
+        "before": "  3  "
+       },
+       {
+        "line": 3,
+        "before": "  4  "
+       },
+       {
+        "line": 4,
+        "before": "  5  "
+       },
+       {
+        "line": 5,
+        "before": "  6  "
+       },
+       {
+        "line": 6,
+        "before": "  7  "
+       },
+       {
+        "line": 7,
+        "before": "  8  "
+       },
+       {
+        "line": 8,
+        "before": "  9  "
+       },
+       {
+        "line": 9,
+        "before": " 10  "
+       },
+       {
+        "line": 10,
+        "before": " 11  "
+       },
+       {
+        "line": 11,
+        "before": " 12  "
+       },
+       {
+        "line": 12,
+        "before": " 13  "
+       },
+       {
+        "line": 13,
+        "before": " 14  "
+       },
+       {
+        "line": 14,
+        "before": " 15  "
+       },
+       {
+        "line": 15,
+        "before": " 16  "
+       },
+       {
+        "line": 16,
+        "before": " 17  "
+       },
+       {
+        "line": 17,
+        "before": " 18  "
+       },
+       {
+        "line": 18,
+        "before": " 19  "
+       },
+       {
+        "line": 19,
+        "before": " 20  "
+       },
+       {
+        "line": 20,
+        "before": " 21  "
+       },
+       {
+        "line": 21,
+        "before": " 22  "
+       },
+       {
+        "line": 22,
+        "before": " 23  "
+       },
+       {
+        "line": 23,
+        "before": " 24  "
+       },
+       {
+        "line": 24,
+        "before": " 25  "
+       },
+       {
+        "line": 25,
+        "before": " 26  "
+       },
+       {
+        "line": 26,
+        "before": " 27  "
+       },
+       {
+        "line": 27,
+        "before": " 28  "
+       },
+       {
+        "line": 28,
+        "before": " 29  "
+       },
+       {
+        "line": 29,
+        "before": " 30  "
+       },
+       {
+        "line": 30,
+        "before": " 31  "
+       },
+       {
+        "line": 31,
+        "before": " 32  "
+       },
+       {
+        "line": 32,
+        "before": " 33  "
+       },
+       {
+        "line": 33,
+        "before": " 34  "
+       },
+       {
+        "line": 34,
+        "before": " 35  "
+       },
+       {
+        "line": 35,
+        "before": " 36  "
+       },
+       {
+        "line": 36,
+        "before": "     "
+       },
+       {
+        "line": 37,
+        "before": " 37  "
+       },
+       {
+        "line": 38,
+        "before": " 38  "
+       },
+       {
+        "line": 39,
+        "before": " 39  "
+       },
+       {
+        "line": 40,
+        "before": " 40  "
+       },
+       {
+        "line": 41,
+        "before": " 41  "
+       },
+       {
+        "line": 42,
+        "before": " 42  "
+       },
+       {
+        "line": 43,
+        "before": " 43  "
+       },
+       {
+        "line": 44,
+        "before": " 44  "
+       },
+       {
+        "line": 45,
+        "before": " 45  "
+       },
+       {
+        "line": 46,
+        "before": " 46  "
+       },
+       {
+        "line": 47,
+        "before": " 47  "
+       },
+       {
+        "line": 48,
+        "before": " 48  "
+       },
+       {
+        "line": 49,
+        "before": " 49  "
+       },
+       {
+        "line": 50,
+        "before": " 50  "
+       },
+       {
+        "line": 51,
+        "before": " 51  "
+       },
+       {
+        "line": 52,
+        "before": " 52  "
+       },
+       {
+        "line": 53,
+        "before": " 53  "
+       },
+       {
+        "line": 54,
+        "before": " 54  "
+       },
+       {
+        "line": 55,
+        "before": " 55  "
+       },
+       {
+        "line": 56,
+        "before": " 56  "
+       },
+       {
+        "line": 57,
+        "before": " 57  "
+       },
+       {
+        "line": 58,
+        "before": " 58  "
+       },
+       {
+        "line": 59,
+        "before": " 59  "
+       },
+       {
+        "line": 60,
+        "before": " 60  "
+       },
+       {
+        "line": 61,
+        "before": " 61  "
+       },
+       {
+        "line": 62,
+        "before": " 62  "
+       },
+       {
+        "line": 63,
+        "before": " 63  "
+       },
+       {
+        "line": 64,
+        "before": " 64  "
+       },
+       {
+        "line": 65,
+        "before": " 65  "
+       },
+       {
+        "line": 66,
+        "before": " 66  "
+       },
+       {
+        "line": 67,
+        "before": " 67  "
+       },
+       {
+        "line": 68,
+        "before": " 68  "
+       },
+       {
+        "line": 69,
+        "before": " 69  "
+       },
+       {
+        "line": 70,
+        "before": " 70  "
+       },
+       {
+        "line": 71,
+        "before": " 71  "
+       },
+       {
+        "line": 72,
+        "before": " 72  "
+       },
+       {
+        "line": 73,
+        "before": " 73  "
+       },
+       {
+        "line": 74,
+        "before": " 74  "
+       },
+       {
+        "line": 75,
+        "before": " 75  "
+       },
+       {
+        "line": 76,
+        "before": " 76  "
+       },
+       {
+        "line": 77,
+        "before": " 77  "
+       },
+       {
+        "line": 78,
+        "before": " 78  "
+       },
+       {
+        "line": 79,
+        "before": " 79  "
+       },
+       {
+        "line": 80,
+        "before": " 80  "
+       },
+       {
+        "line": 81,
+        "before": " 81  "
+       },
+       {
+        "line": 82,
+        "before": " 82  "
+       },
+       {
+        "line": 83,
+        "before": " 83  "
+       },
+       {
+        "line": 84,
+        "before": " 84  "
+       },
+       {
+        "line": 85,
+        "before": " 85  "
+       },
+       {
+        "line": 86,
+        "before": " 86  "
+       },
+       {
+        "line": 87,
+        "before": " 87  "
+       },
+       {
+        "line": 88,
+        "before": " 88  "
+       },
+       {
+        "line": 89,
+        "before": " 89  "
+       },
+       {
+        "line": 90,
+        "before": " 90  "
+       },
+       {
+        "line": 91,
+        "before": " 91  "
+       },
+       {
+        "line": 92,
+        "before": " 92  "
+       },
+       {
+        "line": 93,
+        "before": " 93  "
+       },
+       {
+        "line": 94,
+        "before": " 94  "
+       },
+       {
+        "line": 95,
+        "before": " 95  "
+       },
+       {
+        "line": 96,
+        "before": " 96  "
+       },
+       {
+        "line": 97,
+        "before": " 97  "
+       },
+       {
+        "line": 98,
+        "before": " 98  "
+       },
+       {
+        "line": 99,
+        "before": " 99  "
+       },
+       {
+        "line": 100,
+        "before": "100  "
+       },
+       {
+        "line": 101,
+        "before": "101  "
+       },
+       {
+        "line": 102,
+        "before": "102  "
+       },
+       {
+        "line": 103,
+        "before": "103  "
+       },
+       {
+        "line": 104,
+        "before": "104  "
+       },
+       {
+        "line": 105,
+        "before": "105  "
+       },
+       {
+        "line": 106,
+        "before": "106  "
+       },
+       {
+        "line": 107,
+        "before": "107  "
+       },
+       {
+        "line": 108,
+        "before": "108  "
+       },
+       {
+        "line": 109,
+        "before": "109  "
+       },
+       {
+        "line": 110,
+        "before": "110  "
+       },
+       {
+        "line": 111,
+        "before": "111  "
+       },
+       {
+        "line": 112,
+        "before": "112  "
+       },
+       {
+        "line": 113,
+        "before": "113  "
+       },
+       {
+        "line": 114,
+        "before": "114  "
+       },
+       {
+        "line": 115,
+        "before": "115  "
+       },
+       {
+        "line": 116,
+        "before": "116  "
+       },
+       {
+        "line": 117,
+        "before": "117  "
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#583c27",
+       "light": {
+        "backgroundColor": "#fde3c8"
+       }
+      },
+      "ranges": [
+       {
+        "line": 37
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#b45f06",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 36
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  text.go:37",
+    "description": "Truncate が幅ちょうどの文字列まで切り詰めてしまう原因の比較。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  text.go:103",
+    "description": "Wrap が日本語で早く折り返すのは単語幅をバイト数で測っているため。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  parse.go:39-41",
+    "description": "末尾の空欄が落ちるのは、最後の欄を中身があるときだけ追加しているため。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  select  parse.go:40-42",
+    "description": "最後の欄の追加条件を if ブロックごと置き換えるため、そのブロックだけを対象にする。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "5  replace  text.go:37",
+    "description": "幅ちょうどの文字列は収まっているので、切り詰めずに返すべきだから。",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "6  replace  text.go:103",
+    "description": "折り返し幅は表示幅で定義されているので、バイト数ではなく表示幅で比べる必要があるから。",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "7  replace  parse.go:40",
+    "description": "区切りの数+1 が欄の数なので、最後の欄は空でも必ず1欄として数えるべきだから。",
+    "color": "charts.orange",
+    "kind": "replace"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "5/7",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0054-why-basic",
+  "quickPick": {
+   "placeHolder": "Pick a tape to replay",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9 operations · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7 operations · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10 operations · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 5,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0054-why-basic/text.go",
+    "column": 1,
+    "text": "package textkit\n\nimport (\n\t\"strings\"\n)\n\nconst ellipsis = \"…\"\n\n// RuneWidth は端末での表示幅を返す。全角文字は 2、制御文字は 0、それ以外は 1。\nfunc RuneWidth(r rune) int {\n\tswitch {\n\tcase r < 0x20 || (r >= 0x7f && r < 0xa0):\n\t\treturn 0\n\tcase r >= 0x1100 && r <= 0x115f,\n\t\tr >= 0x2e80 && r <= 0xa4cf,\n\t\tr >= 0xac00 && r <= 0xd7a3,\n\t\tr >= 0xf900 && r <= 0xfaff,\n\t\tr >= 0xff00 && r <= 0xff60,\n\t\tr >= 0xffe0 && r <= 0xffe6:\n\t\treturn 2\n\t}\n\treturn 1\n}\n\n// DisplayWidth は文字列の表示幅の合計。\nfunc DisplayWidth(s string) int {\n\tw := 0\n\tfor _, r := range s {\n\t\tw += RuneWidth(r)\n\t}\n\treturn w\n}\n\n// Truncate は表示幅が w に収まるように文字列を切り詰める。\n// 収まらないときは末尾を \"…\"（幅1）に置き換える。\nfunc Truncate(s string, w int) string {\n\tif DisplayWidth(s) <= w {\n\t\treturn s\n\t}\n\tif w <= 0 {\n\t\treturn \"\"\n\t}\n\tvar b strings.Builder\n\tused := 0\n\tfor _, r := range s {\n\t\trw := RuneWidth(r)\n\t\tif used+rw > w-1 {\n\t\t\tbreak\n\t\t}\n\t\tb.WriteRune(r)\n\t\tused += rw\n\t}\n\tb.WriteString(ellipsis)\n\treturn b.String()\n}\n\n// Align は列の寄せ方。\ntype Align int\n\nconst (\n\tLeft Align = iota\n\tRight\n\tCenter\n)\n\n// Pad は表示幅が w になるまで空白で埋める。すでに w 以上ならそのまま返す。\n// Center で余りが奇数のときは右側を1つ多くする。\nfunc Pad(s string, w int, a Align) string {\n\tgap := w - DisplayWidth(s)\n\tif gap <= 0 {\n\t\treturn s\n\t}\n\tswitch a {\n\tcase Right:\n\t\treturn strings.Repeat(\" \", gap) + s\n\tcase Center:\n\t\tleft := gap / 2\n\t\treturn strings.Repeat(\" \", left) + s + strings.Repeat(\" \", gap-left)\n\t}\n\treturn s + strings.Repeat(\" \", gap)\n}\n\n// Wrap は text を表示幅 width 以内の行に折り返す。\n// 単語は空白で区切られているものとし、幅より長い単語は折り返さずそのまま1行にする。\n// 元の改行は保たれ、空行は空行のまま残る。\nfunc Wrap(text string, width int) []string {\n\tvar lines []string\n\tfor _, para := range strings.Split(text, \"\\n\") {\n\t\tlines = append(lines, wrapParagraph(para, width)...)\n\t}\n\treturn lines\n}\n\nfunc wrapParagraph(p string, width int) []string {\n\twords := strings.Fields(p)\n\tif len(words) == 0 {\n\t\treturn []string{\"\"}\n\t}\n\tvar lines []string\n\tcur := \"\"\n\tcurW := 0\n\tfor _, w := range words {\n◆ 折り返し幅は表示幅で定義されているので、バイト数ではなく表示幅で比べる必要があるから。\n\t\tww := DisplayWidth(w)\n\t\tswitch {\n\t\tcase cur == \"\":\n\t\t\tcur, curW = w, ww\n\t\tcase curW+1+ww <= width:\n\t\t\tcur += \" \" + w\n\t\t\tcurW += 1 + ww\n\t\tdefault:\n\t\t\tlines = append(lines, cur)\n\t\t\tcur, curW = w, ww\n\t\t}\n\t}\n\treturn append(lines, cur)\n}\n",
+    "options": {
+     "lineNumbers": 0
+    },
+    "reveal": 104,
+    "decorations": [
+     {
+      "opts": {
+       "before": {
+        "color": {
+         "id": "editorLineNumber.foreground"
+        }
+       }
+      },
+      "ranges": [
+       {
+        "line": 0,
+        "before": "  1  "
+       },
+       {
+        "line": 1,
+        "before": "  2  "
+       },
+       {
+        "line": 2,
+        "before": "  3  "
+       },
+       {
+        "line": 3,
+        "before": "  4  "
+       },
+       {
+        "line": 4,
+        "before": "  5  "
+       },
+       {
+        "line": 5,
+        "before": "  6  "
+       },
+       {
+        "line": 6,
+        "before": "  7  "
+       },
+       {
+        "line": 7,
+        "before": "  8  "
+       },
+       {
+        "line": 8,
+        "before": "  9  "
+       },
+       {
+        "line": 9,
+        "before": " 10  "
+       },
+       {
+        "line": 10,
+        "before": " 11  "
+       },
+       {
+        "line": 11,
+        "before": " 12  "
+       },
+       {
+        "line": 12,
+        "before": " 13  "
+       },
+       {
+        "line": 13,
+        "before": " 14  "
+       },
+       {
+        "line": 14,
+        "before": " 15  "
+       },
+       {
+        "line": 15,
+        "before": " 16  "
+       },
+       {
+        "line": 16,
+        "before": " 17  "
+       },
+       {
+        "line": 17,
+        "before": " 18  "
+       },
+       {
+        "line": 18,
+        "before": " 19  "
+       },
+       {
+        "line": 19,
+        "before": " 20  "
+       },
+       {
+        "line": 20,
+        "before": " 21  "
+       },
+       {
+        "line": 21,
+        "before": " 22  "
+       },
+       {
+        "line": 22,
+        "before": " 23  "
+       },
+       {
+        "line": 23,
+        "before": " 24  "
+       },
+       {
+        "line": 24,
+        "before": " 25  "
+       },
+       {
+        "line": 25,
+        "before": " 26  "
+       },
+       {
+        "line": 26,
+        "before": " 27  "
+       },
+       {
+        "line": 27,
+        "before": " 28  "
+       },
+       {
+        "line": 28,
+        "before": " 29  "
+       },
+       {
+        "line": 29,
+        "before": " 30  "
+       },
+       {
+        "line": 30,
+        "before": " 31  "
+       },
+       {
+        "line": 31,
+        "before": " 32  "
+       },
+       {
+        "line": 32,
+        "before": " 33  "
+       },
+       {
+        "line": 33,
+        "before": " 34  "
+       },
+       {
+        "line": 34,
+        "before": " 35  "
+       },
+       {
+        "line": 35,
+        "before": " 36  "
+       },
+       {
+        "line": 36,
+        "before": " 37  "
+       },
+       {
+        "line": 37,
+        "before": " 38  "
+       },
+       {
+        "line": 38,
+        "before": " 39  "
+       },
+       {
+        "line": 39,
+        "before": " 40  "
+       },
+       {
+        "line": 40,
+        "before": " 41  "
+       },
+       {
+        "line": 41,
+        "before": " 42  "
+       },
+       {
+        "line": 42,
+        "before": " 43  "
+       },
+       {
+        "line": 43,
+        "before": " 44  "
+       },
+       {
+        "line": 44,
+        "before": " 45  "
+       },
+       {
+        "line": 45,
+        "before": " 46  "
+       },
+       {
+        "line": 46,
+        "before": " 47  "
+       },
+       {
+        "line": 47,
+        "before": " 48  "
+       },
+       {
+        "line": 48,
+        "before": " 49  "
+       },
+       {
+        "line": 49,
+        "before": " 50  "
+       },
+       {
+        "line": 50,
+        "before": " 51  "
+       },
+       {
+        "line": 51,
+        "before": " 52  "
+       },
+       {
+        "line": 52,
+        "before": " 53  "
+       },
+       {
+        "line": 53,
+        "before": " 54  "
+       },
+       {
+        "line": 54,
+        "before": " 55  "
+       },
+       {
+        "line": 55,
+        "before": " 56  "
+       },
+       {
+        "line": 56,
+        "before": " 57  "
+       },
+       {
+        "line": 57,
+        "before": " 58  "
+       },
+       {
+        "line": 58,
+        "before": " 59  "
+       },
+       {
+        "line": 59,
+        "before": " 60  "
+       },
+       {
+        "line": 60,
+        "before": " 61  "
+       },
+       {
+        "line": 61,
+        "before": " 62  "
+       },
+       {
+        "line": 62,
+        "before": " 63  "
+       },
+       {
+        "line": 63,
+        "before": " 64  "
+       },
+       {
+        "line": 64,
+        "before": " 65  "
+       },
+       {
+        "line": 65,
+        "before": " 66  "
+       },
+       {
+        "line": 66,
+        "before": " 67  "
+       },
+       {
+        "line": 67,
+        "before": " 68  "
+       },
+       {
+        "line": 68,
+        "before": " 69  "
+       },
+       {
+        "line": 69,
+        "before": " 70  "
+       },
+       {
+        "line": 70,
+        "before": " 71  "
+       },
+       {
+        "line": 71,
+        "before": " 72  "
+       },
+       {
+        "line": 72,
+        "before": " 73  "
+       },
+       {
+        "line": 73,
+        "before": " 74  "
+       },
+       {
+        "line": 74,
+        "before": " 75  "
+       },
+       {
+        "line": 75,
+        "before": " 76  "
+       },
+       {
+        "line": 76,
+        "before": " 77  "
+       },
+       {
+        "line": 77,
+        "before": " 78  "
+       },
+       {
+        "line": 78,
+        "before": " 79  "
+       },
+       {
+        "line": 79,
+        "before": " 80  "
+       },
+       {
+        "line": 80,
+        "before": " 81  "
+       },
+       {
+        "line": 81,
+        "before": " 82  "
+       },
+       {
+        "line": 82,
+        "before": " 83  "
+       },
+       {
+        "line": 83,
+        "before": " 84  "
+       },
+       {
+        "line": 84,
+        "before": " 85  "
+       },
+       {
+        "line": 85,
+        "before": " 86  "
+       },
+       {
+        "line": 86,
+        "before": " 87  "
+       },
+       {
+        "line": 87,
+        "before": " 88  "
+       },
+       {
+        "line": 88,
+        "before": " 89  "
+       },
+       {
+        "line": 89,
+        "before": " 90  "
+       },
+       {
+        "line": 90,
+        "before": " 91  "
+       },
+       {
+        "line": 91,
+        "before": " 92  "
+       },
+       {
+        "line": 92,
+        "before": " 93  "
+       },
+       {
+        "line": 93,
+        "before": " 94  "
+       },
+       {
+        "line": 94,
+        "before": " 95  "
+       },
+       {
+        "line": 95,
+        "before": " 96  "
+       },
+       {
+        "line": 96,
+        "before": " 97  "
+       },
+       {
+        "line": 97,
+        "before": " 98  "
+       },
+       {
+        "line": 98,
+        "before": " 99  "
+       },
+       {
+        "line": 99,
+        "before": "100  "
+       },
+       {
+        "line": 100,
+        "before": "101  "
+       },
+       {
+        "line": 101,
+        "before": "102  "
+       },
+       {
+        "line": 102,
+        "before": "     "
+       },
+       {
+        "line": 103,
+        "before": "103  "
+       },
+       {
+        "line": 104,
+        "before": "104  "
+       },
+       {
+        "line": 105,
+        "before": "105  "
+       },
+       {
+        "line": 106,
+        "before": "106  "
+       },
+       {
+        "line": 107,
+        "before": "107  "
+       },
+       {
+        "line": 108,
+        "before": "108  "
+       },
+       {
+        "line": 109,
+        "before": "109  "
+       },
+       {
+        "line": 110,
+        "before": "110  "
+       },
+       {
+        "line": 111,
+        "before": "111  "
+       },
+       {
+        "line": 112,
+        "before": "112  "
+       },
+       {
+        "line": 113,
+        "before": "113  "
+       },
+       {
+        "line": 114,
+        "before": "114  "
+       },
+       {
+        "line": 115,
+        "before": "115  "
+       },
+       {
+        "line": 116,
+        "before": "116  "
+       },
+       {
+        "line": 117,
+        "before": "117  "
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#583c27",
+       "light": {
+        "backgroundColor": "#fde3c8"
+       }
+      },
+      "ranges": [
+       {
+        "line": 103
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#b45f06",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 102
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  text.go:37",
+    "description": "Truncate が幅ちょうどの文字列まで切り詰めてしまう原因の比較。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  text.go:103",
+    "description": "Wrap が日本語で早く折り返すのは単語幅をバイト数で測っているため。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  parse.go:39-41",
+    "description": "末尾の空欄が落ちるのは、最後の欄を中身があるときだけ追加しているため。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  select  parse.go:40-42",
+    "description": "最後の欄の追加条件を if ブロックごと置き換えるため、そのブロックだけを対象にする。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "5  replace  text.go:37",
+    "description": "幅ちょうどの文字列は収まっているので、切り詰めずに返すべきだから。",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "6  replace  text.go:103",
+    "description": "折り返し幅は表示幅で定義されているので、バイト数ではなく表示幅で比べる必要があるから。",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "7  replace  parse.go:40",
+    "description": "区切りの数+1 が欄の数なので、最後の欄は空でも必ず1欄として数えるべきだから。",
+    "color": "charts.orange",
+    "kind": "replace"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "6/7",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0054-why-basic",
+  "quickPick": {
+   "placeHolder": "Pick a tape to replay",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9 operations · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7 operations · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10 operations · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 6,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260930-0054-why-basic/parse.go",
+    "column": 1,
+    "text": "package textkit\n\nimport (\n\t\"fmt\"\n\t\"strings\"\n)\n\n// ParseRecord は区切り文字 sep で区切られた1行を欄に分ける。\n// 欄は \"...\" で囲めて、中では sep や \"\" （二重引用符1つ）を書ける。\n// 空の欄も1つの欄として数える（\"a,,b\" は3欄、\"a,\" は2欄）。\nfunc ParseRecord(line string, sep rune) ([]string, error) {\n\tvar fields []string\n\tvar cur strings.Builder\n\tinQuote := false\n\trs := []rune(line)\n\tfor i := 0; i < len(rs); i++ {\n\t\tr := rs[i]\n\t\tswitch {\n\t\tcase inQuote && r == '\"':\n\t\t\tif i+1 < len(rs) && rs[i+1] == '\"' {\n\t\t\t\tcur.WriteRune('\"')\n\t\t\t\ti++\n\t\t\t} else {\n\t\t\t\tinQuote = false\n\t\t\t}\n\t\tcase inQuote:\n\t\t\tcur.WriteRune(r)\n\t\tcase r == '\"':\n\t\t\tinQuote = true\n\t\tcase r == sep:\n\t\t\tfields = append(fields, cur.String())\n\t\t\tcur.Reset()\n\t\tdefault:\n\t\t\tcur.WriteRune(r)\n\t\t}\n\t}\n\tif inQuote {\n\t\treturn nil, fmt.Errorf(\"引用符が閉じていません: %q\", line)\n\t}\n◆ 区切りの数+1 が欄の数なので、最後の欄は空でも必ず1欄として数えるべきだから。\n\tfields = append(fields, cur.String())\n\treturn fields, nil\n}\n\n// ParseTable は先頭行を見出しとする表を読み込む。\n// 空行は読み飛ばし、行末の \"\\r\" は取り除く。\nfunc ParseTable(src string, sep rune) (*Table, error) {\n\tvar t *Table\n\tfor n, line := range strings.Split(src, \"\\n\") {\n\t\tline = strings.TrimSuffix(line, \"\\r\")\n\t\tif strings.TrimSpace(line) == \"\" {\n\t\t\tcontinue\n\t\t}\n\t\tfields, err := ParseRecord(line, sep)\n\t\tif err != nil {\n\t\t\treturn nil, fmt.Errorf(\"%d行目: %w\", n+1, err)\n\t\t}\n\t\tif t == nil {\n\t\t\tcols := make([]Column, len(fields))\n\t\t\tfor i, f := range fields {\n\t\t\t\tcols[i] = Column{Header: f}\n\t\t\t}\n\t\t\tt = &Table{Columns: cols}\n\t\t\tcontinue\n\t\t}\n\t\tt.AddRow(fields...)\n\t}\n\tif t == nil {\n\t\treturn nil, fmt.Errorf(\"見出し行がありません\")\n\t}\n\treturn t, nil\n}\n",
+    "options": {
+     "lineNumbers": 0
+    },
+    "reveal": 41,
+    "decorations": [
+     {
+      "opts": {
+       "before": {
+        "color": {
+         "id": "editorLineNumber.foreground"
+        }
+       }
+      },
+      "ranges": [
+       {
+        "line": 0,
+        "before": " 1  "
+       },
+       {
+        "line": 1,
+        "before": " 2  "
+       },
+       {
+        "line": 2,
+        "before": " 3  "
+       },
+       {
+        "line": 3,
+        "before": " 4  "
+       },
+       {
+        "line": 4,
+        "before": " 5  "
+       },
+       {
+        "line": 5,
+        "before": " 6  "
+       },
+       {
+        "line": 6,
+        "before": " 7  "
+       },
+       {
+        "line": 7,
+        "before": " 8  "
+       },
+       {
+        "line": 8,
+        "before": " 9  "
+       },
+       {
+        "line": 9,
+        "before": "10  "
+       },
+       {
+        "line": 10,
+        "before": "11  "
+       },
+       {
+        "line": 11,
+        "before": "12  "
+       },
+       {
+        "line": 12,
+        "before": "13  "
+       },
+       {
+        "line": 13,
+        "before": "14  "
+       },
+       {
+        "line": 14,
+        "before": "15  "
+       },
+       {
+        "line": 15,
+        "before": "16  "
+       },
+       {
+        "line": 16,
+        "before": "17  "
+       },
+       {
+        "line": 17,
+        "before": "18  "
+       },
+       {
+        "line": 18,
+        "before": "19  "
+       },
+       {
+        "line": 19,
+        "before": "20  "
+       },
+       {
+        "line": 20,
+        "before": "21  "
+       },
+       {
+        "line": 21,
+        "before": "22  "
+       },
+       {
+        "line": 22,
+        "before": "23  "
+       },
+       {
+        "line": 23,
+        "before": "24  "
+       },
+       {
+        "line": 24,
+        "before": "25  "
+       },
+       {
+        "line": 25,
+        "before": "26  "
+       },
+       {
+        "line": 26,
+        "before": "27  "
+       },
+       {
+        "line": 27,
+        "before": "28  "
+       },
+       {
+        "line": 28,
+        "before": "29  "
+       },
+       {
+        "line": 29,
+        "before": "30  "
+       },
+       {
+        "line": 30,
+        "before": "31  "
+       },
+       {
+        "line": 31,
+        "before": "32  "
+       },
+       {
+        "line": 32,
+        "before": "33  "
+       },
+       {
+        "line": 33,
+        "before": "34  "
+       },
+       {
+        "line": 34,
+        "before": "35  "
+       },
+       {
+        "line": 35,
+        "before": "36  "
+       },
+       {
+        "line": 36,
+        "before": "37  "
+       },
+       {
+        "line": 37,
+        "before": "38  "
+       },
+       {
+        "line": 38,
+        "before": "39  "
+       },
+       {
+        "line": 39,
+        "before": "    "
+       },
+       {
+        "line": 40,
+        "before": "40  "
+       },
+       {
+        "line": 41,
+        "before": "41  "
+       },
+       {
+        "line": 42,
+        "before": "42  "
+       },
+       {
+        "line": 43,
+        "before": "43  "
+       },
+       {
+        "line": 44,
+        "before": "44  "
+       },
+       {
+        "line": 45,
+        "before": "45  "
+       },
+       {
+        "line": 46,
+        "before": "46  "
+       },
+       {
+        "line": 47,
+        "before": "47  "
+       },
+       {
+        "line": 48,
+        "before": "48  "
+       },
+       {
+        "line": 49,
+        "before": "49  "
+       },
+       {
+        "line": 50,
+        "before": "50  "
+       },
+       {
+        "line": 51,
+        "before": "51  "
+       },
+       {
+        "line": 52,
+        "before": "52  "
+       },
+       {
+        "line": 53,
+        "before": "53  "
+       },
+       {
+        "line": 54,
+        "before": "54  "
+       },
+       {
+        "line": 55,
+        "before": "55  "
+       },
+       {
+        "line": 56,
+        "before": "56  "
+       },
+       {
+        "line": 57,
+        "before": "57  "
+       },
+       {
+        "line": 58,
+        "before": "58  "
+       },
+       {
+        "line": 59,
+        "before": "59  "
+       },
+       {
+        "line": 60,
+        "before": "60  "
+       },
+       {
+        "line": 61,
+        "before": "61  "
+       },
+       {
+        "line": 62,
+        "before": "62  "
+       },
+       {
+        "line": 63,
+        "before": "63  "
+       },
+       {
+        "line": 64,
+        "before": "64  "
+       },
+       {
+        "line": 65,
+        "before": "65  "
+       },
+       {
+        "line": 66,
+        "before": "66  "
+       },
+       {
+        "line": 67,
+        "before": "67  "
+       },
+       {
+        "line": 68,
+        "before": "68  "
+       },
+       {
+        "line": 69,
+        "before": "69  "
+       },
+       {
+        "line": 70,
+        "before": "70  "
+       },
+       {
+        "line": 71,
+        "before": "71  "
+       },
+       {
+        "line": 72,
+        "before": "72  "
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#583c27",
+       "light": {
+        "backgroundColor": "#fde3c8"
+       }
+      },
+      "ranges": [
+       {
+        "line": 40
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#b45f06",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 39
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  text.go:37",
+    "description": "Truncate が幅ちょうどの文字列まで切り詰めてしまう原因の比較。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  select  text.go:103",
+    "description": "Wrap が日本語で早く折り返すのは単語幅をバイト数で測っているため。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "3  select  parse.go:39-41",
+    "description": "末尾の空欄が落ちるのは、最後の欄を中身があるときだけ追加しているため。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "4  select  parse.go:40-42",
+    "description": "最後の欄の追加条件を if ブロックごと置き換えるため、そのブロックだけを対象にする。",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "5  replace  text.go:37",
+    "description": "幅ちょうどの文字列は収まっているので、切り詰めずに返すべきだから。",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "6  replace  text.go:103",
+    "description": "折り返し幅は表示幅で定義されているので、バイト数ではなく表示幅で比べる必要があるから。",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "7  replace  parse.go:40",
+    "description": "区切りの数+1 が欄の数なので、最後の欄は空でも必ず1欄として数えるべきだから。",
+    "color": "charts.orange",
+    "kind": "replace"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "color": "rgba(255, 255, 255, 0.4)",
+    "visible": true
+   },
+   {
+    "text": "7/7",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260930-0054-why-basic",
+  "quickPick": {
+   "placeHolder": "Pick a tape to replay",
+   "items": [
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9 operations · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7 operations · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10 operations · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ }
+]

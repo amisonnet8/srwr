@@ -235,3 +235,5 @@
 {"id":"2ff45c80e0344441985aacb7fc677c4f","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T07:40:12Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"e2c5030440ee46a7b523f6f309c803f1","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T07:40:12Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"381f37ed79fc4c879289d102da922215","op":"create","type":"memo","text":"R8: 壊して確かめる12か所すべて検出。qsoku check・race・ui-check 違いなし。人間の確認はなし。push・CI のあとで todo 1b50444a73 を閉じる","v":1,"ts":"2026-10-03T07:40:12Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"1b50444a735a4235a9ba61e8df7c7c54","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-03T07:45:09Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"54a5d46cf27b4a82bcbcd98bf8d8bd14","op":"create","type":"memo","text":"R8 完了（CI 通過）。次は R9（UIゲートあり）。「R9開始」の合図まで着手しない","v":1,"ts":"2026-10-03T07:45:09Z","author":{"kind":"ai","name":"claude-code"}}

@@ -48,7 +48,8 @@ Replaces the range with new text. An insertion is a replacement of an empty rang
 // input
 { "selection": "sel_0410R3GZE4KV11C6325D32S7", "newText": "func main() {\n    setupSignals()\n    …\n}", "why": "Added the missing initialization of signal handling" }
 // output
-{ "ok": true, "selection": "sel_041GR3RZE4KV0BBH2S177Q36", "startLine": 12, "endLine": 15 }
+{ "ok": true, "selection": "sel_041GR3RZE4KV0BBH2S177Q36", "startLine": 12, "endLine": 15,
+  "lines": ["func main() {", "    setupSignals()", "    …", "}"], "before": ["", "// main starts the app."], "after": ["", "func run() {"] }
 ```
 
 | Item | Meaning |
@@ -57,6 +58,8 @@ Replaces the range with new text. An insertion is a replacement of an empty rang
 | `newText` | The text after the replacement. `""` is a deletion |
 | `why` | Why it changes it this way |
 | `selection` in the output | A new token for **the range after the replacement**. To go on fixing the same place, it can be used without calling `select` again |
+| `lines` in the output | The content of the range after the replacement (`[]` for a deletion) |
+| `before`, `after` in the output | Up to 2 lines right before and right after that range (fewer near the start or the end of the file, `[]` if none). With them the result can be checked without reading the file again |
 
 **How the lines of `newText` are counted**: `""` is 0 lines (a deletion). Otherwise it is split into lines at `\n`, and if it ends with `\n` the last empty element is not counted (`"x\n"` is 1 line, `"\n"` is one empty line). The range of the returned token follows this count.
 
@@ -122,7 +125,7 @@ These are the mistakes seen when an AI used the two tools. Each is an ordinary e
 
 - **Give `file` as a path relative to the workspace.** An absolute path such as `/home/me/app/main.go` is `invalid_range`, and so is `../main.go`. Write `cmd/app/main.go`.
 - **An empty range is easy to place one line off.** `endLine = startLine - 1` means "just before line `startLine`", so `startLine: 13, endLine: 12` is between lines 12 and 13. Read the lines on both sides of the place first, and check the numbers before calling `select`.
-- **The line numbers of a new `select` are the numbers of the file now.** srwr corrects the token it has already issued when another edit moves the lines, but not the `startLine` and `endLine` of a new `select`. After other edits, read the file again, or check the returned `lines`.
+- **The line numbers of a new `select` are the numbers of the file now.** srwr corrects the token it has already issued when another edit moves the lines, but not the `startLine` and `endLine` of a new `select`. After other edits, read the file again, or check the returned `lines` (and, after a `replace`, `before` and `after`).
 - **A new file cannot be made with `select` and `replace`.** `select` gives `file_not_found`. Make it with a shell command. The file is then recorded as an [`external`](tape.md#external) with `created: true`.
 - **To change the same place again, use the new token that `replace` returned.** The token you used is spent: using it again gives `selection_stale`.
 - **Read the error.** `invalid_range` returns `lineCount` (the number of lines of the file), which is enough to correct the numbers.

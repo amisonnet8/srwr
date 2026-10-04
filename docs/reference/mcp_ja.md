@@ -48,7 +48,8 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **2つの
 // 入力
 { "selection": "sel_0410R3GZE4KV11C6325D32S7", "newText": "func main() {\n    setupSignals()\n    …\n}", "why": "シグナル処理の初期化が漏れていたので追加" }
 // 出力
-{ "ok": true, "selection": "sel_041GR3RZE4KV0BBH2S177Q36", "startLine": 12, "endLine": 15 }
+{ "ok": true, "selection": "sel_041GR3RZE4KV0BBH2S177Q36", "startLine": 12, "endLine": 15,
+  "lines": ["func main() {", "    setupSignals()", "    …", "}"], "before": ["", "// main starts the app."], "after": ["", "func run() {"] }
 ```
 
 | 項目 | 意味 |
@@ -57,6 +58,8 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **2つの
 | `newText` | 置き換え後のテキスト。`""` は削除 |
 | `why` | なぜこう変えるか |
 | 出力の `selection` | **置き換え後の範囲**の新しいトークン。同じ箇所を続けて直すときは、`select` し直さずにこれを使える |
+| 出力の `lines` | 置き換え後の範囲の内容（削除なら `[]`） |
+| 出力の `before`・`after` | その範囲の直前・直後の行（それぞれ最大2行。ファイルの先頭・末尾に近いと少なく、なければ `[]`）。ファイルを読み直さずに、結果を確かめられる |
 
 **`newText` の行の数え方**：`""` は0行（削除）。それ以外は `\n` で行に分け、末尾が `\n` なら最後の空要素は数えない（`"x\n"` は1行、`"\n"` は空行1つ）。返すトークンの範囲は、この数え方による。
 
@@ -122,7 +125,7 @@ AI がこの2つのツールを使って実際に犯したミス。どれも、�
 
 - **`file` は、作業場からの相対パスで渡す。** `/home/me/app/main.go` のような絶対パスは `invalid_range`、`../main.go` も `invalid_range` になる。`cmd/app/main.go` の形で書く。
 - **空範囲は、1 行ずれやすい。** `endLine = startLine - 1` は「`startLine` 行目の直前」を指すので、`startLine: 13, endLine: 12` は 12 行目と 13 行目の間になる。先にその場所の前後の行を読み、番号を確かめてから `select` を呼ぶ。
-- **新しい `select` の行番号は、今のファイルの行番号で渡す。** ほかの編集で行がずれたとき、すでに発行したトークンは srwr が補正するが、新しい `select` の `startLine`・`endLine` は補正しない。ほかの編集のあとは、ファイルを読み直すか、返ってきた `lines` で確かめる。
+- **新しい `select` の行番号は、今のファイルの行番号で渡す。** ほかの編集で行がずれたとき、すでに発行したトークンは srwr が補正するが、新しい `select` の `startLine`・`endLine` は補正しない。ほかの編集のあとは、ファイルを読み直すか、返ってきた `lines`（`replace` のあとは `before`・`after` も）で確かめる。
 - **新しいファイルは、`select` と `replace` では作れない。** `select` は `file_not_found` になる。シェルのコマンドで作る。作ったファイルは、`created: true` の [`external`](tape_ja.md#external) として記録される。
 - **同じ場所を続けて直すときは、`replace` が返した新しいトークンを使う。** 使ったトークンは使い切りで、もう一度使うと `selection_stale` になる。
 - **エラーを読む。** `invalid_range` は `lineCount`（ファイルの行数）を返すので、番号を直すにはそれで足りる。

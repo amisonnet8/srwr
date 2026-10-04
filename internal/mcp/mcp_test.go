@@ -214,6 +214,16 @@ func TestSelectAndReplace(t *testing.T) {
 		t.Errorf("file = %q", b)
 	}
 
+	// The result holds the range now and the lines around it; what is empty is [] and not null.
+	for key, want := range map[string]int{"lines": 1, "before": 1, "after": 0} {
+		if l, ok := rep[key].([]any); !ok || len(l) != want {
+			t.Errorf("%s of the replace = %#v, want %d lines", key, rep[key], want)
+		}
+	}
+	if l := rep["lines"].([]any); l[0] != "a < b && c > d" {
+		t.Errorf("lines of the replace = %#v", l)
+	}
+
 	// An empty range gives [] and not null.
 	empty, _ := call(3, "select", `{"file":"a.go","startLine":3,"endLine":2,"why":"w"}`)
 	if l, ok := empty["lines"].([]any); !ok || len(l) != 0 {

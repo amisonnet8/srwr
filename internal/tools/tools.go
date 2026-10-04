@@ -44,6 +44,7 @@ func List() []Tool {
 			Description: "Replace the range of the selection token returned by select (or by the previous replace) with newText. " +
 				"Do not pass a file or line numbers. To delete, make newText an empty string. To insert, select an empty range and then replace. " +
 				"The selection in the result is the token of the range after the replacement; use it to go on fixing the same place without calling select again. " +
+				"The result also has lines (the content of the range now) and before and after (up to 2 lines around it), so you can check the edit without reading the file again. " +
 				"If edits elsewhere shift the lines, srwr corrects the line numbers. Only an edit that overlaps the range makes the result selection_stale; then call select again. " +
 				"why is required: say why you change it this way, in the language of the conversation with the user.",
 			InputSchema: map[string]any{

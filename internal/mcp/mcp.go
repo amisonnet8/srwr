@@ -158,10 +158,13 @@ type replaceArgs struct {
 }
 
 type replaceOK struct {
-	OK        bool   `json:"ok"`
-	Selection string `json:"selection"`
-	StartLine int    `json:"startLine"`
-	EndLine   int    `json:"endLine"`
+	OK        bool     `json:"ok"`
+	Selection string   `json:"selection"`
+	StartLine int      `json:"startLine"`
+	EndLine   int      `json:"endLine"`
+	Lines     []string `json:"lines"`
+	Before    []string `json:"before"`
+	After     []string `json:"after"`
 }
 
 func (s *Server) callReplace(raw json.RawMessage) toolResult {
@@ -180,7 +183,8 @@ func (s *Server) callReplace(raw json.RawMessage) toolResult {
 	if cerr != nil {
 		return failure(*cerr)
 	}
-	return success(replaceOK{OK: true, Selection: res.Selection, StartLine: res.StartLine, EndLine: res.EndLine})
+	return success(replaceOK{OK: true, Selection: res.Selection, StartLine: res.StartLine, EndLine: res.EndLine,
+		Lines: res.Lines, Before: res.Before, After: res.After})
 }
 
 // decodeArgs reads the arguments of a call. A value of the wrong type is invalid_input, like a missing one.

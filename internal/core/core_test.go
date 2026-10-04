@@ -864,3 +864,44 @@ func TestExternalChangeOfTheFinalLineBreakWritesTheWholeText(t *testing.T) {
 	}
 	e.checkTape()
 }
+
+func TestReplaceReturnsWhatIsThereNow(t *testing.T) {
+	tests := []struct {
+		name                 string
+		file                 string
+		start, end           int
+		newText              string
+		lines, before, after []string
+	}{
+		{"middle", "1\n2\n3\n4\n5\n6\n7\n", 4, 4, "X", []string{"X"}, []string{"2", "3"}, []string{"5", "6"}},
+		{"near the start", "1\n2\n3\n4\n", 2, 2, "X", []string{"X"}, []string{"1"}, []string{"3", "4"}},
+		{"at the start", "1\n2\n3\n", 1, 1, "X", []string{"X"}, []string{}, []string{"2", "3"}},
+		{"near the end", "1\n2\n3\n4\n", 3, 3, "X", []string{"X"}, []string{"1", "2"}, []string{"4"}},
+		{"at the end", "1\n2\n3\n", 3, 3, "X", []string{"X"}, []string{"1", "2"}, []string{}},
+		{"the whole file", "1\n2\n", 1, 2, "a\nb\nc", []string{"a", "b", "c"}, []string{}, []string{}},
+		{"a file of one line", "1\n", 1, 1, "X", []string{"X"}, []string{}, []string{}},
+		{"a deletion keeps the lines around", "1\n2\n3\n4\n5\n", 3, 3, "", []string{}, []string{"1", "2"}, []string{"4", "5"}},
+		{"a deletion of everything", "1\n2\n", 1, 2, "", []string{}, []string{}, []string{}},
+		{"an insertion", "1\n2\n3\n4\n", 3, 2, "new", []string{"new"}, []string{"1", "2"}, []string{"3", "4"}},
+		{"an append to the end", "1\n2\n", 3, 2, "new", []string{"new"}, []string{"1", "2"}, []string{}},
+		{"many lines become one", "1\n2\n3\n4\n5\n6\n", 2, 5, "X", []string{"X"}, []string{"1"}, []string{"6"}},
+		{"one line becomes many", "1\n2\n3\n", 2, 2, "a\nb\nc\nd", []string{"a", "b", "c", "d"}, []string{"1"}, []string{"3"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := newEnv(t)
+			e.write("a.txt", tt.file)
+			s := e.sel(e.c, "a.txt", tt.start, tt.end)
+			r := e.rep(e.c, s.Selection, tt.newText)
+			if !slices.Equal(r.Lines, tt.lines) || r.Lines == nil {
+				t.Errorf("lines = %#v, want %#v", r.Lines, tt.lines)
+			}
+			if !slices.Equal(r.Before, tt.before) || r.Before == nil {
+				t.Errorf("before = %#v, want %#v", r.Before, tt.before)
+			}
+			if !slices.Equal(r.After, tt.after) || r.After == nil {
+				t.Errorf("after = %#v, want %#v", r.After, tt.after)
+			}
+		})
+	}
+}

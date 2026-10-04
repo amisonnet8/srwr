@@ -29,12 +29,12 @@ The AI calls `select` and `replace` with the MCP `tools/call`. In what follows `
 → {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"select","arguments":{"file":"cmd/main.go","startLine":3,"endLine":5,"why":"Check whether a call to initialization can be added to main"}}}
 ← {"jsonrpc":"2.0","id":2,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_041061E48KVH3K24RN324MN2\",\"lines\":[\"func main() {\",\"\\trun()\",\"}\"]}","type":"text"}],"isError":false}}
 → {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"replace","arguments":{"selection":"sel_041061E48KVH3K24RN324MN2","newText":"func main() {\n\tsetup()\n\trun()\n}","why":"run needs the settings loaded first, so call setup"}}}
-← {"jsonrpc":"2.0","id":3,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_041G61P48KVH3AYWAY6Q99GP\",\"startLine\":3,\"endLine\":6}","type":"text"}],"isError":false}}
+← {"jsonrpc":"2.0","id":3,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_041G61P48KVH3AYWAY6Q99GP\",\"startLine\":3,\"endLine\":6,\"lines\":[\"func main() {\",\"\\tsetup()\",\"\\trun()\",\"}\"],\"before\":[\"package main\",\"\"],\"after\":[]}","type":"text"}],"isError":false}}
 ```
 
 - `select` (id 2) declares lines 3 to 5, and returns the selection token `sel_…` and the current content of the range, `lines`
 - `replace` (id 3) passes that token **as it is**. It passes neither a file nor line numbers
-- The response of `replace` is a new token for **the range after the replacement** (lines 3 to 6; it grew by one line). To go on fixing the same place, use this one
+- The response of `replace` is a new token for **the range after the replacement** (lines 3 to 6; it grew by one line). To go on fixing the same place, use this one. It also holds `lines` (what the range is now) and `before` and `after` (the lines around it), so the edit can be checked without reading the file again
 
 As a result, `cmd/main.go` becomes the following 6 lines, and a tape is made in `.srwr/tapes/` ([tape.md](../reference/tape.md); how it replays is in [protocol-session.md](protocol-session.md)).
 

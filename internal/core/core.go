@@ -39,11 +39,17 @@ type ReplaceInput struct {
 	Why       string
 }
 
-// ReplaceResult is what replace returns: a token for the new range, and where it is.
+// contextLines is how many lines before and after the new range replace returns.
+const contextLines = 2
+
+// ReplaceResult is what replace returns: a token for the new range, where it is, what it holds now, and the lines around it.
 type ReplaceResult struct {
 	Selection string
 	StartLine int
 	EndLine   int
+	Lines     []string
+	Before    []string
+	After     []string
 }
 
 // run runs fn with the workspace lock. fn returns a *Error for a failure the client is told about;
@@ -222,7 +228,12 @@ func (c *Core) replaceIn(tx *session.Tx, in ReplaceInput) (*ReplaceResult, error
 	if err != nil {
 		return nil, err
 	}
-	return &ReplaceResult{Selection: sel, StartLine: a, EndLine: newEnd}, nil
+	return &ReplaceResult{
+		Selection: sel, StartLine: a, EndLine: newEnd,
+		Lines:  rangeLines(newText, a, newEnd),
+		Before: rangeLines(newText, a-contextLines, a-1),
+		After:  rangeLines(newText, newEnd+1, newEnd+contextLines),
+	}, nil
 }
 
 // observeTarget records what Observe finds. For a file that is gone it then reports file_not_found.

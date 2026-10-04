@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1176" height="850" viewBox="0 0 1176 850" role="img" aria-label="Vim, failure hidden (light)">
+<rect x="0" y="0" width="1176" height="850" fill="#ffffff"/>
+<circle cx="9.2" cy="9.5" r="4" fill="#0b61a4"/>
+<text x="19.3" y="13" fill="#333333" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">1 select   entry.go:29</text>
+<rect x="0" y="17" width="336.0" height="17" fill="#e4e6f1"/>
+<circle cx="9.2" cy="26.5" r="4" fill="#b45f06"/>
+<text x="19.3" y="30" fill="#333333" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">2 replace  entry.go:29-31</text>
+<circle cx="9.2" cy="43.5" r="4" fill="#652d90"/>
+<text x="19.3" y="47" fill="#333333" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">3 external stats.go:1-3</text>
+<text x="0.0" y="64" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="81" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="98" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="115" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="132" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="149" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="166" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="183" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="200" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="217" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="234" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="251" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="268" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="285" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="302" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="319" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="336" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="353" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="370" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="387" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="404" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="421" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="438" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="455" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="472" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="489" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="506" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="523" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="540" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="557" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="574" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="591" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="608" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="625" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="642" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="659" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="676" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="693" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="710" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="727" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="744" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="761" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="778" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="795" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="812" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0.0" y="829" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<rect x="336.0" y="0" width="1" height="833" fill="#d4d4d4"/>
+<rect x="344.4" y="0" width="831.6" height="17" fill="#b45f06"/>
+<text x="348.6" y="13" fill="#ffffff" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" font-weight="bold" xml:space="preserve" style="white-space:pre">◆ Use UTC instead of the local time</text>
+<rect x="344.4" y="17" width="831.6" height="17" fill="#fde3c8"/>
+<text x="348.6" y="30" fill="#333333" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">    now := time.Now().UTC()</text>
+<rect x="344.4" y="34" width="831.6" height="17" fill="#fde3c8"/>
+<text x="348.6" y="47" fill="#333333" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">    stamp := now.Format(time.RFC3339)</text>
+<text x="348.6" y="64" fill="#333333" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">    return stamp</text>
+<text x="344.4" y="81" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="98" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="115" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="132" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="149" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="166" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="183" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="200" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="217" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="234" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="251" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="268" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="285" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="302" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="319" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="336" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="353" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="370" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="387" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="404" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="421" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="438" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="455" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="472" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="489" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="506" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="523" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="540" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="557" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="574" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="591" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="608" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="625" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="642" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="659" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="676" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="693" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="710" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="727" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="744" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="761" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="778" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="795" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="812" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="344.4" y="829" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<rect x="0" y="833" width="1176" height="17" fill="#e4e6f1"/>
+<text x="8.4" y="846" fill="#333333" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">srwr  2/3  [[ Back  ]] Forward  entry.go:29-31</text>
+<text x="1008.0" y="846" fill="#333333" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">hidden: failure (2)</text>
+</svg>

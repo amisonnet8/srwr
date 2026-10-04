@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="200" viewBox="0 0 560 200" role="img" aria-label="Operations list, failure shown (light)">
+<rect x="0" y="0" width="560" height="200" fill="#ffffff"/>
+<rect x="0" y="0" width="560" height="166" fill="#f3f3f3"/>
+<rect x="0" y="0" width="560" height="24" fill="#e7e7e7"/>
+<text x="16" y="16" fill="#333333" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11" font-weight="bold">Operations</text>
+<text x="90" y="16" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11">20261004-1530-ab12</text>
+<g transform="translate(490,4)" fill="none" stroke="#333333" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3h13l-5 6v5l-3-1.5V9z"/></g>
+<g transform="translate(532,4)" fill="none" stroke="#333333" stroke-width="1.2" stroke-linecap="round"><path d="M3.5 3.5l9 9 M12.5 3.5l-9 9"/></g>
+<circle cx="16" cy="35" r="4.5" fill="#0b61a4"/>
+<text x="30" y="39" fill="#333333" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">1  select  entry.go:29</text>
+<text x="211.2" y="39" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Read the clock before changing it</text>
+<rect x="0" y="46" width="560" height="22" fill="#e4e6f1"/>
+<circle cx="16" cy="57" r="4.5" fill="#d32f2f"/>
+<text x="30" y="61" fill="#333333" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">2  failure  invalid_range</text>
+<text x="234.0" y="61" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Checking the main function</text>
+<circle cx="16" cy="79" r="4.5" fill="#b45f06"/>
+<text x="30" y="83" fill="#333333" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">3  replace  entry.go:29-31</text>
+<text x="241.6" y="83" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Use UTC instead of the local time</text>
+<circle cx="16" cy="101" r="4.5" fill="#d32f2f"/>
+<text x="30" y="105" fill="#333333" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">4  failure  selection_stale</text>
+<text x="249.2" y="105" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Fix the second call as well</text>
+<circle cx="16" cy="123" r="4.5" fill="#652d90"/>
+<text x="30" y="127" fill="#333333" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">5  external  stats.go:1-3</text>
+<text x="234.0" y="127" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">File changed outside srwr</text>
+</svg>

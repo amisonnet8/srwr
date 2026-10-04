@@ -90,7 +90,7 @@ What `srwr init` ([cli.md](cli.md)) writes into `.claude/settings.json` (strict 
   "hooks": { "PostToolUse": [ { "matcher": "Read|Bash|Grep|Edit", "hooks": [ { "type": "command", "command": "srwr hook" } ] } ] },
   "enabledMcpjsonServers": ["srwr"],
   "permissions": {
-    "allow": ["mcp__srwr__select", "mcp__srwr__replace"],
+    "allow": ["mcp__srwr__select", "mcp__srwr__replace", "mcp__srwr__sub"],
     "deny": ["Edit", "Write", "MultiEdit", "NotebookEdit"]
   }
 }

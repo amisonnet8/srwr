@@ -101,6 +101,11 @@ The same as [vscode.md](vscode.md). **select is blue, and what changes a file is
 - Moving between the blocks of changes is done with Vim's `]c` and `[c`
 - The unchanged lines are folded. The fold text is `+-- 17 lines: …` (`行` in Japanese)
 
+### 4b. Frames of sub
+
+- One frame for each file a `sub` changed, shown like an external change: two windows side by side, before on the left and after on the right, only the changed lines painted (blue and orange). **The `why` is in a band at the top of both windows**: the same number of rows on both sides, the `why` on the right (white bold on orange, wrapped to the width of the window and centered in it), empty rows on blue on the left. The file's own line numbers are drawn at the left of each row, and the band rows have none
+- The heading of the left status line is "Before  ⚠ sub: main.go". In the operation list a row reads `● n sub     file (N hits)` with an orange dot
+
 ### 5. The operation list
 - The frames are listed **in the order recorded, 1, 2, 3…** (the number is the same as the position in the status line). There is no indenting by parent and child
 - Each row: `● number kind file:range  why` (the range is `37`, `39-41`, or `before 12` for an empty range; the same order as the list of VSCode: dot, number, kind, file name). The color of the dot tells them apart (select = blue, replace = orange, external and final = purple). An external change is `external`, and the final diff is `final`

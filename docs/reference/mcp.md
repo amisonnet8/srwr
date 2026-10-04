@@ -4,16 +4,17 @@
 
 **Readers**: people who use srwr. For people who want to know what the AI is made to do and what errors come back.
 
-The AI agent edits files with only **two tools** provided by the MCP server `srwr mcp`.
+The AI agent edits files with only **three tools** provided by the MCP server `srwr mcp`.
 
 | Tool | What it does |
 |---|---|
 | `select` | Declares the range being looked at. A selection token is returned |
 | `replace` | Replaces the range of a selection token with new text |
+| `sub` | Replaces a text with another in several files at once, when the number of places is what was expected |
 
-There is no `replace` without `select`. So the tape always holds "look, then change" together. Searching and reading are left to the Read and grep the AI already has (the hook records them; see `srwr hook` in [cli.md](cli.md)).
+There is no `replace` without `select`. So the tape always holds "look, then change" together. `sub` is for a change that is the same in many places: it asks for the number of places, so the check of what is changed is made by that number. Searching and reading are left to the Read and grep the AI already has (the hook records them; see `srwr hook` in [cli.md](cli.md)).
 
-Both require a `why` (the reason). It is the heart of what a person sees when replaying the [tape](tape.md).
+All three require a `why` (the reason). It is the heart of what a person sees when replaying the [tape](tape.md).
 
 The descriptions of the tools and the error messages are in English, whatever the language of the screen, because they are for the AI to read.
 
@@ -83,9 +84,37 @@ Replaces the range with new text. An insertion is a replacement of an empty rang
 
 Files that cannot be handled: files with line breaks other than LF (CRLF), and binary files. They give `unsupported_file`.
 
+## sub
+
+Replaces a text with another in several files at once, like a simple sed, and records why. The text is searched for as it is (not a regular expression), from left to right in each file, and places do not overlap. **`count`, the number of places expected in all the files together, is required: if the number found is different, nothing is changed.**
+
+```jsonc
+// input
+{ "files": ["a.go", "b.go"], "old": "oldName(", "new": "newName(", "count": 3, "why": "Rename the helper to the new naming rule" }
+// output
+{ "ok": true, "count": 3, "files": [
+  { "file": "a.go", "hits": 2, "startLine": 12, "endLine": 30, "selection": "sel_041G417ZRKYSPWJ7X4Z5PPKP", "lines": ["…"] },
+  { "file": "b.go", "hits": 1, "startLine": 7, "endLine": 7, "selection": "sel_042020AD5CH4C75M7DH075CM", "lines": ["…"] } ] }
+```
+
+| Item | Meaning |
+|---|---|
+| `files` | Paths relative to the workspace. Existing files only. A path is given once |
+| `old` | The text to look for. Not empty. It may have several lines (LF) |
+| `new` | The text to put in its place. `""` deletes it |
+| `count` | How many places you expect in all the files together. 1 or more |
+| `why` | Why it changes them |
+| `files` in the output | Only the files that changed. `hits` is the number of places in the file; `startLine` and `endLine` are the lines from the first place to the last, after the change; `selection` is a token for those lines (usable by `replace`); `lines` is their content |
+
+- If the number found is not `count`, the error is `count_mismatch`. Its message and `actual` say how many places each file has (`{"a.go": 3, "b.go": 1}`), and **no file is changed and nothing but the `failure` is written to the tape**
+- Every file is checked as `select` checks it (not recorded, CRLF, binary, outside the workspace). If one of them cannot be used, nothing is changed
+- A change that cannot be told in lines (it adds or removes the final line break of the file) is `invalid_input`: use `select` and `replace` for it
+- On the tape there is one `replace` for each file that changed, with the same `why` ([tape.md](tape.md#replace)). A viewer shows each as a diff of the file, with the `why` above it
+- A regular expression is not supported. Use `select` and `replace` when the places must be chosen one by one
+
 ## why
 
-- **Required in both** `select` and `replace`. Blank is not allowed either (`invalid_input`)
+- **Required in all three** (`select`, `replace` and `sub`). Blank is not allowed either (`invalid_input`)
 - In `select` it is "why it looks here", in `replace` "why it changes it this way". Write the reason in one sentence, not a rephrasing of what is being done
 - Write it in **the same language as the conversation with the user** (the descriptions of the tools and the input schema ask for this). It is for people to read
 
@@ -107,8 +136,9 @@ In the MCP response `isError` is `true`, and the body is the following JSON.
 | `content_mismatch` | The range holds other lines than `expect` | Read where the message says the lines are, and call `select` again |
 | `content_not_found` | `expect` (given without line numbers) is not in the file | Check the content, or give line numbers |
 | `content_ambiguous` | `expect` (given without line numbers) is in the file in more than one place | Give line numbers, or more lines in `expect` |
-| `ignored_file` | `select` or `replace` was used on a file that is not recorded | srwr cannot handle it. Ask the user |
-| `invalid_input` | A required input is missing, has the wrong type, or `why` is empty; `file` is empty or has a NUL; only one of `startLine` and `endLine` is given, or none of them and no `expect`; `selection` is blank; `newText` has a CR | Fix the input |
+| `count_mismatch` | `sub` found a number of places other than `count` | Read how many each file has, and call `sub` again with the right `count` (or use `select`) |
+| `ignored_file` | `select`, `replace` or `sub` was used on a file that is not recorded | srwr cannot handle it. Ask the user |
+| `invalid_input` | A required input is missing, has the wrong type, or `why` is empty; `file` is empty or has a NUL; only one of `startLine` and `endLine` is given, or none of them and no `expect`; `selection` is blank; `newText` has a CR; for `sub`, `files`, `old` or `count` is missing or empty, a path is given twice, `old` or `new` has a CR | Fix the input |
 | `unsupported_file` | CRLF or binary | — |
 | `internal_error` | An I/O error and the like | — |
 
@@ -119,6 +149,7 @@ An error may carry the current content (`actual`). What it holds is decided for 
 | `selection_mismatch` | The current content of the corrected range (an array of lines) |
 | `content_mismatch` | The current content of the range (an array of lines) |
 | `selection_stale` | The current content of the range, corrected up to just before the overlapping edit (kept inside the file) |
+| `count_mismatch` | The number of places in each file (`{"a.go": 3, "b.go": 1}`) |
 | `invalid_range` | `{"lineCount": number of lines}`. None for a path outside the workspace |
 | Others | None |
 
@@ -141,13 +172,14 @@ Even if the process dies in between, the next time srwr touches the files, the m
 
 ## Mistakes an AI tends to make
 
-These are the mistakes seen when an AI used the two tools. Each is an ordinary error with a code, and a failed call is written to the tape as a [`failure`](tape.md#failure).
+These are the mistakes seen when an AI used the tools. Each is an ordinary error with a code, and a failed call is written to the tape as a [`failure`](tape.md#failure).
 
 - **Give `file` as a path relative to the workspace.** An absolute path such as `/home/me/app/main.go` is `invalid_range`, and so is `../main.go`. Write `cmd/app/main.go`.
 - **An empty range is easy to place one line off.** `endLine = startLine - 1` means "just before line `startLine`", so `startLine: 13, endLine: 12` is between lines 12 and 13. Read the lines on both sides of the place first, and check the numbers before calling `select`.
 - **The line numbers of a new `select` are the numbers of the file now.** srwr corrects the token it has already issued when another edit moves the lines, but not the `startLine` and `endLine` of a new `select`. After other edits, read the file again, or check the returned `lines` (and, after a `replace`, `before` and `after`). Better: pass `expect` with the lines you mean, and a wrong number is refused instead of selecting the wrong place.
 - **A new file cannot be made with `select` and `replace`.** `select` gives `file_not_found`. Make it with a shell command. The file is then recorded as an [`external`](tape.md#external) with `created: true`.
 - **To change the same place again, use the new token that `replace` returned.** The token you used is spent: using it again gives `selection_stale`.
+- **For the same change in many places, use `sub` with `count`**, not many `select` and `replace`. A wrong `count` is refused with the number each file has.
 - **Read the error.** `invalid_range` returns `lineCount` (the number of lines of the file), which is enough to correct the numbers.
 
 ## Related

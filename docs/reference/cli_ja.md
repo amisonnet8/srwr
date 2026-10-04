@@ -8,7 +8,7 @@
 
 | コマンド | 使う人 | 役割 |
 |---|---|---|
-| `srwr mcp` | AI（MCP クライアント） | MCP サーバー（stdio）。[`select` / `replace`](mcp_ja.md) を提供する |
+| `srwr mcp` | AI（MCP クライアント） | MCP サーバー（stdio）。[`select` / `replace` / `sub`](mcp_ja.md) を提供する |
 | `srwr hook` | Claude Code の hook | Read・Bash・Grep・Edit を、`srwr mcp` と同じ[テープ](tape_ja.md)に記録する |
 | `srwr view-server` | エディタ（VSCode 拡張・Vim スクリプト） | 表示サーバー。人は直接使わない（[protocol.md](protocol_ja.md)） |
 | `srwr view [テープ]` | 人 | Vim で再生する（[vim.md](vim_ja.md)） |
@@ -54,7 +54,7 @@ srwr を使うディレクトリを**作業場**と呼ぶ。srwr は作業場の
 
 ## srwr mcp
 
-AI に使わせる MCP サーバー。AI エージェント（MCP クライアント）が起動する。作業場は `--root <作業場>`（省略時はカレントディレクトリ）。ツールは `select`・`replace` の2つ（[mcp.md](mcp_ja.md)）。同じ作業場で複数起動してもよい。同じセッション（同じテープ）に書き、片方が発行した範囲トークンをもう片方で使える（[tape.md](tape_ja.md)）。
+AI に使わせる MCP サーバー。AI エージェント（MCP クライアント）が起動する。作業場は `--root <作業場>`（省略時はカレントディレクトリ）。ツールは `select`・`replace`・`sub` の3つ（[mcp.md](mcp_ja.md)）。同じ作業場で複数起動してもよい。同じセッション（同じテープ）に書き、片方が発行した範囲トークンをもう片方で使える（[tape.md](tape_ja.md)）。
 
 ## srwr hook
 

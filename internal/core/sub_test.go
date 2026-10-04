@@ -62,7 +62,7 @@ func TestSubChangesNothingWhenTheCountIsWrong(t *testing.T) {
 	e.write("a.go", "foo\nfoo\n")
 	e.write("b.go", "foo\n")
 	_, err := e.sub([]string{"a.go", "b.go"}, "foo", "bar", 4)
-	wantErr(t, err, CodeCountMismatch)
+	wantCode(t, err, CodeCountMismatch)
 	if !strings.Contains(err.Message, "expected 4") || !strings.Contains(err.Message, "found 3") || !strings.Contains(err.Message, "a.go: 2, b.go: 1") {
 		t.Errorf("message = %q", err.Message)
 	}
@@ -80,7 +80,7 @@ func TestSubFailureOfOneFileNamesIt(t *testing.T) {
 	e := newEnv(t)
 	e.write("a.go", "foo\n")
 	_, err := e.sub([]string{"a.go"}, "foo", "bar", 2)
-	wantErr(t, err, CodeCountMismatch)
+	wantCode(t, err, CodeCountMismatch)
 	if f := e.failures()[0]; f.File == nil || *f.File != "a.go" {
 		t.Errorf("failure = %+v", f)
 	}
@@ -146,7 +146,7 @@ func TestSubInputIsChecked(t *testing.T) {
 		"no final \\n": {Files: []string{"a.txt"}, Old: "foo\n", New: "foo", Count: 1, Why: "w"},
 	} {
 		_, err := e.c.Sub(in)
-		wantErr(t, err, CodeInvalidInput)
+		wantCode(t, err, CodeInvalidInput)
 		if name != "" && e.read("a.txt") != "foo\n" {
 			t.Errorf("%s: the file was changed", name)
 		}

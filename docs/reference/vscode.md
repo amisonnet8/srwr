@@ -59,6 +59,14 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 - When it goes back to an ordinary frame, the editor on the right is closed. **Tabs do not pile up when you move back and forth**
 - One frame per change. If there is no change, none is shown
 
+### 3a. Frames of sub
+
+- `sub` changes a text in several files at once. It is **one frame for each file that changed** (a `replace` with `tool: "sub"` on the tape), shown like an `external` frame: **two editors, left and right**, before on the left, after on the right, only the changed lines painted (blue on the left, orange on the right). However many places a file has, it is one frame
+- **The `why` is in a band above both editors**, the same number of rows on both sides so that the lines line up. VSCode has no band between the tab and the editors, so each document has the rows at its top: on the right the `why` (white bold on orange, wrapped like any `why`), on the left empty rows on blue. The file's own line numbers are drawn, and the band rows have none
+- The text of the band is aligned left (the extension cannot know the width of an editor, so it cannot center it; Vim centers it in the window)
+- The left tab is "Before ⚠ sub: main.go", the right tab "After main.go"
+- In the operation list a row reads `number  sub  file (N hits)` (`N か所` in the Japanese UI), with an orange dot and the `why` as the description. A frame of `sub` is turned on and off with `replace` (see 8 below)
+
 ### 3b. Failure frames
 
 - A failure frame has no file to open (a failure is often about an absolute path, a file that is not recorded, or a wrong input). It is shown as a **virtual document that explains it**: a red line `✖ select failed (invalid_range)` (white bold; for a `replace` it reads `replace failed`), then the message, then `why`, `tool` and `range` (the range given to a `select`; a `replace` has none) and `file` (`(not shown)` when it is left out). The editor tab is named `failure: select (invalid_range)`
@@ -67,7 +75,7 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 ### 4. The operation list (the left panel)
 
 - "srwr" at the left edge → "Operations". The frames are listed **in the order recorded, 1, 2, 3… from the top**. The number is the same as the position in the bottom bar (5/7). There is no indenting by parent and child
-- Each row: `number  kind  file:range` (`37`, `39-41`; an empty range reads `before 12`), with the `why` as the description. The color of the dot at the front tells them apart: select = blue, replace = orange, external and final = purple. The kinds are written `select`, `replace`, `external`, `final` and `failure` (in the Japanese UI: `select`, `replace`, `外部変更`, `録画後` and `失敗`). A failure row is a **red** dot, and its place is the error code (`invalid_range`) instead of `file:range`
+- Each row: `number  kind  file:range` (a `sub` frame has `file (N hits)` in place of `file:range`) (`37`, `39-41`; an empty range reads `before 12`), with the `why` as the description. The color of the dot at the front tells them apart: select = blue, replace = orange, external and final = purple. The kinds are written `select`, `replace`, `external`, `final` and `failure` (in the Japanese UI: `select`, `replace`, `外部変更`, `録画後` and `失敗`). A failure row is a **red** dot, and its place is the error code (`invalid_range`) instead of `file:range`
 - Clicking moves to that frame. The row of the current frame is selected
 - The ☓ at the top right closes the tape (or the live view)
 

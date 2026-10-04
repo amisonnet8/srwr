@@ -201,10 +201,13 @@ def RenderFailure(f: dict<any>)
   win_execute(s.win, 'call winrestview({topline: 1, lnum: 1, col: 1, leftcol: 0})')
 enddef
 
-# SubBand is the band of a sub frame: its why wrapped to the width of the right-hand window, and at least one row.
+# SubBand is the band of a sub frame: its why wrapped to the width of the right-hand window and centered in it, and at
+# least one row. The right-hand window is half of this one when it is not there yet.
 def SubBand(f: dict<any>): list<string>
-  const rows = BannerRows(f, max([TextWidth() / 2, 20]))
-  return empty(rows) ? [BANNER_PREFIX] : rows
+  const width = diff.Active(s) ? WinWidth(s.diffWin) : (WinWidth(s.win) - 1) / 2
+  const room = max([width - 4, 20])
+  const rows = BannerRows(f, room)
+  return mapnew(empty(rows) ? [BANNER_PREFIX] : rows, (_, row) => repeat(' ', max([(room - strdisplaywidth(row)) / 2, 0])) .. row)
 enddef
 
 def ShowDiff(f: dict<any>)

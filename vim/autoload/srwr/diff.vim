@@ -92,6 +92,11 @@ export def Enter(s: dict<any>, f: dict<any>, before: string, after: string, band
   const nameBase = 'srwr://' .. s.tape
   buf.Name(s.buf, s.win, nameBase .. '/before/' .. f.file)
   buf.Name(s.diffBuf, s.diffWin, nameBase .. '/after/' .. f.file)
+  # Lines are cut from a buffer in diff mode only after diff mode is off: Vim 9.0.0784 fails with E315 (ml_get: Invalid lnum)
+  # when a frame with fewer lines follows one with more.
+  for w in [s.win, s.diffWin]
+    win_execute(w, 'diffoff')
+  endfor
   const n = len(band)
   buf.SetLines(s.buf, repeat([''], n) + buf.Lines(before))
   buf.SetLines(s.diffBuf, band + buf.Lines(after))

@@ -69,6 +69,7 @@
 
 - `select`・`replace` が失敗したら、`core.recordFailure`（`internal/core/failure.go`）の**1か所**でテープに `failure` を書く。`Core.Select`・`Core.Replace` が、返す前に呼ぶ。MCP の層で弾く失敗（必須の入力がない、型が違う）は `Core.RecordInputFailure`
 - **`select` の `expect` の中身も、テープに書かない**（`replace` の `newText` と同じ。ファイルの内容が入りうる）。`expect` だけで範囲を探す呼び出し（`Locate`）の失敗は、`startLine`・`endLine` を `null` にする
+- **`sub` の失敗**（`core.Sub`）も同じ1か所で書く。`old`・`new` はテープに書かない（`newText` と同じ）。`file` は、ファイルを1つだけ渡したときだけ書く。複数のときは、パスの誤りの文も決まった文に替える（どれかのパスが実際のパスを含みうるため）。`sub` は、全部のファイルを読んで数えて計画を立ててから書く（数が違えば何も書かない。`count_mismatch`）。変えたファイルごとに `replace` を1つ（`tool: "sub"`・`hits`）
 - **返事を変えない。** 書けなくても握りつぶす（AI の作業を止めない）。AI に返すエラー文は今のまま（パスを含む）
 - **テープに実際のパスを書かない**：絶対パス・作業場の外・`ignored_file`・`internal_error`（`.srwrignore` が読めないとき）は `file` を `null` にし、エラー文を決まった文に替える。`replace` の `newText` も書かない。新しい失敗の入口を足したら、この伏せを通ることを確かめ、テストを書く
 - `failure` のコマは `timeline.Builder.Add` が作る。送るかは `kinds`（`timeline.Filter`）で決まる。ふだんは送らない

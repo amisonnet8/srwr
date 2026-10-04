@@ -4,16 +4,17 @@
 
 **読者**：srwr を使う人。AI エージェントに何をさせ、どんなエラーが返るかを知りたい人。
 
-AI エージェントは、MCP サーバー `srwr mcp` が提供する **2つのツール**だけでファイルを編集する。
+AI エージェントは、MCP サーバー `srwr mcp` が提供する **3つのツール**だけでファイルを編集する。
 
 | ツール | やること |
 |---|---|
 | `select` | 見ている範囲を宣言する。範囲トークンが返る |
 | `replace` | 範囲トークンの範囲を、新しいテキストに置き換える |
+| `sub` | 複数のファイルで、文字列を別の文字列に一度に置き換える。場所の数が見込みどおりのときだけ |
 
-`select` を経ない `replace` はない。そのため、テープには「見る → 変える」が必ず揃って残る。検索や読み取りは、AI がもともと持っている Read・grep に任せる（hook が記録する。[cli.md](cli_ja.md) の `srwr hook`）。
+`select` を経ない `replace` はない。そのため、テープには「見る → 変える」が必ず揃って残る。`sub` は、同じ変更を何か所もするときのもので、場所の数を渡させる。何を変えたかの確かめは、その数で行う。検索や読み取りは、AI がもともと持っている Read・grep に任せる（hook が記録する。[cli.md](cli_ja.md) の `srwr hook`）。
 
-どちらにも `why`（理由）が必須。人が [テープ](tape_ja.md) を再生するときの中心になる。
+3つとも `why`（理由）が必須。人が [テープ](tape_ja.md) を再生するときの中心になる。
 
 ツールの説明とエラーの文言は、AI が読むものなので、画面の言語に関わらず英語。
 
@@ -83,9 +84,37 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **2つの
 
 扱えないファイル：LF 以外の改行（CRLF）を含むファイルと、バイナリ。`unsupported_file` になる。
 
+## sub
+
+複数のファイルで、文字列を別の文字列に一度に置き換える（簡単な sed のようなもの）。理由も記録する。文字列は、そのままの文字として探す（正規表現ではない）。各ファイルを左から探し、場所は重ならない。**全部のファイルでの場所の数 `count` は必須。見つかった数が違えば、何も変えない。**
+
+```jsonc
+// 入力
+{ "files": ["a.go", "b.go"], "old": "oldName(", "new": "newName(", "count": 3, "why": "新しい命名規則に合わせて、ヘルパーの名前を変える" }
+// 出力
+{ "ok": true, "count": 3, "files": [
+  { "file": "a.go", "hits": 2, "startLine": 12, "endLine": 30, "selection": "sel_041G417ZRKYSPWJ7X4Z5PPKP", "lines": ["…"] },
+  { "file": "b.go", "hits": 1, "startLine": 7, "endLine": 7, "selection": "sel_042020AD5CH4C75M7DH075CM", "lines": ["…"] } ] }
+```
+
+| 項目 | 意味 |
+|---|---|
+| `files` | 作業場からの相対パス。既存のファイルだけ。同じパスは1回だけ |
+| `old` | 探す文字列。空は不可。複数行（LF）でもよい |
+| `new` | 置き換える文字列。`""` は削除 |
+| `count` | 全部のファイルを合わせた、場所の数の見込み。1以上 |
+| `why` | なぜこう変えるか |
+| 出力の `files` | 変わったファイルだけ。`hits` はそのファイルの場所の数、`startLine`・`endLine` は変えたあとの、最初の場所から最後の場所までの行、`selection` はその行のトークン（`replace` で使える）、`lines` はその内容 |
+
+- 見つかった数が `count` と違えば `count_mismatch`。メッセージと `actual` が、ファイルごとの場所の数を言う（`{"a.go": 3, "b.go": 1}`）。**どのファイルも変えず、テープには `failure` しか書かない**
+- どのファイルも、`select` と同じ検査をする（記録しない・CRLF・バイナリ・作業場の外）。1つでも使えなければ、何も変えない
+- 行で表せない変更（ファイルの最後の改行を足す・消す）は `invalid_input`。`select` と `replace` で行う
+- テープには、変わったファイルごとに `replace` を1つ、同じ `why` で書く（[tape.md](tape_ja.md#replace)）。ビューワーは、それぞれをファイルの差分として、上に `why` を付けて見せる
+- 正規表現は使えない。場所を1つずつ選びたいときは `select` と `replace` を使う
+
 ## why
 
-- `select` と `replace` の**両方で必須**。空白だけも不可（`invalid_input`）
+- `select`・`replace`・`sub` の**3つとも必須**。空白だけも不可（`invalid_input`）
 - `select` は「なぜここを見るか」、`replace` は「なぜこう変えるか」。「何をしているか」の言い換えではなく、理由を1文で書く
 - **ユーザーとの会話と同じ言語**で書く（ツールの説明文と入力スキーマで求めている）。人が読むためのもの
 
@@ -107,8 +136,9 @@ MCP の応答では `isError: true` になり、本文は次の JSON。
 | `content_mismatch` | 範囲の内容が `expect` と違う | メッセージが言う場所を読んで、`select` し直す |
 | `content_not_found` | `expect`（行番号なし）がファイルにない | 内容を確認する。または行番号を付ける |
 | `content_ambiguous` | `expect`（行番号なし）がファイルの2か所以上にある | 行番号を付ける。または `expect` の行を増やす |
-| `ignored_file` | 記録しないファイルに `select`・`replace` した。 | srwr では扱えない。ユーザーに頼む |
-| `invalid_input` | 必須の入力がない、型が違う、`why` が空。`file` が空か NUL を含む、`startLine` と `endLine` の片方だけがある、または両方なく `expect` もない、`selection` が空白だけ、`newText` に CR がある | 入力を直す |
+| `count_mismatch` | `sub` で見つかった場所の数が `count` と違う | ファイルごとの数を読み、正しい `count` で `sub` し直す（または `select` を使う） |
+| `ignored_file` | 記録しないファイルに `select`・`replace`・`sub` した。 | srwr では扱えない。ユーザーに頼む |
+| `invalid_input` | 必須の入力がない、型が違う、`why` が空。`file` が空か NUL を含む、`startLine` と `endLine` の片方だけがある、または両方なく `expect` もない、`selection` が空白だけ、`newText` に CR がある。`sub` では、`files`・`old`・`count` がない・空、同じパスが2回、`old` か `new` に CR がある | 入力を直す |
 | `unsupported_file` | CRLF やバイナリ | — |
 | `internal_error` | I/O エラーなど | — |
 
@@ -119,6 +149,7 @@ MCP の応答では `isError: true` になり、本文は次の JSON。
 | `selection_mismatch` | 補正後の範囲の現在の内容（行の配列） |
 | `content_mismatch` | 範囲の現在の内容（行の配列） |
 | `selection_stale` | 重なった編集の直前まで補正した範囲の、現在の内容（ファイルの範囲内に収める） |
+| `count_mismatch` | ファイルごとの場所の数（`{"a.go": 3, "b.go": 1}`） |
 | `invalid_range` | `{"lineCount": 行数}`。作業場の外のパスのときはなし |
 | ほか | なし |
 
@@ -141,13 +172,14 @@ MCP の応答では `isError: true` になり、本文は次の JSON。
 
 ## AI が犯しやすいミス
 
-AI がこの2つのツールを使って実際に犯したミス。どれも、コードのあるふつうのエラーで、失敗した呼び出しは [`failure`](tape_ja.md#failure) としてテープに書かれる。
+AI がこれらのツールを使って実際に犯したミス。どれも、コードのあるふつうのエラーで、失敗した呼び出しは [`failure`](tape_ja.md#failure) としてテープに書かれる。
 
 - **`file` は、作業場からの相対パスで渡す。** `/home/me/app/main.go` のような絶対パスは `invalid_range`、`../main.go` も `invalid_range` になる。`cmd/app/main.go` の形で書く。
 - **空範囲は、1 行ずれやすい。** `endLine = startLine - 1` は「`startLine` 行目の直前」を指すので、`startLine: 13, endLine: 12` は 12 行目と 13 行目の間になる。先にその場所の前後の行を読み、番号を確かめてから `select` を呼ぶ。
 - **新しい `select` の行番号は、今のファイルの行番号で渡す。** ほかの編集で行がずれたとき、すでに発行したトークンは srwr が補正するが、新しい `select` の `startLine`・`endLine` は補正しない。ほかの編集のあとは、ファイルを読み直すか、返ってきた `lines`（`replace` のあとは `before`・`after` も）で確かめる。もっと良いのは、`expect` に狙った行を渡すこと。番号が違えば、違う場所を選ばずに断られる。
 - **新しいファイルは、`select` と `replace` では作れない。** `select` は `file_not_found` になる。シェルのコマンドで作る。作ったファイルは、`created: true` の [`external`](tape_ja.md#external) として記録される。
 - **同じ場所を続けて直すときは、`replace` が返した新しいトークンを使う。** 使ったトークンは使い切りで、もう一度使うと `selection_stale` になる。
+- **同じ変更を何か所もするときは、`select` と `replace` を何度も使わず、`count` つきの `sub` を使う。** `count` が違えば、ファイルごとの数を言って断られる。
 - **エラーを読む。** `invalid_range` は `lineCount`（ファイルの行数）を返すので、番号を直すにはそれで足りる。
 
 ## 関連

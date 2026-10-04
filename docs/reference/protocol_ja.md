@@ -62,6 +62,7 @@
 |---|---|---|
 | `select` | テープの `select`（`source` が `mcp` でも `hook` でも） | ファイル、範囲、`why`（`null` のことがある）、`seq`、系譜（`selection`） |
 | `replace` | テープの `replace` | ファイル、変更前後の範囲とテキスト、`why`（`null` のことがある）、`seq`、系譜（`from`→`selection`） |
+| `sub` | テープの `replace` のうち、`sub` が書いたもの（`tool` が `sub`）：1ファイルの、全部の場所 | ファイル、範囲と変更前後のテキスト、`why`、`seq`、`hits`（場所の数）。`external` と同じ差分で見せ、`why` は左右の上の帯に出す |
 | `external` | テープの `external` | ファイル、変更前（直前の内容）と変更後（`text`）、削除されたか |
 | `final` | テープの最後の内容と、今のファイルの比較 | ファイル、変更前（テープの最後）と変更後（今のファイル）、今は存在しないか |
 | `failure` | テープの `failure`（AI がエラーを受け取った `select`・`replace`） | `tool`・`code`・`message`・`why`。`file` は、分からないときと伏せるときは `""`。`range` は `select` に渡された範囲（ないときは `{start:0,end:-1}`）。変更前後の本文は空 |
@@ -71,22 +72,23 @@ Frame のフィールド：
 | フィールド | 内容 |
 |---|---|
 | `index` | 0 から始まる、列の中の位置 |
-| `kind` | `select`・`replace`・`external`・`final`・`failure` |
+| `kind` | `select`・`replace`・`sub`・`external`・`final`・`failure` |
 | `seq`・`ts` | テープの `seq`、時刻（エポックミリ秒。読めなければ前のコマの値、最初は 0）。`final` は最後のコマの値 |
 | `file` | 作業場からの相対パス（`/` 区切り） |
-| `range` | `{start, end}`。変更後の側の範囲（`select`＝その範囲、`replace`＝新しい範囲、`external`・`final`＝ファイル全体）。`end < start` は空範囲 |
+| `range` | `{start, end}`。変更後の側の範囲（`select`＝その範囲、`replace`・`sub`＝新しい範囲、`external`・`final`＝ファイル全体）。`end < start` は空範囲 |
 | `oldRange` | `replace` だけ。変更前の側の範囲 |
 | `why`・`selection`・`from` | 文字列または `null` |
 | `parent` | 系譜の親（`from` が指すコマの `index`）、なければ `null` |
 | `tool`・`code`・`message` | `failure` だけ。ツール（`select`・`replace`）、エラーコード、エラー文（実際のパスは伏せてある。[tape_ja.md](tape_ja.md#failure)） |
+| `hits` | `sub` だけ。ファイルの中で変えた場所の数（ほかのコマでは出さない） |
 | `deleted` | 差分のコマだけ。変更後にファイルが存在しない（そのときだけ `true`。それ以外は出さない） |
 | `before`・`after` | **`withText` が真のときだけ**。変更前・変更後の全文。ふだんは `frame/state` で取る（大きいテープで、全コマが全文を持たないため） |
 
-- **送る種類（`kinds`）**：`tape/open` と `live/start` は `kinds`（`select`・`replace`・`external`・`failure` の配列）を受ける。サーバーは、その種類だけを送り、**0 から番号を振り直す**（`index` は送ったものの中の位置で、`frame/state` もその `index` を受ける）。送らなかった数は `hidden` で返す（`{"failure": 2}` のような形。送らなかったものがない種類は入れない。何も送らなかったものがないときは、`hidden` 自体を出さない）。`final` は `external` に連れる。省略すると `["select","replace","external"]`：頼まない限り `failure` のコマは送らない。知らない名前は `invalid_params`。空の配列は何も送らない。表示する種類を替えるときは、クライアントが別の `kinds` でもう一度開く。`frame/state` は、送らなかったコマに左右されない：ファイルの内容は、送らなかったコマも含めた結果になる
+- **送る種類（`kinds`）**：`tape/open` と `live/start` は `kinds`（`select`・`replace`・`external`・`failure` の配列）を受ける。サーバーは、その種類だけを送り、**0 から番号を振り直す**（`index` は送ったものの中の位置で、`frame/state` もその `index` を受ける）。送らなかった数は `hidden` で返す（`{"failure": 2}` のような形。送らなかったものがない種類は入れない。何も送らなかったものがないときは、`hidden` 自体を出さない）。`final` は `external` に、`sub` は `replace` に連れる。省略すると `["select","replace","external"]`：頼まない限り `failure` のコマは送らない。知らない名前は `invalid_params`。空の配列は何も送らない。表示する種類を替えるときは、クライアントが別の `kinds` でもう一度開く。`frame/state` は、送らなかったコマに左右されない：ファイルの内容は、送らなかったコマも含めた結果になる
 - ライブのコマ（`live/start`・`live/frame`）に、最後の差分は含まれない（`external` はテープに書かれたものが出る）
 - **最後の差分は、サーバーが決める。** クライアントは出すだけ
 - テープの項目が増えても（`source`・`tool`・`vcs` など）、クライアントは使わなくてよい
-- **VSCode・Vim が使うフィールド**は、`index`・`kind`・`file`・`range`・`why`・`before`・`after`・`deleted`、`failure` では `tool`・`code`・`message`、それに `seq`（表示する種類を替えたとき、今に一番近いコマを探し直すため）だけ。`ts`・`selection`・`from`・`parent`・`oldRange` は使わない。ライブでも本文（`before`・`after`）を使うので、`live/start` に `withText: true` を渡す
+- **VSCode・Vim が使うフィールド**は、`index`・`kind`・`file`・`range`・`why`・`before`・`after`・`deleted`、`sub` では `hits`、`failure` では `tool`・`code`・`message`、それに `seq`（表示する種類を替えたとき、今に一番近いコマを探し直すため）だけ。`ts`・`selection`・`from`・`parent`・`oldRange` は使わない。ライブでも本文（`before`・`after`）を使うので、`live/start` に `withText: true` を渡す
 
 ## サーバーの振る舞い
 

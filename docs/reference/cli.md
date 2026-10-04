@@ -8,7 +8,7 @@
 
 | Command | Used by | Role |
 |---|---|---|
-| `srwr mcp` | The AI (an MCP client) | The MCP server (stdio). Provides [`select` / `replace`](mcp.md) |
+| `srwr mcp` | The AI (an MCP client) | The MCP server (stdio). Provides [`select` / `replace` / `sub`](mcp.md) |
 | `srwr hook` | The hook of Claude Code | Records Read, Bash, Grep and Edit on the same [tape](tape.md) as `srwr mcp` |
 | `srwr view-server` | The editors (the VSCode extension, the Vim script) | The view server. People do not use it directly ([protocol.md](protocol.md)) |
 | `srwr view [tape]` | People | Replays in Vim ([vim.md](vim.md)) |
@@ -54,7 +54,7 @@ The directory where srwr is used is called the **workspace**. srwr makes the fol
 
 ## srwr mcp
 
-The MCP server the AI uses. It is started by the AI agent (the MCP client). The workspace is `--root <workspace>` (the current directory if omitted). There are two tools, `select` and `replace` ([mcp.md](mcp.md)). Several may be started in the same workspace. They write to the same session (the same tape), and a selection token issued by one can be used by another ([tape.md](tape.md)).
+The MCP server the AI uses. It is started by the AI agent (the MCP client). The workspace is `--root <workspace>` (the current directory if omitted). There are three tools, `select`, `replace` and `sub` ([mcp.md](mcp.md)). Several may be started in the same workspace. They write to the same session (the same tape), and a selection token issued by one can be used by another ([tape.md](tape.md)).
 
 ## srwr hook
 
@@ -120,7 +120,7 @@ Sets up the workspace for srwr. It gives the same result however many times it r
 |---|---|
 | `.srwr/` | Makes the directory and the key |
 | `.mcp.json` | Registers `srwr mcp` (existing servers are kept and this is added; if `srwr` is already there, it is left alone) |
-| `.claude/settings.json` | Registers the hook, the setting that lets Claude Code use the tools without asking (`enabledMcpjsonServers`, and the permission of `select` and `replace`), and in strict mode the ban on Edit/Write (existing content is kept and this is added) |
+| `.claude/settings.json` | Registers the hook, the setting that lets Claude Code use the tools without asking (`enabledMcpjsonServers`, and the permission of `select`, `replace` and `sub`), and in strict mode the ban on Edit/Write (existing content is kept and this is added) |
 | `.gitignore` | Adds `.srwr/key`, `.srwr/lock`, `.srwr/active` and `.srwr/init-backup/` (when under git). Tapes (`.srwr/tapes/`) are not ignored, so that they can be shared |
 
 - It does not break existing files. The order of keys and the other settings, servers and hooks are kept as they are. The format is tidied to JSON with a 2-space indent

@@ -35,7 +35,7 @@
 - 追記のみ。既存の行を書き換えたり消したりしない
 - `seq` はテープ内で1から始まる連番で、欠番がない（`header` は持たない）
 - `ts` は RFC 3339 の **UTC** で、ミリ秒まで、末尾は `Z`（`2026-09-29T02:20:04.123Z`）。古い版が書いたテープには `+09:00` のようなオフセット（そのときの機械の時間帯）が付いている。同じ瞬間として読み、古い行を書き換えることはしない
-- 値のないフィールド（`why`・`selection`・`from` など）は、省略せず `null`。例外は、任意の `source`・`tool`（空なら書かない）と `deleted`（真のときだけ書く）
+- 値のないフィールド（`why`・`selection`・`from` など）は、省略せず `null`。例外は、任意の `source`・`tool`（空なら書かない）、`hits`（`sub` が書いた `replace` のときだけ書く）と `deleted`（真のときだけ書く）
 - 1イベント1行。改行で終わっていない最後の行は、書き込み途中として扱う
 - 読む側は、知らないフィールドを無視する
 - **v1 までは、テープの形式を互換なしで変えることがある。** ある版が書いたテープを別の版が読めることは、約束しない。v1 からは、フィールドは足せるが、既存の意味は変えない
@@ -90,6 +90,7 @@ hook が記録した `select`（Read など）は、`why` が `null`。`source`�
 - `oldText`・`newText` は、範囲の行を `\n` でつないだもの（末尾の改行は含まない）。削除は `newEndLine = newStartLine - 1` で、`newText` は空。空行1つは `newEndLine = newStartLine` で `newText` も空なので、行の数は `newStartLine`・`newEndLine` から読む
 - 範囲トークンの中の `seq` は、そのトークンを発行したイベントの `seq`
 - hook が記録した `replace`（Edit）は、`from`・`selection`・`why` が `null` で、`source` が `hook`、`tool` が `Edit`。範囲は置換位置を含む行全体
+- `sub`（[mcp.md](mcp_ja.md#sub)）が書いた `replace` は、`source` が `mcp`、`tool` が `sub`、`from` が `null` で、ファイルの中で変えた場所の数 `hits` を持つ。変わったファイルごとに**1つ**で、`why` は同じ。範囲は、最初の場所から最後の場所までの行全体（間の行も `oldText` に入る）。`selection` は、変えたあとの範囲のトークン
 
 ### external
 
@@ -102,7 +103,7 @@ srwr の外でファイルが変わったことを検知したとき。`snapshot
 - `hunks`：**変わった行**。テープが直前に持っていた内容（`expectedSha` のハッシュの内容）に対するもの。箇所は上から順で、重ならない。`startLine`・`endLine` は変更前の行、`newText` は変更後の行（`\n` でつなぐ）、`newStartLine`・`newEndLine` はその行番号で、`replace` と同じ。挿入は `endLine = startLine - 1`、削除は `newText` が空で `newEndLine = newStartLine - 1`。変更前の内容に当てると、変更後の内容（`actualSha` のハッシュ）になる。差分のコマ（左右に並べた diff）として再生する
 - `text`：**変更後のファイル全文**。行で表せない変更（ファイル末尾の改行だけが変わった）や、比べるには大きすぎる変更のとき、`hunks` の代わりに書く。ファイルが消えていたときは `null`、`actualSha` は空文字列で、`deleted: true` が付く
 - `created`：ファイルが**新しい**とき（テープがその内容を持たず、シェルのコマンドが作った）に `true` で書く。`expectedSha` は空文字列で、`hunks`（または `text`）がファイル全体を持つので、左が空の差分のコマとして再生する。見つけるのは hook だけ（[cli_ja.md](cli_ja.md) の `srwr hook`）
-- `detectedBy`：検知のきっかけ（`select`・`replace`・`hook`）
+- `detectedBy`：検知のきっかけ（`select`・`replace`・`sub`・`hook`）
 - `author.kind` は `external` 固定（誰が変えたかは srwr には分からない）
 - 古い形式の `external` も読める：全文の `text` を持ち直後に `snapshot` が続くもの、`text` のないもの（そのときは、直後の `snapshot` を変更後の内容として見せる）
 
@@ -112,17 +113,17 @@ srwr の外でファイルが変わったことを検知したとき。`snapshot
 
 ### failure
 
-`select`・`replace` が失敗したとき（AI がエラーを受け取ったとき）に記録する。AI がどんなミスをするかを知るためのもの。ビューワーは、頼まれたときだけコマとして出す（赤。[vscode_ja.md](vscode_ja.md)）。ふだんは出さない。
+`select`・`replace`・`sub` が失敗したとき（AI がエラーを受け取ったとき）に記録する。AI がどんなミスをするかを知るためのもの。ビューワーは、頼まれたときだけコマとして出す（赤。[vscode_ja.md](vscode_ja.md)）。ふだんは出さない。
 
 ```json
 {"v":1,"seq":7,"ts":"…","type":"failure","tool":"select","file":null,"startLine":3,"endLine":9,"selection":null,"why":"main 関数を確認する","code":"invalid_range","message":"The path is absolute. Give a path relative to the workspace"}
 {"v":1,"seq":9,"ts":"…","type":"failure","tool":"replace","file":"cmd/app/main.go","startLine":null,"endLine":null,"selection":"sel_0410R3GZE4KV11C6325D32S7","why":"…","code":"selection_stale","message":"an edit overlapped the range after the select. Call select again"}
 ```
 
-- `tool`：`select` または `replace`。`code` と `message` は、AI が受け取ったエラー（[mcp_ja.md](mcp_ja.md)）
-- `file`：作業場の中のパス。分からないときと、伏せるときは `null`。`startLine`・`endLine` は `select` のとき、`selection`（渡されたトークン）は `replace` のとき。`why` は AI が書いたもの。値がないものは `null`
+- `tool`：`select`・`replace`・`sub`。`code` と `message` は、AI が受け取ったエラー（[mcp_ja.md](mcp_ja.md)）
+- `file`：作業場の中のパス。分からないときと、伏せるときは `null`（`sub` は、ファイルを1つだけ渡したときだけそのファイル）。`startLine`・`endLine` は `select` のとき、`selection`（渡されたトークン）は `replace` のとき。`why` は AI が書いたもの。値がないものは `null`
 - **実際のパスは伏せる**：絶対パス、作業場の外を指すパス、記録しないファイルのとき、`file` は `null` で、`message` はパスを含まない文にする（`The path is absolute. Give a path relative to the workspace`、`The path points outside the workspace`、`The file is not recorded`）
-- `replace` の `newText` は書かない。`message` は 300 文字で切る
+- `replace` の `newText`、`sub` の `old` と `new` は書かない。`message` は 300 文字で切る
 - srwr の編集に届く前に見つかる失敗（必須の入力がない、値の型が違う）も記録する。`file` は `null`
 
 ## 範囲トークン

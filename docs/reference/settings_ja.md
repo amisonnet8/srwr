@@ -90,7 +90,7 @@ srwr が出す文言は**英語が既定**で、日本語にも切り替えら�
   "hooks": { "PostToolUse": [ { "matcher": "Read|Bash|Grep|Edit", "hooks": [ { "type": "command", "command": "srwr hook" } ] } ] },
   "enabledMcpjsonServers": ["srwr"],
   "permissions": {
-    "allow": ["mcp__srwr__select", "mcp__srwr__replace"],
+    "allow": ["mcp__srwr__select", "mcp__srwr__replace", "mcp__srwr__sub"],
     "deny": ["Edit", "Write", "MultiEdit", "NotebookEdit"]
   }
 }

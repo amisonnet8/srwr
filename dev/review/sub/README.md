@@ -16,7 +16,7 @@
 3. **`file`**：複数ファイルを渡す sub の失敗は、`file` を `(not shown)` にする（1つだけなら、そのファイル）
 
 ## 画像（`images/`、dark と light）
-- `vscode-sub-diff-c`・`vscode-ops-c`：案C のコマ（左右の差分）と操作一覧
+- `vscode-sub-diff-c`（帯の作り方1）・`vscode-sub-diff-c2`（帯の作り方2・推奨）・`vscode-ops-c`：案C のコマ（左右の差分）と操作一覧
 - `vscode-sub-frame-a`・`vscode-ops-a`：案A のコマと操作一覧
 - `vscode-failure-frame`：数が合わなかった失敗
 - `vim-sub-diff-c`・`vim-sub-frame`（案A）・`vim-failure-frame`：Vim のコマと失敗

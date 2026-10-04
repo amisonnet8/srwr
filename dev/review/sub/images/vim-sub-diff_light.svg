@@ -3,7 +3,7 @@
 <text x="0" y="13" fill="#6e6e6e" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">Before  ⚠ sub: a.go</text>
 <text x="588.0" y="13" fill="#6e6e6e" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">After  a.go</text>
 <rect x="0" y="18" width="1176" height="17" fill="#b45f06"/>
-<text x="420" y="30" fill="#ffffff" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" font-weight="bold" xml:space="preserve" style="white-space:pre">Rename the helper to the new naming rule</text>
+<text x="714" y="30" fill="#ffffff" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" font-weight="bold" xml:space="preserve" style="white-space:pre">Rename the helper to the new naming rule</text>
 <rect x="0" y="35" width="588.0" height="17" fill="#cfe3fb"/>
 <rect x="588.0" y="35" width="588.0" height="17" fill="#fde3c8"/>
 <text x="0" y="47" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">  12  		return oldName(id)</text>

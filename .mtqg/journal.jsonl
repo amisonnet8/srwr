@@ -533,3 +533,5 @@
 {"id":"0de038493ee84d1a9fe7d53ee2b8c83c","op":"create","type":"qa","re":"f2d4eab74ae74fcd875b45169df2c182","text":"含める。v0.1.3 の前に直す。開始の合図は別に待つ","v":1,"ts":"2026-10-04T12:28:15Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"f2d4eab74ae74fcd875b45169df2c182","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-04T12:28:15Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"7c8852a50b724eceb470ad0e7c22bcc2","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-04T12:29:49Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"f1b6f6ef12664eeeb668c7c5fc9f4bc2","op":"create","type":"bug","status":"open","text":"作業例のテスト TestWorkflowExample が現在時刻に依存し、書いた日から 30 分過ぎた CI で落ちた（今のセッションが無くなる）。cli に差し込める時計 cli.Now を足し、テストで固定して直した","v":1,"ts":"2026-10-04T12:35:27Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"f1b6f6ef12664eeeb668c7c5fc9f4bc2","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-04T12:35:31Z","author":{"kind":"ai","name":"claude-code"}}

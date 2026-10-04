@@ -154,6 +154,10 @@ func (w *workflowRun) run(line string, docIDs []string) (string, int) {
 			}
 		}
 	}
+	at := w.clock.Add(10 * time.Minute) // ten minutes after the last thing the AI did: the session is still the current one
+	old := cli.Now
+	cli.Now = func() time.Time { return at }
+	defer func() { cli.Now = old }()
 	var out, errOut strings.Builder
 	code := cli.Run(append(fields, "--root", w.root), nil, &out, &errOut)
 	return out.String() + errOut.String(), code

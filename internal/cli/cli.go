@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"time"
 
 	"github.com/amisonnet8/srwr/internal/core"
 	"github.com/amisonnet8/srwr/internal/hook"
@@ -123,13 +124,16 @@ func runViewServer(args []string, stdin io.Reader, stdout, stderr io.Writer) int
 	return 0
 }
 
+// Now is the clock of the commands that open the workspace. Tests replace it; nothing else does.
+var Now = time.Now
+
 func runMCP(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	root, code := workspaceArg("mcp", args, stderr)
 	if code != 0 {
 		return code
 	}
 
-	ws, err := session.Open(root, session.Options{Version: Version()})
+	ws, err := session.Open(root, session.Options{Version: Version(), Now: Now})
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "srwr mcp: %v\n", err)
 		return 1
@@ -160,7 +164,7 @@ func runHook(args []string, stdin io.Reader, stderr io.Writer) int {
 		_, _ = fmt.Fprintf(stderr, "srwr hook: cannot open the workspace %q as a directory, so nothing is recorded\n", *root)
 		return 0
 	}
-	ws, err := session.Open(*root, session.Options{Version: Version()})
+	ws, err := session.Open(*root, session.Options{Version: Version(), Now: Now})
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "srwr hook: %v\n", err)
 		return 0

@@ -45,7 +45,7 @@ func runTapes(args []string, stdout, stderr io.Writer) int {
 		_, _ = fmt.Fprintf(stderr, lang.Pick("srwr tapes: cannot open the workspace %q as a directory\n", "srwr tapes: 作業場 %q がディレクトリとして開けません\n"), *root)
 		return 1
 	}
-	ws, err := session.Open(*root, session.Options{Version: Version()})
+	ws, err := session.Open(*root, session.Options{Version: Version(), Now: Now})
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "srwr tapes: %v\n", err)
 		return 1
@@ -254,7 +254,7 @@ func tapesPrune(ws *session.Workspace, keep int, older string, stdout, stderr io
 		if _, found := tape.Find(filepath.Dir(ws.TapePath("x")), tx.TapeID()); found {
 			cur = tx.TapeID()
 		}
-		now := time.Now()
+		now := Now()
 		for i, r := range rows {
 			doomed := false
 			if keep >= 0 {

@@ -17,7 +17,7 @@ tr.ok td:last-child{color:#1a7f37}tr.ng td{background:#fdecea;color:#c62828}
 figcaption{font-size:13px;color:#555}.why{background:#fff8e1;padding:6px 6px 6px 28px}.note{background:#eef6ff;border-left:4px solid #0b61a4;padding:8px 14px}
 h2{margin:22px 0 4px}h3{margin:14px 0 2px}h4{margin:10px 0 2px}code{background:#eee;padding:0 4px}`
 
-// renderPage makes the page a person looks at (the UI gate of R6, dev/review/R6): the summary first, then the checks, then
+// renderPage makes the page a person looks at (the UI gate of R6): the summary first, then the checks, then
 // the frames that differ (left the baseline, right now, the cells that differ in a red frame), then what a person judges.
 func renderPage(r *Report) string {
 	var b strings.Builder

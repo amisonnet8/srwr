@@ -31,7 +31,7 @@ func TestEnglishIsTheDefault(t *testing.T) {
 	}
 }
 
-// The outputs of dev/review/R10.5 (the examples the person approved), in English.
+// The outputs the person approved at the UI gate of R10.5, in English.
 func TestInitOutputsInEnglish(t *testing.T) {
 	english(t)
 	empty := `Workspace: /home/me/project

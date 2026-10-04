@@ -105,6 +105,7 @@
 | `index.html` | `README.md` の要点と画像を、1枚に並べたページ（外部の読み込みなし。ブラウザで開くだけで見える） |
 
 - **`index.html` は、本物の HTML で書き、画像（SVG）を埋め込んだ1ファイルにする。** 画像を相対パスで参照すると、開く環境によって出ない。`README.md` の Markdown を `<pre>` に流し込まない（R4 で2回やり直した）
+- **段階が終わったら、`dev/review/<段階>/` を `dev/review/<段階>.zip` に圧縮して、元のディレクトリを消す**（完了した資料で、変わらない。HTML が GitHub の言語の割合を占めないようにする。見たいときは展開する）
 - 人間には、2章の形の短い依頼で `dev/review/<段階>/index.html` を開いてもらい、`AskUserQuestion` で「了承／直す」を選んでもらう
 - **了承されてから実装する。** 了承の内容は `mtqg q add`（質問と回答）に残す。「直す」なら直して出し直す
 - 確定済みのデザイン（`docs/reference/vscode.md`・`vim.md`）は、ゲートでも変えない。変えるのは新しい画面だけ。決まった新しい画面は、`docs/reference/vscode.md`・`vim.md` に足し、基準を `qsoku ui-accept` で取る

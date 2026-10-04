@@ -3,7 +3,7 @@ package uicheck
 import "fmt"
 
 // LiveStatus redraws the status line of the right-hand window of a live view that went back to an older frame, the way
-// the UI gate of R5 (dev/review/R5) decided: the close hint is left out when it does not fit, so the orange mark
+// the UI gate of R5 decided: the close hint is left out when it does not fit, so the orange mark
 // "L：LIVE に戻る（新着 N）" is whole. The approved image of this state (stage L4 to L6 of the live view) shows the old,
 // cut-off line; this is the line that replaces it. col is where the window starts.
 func LiveStatus(g *Grid, row, col, index, total, behind int, where string) error {

@@ -5,4 +5,4 @@
 | 場所 | 中身 |
 |---|---|
 | `roadmap.md` | 開発の段階（R0〜R14）と完了条件。進捗そのものは mtqg の todo |
-| `review/<段階>/` | UIゲートの資料（`README.md`・`images/`・`index.html`）。人間の了承をもらってから実装する（`.claude/rules/working-with-human.md` 4章） |
+| `review/<段階>/` | UIゲートの資料（`README.md`・`images/`・`index.html`）。人間の了承をもらってから実装する（`.claude/rules/working-with-human.md` 4章）。段階が終わったら `review/<段階>.zip` に圧縮する |

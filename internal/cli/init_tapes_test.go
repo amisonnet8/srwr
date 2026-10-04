@@ -35,7 +35,7 @@ func gitDir(t *testing.T) string {
 	return root
 }
 
-// The outputs of dev/review/R9 (the examples the person approved).
+// The outputs the person approved at the UI gate of R9.
 func TestInitOutputs(t *testing.T) {
 	empty := `作業場：/home/me/project
 

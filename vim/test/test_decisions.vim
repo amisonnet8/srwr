@@ -1,5 +1,5 @@
 vim9script
-# The two problems carried over from the previous implementation, as the UI gate decided (dev/review/R5):
+# The two problems carried over from the previous implementation, as the UI gate of R5 decided:
 #  1. a range near the bottom of the window was hidden under the why rows (RevealTop)
 #  2. the live mark "L：LIVE に戻る（新着 N）" was cut off by the close hint (StatusParts)
 import './helpers.vim' as t

@@ -55,6 +55,7 @@
 - JSON は `internal/setup/ordered.go` の順序を保つ値で読み書きする（`map` に落とさない。キーの順と数値の書式を保つ）。変えるものがなければ書き換えない（バックアップも作らない）
 - 厳格 ⇄ 緩いの切り替えで外す禁止は、`Edit`・`Write`・`MultiEdit`・`NotebookEdit` の4つだけ
 - `srwr tapes new`・`prune` はロック（`Workspace.Do`）の中で動かす。`prune` は今のセッションのテープを消さない。`srwr tapes`（一覧）と `path` はロックも `.srwr/` の作成もしない
+- `srwr tapes check` は読むだけ（ロックなし、`.srwr/` を作らない）。`git` を動かすのは `internal/vcs` の `Changes` に集める（`Detect` と違い、失敗の理由を返す。人間が頼んだ検査なので）。テープにあるか・記録しないかの判定は、テープのイベントの `file` と `ignore.Matcher` で行う
 - 端末の表示の桁は `cellWidth`（全角は2桁）で揃える。出力の文言は、UIゲートで了承した例と `init_tapes_test.go` が一致を確かめる
 
 ## テープを読む・行を数える

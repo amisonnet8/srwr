@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -12,9 +13,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/amisonnet8/srwr/internal/ignore"
 	"github.com/amisonnet8/srwr/internal/lang"
 	"github.com/amisonnet8/srwr/internal/session"
 	"github.com/amisonnet8/srwr/internal/tape"
+	"github.com/amisonnet8/srwr/internal/vcs"
 )
 
 // tapeRow is what the list shows of one tape.
@@ -27,7 +30,7 @@ type tapeRow struct {
 	size    int64
 }
 
-// runTapes is srwr tapes [new | prune (--keep N | --older-than 30d) | path <id>] [--root <dir>].
+// runTapes is srwr tapes [new | prune (--keep N | --older-than 30d) | path <id> | check [<id>]] [--root <dir>].
 func runTapes(args []string, stdout, stderr io.Writer) int {
 	// --root may come anywhere; what is left is the verb and its arguments.
 	fs := flag.NewFlagSet("srwr tapes", flag.ContinueOnError)
@@ -65,8 +68,18 @@ func runTapes(args []string, stdout, stderr io.Writer) int {
 			return 2
 		}
 		return tapesPath(ws, rest[0], stdout, stderr)
+	case "check":
+		if len(rest) > 1 {
+			_, _ = fmt.Fprintln(stderr, lang.Pick("Usage: srwr tapes check [<tape ID>]", "使い方: srwr tapes check [<テープID>]"))
+			return 2
+		}
+		id := ""
+		if len(rest) == 1 {
+			id = rest[0]
+		}
+		return tapesCheck(ws, id, stdout, stderr)
 	}
-	_, _ = fmt.Fprintf(stderr, lang.Pick("srwr tapes: unknown action %q (new, prune, path)\n", "srwr tapes: 知らない操作 %q（new・prune・path）\n"), verb)
+	_, _ = fmt.Fprintf(stderr, lang.Pick("srwr tapes: unknown action %q (new, prune, path, check)\n", "srwr tapes: 知らない操作 %q（new・prune・path・check）\n"), verb)
 	return 2
 }
 
@@ -317,3 +330,83 @@ func shortTime(t time.Time) string {
 
 // timeCol is the width of a time column: the English time is a little longer than the Japanese one.
 func timeCol() int { return lang.PickInt(14, 13) }
+
+// tapesCheck lists the files that changed in the git work tree but are not on the tape. It only reads: no lock, no .srwr/ made.
+// id is empty for the current session, or the newest tape when there is none.
+func tapesCheck(ws *session.Workspace, id string, stdout, stderr io.Writer) int {
+	label := ""
+	switch {
+	case id != "":
+		id = strings.TrimSuffix(filepath.Base(id), tape.FileSuffix)
+		if !tape.ValidID(id) {
+			_, _ = fmt.Fprintf(stderr, lang.Pick("srwr tapes check: %q is not a valid tape ID\n", "srwr tapes check: テープID %q が正しくありません\n"), id)
+			return 1
+		}
+	default:
+		if cur, ok := ws.Current(); ok {
+			id, label = cur, lang.Pick(" (current session)", "（今のセッション）")
+			break
+		}
+		rows, err := tapeRows(ws)
+		if err != nil || len(rows) == 0 {
+			_, _ = fmt.Fprintln(stderr, lang.Pick("srwr tapes check: there is no tape", "srwr tapes check: テープがありません"))
+			return 1
+		}
+		id = rows[0].id
+	}
+	data, err := os.ReadFile(ws.TapePath(id))
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, lang.Pick("srwr tapes check: there is no tape %s\n", "srwr tapes check: テープ %s がありません\n"), id)
+		return 1
+	}
+	onTape, startedDirty := map[string]bool{}, false
+	for _, e := range tape.Parse(data).Events {
+		if e.Type == tape.TypeHeader {
+			var v struct{ Dirty bool }
+			startedDirty = len(e.VCS) > 0 && json.Unmarshal(e.VCS, &v) == nil && v.Dirty
+			continue
+		}
+		onTape[e.File] = true
+	}
+	changes, err := vcs.Changes(ws.Root())
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, "srwr tapes check: %v\n", err)
+		return 1
+	}
+	matcher, err := ignore.Load(ws.Root())
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, "srwr tapes check: %v\n", err)
+		return 1
+	}
+	var missing []vcs.Change
+	var unrecorded []string
+	for _, c := range changes {
+		switch {
+		case onTape[c.Path]:
+		case matcher.Match(c.Path):
+			unrecorded = append(unrecorded, c.Path)
+		default:
+			missing = append(missing, c)
+		}
+	}
+	_, _ = fmt.Fprintf(stdout, lang.Pick("Tape %s%s\n", "テープ %s%s\n"), id, label)
+	if len(missing) == 0 {
+		_, _ = fmt.Fprintln(stdout, lang.Pick("Every file that changed in the work tree is on the tape, or is not recorded by the settings.", "作業ツリーで変わったファイルは、すべてテープにあるか、設定で記録しないものです。"))
+	} else {
+		_, _ = fmt.Fprintf(stdout, lang.Pick("Changed in the work tree but not on the tape (%d):\n", "作業ツリーで変わったが、テープにないファイル（%d）：\n"), len(missing))
+		for _, c := range missing {
+			_, _ = fmt.Fprintf(stdout, "  %-4s %s\n", c.Status, c.Path)
+		}
+	}
+	if len(unrecorded) > 0 {
+		_, _ = fmt.Fprintf(stdout, lang.Pick("Changed, and not recorded by the settings (%d): %s\n", "変わったが、設定で記録しないファイル（%d）：%s\n"), len(unrecorded), strings.Join(unrecorded, ", "))
+	}
+	_, _ = fmt.Fprintf(stdout, lang.Pick("On the tape: %d files.\n", "テープにあるファイル：%d\n"), len(onTape))
+	if len(missing) > 0 && startedDirty {
+		_, _ = fmt.Fprintln(stdout, lang.Pick("The work tree had uncommitted changes when this tape started, so some of these may be older than the tape.", "このテープを始めたとき、作業ツリーに未コミットの変更がありました。上のうち、テープより古いものがあるかもしれません。"))
+	}
+	if len(missing) > 0 {
+		return 1
+	}
+	return 0
+}

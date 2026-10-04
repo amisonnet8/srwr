@@ -206,3 +206,75 @@ func TestDoesNotRunProgramsOfTheRepository(t *testing.T) {
 		t.Error("the fsmonitor program of the repository was run")
 	}
 }
+
+func TestParseStatus(t *testing.T) {
+	out := " M a.go\x00A  dir/b.go\x00R  new.go\x00old.go\x00?? c.txt\x00 D gone.go\x00"
+	got := parseStatus(out, "")
+	want := []Change{{"M", "a.go"}, {"A", "dir/b.go"}, {"R", "new.go"}, {"??", "c.txt"}, {"D", "gone.go"}}
+	if len(got) != len(want) {
+		t.Fatalf("got %+v, want %+v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("change %d = %+v, want %+v", i, got[i], want[i])
+		}
+	}
+	// A workspace below the top of the repository: paths are relative to it, and the ones outside are dropped.
+	got = parseStatus(" M sub/in.go\x00 M out.go\x00", "sub/")
+	if len(got) != 1 || got[0] != (Change{"M", "in.go"}) {
+		t.Errorf("below the top: %+v", got)
+	}
+}
+
+func TestChanges(t *testing.T) {
+	needGit(t)
+	root := t.TempDir()
+	if real, err := filepath.EvalSymlinks(root); err == nil {
+		root = real
+	}
+	runGit(t, root, "init", "-q")
+	write(t, root, "a.go", "a\n")
+	write(t, root, "sub/b.go", "b\n")
+	write(t, root, "gone.go", "g\n")
+	runGit(t, root, "add", ".")
+	runGit(t, root, "commit", "-q", "-m", "first")
+	write(t, root, "a.go", "a2\n")
+	write(t, root, "sub/new/c.go", "c\n")
+	write(t, root, ".srwr/tapes/x.jsonl", "tape\n") // never counted
+	if err := os.Remove(filepath.Join(root, "gone.go")); err != nil {
+		t.Fatal(err)
+	}
+	got, err := Changes(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	seen := map[string]string{}
+	for _, c := range got {
+		seen[c.Path] = c.Status
+	}
+	want := map[string]string{"a.go": "M", "gone.go": "D", "sub/new/c.go": "??"}
+	if len(seen) != len(want) {
+		t.Fatalf("changes = %v, want %v", seen, want)
+	}
+	for p, s := range want {
+		if seen[p] != s {
+			t.Errorf("%s = %q, want %q", p, seen[p], s)
+		}
+	}
+	// A workspace in a directory of the repository sees only what is below it, with paths relative to it.
+	sub, err := Changes(filepath.Join(root, "sub"))
+	if err != nil || len(sub) != 1 || sub[0] != (Change{"??", "new/c.go"}) {
+		t.Errorf("sub = %+v, %v", sub, err)
+	}
+}
+
+func TestChangesOutsideGit(t *testing.T) {
+	needGit(t)
+	dir := t.TempDir()
+	if exec.Command("git", "-C", dir, "rev-parse", "--git-dir").Run() == nil { //nolint:gosec // git, in a temporary directory
+		t.Skip("the temporary directory is inside a git work tree")
+	}
+	if _, err := Changes(dir); err == nil {
+		t.Error("Changes did not fail outside git")
+	}
+}

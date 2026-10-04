@@ -154,7 +154,7 @@ For lenient mode (Edit and Write stay allowed), run: srwr init --lenient.
 ## srwr tapes
 
 ```
-srwr tapes [new | prune (--keep N | --older-than 30d) | path <tape ID>] [--root <workspace>]
+srwr tapes [new | prune (--keep N | --older-than 30d) | path <tape ID> | check [<tape ID>]] [--root <workspace>]
 ```
 
 | Command | Content |
@@ -163,8 +163,29 @@ srwr tapes [new | prune (--keep N | --older-than 30d) | path <tape ID>] [--root 
 | `srwr tapes new` | Closes the current session, and the next write starts a new session. Selection tokens issued before the closing can no longer be used |
 | `srwr tapes prune --keep N` / `--older-than 30d` | Deletes old tapes. `--keep N` keeps the newest N. `--older-than` takes the form `30d` or `12h`. It does not ask for confirmation, and prints each deleted tape on a line. **It does not delete the tape of the current session** |
 | `srwr tapes path <id>` | Prints the path of a tape (used when sharing) |
+| `srwr tapes check [<id>]` | Lists the files that changed in the git work tree but are not on the tape. Without an ID it checks the current session (or the newest tape). It only reads |
 
 There is no automatic cleanup. Deleting is done explicitly by the user.
+
+### srwr tapes check
+
+srwr records only the files that `select`, `replace` and the hook saw. A file the AI changed some other way (for example, written by a shell command) may not be on the tape. `check` compares the tape with `git status` and tells you.
+
+- A file is **on the tape** if any event of the tape is about it
+- A changed file that is not on the tape is a **warning**. A changed file that [is not recorded by the settings](#files-that-are-not-recorded) is counted apart and is not a warning. Anything inside `.srwr/` is left out
+- If the work tree already had uncommitted changes when the tape started (the `dirty` of the header), the output says that some warnings may be older than the tape
+- The exit code is 0 when there is no warning and 1 when there is. It needs git; outside a git work tree it prints why and exits with 1
+- It does not take the lock and does not create `.srwr/`
+
+```
+Tape 20261004-1530-ab12 (current session)
+Changed in the work tree but not on the tape (2):
+  M    docs/a.md
+  ??   newfile.txt
+Changed, and not recorded by the settings (1): .env
+On the tape: 3 files.
+The work tree had uncommitted changes when this tape started, so some of these may be older than the tape.
+```
 
 An example of the output (the time zone is `Asia/Tokyo`; the date and time in a tape ID are UTC):
 

@@ -5,6 +5,7 @@ package vcs
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"os/exec"
 	"strings"
@@ -48,4 +49,55 @@ func git(ctx context.Context, dir string, args ...string) (string, error) {
 	cmd.Env = append(os.Environ(), "GIT_OPTIONAL_LOCKS=0", "GIT_TERMINAL_PROMPT=0", "LC_ALL=C")
 	out, err := cmd.Output()
 	return string(out), err
+}
+
+// Change is one file that git says differs from HEAD or is new. Status is git's two-letter code without the blank
+// ("M", "A", "D", "R", "??").
+type Change struct {
+	Status string
+	Path   string // slash-separated, relative to the workspace
+}
+
+// Changes lists the files below root that changed in the git work tree: modified, staged, deleted, renamed (by the new
+// name) and new files that git does not ignore. What is inside .srwr/ is left out. Unlike Detect it says why it failed, since
+// a person asked for it: git is not installed, or root is not in a git work tree.
+func Changes(root string) ([]Change, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), Timeout)
+	defer cancel()
+	prefix, err := git(ctx, root, "rev-parse", "--show-prefix")
+	if err != nil {
+		return nil, errNotGit
+	}
+	out, err := git(ctx, root, "status", "--porcelain=v1", "-z", "--untracked-files=all", "--", ".", ":(exclude).srwr")
+	if err != nil {
+		return nil, errNotGit
+	}
+	return parseStatus(out, strings.TrimSpace(prefix)), nil
+}
+
+// errNotGit is what Changes says when git cannot tell: not installed, not a work tree, or too slow.
+var errNotGit = errors.New("git cannot tell the state of this directory (is git installed, and is it in a git work tree?)")
+
+// parseStatus reads the output of git status --porcelain=v1 -z: entries "XY path" separated by NUL. A rename or copy is
+// followed by one more entry, the old name, which is skipped. prefix is where the workspace is inside the repository
+// ("" or "sub/"); paths are made relative to it, and one that is outside is dropped.
+func parseStatus(out, prefix string) []Change {
+	var changes []Change
+	entries := strings.Split(out, "\x00")
+	for i := 0; i < len(entries); i++ {
+		e := entries[i]
+		if len(e) < 4 {
+			continue
+		}
+		xy, path := e[:2], e[3:]
+		if strings.ContainsAny(xy, "RC") {
+			i++ // the old name
+		}
+		rel, ok := strings.CutPrefix(path, prefix)
+		if !ok {
+			continue
+		}
+		changes = append(changes, Change{Status: strings.ReplaceAll(xy, " ", ""), Path: rel})
+	}
+	return changes
 }

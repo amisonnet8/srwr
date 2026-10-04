@@ -560,3 +560,4 @@
 {"id":"50ce4ae157844dc3bddaef87134dced1","op":"create","type":"qa","re":"e9266d8bc75647c1891553b860ab9ca0","text":"行番号と内容の両方を受ける（行番号＋expect で照合、expect だけで探す）。実装した（改善2）","v":1,"ts":"2026-10-04T22:31:03Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"e9266d8bc75647c1891553b860ab9ca0","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-04T22:31:03Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"786336f292274b608988be9919b26922","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-04T22:38:58Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"f897877a446742fd89aeaaa078c5b022","op":"create","type":"memo","text":"改善3 sub: UIゲート資料を dev/review/sub/ に作った（案A=ふつうのreplaceのコマ、案B=sub表示）。人間の了承まで実装しない","v":1,"ts":"2026-10-04T22:44:09Z","author":{"kind":"ai","name":"claude-code"}}

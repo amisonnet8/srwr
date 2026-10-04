@@ -48,11 +48,20 @@ func (s *State) Apply(e Event) {
 		switch {
 		case e.Deleted:
 			s.Files[e.File] = &File{Deleted: true}
+		case e.Hunks != nil:
+			s.Files[e.File] = &File{Text: ApplyHunks(s.text(e.File), e.Hunks)}
 		case e.Text != nil:
 			s.Files[e.File] = &File{Text: *e.Text}
 		}
-		// The old format has no text: the snapshot that follows gives the new content.
+		// The oldest format has neither: the snapshot that follows gives the new content.
 	}
+}
+
+func (s *State) text(file string) string {
+	if f := s.Files[file]; f != nil {
+		return f.Text
+	}
+	return ""
 }
 
 // NewLines returns the lines a replace wrote. NewText is the lines joined by "\n", which cannot say

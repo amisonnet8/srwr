@@ -56,7 +56,7 @@ It also has `vcs` and `tool` (`{"name":"srwr","version":"…"}`).
 
 ### snapshot
 
-The **whole text** of a file. It is recorded when the file is first touched in the session, and right after an `external`. Replay is built by applying the `replace` events in order from the last `snapshot`.
+The **whole text** of a file. It is recorded when the file is first touched in the session, and when a file that an `external` removed comes back. After that the file is followed by `replace` and `external` events only, which hold just the changed lines. Replay is built by applying them in order from the last `snapshot`.
 
 ```json
 {"v":1,"seq":1,"ts":"…","type":"snapshot","file":"cmd/app/main.go","fileHash":"a3f09c21","text":"package main\n…","sha":"sha256:…"}
@@ -84,16 +84,17 @@ A `select` recorded by the hook (Read and the like) has a `why` of `null`. It ha
 
 ### external
 
-Recorded when a change to a file made outside srwr is detected. The `snapshot` of that file follows it right away.
+Recorded when a change to a file made outside srwr is detected. No `snapshot` follows it: the event itself holds what changed.
 
 ```json
-{"v":1,"seq":4,"ts":"…","type":"external","file":"cmd/app/main.go","author":{"kind":"external"},"detectedBy":"select","expectedSha":"sha256:…","actualSha":"sha256:…","text":"package main\n… (the whole text after the change)"}
+{"v":1,"seq":4,"ts":"…","type":"external","file":"cmd/app/main.go","author":{"kind":"external"},"detectedBy":"select","expectedSha":"sha256:…","actualSha":"sha256:…","hunks":[{"startLine":3,"endLine":3,"newText":"b","newStartLine":3,"newEndLine":3},{"startLine":40,"endLine":41,"newText":"x\ny","newStartLine":40,"newEndLine":41}]}
 ```
 
-- `text`: the **whole text of the file after the change**. It is kept to replay as a diff frame (a side-by-side diff). When the file was gone it is `null`, `actualSha` is an empty string, and `deleted: true` is added
+- `hunks`: **the lines that changed**, against the content the tape held before (the one `expectedSha` is the hash of). The places come from top to bottom and do not overlap. `startLine` and `endLine` are the lines before, `newText` the lines after (joined with `\n`), and `newStartLine` and `newEndLine` their numbers, as in `replace`. An insertion has `endLine = startLine - 1`; a deletion has an empty `newText` and `newEndLine = newStartLine - 1`. Applying them to the content before gives the content after, which `actualSha` is the hash of. It is replayed as a diff frame (a side-by-side diff)
+- `text`: **the whole text of the file after the change**, written instead of `hunks` when the change cannot be told as lines (only the line break at the end of the file changed) or is too big to compare. When the file was gone it is `null`, `actualSha` is an empty string, and `deleted: true` is added
 - `detectedBy`: what led to the detection (`select`, `replace`, `hook`)
 - `author.kind` is always `external` (srwr cannot know who changed it)
-- An `external` of the old form without `text` can be read too. Then the `snapshot` right after it is shown as the content after the change
+- An `external` of the old forms can be read too: one with the whole `text` and a `snapshot` after it, and one without `text` (then the `snapshot` right after it is shown as the content after the change)
 
 **What can be detected**: an `external` happens only when a file for which **the tape already holds the content (a `snapshot`)** later differs. A file first touched in the session has its content at that time as its first `snapshot`. A change to a file that is never touched cannot be seen.
 

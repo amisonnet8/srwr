@@ -5,8 +5,10 @@ import (
 	"math/rand/v2"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -297,12 +299,13 @@ func TestExternalChangeBeforeSelect(t *testing.T) {
 	if want := []string{"zero", "one"}; !slices.Equal(s2.Lines, want) {
 		t.Errorf("lines = %q, want %q", s2.Lines, want)
 	}
-	if got, want := e.kinds(), []string{"snapshot", "select", "replace", "external", "snapshot", "select"}; !slices.Equal(got, want) {
+	if got, want := e.kinds(), []string{"snapshot", "select", "replace", "external", "select"}; !slices.Equal(got, want) {
 		t.Fatalf("tape = %v, want %v", got, want)
 	}
 	ev := e.events()
 	x := ev[4]
-	if x.Text == nil || *x.Text != "zero\none\n2\n3\n" || x.DetectedBy != "select" || x.Author == nil || x.Author.Kind != "external" ||
+	wantHunks := []tape.Hunk{{StartLine: 1, EndLine: 0, NewText: "zero", NewStartLine: 1, NewEndLine: 1}}
+	if x.Text != nil || !reflect.DeepEqual(x.Hunks, wantHunks) || x.DetectedBy != "select" || x.Author == nil || x.Author.Kind != "external" ||
 		x.ExpectedSha != tape.Sha("one\n2\n3\n") || x.ActualSha != tape.Sha("zero\none\n2\n3\n") {
 		t.Errorf("external = %+v", x)
 	}
@@ -327,7 +330,7 @@ func TestExternalChangeBeforeReplace(t *testing.T) {
 	if got, ok := m.Actual.([]string); !ok || !slices.Equal(got, []string{"1", "2"}) {
 		t.Errorf("actual = %#v, want the lines now at 2..3", m.Actual)
 	}
-	if got, want := e.kinds(), []string{"snapshot", "select", "external", "snapshot"}; !slices.Equal(got, want) {
+	if got, want := e.kinds(), []string{"snapshot", "select", "external"}; !slices.Equal(got, want) {
 		t.Errorf("tape = %v, want %v", got, want)
 	}
 	if got := e.read("f.txt"); got != "0\n1\n2\n3\n4\n" {
@@ -811,6 +814,46 @@ func TestConcurrentClients(t *testing.T) {
 		if x.Seq != i+1 {
 			t.Fatalf("event %d has seq %d", i, x.Seq)
 		}
+	}
+	e.checkTape()
+}
+
+func TestExternalChangeIsWrittenAsHunks(t *testing.T) {
+	e := newEnv(t)
+	var lines []string
+	for i := 1; i <= 50; i++ {
+		lines = append(lines, strconv.Itoa(i))
+	}
+	e.write("f.txt", strings.Join(lines, "\n")+"\n")
+	e.sel(e.c, "f.txt", 1, 1)
+	lines[2] = "three"
+	lines = append(lines[:40], append([]string{"x", "y"}, lines[41:]...)...) // line 41 becomes two lines
+	changed := strings.Join(lines, "\n") + "\n"
+	e.write("f.txt", changed) // not by srwr, two places far apart
+	e.sel(e.c, "f.txt", 1, 1)
+
+	x := e.events()[3]
+	if x.Type != tape.TypeExternal || x.Text != nil || len(x.Hunks) != 2 {
+		t.Fatalf("external = %+v, want two hunks and no text", x)
+	}
+	if got, want := e.kinds(), []string{"snapshot", "select", "external", "select"}; !slices.Equal(got, want) {
+		t.Errorf("tape = %v, want %v", got, want)
+	}
+	if got := tape.Build(e.events()).Files["f.txt"].Text; got != changed {
+		t.Errorf("the tape says %q, want the file", got)
+	}
+	e.checkTape()
+}
+
+func TestExternalChangeOfTheFinalLineBreakWritesTheWholeText(t *testing.T) {
+	e := newEnv(t)
+	e.write("f.txt", "a\nb\n")
+	e.sel(e.c, "f.txt", 1, 1)
+	e.write("f.txt", "a\nb") // only the line break at the end is gone
+	e.sel(e.c, "f.txt", 1, 1)
+	x := e.events()[3]
+	if x.Type != tape.TypeExternal || x.Hunks != nil || x.Text == nil || *x.Text != "a\nb" {
+		t.Errorf("external = %+v, want the whole text", x)
 	}
 	e.checkTape()
 }

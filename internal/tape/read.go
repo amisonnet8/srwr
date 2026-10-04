@@ -95,6 +95,13 @@ func parseLine(line []byte) (Event, bool) {
 	case TypeExternal:
 		e.Author = getAuthor(m)
 		e.Text = getNullableString(m, "text")
+		if has(m, "hunks") {
+			var hs []Hunk
+			if json.Unmarshal(m["hunks"], &hs) != nil {
+				return Event{}, false
+			}
+			e.Hunks = hs
+		}
 		e.DetectedBy, _ = getString(m, "detectedBy")
 		e.ExpectedSha, _ = getString(m, "expectedSha")
 		e.ActualSha, _ = getString(m, "actualSha")

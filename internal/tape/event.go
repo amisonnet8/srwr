@@ -42,7 +42,7 @@ type ToolInfo struct {
 //	select:   Seq, TS, File, StartLine, EndLine, Why, Selection, Source, HookTool
 //	replace:  Seq, TS, File, From, StartLine, EndLine, OldText, NewText, NewStartLine, NewEndLine,
 //	          Selection, Why, FileShaBefore, FileShaAfter, Source, HookTool
-//	external: Seq, TS, File, Author, DetectedBy, ExpectedSha, ActualSha, Text (nil when unknown), Deleted
+//	external: Seq, TS, File, Author, DetectedBy, ExpectedSha, ActualSha, Hunks or Text (both nil when unknown), Deleted
 //
 // A field that is null on the tape is nil here. TS is kept as the text on the tape, because
 // a reader has to cope with a value it cannot parse.
@@ -66,8 +66,11 @@ type Event struct {
 	FileHash string
 	Sha      string
 
-	// snapshot and external: the whole file. nil on an external means the old format without text.
+	// snapshot and external: the whole file. nil on an external means it has Hunks, or (the old format) no text.
 	Text *string
+
+	// external: the lines that changed, against the content the tape held before. nil when Text is written.
+	Hunks []Hunk
 
 	// select and replace
 	StartLine int

@@ -47,7 +47,12 @@ func Marshal(e Event) ([]byte, error) {
 	case TypeExternal:
 		fs = []field{
 			{"seq", e.Seq}, {"ts", e.TS}, {"type", e.Type}, {"file", e.File}, {"author", e.Author},
-			{"detectedBy", e.DetectedBy}, {"expectedSha", e.ExpectedSha}, {"actualSha", e.ActualSha}, {"text", e.Text},
+			{"detectedBy", e.DetectedBy}, {"expectedSha", e.ExpectedSha}, {"actualSha", e.ActualSha},
+		}
+		if e.Hunks != nil {
+			fs = append(fs, field{"hunks", e.Hunks})
+		} else {
+			fs = append(fs, field{"text", e.Text})
 		}
 		if e.Deleted {
 			fs = append(fs, field{"deleted", true})

@@ -56,7 +56,7 @@
 
 ### snapshot
 
-ファイルの**全文**。そのセッションでそのファイルに初めて触れたときと、`external` の直後に記録する。再生は、最後の `snapshot` から、`replace` を順に適用して作る。
+ファイルの**全文**。そのセッションでそのファイルに初めて触れたときと、`external` で消えたファイルが戻ったときに記録する。それ以後は、変わった行だけを持つ `replace` と `external` で追う。再生は、最後の `snapshot` から、それらを順に適用して作る。
 
 ```json
 {"v":1,"seq":1,"ts":"…","type":"snapshot","file":"cmd/app/main.go","fileHash":"a3f09c21","text":"package main\n…","sha":"sha256:…"}
@@ -84,16 +84,17 @@ hook が記録した `select`（Read など）は、`why` が `null`。`source`�
 
 ### external
 
-srwr の外でファイルが変わったことを検知したとき。直後に、そのファイルの `snapshot` を続けて記録する。
+srwr の外でファイルが変わったことを検知したとき。`snapshot` は続けない。何が変わったかは、この行が持つ。
 
 ```json
-{"v":1,"seq":4,"ts":"…","type":"external","file":"cmd/app/main.go","author":{"kind":"external"},"detectedBy":"select","expectedSha":"sha256:…","actualSha":"sha256:…","text":"package main\n…（変更後の全文）"}
+{"v":1,"seq":4,"ts":"…","type":"external","file":"cmd/app/main.go","author":{"kind":"external"},"detectedBy":"select","expectedSha":"sha256:…","actualSha":"sha256:…","hunks":[{"startLine":3,"endLine":3,"newText":"b","newStartLine":3,"newEndLine":3},{"startLine":40,"endLine":41,"newText":"x\ny","newStartLine":40,"newEndLine":41}]}
 ```
 
-- `text`：**変更後のファイル全文**。差分のコマ（左右に並べた diff）として再生するために持つ。ファイルが消えていたときは `null`、`actualSha` は空文字列で、`deleted: true` が付く
+- `hunks`：**変わった行**。テープが直前に持っていた内容（`expectedSha` のハッシュの内容）に対するもの。箇所は上から順で、重ならない。`startLine`・`endLine` は変更前の行、`newText` は変更後の行（`\n` でつなぐ）、`newStartLine`・`newEndLine` はその行番号で、`replace` と同じ。挿入は `endLine = startLine - 1`、削除は `newText` が空で `newEndLine = newStartLine - 1`。変更前の内容に当てると、変更後の内容（`actualSha` のハッシュ）になる。差分のコマ（左右に並べた diff）として再生する
+- `text`：**変更後のファイル全文**。行で表せない変更（ファイル末尾の改行だけが変わった）や、比べるには大きすぎる変更のとき、`hunks` の代わりに書く。ファイルが消えていたときは `null`、`actualSha` は空文字列で、`deleted: true` が付く
 - `detectedBy`：検知のきっかけ（`select`・`replace`・`hook`）
 - `author.kind` は `external` 固定（誰が変えたかは srwr には分からない）
-- `text` のない古い形式の `external` も読める。そのときは、直後の `snapshot` を変更後の内容として見せる
+- 古い形式の `external` も読める：全文の `text` を持ち直後に `snapshot` が続くもの、`text` のないもの（そのときは、直後の `snapshot` を変更後の内容として見せる）
 
 **検知できる範囲**：`external` になるのは、**テープがすでに内容（`snapshot`）を持つファイル**が、あとで食い違ったときだけ。そのセッションで初めて触れるファイルは、そのときの内容が最初の `snapshot` になる。一度も触れないファイルの変更は見えない。
 

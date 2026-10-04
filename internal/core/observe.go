@@ -10,7 +10,8 @@ import (
 // "replace", "hook").
 //
 //   - A file the tape has no content of: a snapshot, the first time it is touched.
-//   - A file that is not what the tape says: an external event with the new content, then a snapshot.
+//   - A file that is not what the tape says: an external event with the lines that changed (or, when
+//     those cannot tell the change, the whole new content). No snapshot follows: the event is enough.
 //   - A file that is gone: an external event that says so. When it comes back, a snapshot.
 //
 // A file the tape has no content of is never external: there is nothing to compare with.
@@ -28,14 +29,18 @@ func Observe(tx *session.Tx, rel, detectedBy string, current *string) error {
 	case known == nil || known.Deleted:
 		return appendSnapshot(tx, rel, *current)
 	case known.Text != *current:
-		err := tx.Append(tape.Event{
+		e := tape.Event{
 			Type: tape.TypeExternal, Seq: tx.NextSeq(), File: rel, Author: &tape.Author{Kind: "external"},
-			DetectedBy: detectedBy, ExpectedSha: tape.Sha(known.Text), ActualSha: tape.Sha(*current), Text: current,
-		})
-		if err != nil {
-			return err
+			DetectedBy: detectedBy, ExpectedSha: tape.Sha(known.Text), ActualSha: tape.Sha(*current),
 		}
-		return appendSnapshot(tx, rel, *current)
+		// Lines are not enough when only the end of the file changed (a final line break), or when
+		// too much changed to compare: then the whole text goes on the tape.
+		if hunks, ok := tape.Diff(known.Text, *current); ok && tape.ApplyHunks(known.Text, hunks) == *current {
+			e.Hunks = hunks
+		} else {
+			e.Text = current
+		}
+		return tx.Append(e)
 	}
 	return nil
 }

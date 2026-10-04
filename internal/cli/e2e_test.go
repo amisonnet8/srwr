@@ -473,3 +473,31 @@ func TestViewServerShowsWhatMCPWrote(t *testing.T) {
 		t.Errorf("view-server exited with %v", err)
 	}
 }
+
+// An external change is on the tape as the lines that changed, with no snapshot after it, and the tape still replays to the file.
+func TestExternalChangeIsHunksAndReplays(t *testing.T) {
+	root := t.TempDir()
+	write(t, root, "f.txt", "1\n2\n3\n4\n5\n6\n7\n8\n")
+	c := startClient(t, root)
+	c.initialize()
+	c.mustSelect("f.txt", 1, 1)
+	write(t, root, "f.txt", "1\nTWO\n3\n4\n5\n6\n7\n8\n9\n") // two places, not by srwr
+	tok := c.mustSelect("f.txt", 1, 1)
+	c.mustReplace(tok, "one")
+
+	events := readTape(t, tapes(t, root)[0])
+	checkSeqs(t, events)
+	var kinds []string
+	for _, e := range events[1:] {
+		kinds = append(kinds, e.Type)
+	}
+	if want := []string{"snapshot", "select", "external", "select", "replace"}; !slices.Equal(kinds, want) {
+		t.Fatalf("tape = %v, want %v", kinds, want)
+	}
+	if x := events[3]; x.Text != nil || len(x.Hunks) != 2 {
+		t.Errorf("external = %+v, want two hunks and no text", x)
+	}
+	if st := tape.Build(events); st.Files["f.txt"].Text != read(t, root, "f.txt") {
+		t.Error("the tape does not replay to the file")
+	}
+}

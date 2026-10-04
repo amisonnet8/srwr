@@ -137,6 +137,8 @@ func (b *Builder) Add(e tape.Event) bool {
 		switch {
 		case e.Deleted:
 			f.Deleted = true
+		case e.Hunks != nil:
+			f.After = b.text(e.File)
 		case e.Text != nil:
 			f.After = *e.Text
 		default:

@@ -320,3 +320,21 @@ func TestVCSOfTheHeaderDoesNotChangeTheFrames(t *testing.T) {
 		}
 	}
 }
+
+func TestExternalFrameOfHunks(t *testing.T) {
+	ev := parse(t,
+		`{"v":1,"seq":1,"ts":"2026-10-04T03:00:01.000Z","type":"snapshot","file":"a.go","text":"1\n2\n3\n4\n"}`,
+		`{"v":1,"seq":2,"ts":"2026-10-04T03:00:02.000Z","type":"external","file":"a.go","author":{"kind":"external"},"detectedBy":"select","expectedSha":"x","actualSha":"y","hunks":[{"startLine":2,"endLine":2,"newText":"two\ntwo!","newStartLine":2,"newEndLine":3},{"startLine":4,"endLine":4,"newText":"","newStartLine":5,"newEndLine":4}]}`,
+		`{"v":1,"seq":3,"ts":"2026-10-04T03:00:03.000Z","type":"replace","file":"a.go","from":null,"startLine":3,"endLine":3,"oldText":"two!","newText":"X","newStartLine":3,"newEndLine":3,"selection":null,"why":null}`,
+	)
+	f := Build(ev).Frames()
+	if len(f) != 2 {
+		t.Fatalf("%d frames, want 2 (no snapshot follows an external)", len(f))
+	}
+	if x := f[0]; x.Kind != KindExternal || x.Before != "1\n2\n3\n4\n" || x.After != "1\ntwo\ntwo!\n3\n" || x.Range != (Range{1, 4}) {
+		t.Errorf("external frame = %+v", x)
+	}
+	if r := f[1]; r.Before != "1\ntwo\ntwo!\n3\n" || r.After != "1\ntwo\nX\n3\n" {
+		t.Errorf("the replace after it = %+v", r)
+	}
+}

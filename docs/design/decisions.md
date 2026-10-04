@@ -50,6 +50,8 @@ A change to a file that was never touched cannot be seen, because there is no ba
 
 A label alone does not tell what changed. So `external` and `final` are shown as a side-by-side diff. The label goes in the heading (the tab title). A line shaped like the `why` line cannot be made on a diff screen.
 
+The tape holds an `external` as the lines that changed (`hunks`), not as the whole file, and no `snapshot` follows it. A measured tape was 89% whole texts, most of them the same text twice (an `external` and the `snapshot` after it). The whole text is kept only once per file, at the first touch; the tape still replays alone, because the lines that changed are applied to a text the same tape holds.
+
 ### The view server does not trust the paths written on the tape
 
 So that a shared tape cannot make it read an arbitrary file. When the current file is read for the final diff, a path that points outside the workspace (`..`, an absolute path, a symbolic link that points outside) is not read and is treated as "does not exist".

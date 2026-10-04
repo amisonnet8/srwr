@@ -79,7 +79,7 @@ func TestHookSelectSeesAnExternalChange(t *testing.T) {
 	e.hook(HookRequest{Selects: []HookSelect{{File: "f.txt", Range: HookRange{Mode: RangeAll}, Tool: "Read"}}})
 	e.write("f.txt", "a\nB\nc\n")
 	e.hook(HookRequest{Selects: []HookSelect{{File: "f.txt", Range: HookRange{Mode: RangeAll}, Tool: "Read"}}})
-	if got, want := e.kinds(), []string{"snapshot", "select", "external", "snapshot", "select"}; !reflect.DeepEqual(got, want) {
+	if got, want := e.kinds(), []string{"snapshot", "select", "external", "select"}; !reflect.DeepEqual(got, want) {
 		t.Errorf("kinds = %v, want %v", got, want)
 	}
 	for _, ev := range e.events() {
@@ -223,7 +223,7 @@ func TestHookEditThatDoesNotMatchTheFileIsExternal(t *testing.T) {
 	for _, ev := range e.events()[before:] {
 		kinds = append(kinds, ev.Type)
 	}
-	if !reflect.DeepEqual(kinds, []string{"external", "snapshot"}) {
+	if !reflect.DeepEqual(kinds, []string{"external"}) {
 		t.Errorf("kinds = %v", kinds)
 	}
 	e.checkTape()

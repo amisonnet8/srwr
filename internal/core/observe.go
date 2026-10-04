@@ -51,3 +51,18 @@ func appendSnapshot(tx *session.Tx, rel, text string) error {
 		FileHash: tape.FileHash(rel), Text: &text, Sha: tape.Sha(text),
 	})
 }
+
+// observeCreated records a new file: one the tape had no content of, which appeared. It is an external event with Created set,
+// told as lines added to an empty file (or, for an empty file, as the empty text).
+func observeCreated(tx *session.Tx, rel, detectedBy, text string) error {
+	e := tape.Event{
+		Type: tape.TypeExternal, Seq: tx.NextSeq(), File: rel, Author: &tape.Author{Kind: "external"},
+		DetectedBy: detectedBy, ActualSha: tape.Sha(text), Created: true,
+	}
+	if hunks, ok := tape.Diff("", text); ok && len(hunks) > 0 && tape.ApplyHunks("", hunks) == text {
+		e.Hunks = hunks
+	} else {
+		e.Text = &text
+	}
+	return tx.Append(e)
+}

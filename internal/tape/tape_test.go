@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -402,5 +403,33 @@ func TestValidID(t *testing.T) {
 	}
 	if got := FileName("x"); got != "x.tape.jsonl" {
 		t.Errorf("FileName = %q", got)
+	}
+}
+
+func TestCreatedExternalRoundTrips(t *testing.T) {
+	e := Event{
+		Type: TypeExternal, Seq: 5, TS: "2026-10-04T00:00:00.000Z", File: "new.go", Author: &Author{Kind: "external"},
+		DetectedBy: "hook", ActualSha: "sha256:b", Created: true,
+		Hunks: []Hunk{{StartLine: 1, EndLine: 0, NewText: "a\nb", NewStartLine: 1, NewEndLine: 2}},
+	}
+	line, err := Marshal(e)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(line), `"created":true`) {
+		t.Errorf("line = %s", line)
+	}
+	got, ok := parseLine(line)
+	if !ok || !got.Created || !reflect.DeepEqual(got.Hunks, e.Hunks) {
+		t.Errorf("parsed %+v (ok %v)", got, ok)
+	}
+	// Without Created the field is not written; and the state of a new file is its text.
+	e.Created = false
+	if line, _ := Marshal(e); strings.Contains(string(line), "created") {
+		t.Errorf("created written for an ordinary external: %s", line)
+	}
+	e.Created = true
+	if text := Build([]Event{e}).Files["new.go"].Text; text != "a\nb\n" {
+		t.Errorf("text = %q", text)
 	}
 }

@@ -6,7 +6,7 @@
 
 ## 1. Limits (trade-offs of the design)
 
-- **A change to a file that was never touched cannot be seen.** Only a file whose content the tape already holds can become `external` (holding a base for every file would make the tape big)
+- **A change to a file that was never touched cannot be seen.** Only a file whose content the tape already holds can become `external` (holding a base for every file would make the tape big). The exception is a new file made by a Bash command: in a git work tree it is found and recorded (`created`)
 - **After an external change that alters the range or the number of lines above it, the selection tokens issued before it cannot be used.** The content check gives `selection_mismatch`. srwr does not estimate the shift of lines from the content of the external change
 - Files with line breaks other than LF (CRLF) and binary files cannot be handled (`unsupported_file`)
 - The ban on Edit/Write and the hook depend on the settings of Claude Code. With other agents, `select` / `replace` themselves can still be used, because they are MCP

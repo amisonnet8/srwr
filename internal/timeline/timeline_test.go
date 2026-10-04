@@ -338,3 +338,20 @@ func TestExternalFrameOfHunks(t *testing.T) {
 		t.Errorf("the replace after it = %+v", r)
 	}
 }
+
+func TestCreatedExternalFrame(t *testing.T) {
+	ev := parse(t,
+		`{"v":1,"seq":1,"ts":"2026-10-04T03:00:01.000Z","type":"external","file":"new.go","author":{"kind":"external"},"detectedBy":"hook","expectedSha":"","actualSha":"y","created":true,"hunks":[{"startLine":1,"endLine":0,"newText":"a\nb","newStartLine":1,"newEndLine":2}]}`,
+		`{"v":1,"seq":2,"ts":"2026-10-04T03:00:02.000Z","type":"external","file":"empty.go","author":{"kind":"external"},"detectedBy":"hook","expectedSha":"","actualSha":"y","created":true,"text":""}`,
+	)
+	f := Build(ev).Frames()
+	if len(f) != 2 {
+		t.Fatalf("%d frames", len(f))
+	}
+	if x := f[0]; x.Kind != KindExternal || x.Before != "" || x.After != "a\nb\n" || x.Range != (Range{1, 2}) || x.Deleted {
+		t.Errorf("created frame = %+v", x)
+	}
+	if x := f[1]; x.Before != "" || x.After != "" || x.Deleted {
+		t.Errorf("empty created frame = %+v", x)
+	}
+}

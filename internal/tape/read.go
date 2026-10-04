@@ -106,6 +106,7 @@ func parseLine(line []byte) (Event, bool) {
 		e.ExpectedSha, _ = getString(m, "expectedSha")
 		e.ActualSha, _ = getString(m, "actualSha")
 		e.Deleted, _ = getBool(m, "deleted")
+		e.Created, _ = getBool(m, "created")
 	default:
 		return Event{}, false
 	}

@@ -278,3 +278,33 @@ func TestChangesOutsideGit(t *testing.T) {
 		t.Error("Changes did not fail outside git")
 	}
 }
+
+func TestUntracked(t *testing.T) {
+	needGit(t)
+	root := t.TempDir()
+	if real, err := filepath.EvalSymlinks(root); err == nil {
+		root = real
+	}
+	runGit(t, root, "init", "-q")
+	write(t, root, "tracked.go", "t\n")
+	write(t, root, ".gitignore", "built.txt\n")
+	runGit(t, root, "add", ".")
+	runGit(t, root, "commit", "-q", "-m", "first")
+	write(t, root, "tracked.go", "changed\n") // changed, not new
+	write(t, root, "new.go", "n\n")
+	write(t, root, "sub/deep/new2.go", "n\n")
+	write(t, root, "built.txt", "ignored\n")
+	write(t, root, ".srwr/tapes/x.jsonl", "tape\n")
+	got, err := Untracked(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "new.go sub/deep/new2.go"; strings.Join(got, " ") != want {
+		t.Errorf("untracked = %v, want %s", got, want)
+	}
+	// A workspace in a directory of the repository sees only what is below it, with paths relative to it.
+	sub, err := Untracked(filepath.Join(root, "sub"))
+	if err != nil || strings.Join(sub, " ") != "deep/new2.go" {
+		t.Errorf("sub = %v, %v", sub, err)
+	}
+}

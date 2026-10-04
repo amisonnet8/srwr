@@ -2,8 +2,10 @@ package core
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -266,4 +268,131 @@ func (e *env) eventCount() int {
 		return 0
 	}
 	return len(e.events())
+}
+
+// gitInit makes the workspace a git work tree (no commit needed: new files are the ones git lists as untracked).
+func (e *env) gitInit() {
+	e.t.Helper()
+	if _, err := exec.LookPath("git"); err != nil {
+		e.t.Skip("git is not installed")
+	}
+	cmd := exec.Command("git", "init", "-q")
+	cmd.Dir = e.root
+	if out, err := cmd.CombinedOutput(); err != nil {
+		e.t.Fatalf("git init: %v\n%s", err, out)
+	}
+}
+
+func (e *env) bash() []string { e.t.Helper(); return e.hook(HookRequest{ObserveAll: true}) }
+
+func (e *env) createdFiles() map[string]tape.Event {
+	got := map[string]tape.Event{}
+	for _, ev := range e.events() {
+		if ev.Type == tape.TypeExternal && ev.Created {
+			got[ev.File] = ev
+		}
+	}
+	return got
+}
+
+// A file a Bash command made is on the tape: an external with Created, told as lines added to nothing.
+func TestHookRecordsANewFileMadeByBash(t *testing.T) {
+	e := newEnv(t)
+	e.gitInit()
+	e.write("seen.txt", "x\n")
+	e.sel(e.c, "seen.txt", 1, 1)
+	e.write("dir/new.go", "package a\n\nfunc f() {}\n")
+	e.write("empty.txt", "")
+	e.bash()
+
+	got := e.createdFiles()
+	n := got["dir/new.go"]
+	if len(got) != 2 || n.Hunks == nil || n.Text != nil || n.ExpectedSha != "" || n.ActualSha != tape.Sha("package a\n\nfunc f() {}\n") ||
+		n.DetectedBy != "hook" || n.Author == nil || n.Author.Kind != "external" {
+		t.Fatalf("created = %+v", got)
+	}
+	if ev := got["empty.txt"]; ev.Text == nil || *ev.Text != "" {
+		t.Errorf("an empty new file = %+v, want an empty text", ev)
+	}
+	st := tape.Build(e.events())
+	if st.Files["dir/new.go"] == nil || st.Files["dir/new.go"].Text != e.read("dir/new.go") || st.Files["empty.txt"] == nil {
+		t.Errorf("the tape does not know the new files: %+v", st.Files)
+	}
+
+	// The next Bash does not record them again, and a later change is an ordinary external.
+	before := e.eventCount()
+	e.bash()
+	if e.eventCount() != before {
+		t.Errorf("a second Bash added %d events", e.eventCount()-before)
+	}
+	e.write("dir/new.go", "package a\n\nfunc g() {}\n")
+	e.bash()
+	evs := e.events()
+	last := evs[len(evs)-1]
+	if last.Type != tape.TypeExternal || last.Created || last.Hunks == nil || last.File != "dir/new.go" {
+		t.Errorf("the change = %+v", last)
+	}
+	e.checkTape()
+}
+
+// Entrance 5: the new files are looked for through readTarget, so what is not recorded is left out, and so is what cannot be handled.
+func TestHookNewFilesLeaveOutWhatIsNotRecorded(t *testing.T) {
+	e := newEnv(t)
+	e.gitInit()
+	e.write(".srwrignore", "priv*.txt\n")
+	e.write(".gitignore", "built.txt\n")
+	e.write("private.txt", secret)
+	e.write(".env", secret)
+	e.write("built.txt", "x\n")
+	e.write("crlf.txt", "a\r\nb\r\n")
+	e.write("bin.dat", "a\x00b")
+	e.write("big.txt", strings.Repeat("x\n", maxNewFileSize))
+	e.write("ok.txt", "fine\n")
+	_ = os.Symlink(filepath.Join(e.root, "ok.txt"), filepath.Join(e.root, "link.txt")) // a link to a file inside is fine; where links are not allowed it is just missing
+	e.bash()
+	got := e.createdFiles()
+	for name := range got {
+		switch name {
+		case "ok.txt", "link.txt", ".gitignore", ".srwrignore": // link.txt is a link to a file inside the workspace
+		default:
+			t.Errorf("%s was recorded", name)
+		}
+	}
+	if got["ok.txt"].File == "" {
+		t.Error("ok.txt was not recorded")
+	}
+	e.noSecretOnTape(".env", "private.txt")
+}
+
+func TestHookNewFilesStopAtTheLimit(t *testing.T) {
+	e := newEnv(t)
+	e.gitInit()
+	for i := range maxNewFiles + 7 {
+		e.write(filepath.Join("gen", strings.Repeat("a", 1)+strconv.Itoa(1000+i)+".txt"), "x\n")
+	}
+	notes := e.bash()
+	if got := len(e.createdFiles()); got != maxNewFiles {
+		t.Errorf("%d new files recorded, want %d", got, maxNewFiles)
+	}
+	if len(notes) != 1 || !strings.Contains(notes[0], "7 more new files") {
+		t.Errorf("notes = %v", notes)
+	}
+}
+
+// Outside a git work tree there is no list of new files: nothing happens, and the agent is not stopped.
+func TestHookNewFilesOutsideGit(t *testing.T) {
+	e := newEnv(t)
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git is not installed")
+	}
+	if exec.Command("git", "-C", e.root, "rev-parse", "--git-dir").Run() == nil { //nolint:gosec // git, in a temporary directory
+		t.Skip("the temporary directory is inside a git work tree")
+	}
+	e.write("new.txt", "x\n")
+	if notes := e.bash(); len(notes) != 0 {
+		t.Errorf("notes %v, want none", notes)
+	}
+	if _, err := os.Stat(filepath.Join(e.root, ".srwr", "active")); err == nil {
+		t.Error("a tape was made although nothing was found")
+	}
 }

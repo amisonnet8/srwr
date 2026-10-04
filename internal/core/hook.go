@@ -7,6 +7,7 @@ import (
 
 	"github.com/amisonnet8/srwr/internal/session"
 	"github.com/amisonnet8/srwr/internal/tape"
+	"github.com/amisonnet8/srwr/internal/vcs"
 )
 
 // What srwr hook records (docs/reference/cli.md): what the agent did with its own tools, written to the same tape as
@@ -44,7 +45,7 @@ type HookEdit struct {
 
 // HookRequest is everything one hook call records, in this order: the files read again, the selects, the edit.
 type HookRequest struct {
-	ObserveAll bool // read every file the tape has content of again (after Bash)
+	ObserveAll bool // read every file the tape has content of again, and record new files git lists (after Bash)
 	Selects    []HookSelect
 	Edit       *HookEdit
 }
@@ -54,6 +55,11 @@ func (c *Core) Hook(req HookRequest) (notes []string, err error) {
 	err = c.WS.Do(func(tx *session.Tx) error {
 		if req.ObserveAll {
 			n, err := c.observeAll(tx)
+			notes = append(notes, n...)
+			if err != nil {
+				return err
+			}
+			n, err = c.observeNew(tx)
 			notes = append(notes, n...)
 			if err != nil {
 				return err
@@ -103,6 +109,45 @@ func (c *Core) observeAll(tx *session.Tx) (notes []string, err error) {
 		if err := Observe(tx, name, "hook", cur); err != nil {
 			return notes, err
 		}
+	}
+	return notes, nil
+}
+
+// Limits of the new files one Bash command may add to the tape, so that a command that writes a lot (a generator, an unpacked
+// archive) does not swell it.
+const (
+	maxNewFiles    = 50
+	maxNewFileSize = 256 << 10
+)
+
+// observeNew records the new files a Bash command made: files git lists as untracked (and does not ignore) that the tape has no
+// content of. Outside a git work tree there are none to find, and that is not worth stopping the agent for. Every file goes
+// through readTarget, so the files that are not recorded, binary files and links out of the workspace are left out.
+func (c *Core) observeNew(tx *session.Tx) (notes []string, err error) {
+	files, verr := vcs.Untracked(c.WS.Root())
+	if verr != nil {
+		return nil, nil //nolint:nilerr // no git work tree means no list of new files; that must not stop the agent
+	}
+	recorded, over := 0, 0
+	for _, name := range files {
+		if _, known := tx.State().Files[name]; known {
+			continue
+		}
+		if recorded >= maxNewFiles {
+			over++
+			continue
+		}
+		t, cerr := c.readTarget(name)
+		if cerr != nil || !t.exists || len(t.text) > maxNewFileSize {
+			continue // not recorded, not a text file, or too big: it is left out
+		}
+		if err := observeCreated(tx, name, "hook", t.text); err != nil {
+			return notes, err
+		}
+		recorded++
+	}
+	if over > 0 {
+		notes = append(notes, fmt.Sprintf("%d more new files were not recorded (at most %d new files are recorded for one command)", over, maxNewFiles))
 	}
 	return notes, nil
 }

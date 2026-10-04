@@ -42,7 +42,7 @@ type ToolInfo struct {
 //	select:   Seq, TS, File, StartLine, EndLine, Why, Selection, Source, HookTool
 //	replace:  Seq, TS, File, From, StartLine, EndLine, OldText, NewText, NewStartLine, NewEndLine,
 //	          Selection, Why, FileShaBefore, FileShaAfter, Source, HookTool
-//	external: Seq, TS, File, Author, DetectedBy, ExpectedSha, ActualSha, Hunks or Text (both nil when unknown), Deleted
+//	external: Seq, TS, File, Author, DetectedBy, ExpectedSha, ActualSha, Hunks or Text (both nil when unknown), Created, Deleted
 //
 // A field that is null on the tape is nil here. TS is kept as the text on the tape, because
 // a reader has to cope with a value it cannot parse.
@@ -94,6 +94,7 @@ type Event struct {
 	ExpectedSha string
 	ActualSha   string
 	Deleted     bool
+	Created     bool // a new file: the tape held nothing of it, and Hunks (or Text) is the whole file
 }
 
 // Str returns a pointer to s, for the nullable fields.

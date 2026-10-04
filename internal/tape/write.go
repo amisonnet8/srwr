@@ -54,6 +54,9 @@ func Marshal(e Event) ([]byte, error) {
 		} else {
 			fs = append(fs, field{"text", e.Text})
 		}
+		if e.Created {
+			fs = append(fs, field{"created", true})
+		}
 		if e.Deleted {
 			fs = append(fs, field{"deleted", true})
 		}

@@ -192,3 +192,39 @@ func TestViewServerShowsWhatHookWrote(t *testing.T) {
 		t.Errorf("replace frame = %+v", rep)
 	}
 }
+
+// A file a Bash command made is recorded by the real srwr hook, and srwr tapes check has nothing to say about it.
+func TestHookRecordsANewFileFromBash(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git is not installed")
+	}
+	root := t.TempDir()
+	if real, err := filepath.EvalSymlinks(root); err == nil {
+		root = real
+	}
+	runGit(t, root, "init", "-q")
+	write(t, root, "main.go", "package main\n")
+	runGit(t, root, "add", ".")
+	runGit(t, root, "commit", "-q", "-m", "first")
+	runHookProcess(t, root, toolPayload("Read", map[string]any{"file_path": filepath.Join(root, "main.go")}, nil))
+	write(t, root, "util/helper.go", "package util\n\nfunc Help() {}\n") // as `cat > util/helper.go` would
+	runHookProcess(t, root, toolPayload("Bash", map[string]any{"command": "cat > util/helper.go <<EOF"}, map[string]any{"stdout": ""}))
+
+	events := readTape(t, tapes(t, root)[0])
+	var created []tape.Event
+	for _, e := range events {
+		if e.Type == tape.TypeExternal && e.Created {
+			created = append(created, e)
+		}
+	}
+	if len(created) != 1 || created[0].File != "util/helper.go" || created[0].Hunks == nil {
+		t.Fatalf("created = %+v", created)
+	}
+	if st := tape.Build(events); st.Files["util/helper.go"] == nil || st.Files["util/helper.go"].Text != read(t, root, "util/helper.go") {
+		t.Error("the tape does not replay to the new file")
+	}
+	english(t)
+	if code, out, errOut := tapesOut(t, root, "check"); code != 0 {
+		t.Errorf("tapes check: code %d, stderr %q\n%s", code, errOut, out)
+	}
+}

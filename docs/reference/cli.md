@@ -87,6 +87,7 @@ Called from a hook of Claude Code, it records the operations of the tools the AI
 | Write, MultiEdit, NotebookEdit | Not recorded (the next time srwr touches the file, it shows up as `external`) |
 
 - After a Bash command (even one that does not read), every file whose content the tape holds is read again, and a difference is recorded as `external` (`detectedBy` is `hook`)
+- After a Bash command, in a git work tree, a **new file** (one that git lists as untracked and does not ignore, and that is not in `.srwrignore`) is recorded as an `external` with `created: true`, so the tape shows what was made. A file with CRLF, a binary file, and a file over 256 KiB are left out. At most 50 new files are recorded per command; the rest are not, and the hook says so. Outside a git work tree new files are not found
 - For an Edit, `old_string` → `new_string` is applied to the content before the edit (what the tape holds; if there is none, `tool_response.originalFile`), and if the result equals the current file it is a `replace`. If it does not (other changes are mixed in, for example), it is recorded as `external`
 - A single call records at most 100 `select`s (so that a search over a wide range does not swell the tape)
 - For a pipe, only the first command is looked at. `$( )`, redirects that write, `sed -i`, `tail -f` and `grep` without `-n` are not recorded

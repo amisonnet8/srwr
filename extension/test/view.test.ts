@@ -319,3 +319,47 @@ test("the line numbers are as wide as the file's last line number, not the docum
   assert.equal(numbers.ranges[0].before, nbsp.repeat(2 + 2), "98 lines + the empty last row = 99: two digits, then two spaces");
   assert.equal(numbers.ranges[2].before, nbsp + "1" + nbsp.repeat(2));
 });
+
+// A sub frame: a diff of the file with its why in a band above both sides (blue on the left, orange on the right).
+function serverWithSub(): FakeServer {
+  const s = new FakeServer();
+  const id = "20261005-1030-sub";
+  const before = "1\nfoo(1)\n3\nfoo(2)\n5\n";
+  const after = "1\nbar(1)\n3\nbar(2)\n5\n";
+  const frames = [
+    { index: 0, kind: "sub" as const, seq: 2, file: "a.go", range: { start: 2, end: 4 }, why: "名前を変える", before, after, hits: 2 },
+  ];
+  s.frames.set(id, frames);
+  s.tapes.push({ tapeId: id, startedAt: "2026-10-05T10:30:00+09:00", ops: 1, files: ["a.go"] });
+  return s;
+}
+
+test("a sub frame: left and right, the why in a band above both, the changed lines painted below it", async () => {
+  const a = await openTape(serverWithSub(), "20261005-1030-sub");
+  const s = a.screen();
+  assert.equal(s.tabs.length, 2);
+  const [left, right] = s.tabs;
+  assert.ok(left.uri.includes("前 ⚠ sub: a.go?diff=0&side=before"), left.uri);
+  assert.ok(right.uri.includes("後 a.go?diff=0&side=after"), right.uri);
+  assert.equal(left.text, "\n1\nfoo(1)\n3\nfoo(2)\n5\n", "the left has an empty row where the why is on the right");
+  assert.equal(right.text, "◆ 名前を変える\n1\nbar(1)\n3\nbar(2)\n5\n");
+  // The band, then the changed lines (moved down by the band), then the file's own numbers.
+  const leftColors = colorsOf(left);
+  const rightColors = colorsOf(right);
+  assert.ok(leftColors.includes("#0b61a4") && leftColors.includes("#1d3a5c") && leftColors.includes("numbers"), `${leftColors}`);
+  assert.ok(rightColors.includes("#b45f06") && rightColors.includes("#583c27") && rightColors.includes("numbers"), `${rightColors}`);
+  const painted = (tab: typeof left, color: string): unknown => tab.decorations.find((d) => d.opts.backgroundColor === color)?.ranges;
+  assert.deepEqual(painted(left, "#0b61a4"), [{ line: 0 }], "the band on the left is blue");
+  assert.deepEqual(painted(right, "#b45f06"), [{ line: 0 }], "the band on the right is orange");
+  assert.deepEqual(painted(left, "#1d3a5c"), [{ line: 2 }, { line: 4 }]);
+  assert.deepEqual(painted(right, "#583c27"), [{ line: 2 }, { line: 4 }]);
+  assert.equal(left.options.lineNumbers, 0, "the file's own numbers are drawn, since the band moves the lines");
+});
+
+test("a sub frame is listed with its file and the number of places, in orange", async () => {
+  const a = await openTape(serverWithSub(), "20261005-1030-sub");
+  const row = a.screen().tree[0];
+  assert.match(String(row.label), /^1  sub  a\.go \(2か所\)$/);
+  assert.equal(row.description, "名前を変える");
+  assert.equal(row.color, "charts.orange");
+});

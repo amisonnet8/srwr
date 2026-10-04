@@ -179,3 +179,15 @@ test("the picker shows the time in the time zone of the machine", async () => {
   await app.run("srwr.openTape");
   assert.equal(state.quickPick?.items[0].label, "2026-09-30 09:54:08");
 });
+
+test("a sub frame in English: the heading and the number of places", async () => {
+  const s = new FakeServer();
+  const id = "20261005-1030-sub";
+  const hit = (n: number, hits: number) => ({ index: n, kind: "sub" as const, seq: n + 2, file: `dir/f${n}.go`, range: { start: 1, end: 1 }, why: "Rename it", before: "foo\n", after: "bar\n", hits });
+  s.frames.set(id, [hit(0, 1), hit(1, 3)]);
+  s.tapes.push({ tapeId: id, startedAt: "2026-10-05T10:30:00+09:00", ops: 2, files: ["dir/f0.go", "dir/f1.go"] });
+  const a = await openTape(s, id);
+  assert.equal(a.screen().tabs[0].uri, `srwr-replay:/${id}/diff0/Before ⚠ sub: f0.go?diff=0&side=before`);
+  assert.equal(a.screen().tabs[1].text, "◆ Rename it\nbar\n");
+  assert.deepEqual(a.screen().tree.map((r) => r.label), ["1  sub  f0.go (1 hit)", "2  sub  f1.go (3 hits)"]);
+});

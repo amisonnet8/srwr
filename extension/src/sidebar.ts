@@ -15,12 +15,12 @@ export interface OpsSource {
 }
 
 export function dotColor(f: Frame): string {
-  return f.kind === "select" ? "charts.blue" : f.kind === "replace" ? "charts.orange" : f.kind === "failure" ? "srwr.failureForeground" : "charts.purple";
+  return f.kind === "select" ? "charts.blue" : f.kind === "replace" || f.kind === "sub" ? "charts.orange" : f.kind === "failure" ? "srwr.failureForeground" : "charts.purple";
 }
 
 // The label of a kind: the words select and replace are the names of the two commands; external and final are srwr's own.
 function kindLabel(kind: Frame["kind"]): string {
-  return { select: "select", replace: "replace", external: pick("external", "外部変更"), final: pick("final", "録画後"), failure: pick("failure", "失敗") }[kind];
+  return { select: "select", replace: "replace", sub: "sub", external: pick("external", "外部変更"), final: pick("final", "録画後"), failure: pick("failure", "失敗") }[kind];
 }
 
 // "Hiding: failure (2)" under the heading of the list; "No frames to show" when nothing is there.
@@ -35,6 +35,10 @@ export function hiddenMessage(hidden: Hidden, shown: number): string {
 
 // What a row says where a frame has a file and a range: a failure has the error code instead.
 export function rowPlace(f: Frame): string {
+  if (f.kind === "sub") {
+    const n = f.hits ?? 0;
+    return `${basename(f.file)} (${pick(`${n} ${n === 1 ? "hit" : "hits"}`, `${n}か所`)})`;
+  }
   return f.kind === "failure" ? (f.code ?? "") : `${basename(f.file)}:${formatRange(f.range)}`;
 }
 

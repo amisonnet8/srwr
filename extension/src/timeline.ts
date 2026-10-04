@@ -3,7 +3,7 @@
 
 import { pick } from "./lang";
 
-export type FrameKind = "select" | "replace" | "external" | "final" | "failure";
+export type FrameKind = "select" | "replace" | "sub" | "external" | "final" | "failure";
 
 // The kinds a person can turn on and off (final follows external), and what the server was told is hidden: kind -> how many.
 export type ShownKind = "select" | "replace" | "external" | "failure";
@@ -27,6 +27,7 @@ export interface Frame {
   before: string;
   after: string;
   deleted?: boolean;
+  hits?: number; // sub frames only: how many places it changed in the file
   // failure frames only
   tool?: string;
   code?: string;
@@ -38,6 +39,11 @@ export type Tone = "select" | "replace" | "failure";
 
 export function isDiff(f: Frame): boolean {
   return f.kind === "external" || f.kind === "final";
+}
+
+// A sub frame is a replace shown as a diff: left and right, with its why in a band above both.
+export function isSub(f: Frame): boolean {
+  return f.kind === "sub";
 }
 
 export function toneOf(f: Frame): Tone {
@@ -70,6 +76,7 @@ export function toFrame(raw: Record<string, unknown>): Frame {
     before: typeof f.before === "string" ? f.before : "",
     after: typeof f.after === "string" ? f.after : "",
     ...(f.deleted ? { deleted: true } : {}),
+    ...(f.kind === "sub" ? { hits: typeof f.hits === "number" ? f.hits : 0 } : {}),
     ...(f.kind === "failure" ? { tool: f.tool ?? "", code: f.code ?? "", message: f.message ?? "" } : {}),
   };
 }

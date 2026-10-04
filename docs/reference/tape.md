@@ -20,6 +20,15 @@ The current session is the one `.srwr/active` (the current tape ID) of the works
 
 `srwr hook` also writes to the same session (the same tape) as `srwr mcp`.
 
+## A closed tape is compressed
+
+When a session ends, its tape is **compressed with gzip** and renamed `<id>.tape.jsonl.gz`. The tape ID is the same, and the content is the same JSONL (`zcat` shows it). It is done by whoever starts the next session (a write after a pause, or `srwr tapes new`), while it holds the lock, so a tape that is still being written is never compressed. The tape of the session that is still current, and the last one until something is written again, stay plain.
+
+- Everything that reads tapes opens both forms. If a crash leaves both the plain and the compressed file, the plain one is the tape
+- Nothing is appended to a closed tape. The compressed bytes depend only on the content (no time or name is stored in the header of the gzip), and the file keeps the time of last change of the plain tape
+- Compressing only saves space (a tape is mostly the whole text of each file when it was first touched, which compresses to about a third). If it fails, the plain tape stays and nothing else is affected
+- Tapes made before this stay plain; they are not converted
+
 ## Rules of writing
 
 - Every event has `"v":1` (the version of the format)

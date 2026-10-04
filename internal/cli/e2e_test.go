@@ -194,9 +194,11 @@ func read(t *testing.T, root, rel string) string {
 // tapes returns the tape files of a workspace.
 func tapes(t *testing.T, root string) []string {
 	t.Helper()
-	m, err := filepath.Glob(filepath.Join(root, ".srwr", "tapes", "*"+tape.FileSuffix))
-	if err != nil {
-		t.Fatal(err)
+	var m []string
+	for _, id := range tape.IDs(filepath.Join(root, ".srwr", "tapes")) {
+		if path, ok := tape.Find(filepath.Join(root, ".srwr", "tapes"), id); ok {
+			m = append(m, path)
+		}
 	}
 	return m
 }
@@ -364,6 +366,9 @@ func TestNewSessionAfterAPause(t *testing.T) {
 	files = tapes(t, root)
 	if len(files) != 2 {
 		t.Fatalf("tapes = %v, want the old one and a new one", files)
+	}
+	if closed := slices.IndexFunc(files, func(f string) bool { return strings.HasSuffix(f, tape.GzSuffix) }); closed < 0 || files[closed] == files[1-closed] {
+		t.Errorf("the tape of the session that ended is not compressed: %v", files)
 	}
 	active, _ := os.ReadFile(filepath.Join(root, ".srwr", "active")) //nolint:gosec // a path in a temporary directory
 	newTape := filepath.Join(root, ".srwr", "tapes", tape.FileName(strings.TrimSpace(string(active))))

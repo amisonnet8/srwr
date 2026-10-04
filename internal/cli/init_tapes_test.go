@@ -13,6 +13,7 @@ import (
 	"github.com/amisonnet8/srwr/internal/core"
 	"github.com/amisonnet8/srwr/internal/session"
 	"github.com/amisonnet8/srwr/internal/setup"
+	"github.com/amisonnet8/srwr/internal/tape"
 )
 
 func initOut(t *testing.T, root string, args ...string) (int, string, string) {
@@ -215,11 +216,7 @@ func TestTapesNewEndsTheSession(t *testing.T) {
 
 func tapeCount(t *testing.T, root string) int {
 	t.Helper()
-	m, err := filepath.Glob(filepath.Join(root, ".srwr", "tapes", "*.tape.jsonl"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	return len(m)
+	return len(tape.IDs(filepath.Join(root, ".srwr", "tapes")))
 }
 
 func TestTapesPrune(t *testing.T) {
@@ -299,5 +296,70 @@ func TestTapesPruneKeepCountsTheNewestIncludingTheCurrent(t *testing.T) {
 	}
 	if got := tapeCount(t, root); got != 2 {
 		t.Errorf("tapes = %d, want 2", got)
+	}
+}
+
+// Making the tape of the session before it is what closes it: it is a compressed file from then on, and every command that
+// reads tapes opens it all the same.
+func TestTapesCommandsOpenClosedTapes(t *testing.T) {
+	root := t.TempDir()
+	write(t, root, "a.txt", "1\n2\n")
+	makeTape(t, root, time.Now().Add(-48*time.Hour), "a.txt")
+	makeTape(t, root, time.Now().Add(-24*time.Hour), "a.txt")
+	makeTape(t, root, time.Now(), "a.txt")
+	dir := filepath.Join(root, ".srwr", "tapes")
+	ids := tape.IDs(dir)
+	if len(ids) != 3 {
+		t.Fatalf("tapes = %v", ids)
+	}
+	oldest := ids[0]
+	gz := filepath.Join(dir, oldest+".tape.jsonl.gz")
+	if _, err := os.Stat(gz); err != nil {
+		t.Fatalf("the oldest tape is not closed: %v", err)
+	}
+
+	// list: the closed tape is there, with its size on disk (smaller than the tape it holds).
+	code, out, _ := tapesOut(t, root)
+	if code != 0 || !strings.Contains(out, oldest) {
+		t.Fatalf("list: %d %q", code, out)
+	}
+	// path: by ID and by the name of the file.
+	for _, arg := range []string{oldest, oldest + ".tape.jsonl.gz"} {
+		if code, out, _ := tapesOut(t, root, "path", arg); code != 0 || out != gz+"\n" {
+			t.Errorf("path %s: %d %q", arg, code, out)
+		}
+	}
+	// check: the tape is read (outside git it stops on git, not on a missing tape).
+	if code, _, errOut := tapesOut(t, root, "check", oldest); strings.Contains(errOut, "がありません") {
+		t.Errorf("check does not find the closed tape: %d %q", code, errOut)
+	}
+	// prune: both forms of a tape go.
+	if code, out, _ := tapesOut(t, root, "prune", "--keep", "2"); code != 0 || !strings.Contains(out, oldest) {
+		t.Fatalf("prune: %d %q", code, out)
+	}
+	if _, err := os.Stat(gz); !os.IsNotExist(err) {
+		t.Errorf("the closed tape was not deleted: %v", err)
+	}
+	if got := tape.IDs(dir); len(got) != 2 {
+		t.Errorf("tapes = %v", got)
+	}
+}
+
+// tapes new reports a tape that could not be compressed, and has closed the session all the same.
+func TestTapesNewWarnsWhenTheTapeCannotBeCompressed(t *testing.T) {
+	root := t.TempDir()
+	write(t, root, "a.txt", "1\n")
+	makeTape(t, root, time.Now(), "a.txt")
+	ws, _ := session.Open(root, session.Options{})
+	id, _ := ws.Current()
+	if err := os.MkdirAll(filepath.Join(ws.TapePath(id)+tape.GzSuffix, "x"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	code, out, errOut := tapesOut(t, root, "new")
+	if code != 0 || !strings.Contains(out, "閉じました") || !strings.Contains(errOut, "警告") || !strings.Contains(errOut, id) {
+		t.Errorf("new: %d %q %q", code, out, errOut)
+	}
+	if _, ok := ws.Current(); ok {
+		t.Error("the session is still open")
 	}
 }

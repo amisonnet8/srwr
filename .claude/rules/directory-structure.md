@@ -19,7 +19,7 @@
 ├── cmd/srwr/               ← 単一バイナリ（R2）。main.go は引数を internal/cli に渡すだけ
 ├── internal/
 │   ├── docs/               ← docs/ の検査だけのテスト（リンク切れ、英語版と日本語版の対、examples/ の本物との照合）（R0・R2・R3・R10.5）
-│   ├── tape/               ← テープの読み書き（イベントの型、追記、読み込み、テープから作る状態）（R1）
+│   ├── tape/               ← テープの読み書き（イベントの型、追記、読み込み、テープから作る状態、閉じたテープの圧縮と、生・`.gz` の両方を開く入口 `store.go`）（R1）
 │   ├── token/              ← 範囲トークン（R1）
 │   ├── jsonrpc/            ← 改行区切りの JSON-RPC（mcp と viewserver が共有）（R2）
 │   ├── core/               ← select / replace の本体、行番号補正、external の検知（R2）

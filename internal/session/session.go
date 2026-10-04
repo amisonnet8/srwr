@@ -87,6 +87,7 @@ type tapeCache struct {
 	tail   int64     // bytes after offset: a line a crashed writer left unfinished
 	last   time.Time // time of the last event
 	exists bool      // the tape file exists (false for a session that has not written yet)
+	closed bool      // the tape was closed and compressed: nothing is appended to it
 }
 
 // Tx is the current session while a call to Do runs. It must not be used after Do returns.
@@ -125,10 +126,12 @@ func (w *Workspace) Do(fn func(*Tx) error) error {
 // Prepare makes .srwr/ with its lock and key, and nothing else. srwr init uses it.
 func (w *Workspace) Prepare() error { return w.Do(func(*Tx) error { return nil }) }
 
-// EndSession closes the current session: the next write starts a new tape. Without a current session it does nothing.
-// It returns the ID of the tape that was closed, or "".
+// EndSession closes the current session: the tape is compressed, and the next write starts a new tape. Without a current session
+// it does nothing. It returns the ID of the tape that was closed, or "". A tape that could not be compressed is reported as a
+// *CompressError, and the session is closed all the same.
 func (w *Workspace) EndSession() (string, error) {
 	var closed string
+	var compressErr *CompressError
 	err := w.Do(func(tx *Tx) error {
 		if !tx.tc.exists {
 			return nil
@@ -138,9 +141,35 @@ func (w *Workspace) EndSession() (string, error) {
 			return err
 		}
 		w.cache = nil
+		if cerr := w.closeTape(closed); cerr != nil {
+			compressErr = &CompressError{ID: closed, Err: cerr}
+		}
 		return nil
 	})
-	return closed, err
+	if err != nil {
+		return closed, err
+	}
+	if compressErr != nil {
+		return closed, compressErr
+	}
+	return closed, nil
+}
+
+// CompressError says that a session was closed but its tape could not be compressed; the plain tape is still there.
+type CompressError struct {
+	ID  string
+	Err error
+}
+
+func (e *CompressError) Error() string {
+	return "the tape " + e.ID + " could not be compressed: " + e.Err.Error()
+}
+func (e *CompressError) Unwrap() error { return e.Err }
+
+// closeTape compresses the tape of a session that has ended. It is only a saving of space: when it fails the plain tape stays,
+// and every reader opens that as well as it would the compressed one.
+func (w *Workspace) closeTape(id string) error {
+	return tape.Compress(filepath.Dir(w.TapePath(id)), id)
 }
 
 // Current returns the ID of the current tape, without taking the lock or making anything. ok is false when there is none.
@@ -152,7 +181,7 @@ func (w *Workspace) Current() (id string, ok bool) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	tc, err := w.load(id)
-	if err != nil || !tc.exists || w.opts.Now().Sub(tc.last) > w.opts.Gap {
+	if err != nil || !tc.exists || tc.closed || w.opts.Now().Sub(tc.last) > w.opts.Gap {
 		return "", false
 	}
 	return id, true
@@ -167,9 +196,14 @@ func (w *Workspace) current() (*tapeCache, error) {
 		if err != nil {
 			return nil, err
 		}
-		if tc.exists && now.Sub(tc.last) <= w.opts.Gap {
+		if tc.exists && !tc.closed && now.Sub(tc.last) <= w.opts.Gap {
 			w.cache = tc
 			return tc, nil
+		}
+		if tc.exists {
+			// The session ended by being left alone for too long: this call starts the next one, so the old tape is closed.
+			// Compressing is only a saving of space, and must not stop the agent: when it fails, the plain tape stays.
+			_ = w.closeTape(id)
 		}
 	}
 	id, err := w.newID(now)
@@ -215,7 +249,7 @@ func (w *Workspace) load(id string) (*tapeCache, error) {
 	path := w.TapePath(id)
 	f, err := os.Open(path) //nolint:gosec // id passed tape.ValidID
 	if errors.Is(err, os.ErrNotExist) {
-		return &tapeCache{id: id, state: tape.NewState()}, nil
+		return w.loadClosed(id)
 	}
 	if err != nil {
 		return nil, err
@@ -250,6 +284,33 @@ func (w *Workspace) load(id string) (*tapeCache, error) {
 	return tc, nil
 }
 
+// loadClosed reads a tape that has no plain file: a closed one, which is compressed, or none at all.
+func (w *Workspace) loadClosed(id string) (*tapeCache, error) {
+	gz := w.TapePath(id) + tape.GzSuffix
+	data, err := tape.ReadFile(gz)
+	if errors.Is(err, os.ErrNotExist) {
+		return &tapeCache{id: id, state: tape.NewState()}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	tc := &tapeCache{id: id, state: tape.NewState(), exists: true, closed: true}
+	res := tape.Parse(data)
+	for _, e := range res.Events {
+		tc.state.Apply(e)
+		if t, ok := eventTime(e); ok {
+			tc.last = t
+		}
+	}
+	tc.offset, tc.tail = int64(res.Consumed), int64(len(data)-res.Consumed)
+	if tc.last.IsZero() {
+		if info, err := os.Stat(gz); err == nil {
+			tc.last = info.ModTime()
+		}
+	}
+	return tc, nil
+}
+
 // eventTime returns the time an event happened, if the tape says it in a form that can be read.
 func eventTime(e tape.Event) (time.Time, bool) {
 	s := e.TS
@@ -272,11 +333,17 @@ func (w *Workspace) newID(now time.Time) (string, error) {
 			b[i] = chars[int(b[i])%len(chars)]
 		}
 		id := now.UTC().Format("20060102-1504") + "-" + string(b[:])
-		if _, err := os.Stat(w.TapePath(id)); errors.Is(err, os.ErrNotExist) {
+		if !w.taken(id) {
 			return id, nil
 		}
 	}
 	return "", errors.New("could not find an unused tape ID")
+}
+
+// taken reports whether a tape, plain or closed, has the ID.
+func (w *Workspace) taken(id string) bool {
+	_, found := tape.Find(filepath.Dir(w.TapePath(id)), id)
+	return found
 }
 
 // TapeID returns the ID of the current tape. For a session that has not written yet, it is the

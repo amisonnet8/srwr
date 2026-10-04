@@ -29,6 +29,7 @@
 - **同じプロセスの goroutine 同士は、flock のほかに `sync.Mutex` で守る。** race detector は flock による順序を知らないので、`Workspace` が持つ読み足しの状態を2つの goroutine が順に触ると、flock だけでは race と報告される
 - Windows の flock は、標準ライブラリに無いので `syscall.NewLazyDLL("kernel32.dll")` の `LockFileEx`・`UnlockFileEx` を呼ぶ（外部依存も cgo も要らない）。手元では型検査（`qsoku cross`）までで、動くのは CI の Windows が初めて
 - flock は OS ごとにビルドタグで分け（`//go:build unix` と `//go:build windows`）、cgo を使わない。**手元でも `qsoku cross` を通す**（前は Windows の CI で初めて落ちた）
+- **閉じたセッションのテープは gzip で圧縮される**（`internal/tape/store.go`）。起点は `session` の `current()`（間隔を越えた古いテープ）と `EndSession()`（`srwr tapes new`）で、どちらもロックの中。**圧縮の失敗は作業を止めない**（`current()` は握りつぶし、`EndSession` は `*CompressError` で返して CLI が警告にする）。圧縮したテープに追記しない（`tapeCache.closed`）。`Compress` は、読み終えて閉じてから rename・remove する（Windows は開いたファイルを置き換えられない）
 - 表示サーバー（`viewserver`・`timeline`）はテープを**読むだけ**。ロックを取らず、書き込み途中の最後の行は保留する
 - 表示サーバーが「今のファイル」を読むのは、最後の差分のときだけ。**テープに書かれたパスは信用しない**（共有されたテープが任意のファイルを読ませないよう、作業場の外を指すパス・シンボリックリンクは「存在しない」として扱う）。`tapeId` も裸の名前だけを受ける
 - サーバーからの通知（ライブ）を書く goroutine は、接続が終わるときに必ず止めて待つ。通知は、その要求への返事を書いたあとに始める

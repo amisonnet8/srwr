@@ -45,7 +45,8 @@ The directory where srwr is used is called the **workspace**. srwr makes the fol
 │   ├── lock                For exclusive writing (flock)
 │   ├── active              The tape ID of the current session
 │   └── tapes/
-│       └── <id>.tape.jsonl   A tape
+│       ├── <id>.tape.jsonl   A tape (the one being written)
+│       └── <id>.tape.jsonl.gz   A tape of a session that ended (compressed)
 ├── .srwrignore             Files not to record (optional)
 ├── .mcp.json               Registers srwr mcp (written by srwr init)
 └── .claude/settings.json   Registers the hook, forbids Edit/Write (written by srwr init)
@@ -105,7 +106,7 @@ It is not for people to use directly. Those who add support for an editor read [
 
 ## srwr view
 
-`srwr view [tape]` replays a tape in a plain Vim, with no plugin, using the Vim scripts embedded in the binary. If the tape is left out, you choose from the list. `--live` is live viewing. When running from outside the workspace, give `--root <workspace>`. Vim 9.0.0784 or later is needed. For how to use it, see [vim.md](vim.md).
+`srwr view [tape]` replays a tape in a plain Vim, with no plugin, using the Vim scripts embedded in the binary. If the tape is left out, you choose from the list. A tape is its ID or the path of a `.tape.jsonl` or `.tape.jsonl.gz` file. `--live` is live viewing. When running from outside the workspace, give `--root <workspace>`. Vim 9.0.0784 or later is needed. For how to use it, see [vim.md](vim.md).
 
 ## srwr init
 
@@ -161,9 +162,9 @@ srwr tapes [new | prune (--keep N | --older-than 30d) | path <tape ID> | check [
 | Command | Content |
 |---|---|
 | `srwr tapes` | A list (tape ID, start, last update, number of events, number of files, size, whether it is the current session). Newest first (by the time the tape started). Times are in the time zone of the machine |
-| `srwr tapes new` | Closes the current session, and the next write starts a new session. Selection tokens issued before the closing can no longer be used |
-| `srwr tapes prune --keep N` / `--older-than 30d` | Deletes old tapes. `--keep N` keeps the newest N. `--older-than` takes the form `30d` or `12h`. It does not ask for confirmation, and prints each deleted tape on a line. **It does not delete the tape of the current session** |
-| `srwr tapes path <id>` | Prints the path of a tape (used when sharing) |
+| `srwr tapes new` | Closes the current session, and the next write starts a new session. The tape is [compressed](tape.md#a-closed-tape-is-compressed); if that fails, the tape stays as it was and a warning is printed. Selection tokens issued before the closing can no longer be used |
+| `srwr tapes prune --keep N` / `--older-than 30d` | Deletes old tapes, compressed or not. `--keep N` keeps the newest N. `--older-than` takes the form `30d` or `12h`. It does not ask for confirmation, and prints each deleted tape on a line. **It does not delete the tape of the current session** |
+| `srwr tapes path <id>` | Prints the path of a tape, `.tape.jsonl` or `.tape.jsonl.gz` (used when sharing) |
 | `srwr tapes check [<id>]` | Lists the files that changed in the git work tree but are not on the tape. Without an ID it checks the current session (or the newest tape). It only reads |
 
 There is no automatic cleanup. Deleting is done explicitly by the user.

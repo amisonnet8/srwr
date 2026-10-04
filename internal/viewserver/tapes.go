@@ -4,9 +4,7 @@ import (
 	"errors"
 	"io/fs"
 	"os"
-	"path/filepath"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/amisonnet8/srwr/internal/jsonrpc"
@@ -32,17 +30,7 @@ type listEntry struct {
 
 // tapeIDs returns the IDs of the tapes in the workspace, newest first by name.
 func (s *Server) tapeIDs() []string {
-	entries, err := os.ReadDir(s.tapesDir())
-	if err != nil {
-		return nil
-	}
-	var ids []string
-	for _, e := range entries {
-		id, ok := strings.CutSuffix(e.Name(), tape.FileSuffix)
-		if ok && !e.IsDir() && tape.ValidID(id) {
-			ids = append(ids, id)
-		}
-	}
+	ids := tape.IDs(s.tapesDir())
 	sort.Sort(sort.Reverse(sort.StringSlice(ids)))
 	return ids
 }
@@ -72,7 +60,10 @@ func (c *conn) tapesList() (any, *jsonrpc.Error) {
 }
 
 func (c *conn) info(id string) *tapeInfo {
-	path := filepath.Join(c.srv.tapesDir(), tape.FileName(id))
+	path, found := tape.Find(c.srv.tapesDir(), id)
+	if !found {
+		return nil
+	}
 	st, err := os.Stat(path)
 	if err != nil {
 		return nil
@@ -81,7 +72,7 @@ func (c *conn) info(id string) *tapeInfo {
 		return e.info
 	}
 	var info *tapeInfo
-	if data, err := os.ReadFile(path); err == nil { //nolint:gosec // id passed tape.ValidID
+	if data, err := tape.ReadFile(path); err == nil {
 		res := tape.Parse(data)
 		b := timeline.Build(res.Events)
 		if b.Ops() > 0 {
@@ -109,7 +100,7 @@ func tapeParam(id string) *jsonrpc.Error {
 
 // readTape reads a whole tape.
 func (s *Server) readTape(id string) (tape.Result, *jsonrpc.Error) {
-	data, err := os.ReadFile(filepath.Join(s.tapesDir(), tape.FileName(id)))
+	data, err := tape.ReadAll(s.tapesDir(), id)
 	if errors.Is(err, fs.ErrNotExist) {
 		return tape.Result{}, rpcError(serverError, codeTapeNotFound, "no such tape: "+id)
 	}

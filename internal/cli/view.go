@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/amisonnet8/srwr/internal/lang"
+	"github.com/amisonnet8/srwr/internal/tape"
 	"github.com/amisonnet8/srwr/vim"
 )
 
@@ -64,9 +65,9 @@ func parseViewArgs(args []string) (viewArgs, error) {
 		return v, errors.New(lang.Pick("--live and a tape cannot be given together", "--live と テープは一緒に指定できません"))
 	}
 	if v.tape != "" {
-		id := strings.TrimSuffix(filepath.Base(v.tape), ".tape.jsonl")
+		id := tape.IDOf(v.tape)
 		if !tapeName.MatchString(id) {
-			return v, fmt.Errorf(lang.Pick("%q is not a valid tape name (a tape ID or the path of a .tape.jsonl file)", "テープ %q の名前が正しくありません（テープID か .tape.jsonl のパス）"), v.tape)
+			return v, fmt.Errorf(lang.Pick("%q is not a valid tape name (a tape ID or the path of a .tape.jsonl or .tape.jsonl.gz file)", "テープ %q の名前が正しくありません（テープID か .tape.jsonl・.tape.jsonl.gz のパス）"), v.tape)
 		}
 		v.tape = id
 	}

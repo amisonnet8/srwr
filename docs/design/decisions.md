@@ -74,6 +74,15 @@ If each editor had its own code to read the tape and build the frames, VSCode an
 
 srwr is still experimental and has no users who depend on old tapes. Keeping every old form readable would stop us from making the tape lighter and simpler (for example, dropping the whole-text `snapshot` that repeats an `external`). So until v1 the format may change without compatibility, and a tape is read by the version that wrote it. From v1 on, the promise in [tape.md](../reference/tape.md) applies: fields may be added, and the meaning of an existing one is not changed.
 
+### Closed tapes are compressed with gzip
+
+About nine tenths of a tape is the whole text that each file had when it was first touched (the `snapshot`). It cannot be dropped: the replay must complete from the tape alone. So the tape is made smaller after the session ends. The tape of a session that ended is compressed with gzip (`<id>.tape.jsonl.gz`), by the call that starts the next session, under the lock.
+
+- gzip is in Go's standard library (no dependency), `zcat` reads it, and the same tape always gives the same bytes, so a shared tape does not change when it is compressed again
+- A tape being written stays plain JSONL, so appending, live viewing, and the reading of the last line that is not finished are as they were. Everything that reads tapes opens both forms
+- Not chosen: keeping only the part of an unchanged file that was read (it breaks the replay on its own), and compressing each event (it makes the tape unreadable by eye and by `grep`)
+- Failing to compress changes nothing else: the plain tape stays and is read as before
+
 ### Communication is newline-delimited JSON
 
 The LSP format (with headers) is not handled by Vim as it is. Newline-delimited JSON is handled by Vim's own `job` and a channel in `nl` mode as it is, and VSCode can write it without a library. It is the same format as MCP, so the implementation can be shared.

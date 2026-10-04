@@ -111,25 +111,22 @@ func reorder(args []string) []string {
 
 func tapeRows(ws *session.Workspace) ([]tapeRow, error) {
 	dir := filepath.Dir(ws.TapePath("x"))
-	entries, err := os.ReadDir(dir)
-	if errors.Is(err, os.ErrNotExist) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
 	var rows []tapeRow
-	for _, e := range entries {
-		id, ok := strings.CutSuffix(e.Name(), tape.FileSuffix)
-		if !ok || e.IsDir() || !tape.ValidID(id) {
-			continue
-		}
+	for _, id := range tape.IDs(dir) {
 		row := tapeRow{id: id}
-		b, err := os.ReadFile(ws.TapePath(id))
+		path, found := tape.Find(dir, id)
+		if !found {
+			continue // gone since the list was made
+		}
+		b, err := tape.ReadFile(path)
 		if err != nil {
 			return nil, err
 		}
-		row.size = int64(len(b))
+		info, statErr := os.Stat(path)
+		if statErr != nil {
+			return nil, statErr
+		}
+		row.size = info.Size() // on disk: a closed tape is compressed
 		res := tape.Parse(b)
 		st := tape.Build(res.Events)
 		row.files = len(st.Files)
@@ -143,7 +140,7 @@ func tapeRows(ws *session.Workspace) ([]tapeRow, error) {
 				row.updated = t
 			}
 		}
-		if info, err := e.Info(); err == nil && row.updated.IsZero() {
+		if row.updated.IsZero() {
 			row.updated = info.ModTime()
 		}
 		if row.started.IsZero() {
@@ -195,7 +192,10 @@ func tapesNew(ws *session.Workspace, stdout, stderr io.Writer) int {
 		return 0
 	}
 	id, err := ws.EndSession()
-	if err != nil {
+	var cerr *session.CompressError
+	if errors.As(err, &cerr) {
+		_, _ = fmt.Fprintf(stderr, lang.Pick("srwr tapes new: warning: %s could not be compressed (it stays as it is): %v\n", "srwr tapes new: 警告: %s を圧縮できませんでした（そのまま残ります）: %v\n"), cerr.ID, cerr.Err)
+	} else if err != nil {
 		_, _ = fmt.Fprintf(stderr, "srwr tapes new: %v\n", err)
 		return 1
 	}
@@ -251,7 +251,7 @@ func tapesPrune(ws *session.Workspace, keep int, older string, stdout, stderr io
 			return err
 		}
 		cur := ""
-		if _, statErr := os.Stat(ws.TapePath(tx.TapeID())); statErr == nil {
+		if _, found := tape.Find(filepath.Dir(ws.TapePath("x")), tx.TapeID()); found {
 			cur = tx.TapeID()
 		}
 		now := time.Now()
@@ -263,7 +263,7 @@ func tapesPrune(ws *session.Workspace, keep int, older string, stdout, stderr io
 				doomed = now.Sub(r.updated) > age
 			}
 			if doomed && r.id != cur {
-				if err := os.Remove(ws.TapePath(r.id)); err != nil {
+				if err := tape.Remove(filepath.Dir(ws.TapePath("x")), r.id); err != nil {
 					return err
 				}
 				gone = append(gone, r)
@@ -293,13 +293,13 @@ func tapesPrune(ws *session.Workspace, keep int, older string, stdout, stderr io
 }
 
 func tapesPath(ws *session.Workspace, id string, stdout, stderr io.Writer) int {
-	id = strings.TrimSuffix(filepath.Base(id), tape.FileSuffix)
+	id = tape.IDOf(id)
 	if !tape.ValidID(id) {
 		_, _ = fmt.Fprintf(stderr, lang.Pick("srwr tapes path: %q is not a valid tape ID\n", "srwr tapes path: テープID %q が正しくありません\n"), id)
 		return 1
 	}
-	p := ws.TapePath(id)
-	if _, err := os.Stat(p); err != nil {
+	p, found := tape.Find(filepath.Dir(ws.TapePath("x")), id)
+	if !found {
 		_, _ = fmt.Fprintf(stderr, lang.Pick("srwr tapes path: there is no tape %s\n", "srwr tapes path: テープ %s がありません\n"), id)
 		return 1
 	}
@@ -337,7 +337,7 @@ func tapesCheck(ws *session.Workspace, id string, stdout, stderr io.Writer) int 
 	label := ""
 	switch {
 	case id != "":
-		id = strings.TrimSuffix(filepath.Base(id), tape.FileSuffix)
+		id = tape.IDOf(id)
 		if !tape.ValidID(id) {
 			_, _ = fmt.Fprintf(stderr, lang.Pick("srwr tapes check: %q is not a valid tape ID\n", "srwr tapes check: テープID %q が正しくありません\n"), id)
 			return 1
@@ -354,7 +354,7 @@ func tapesCheck(ws *session.Workspace, id string, stdout, stderr io.Writer) int 
 		}
 		id = rows[0].id
 	}
-	data, err := os.ReadFile(ws.TapePath(id))
+	data, err := tape.ReadAll(filepath.Dir(ws.TapePath("x")), id)
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, lang.Pick("srwr tapes check: there is no tape %s\n", "srwr tapes check: テープ %s がありません\n"), id)
 		return 1

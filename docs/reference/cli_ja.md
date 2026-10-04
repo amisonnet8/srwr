@@ -45,7 +45,8 @@ srwr を使うディレクトリを**作業場**と呼ぶ。srwr は作業場の
 │   ├── lock                書き込みの排他用（flock）
 │   ├── active              今のセッションのテープID
 │   └── tapes/
-│       └── <id>.tape.jsonl   テープ
+│       ├── <id>.tape.jsonl   テープ（書き込み中のもの）
+│       └── <id>.tape.jsonl.gz   終わったセッションのテープ（圧縮）
 ├── .srwrignore             記録しないファイルの指定（任意）
 ├── .mcp.json               srwr mcp の登録（srwr init が書く）
 └── .claude/settings.json   hook の登録、Edit/Write の禁止（srwr init が書く）
@@ -105,7 +106,7 @@ srwr view-server --root <作業場>
 
 ## srwr view
 
-`srwr view [テープ]` は、バイナリに埋め込んだ Vim スクリプトを使って、プラグインなしの Vim でテープを再生する。テープを省くと一覧から選ぶ。`--live` でライブ。作業場以外から実行するときは `--root <作業場>`。Vim 9.0.0784 以上が要る。使い方は [vim.md](vim_ja.md)。
+`srwr view [テープ]` は、バイナリに埋め込んだ Vim スクリプトを使って、プラグインなしの Vim でテープを再生する。テープを省くと一覧から選ぶ。テープは、そのIDか、`.tape.jsonl`・`.tape.jsonl.gz` のファイルのパス。`--live` でライブ。作業場以外から実行するときは `--root <作業場>`。Vim 9.0.0784 以上が要る。使い方は [vim.md](vim_ja.md)。
 
 ## srwr init
 
@@ -161,9 +162,9 @@ srwr tapes [new | prune (--keep N | --older-than 30d) | path <テープID> | che
 | コマンド | 内容 |
 |---|---|
 | `srwr tapes` | 一覧（テープID、開始、最後の更新、イベント数、ファイル数、大きさ、今のセッションか）。新しい順（テープを始めた時刻の順）。時刻はその機械の時間帯（テープには UTC で持つ） |
-| `srwr tapes new` | 今のセッションを閉じ、次の書き込みから新しいセッションにする。閉じる前に発行した範囲トークンは使えなくなる |
-| `srwr tapes prune --keep N` / `--older-than 30d` | 古いテープを消す。`--keep N` は新しい方から N 本を残す。`--older-than` は `30d`・`12h` の形。確認は聞かず、消したテープを1行ずつ出す。**今のセッションのテープは消さない** |
-| `srwr tapes path <id>` | テープのパスを表示（共有するときに使う） |
+| `srwr tapes new` | 今のセッションを閉じ、次の書き込みから新しいセッションにする。テープは[圧縮される](tape_ja.md#閉じたテープは圧縮する)（失敗したらテープはそのままで、警告を出す）。閉じる前に発行した範囲トークンは使えなくなる |
+| `srwr tapes prune --keep N` / `--older-than 30d` | 古いテープを、圧縮したものも含めて消す。`--keep N` は新しい方から N 本を残す。`--older-than` は `30d`・`12h` の形。確認は聞かず、消したテープを1行ずつ出す。**今のセッションのテープは消さない** |
+| `srwr tapes path <id>` | テープのパス（`.tape.jsonl` か `.tape.jsonl.gz`）を表示（共有するときに使う） |
 | `srwr tapes check [<id>]` | git の作業ツリーで変わったのに、テープに出ないファイルを一覧にする。ID を省くと今のセッション（なければ一番新しいテープ）。読むだけ |
 
 自動の整理はしない。消すのは利用者が明示的に行う。

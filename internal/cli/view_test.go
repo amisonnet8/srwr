@@ -24,6 +24,7 @@ func TestParseViewArgs(t *testing.T) {
 		{"nothing: the list", nil, viewArgs{root: "."}, ""},
 		{"a tape id", []string{"20260930-0054-why-basic"}, viewArgs{root: ".", tape: "20260930-0054-why-basic"}, ""},
 		{"a tape path", []string{".srwr/tapes/20260930-0054-why-basic.tape.jsonl"}, viewArgs{root: ".", tape: "20260930-0054-why-basic"}, ""},
+		{"a closed tape path", []string{".srwr/tapes/20260930-0054-why-basic.tape.jsonl.gz"}, viewArgs{root: ".", tape: "20260930-0054-why-basic"}, ""},
 		{"live", []string{"--live"}, viewArgs{root: ".", live: true}, ""},
 		{"root after the tape", []string{"abc", "--root", "/w"}, viewArgs{root: "/w", tape: "abc"}, ""},
 		{"root before the tape", []string{"--root=/w", "abc"}, viewArgs{root: "/w", tape: "abc"}, ""},

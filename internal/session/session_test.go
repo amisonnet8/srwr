@@ -46,7 +46,7 @@ func selectEvent(seq int) tape.Event {
 
 func readTape(t *testing.T, w *Workspace, id string) tape.Result {
 	t.Helper()
-	b, err := os.ReadFile(w.TapePath(id))
+	b, err := tape.ReadAll(filepath.Dir(w.TapePath(id)), id)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -166,7 +166,7 @@ func TestSessionEndsAfterTheGap(t *testing.T) {
 		if second == first || tx.NextSeq() != 1 || len(tx.State().Files) != 0 {
 			t.Errorf("after the gap: TapeID = %s (first %s), NextSeq = %d", second, first, tx.NextSeq())
 		}
-		// The old tape is not touched until something is written.
+		// The pointer to the old tape stays until something is written.
 		active, _ := os.ReadFile(filepath.Join(root, ".srwr", "active")) //nolint:gosec // a path in a temporary directory
 		if string(bytes.TrimSpace(active)) != first {
 			t.Errorf("active changed before a write: %q", active)
@@ -539,5 +539,203 @@ func TestHeaderVCSDefaultsToAskingGit(t *testing.T) {
 	first, _, _ := bytes.Cut(b, []byte("\n"))
 	if !strings.Contains(string(first), `"vcs":null`) {
 		t.Errorf("header line = %s", first)
+	}
+}
+
+// writeOne starts a session with one event and returns the ID of its tape.
+func writeOne(t *testing.T, w *Workspace) string {
+	t.Helper()
+	var id string
+	if err := w.Do(func(tx *Tx) error { id = tx.TapeID(); return tx.Append(selectEvent(1)) }); err != nil {
+		t.Fatal(err)
+	}
+	return id
+}
+
+func tapesDir(w *Workspace) string { return filepath.Dir(w.TapePath("x")) }
+
+// The session that is left alone is closed by the call that starts the next one, and its tape is compressed then.
+func TestTheTapeOfASessionLeftAloneIsCompressed(t *testing.T) {
+	root := t.TempDir()
+	c := newClock()
+	w := open(t, root, c)
+	first := writeOne(t, w)
+	if _, err := os.Stat(w.TapePath(first)); err != nil {
+		t.Fatalf("a session that goes on is not compressed: %v", err)
+	}
+	c.t = c.t.Add(30*time.Minute + time.Millisecond)
+	if err := w.Do(func(tx *Tx) error { return nil }); err != nil { // nothing is written
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(w.TapePath(first)); !os.IsNotExist(err) {
+		t.Errorf("the plain tape of the closed session is still there: %v", err)
+	}
+	if _, err := os.Stat(w.TapePath(first) + tape.GzSuffix); err != nil {
+		t.Errorf("no compressed tape: %v", err)
+	}
+	if n := len(readTape(t, w, first).Events); n != 2 {
+		t.Errorf("the closed tape has %d events, want 2", n)
+	}
+	second := writeOne(t, w)
+	if _, err := os.Stat(w.TapePath(second)); err != nil {
+		t.Errorf("the new session's tape is not plain: %v", err)
+	}
+	if got := tape.IDs(tapesDir(w)); !slices.Equal(got, []string{first, second}) && !slices.Equal(got, []string{second, first}) {
+		t.Errorf("tapes = %v", got)
+	}
+}
+
+func TestEndSessionCompressesTheTape(t *testing.T) {
+	root := t.TempDir()
+	w := open(t, root, newClock())
+	first := writeOne(t, w)
+	id, err := w.EndSession()
+	if err != nil || id != first {
+		t.Fatalf("EndSession = %q, %v", id, err)
+	}
+	if _, err := os.Stat(w.TapePath(first)); !os.IsNotExist(err) {
+		t.Errorf("the plain tape is still there: %v", err)
+	}
+	if n := len(readTape(t, w, first).Events); n != 2 {
+		t.Errorf("the closed tape has %d events, want 2", n)
+	}
+	if _, ok := w.Current(); ok {
+		t.Error("a closed session is still the current one")
+	}
+	if id2, err := w.EndSession(); err != nil || id2 != "" {
+		t.Errorf("a second EndSession = %q, %v", id2, err)
+	}
+}
+
+// Compressing only saves space. When it cannot be done, the session still ends and the next one still starts.
+func TestACompressFailureStopsNothing(t *testing.T) {
+	root := t.TempDir()
+	c := newClock()
+	w := open(t, root, c)
+	first := writeOne(t, w)
+	// A directory where the compressed tape would go: the rename fails.
+	blocker := filepath.Join(w.TapePath(first) + tape.GzSuffix)
+	if err := os.MkdirAll(filepath.Join(blocker, "x"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	id, err := w.EndSession()
+	var cerr *CompressError
+	if !errors.As(err, &cerr) || id != first || cerr.ID != first {
+		t.Fatalf("EndSession = %q, %v; want a *CompressError for %s", id, err, first)
+	}
+	if _, statErr := os.Stat(w.TapePath(first)); statErr != nil {
+		t.Errorf("the plain tape was lost: %v", statErr)
+	}
+	if n := len(readTape(t, w, first).Events); n != 2 {
+		t.Errorf("the tape has %d events, want 2", n)
+	}
+	entries, _ := os.ReadDir(tapesDir(w))
+	for _, e := range entries {
+		if strings.HasSuffix(e.Name(), ".tmp") {
+			t.Errorf("a temporary file is left: %s", e.Name())
+		}
+	}
+	second := writeOne(t, w) // the next write starts a new session
+	if second == first {
+		t.Error("the session did not end")
+	}
+
+	// The same for a session left alone: the call that starts the next one does not fail.
+	c.t = c.t.Add(31 * time.Minute)
+	if err := w.Do(func(tx *Tx) error { return tx.Append(selectEvent(tx.NextSeq())) }); err != nil {
+		t.Fatalf("a write after a pause stopped: %v", err)
+	}
+}
+
+// Several writers meet the end of the pause together: the tape is closed once, the new session is one tape, and nobody loses an event.
+func TestWritersMeetingTheEndOfAPauseTogether(t *testing.T) {
+	root := t.TempDir()
+	c := newClock()
+	first := writeOne(t, open(t, root, c))
+	later := c.t.Add(time.Hour)
+	const writers, rounds = 8, 5
+	var wg sync.WaitGroup
+	for range writers {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			w, err := Open(root, Options{Gap: 30 * time.Minute, Now: func() time.Time { return later }})
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			for range rounds {
+				if err := w.Do(func(tx *Tx) error { return tx.Append(selectEvent(tx.NextSeq())) }); err != nil {
+					t.Error(err)
+					return
+				}
+			}
+		}()
+	}
+	wg.Wait()
+	w := open(t, root, c)
+	ids := tape.IDs(tapesDir(w))
+	if len(ids) != 2 {
+		t.Fatalf("tapes = %v, want the closed one and one new", ids)
+	}
+	if n := len(readTape(t, w, first).Events); n != 2 {
+		t.Errorf("the closed tape has %d events, want 2", n)
+	}
+	if _, err := os.Stat(w.TapePath(first)); !os.IsNotExist(err) {
+		t.Errorf("the plain tape of the closed session is still there: %v", err)
+	}
+	for _, id := range ids {
+		if id == first {
+			continue
+		}
+		res := readTape(t, w, id)
+		if res.Skipped != 0 || len(res.Events) != 1+writers*rounds {
+			t.Errorf("the new tape has %d events (skipped %d), want %d", len(res.Events), res.Skipped, 1+writers*rounds)
+		}
+	}
+	entries, _ := os.ReadDir(tapesDir(w))
+	for _, e := range entries {
+		if strings.HasSuffix(e.Name(), ".tmp") {
+			t.Errorf("a temporary file is left: %s", e.Name())
+		}
+	}
+}
+
+// A new tape never takes the ID of a closed one.
+func TestNewIDAvoidsClosedTapes(t *testing.T) {
+	root := t.TempDir()
+	w := open(t, root, newClock())
+	first := writeOne(t, w)
+	if _, err := w.EndSession(); err != nil {
+		t.Fatal(err)
+	}
+	if !w.taken(first) || w.taken("20261001-0000-zzzz") {
+		t.Error("taken does not tell a closed tape from a free ID")
+	}
+	for range 50 {
+		if id, err := w.newID(time.Now()); err != nil || id == first {
+			t.Fatalf("newID = %q, %v", id, err)
+		}
+	}
+}
+
+// Nothing is appended to a tape that is closed, even when its pointer is still the active one and the pause is not over: the
+// next write starts a new tape, and the closed one is left as it was.
+func TestAClosedTapeIsNotAppendedTo(t *testing.T) {
+	root := t.TempDir()
+	w := open(t, root, newClock())
+	first := writeOne(t, w)
+	if err := tape.Compress(tapesDir(w), first); err != nil { // closed by someone else; .srwr/active still points at it
+		t.Fatal(err)
+	}
+	second := writeOne(t, w)
+	if second == first {
+		t.Fatal("the closed tape was written to again")
+	}
+	if _, err := os.Stat(w.TapePath(first)); !os.IsNotExist(err) {
+		t.Errorf("a plain tape was made again for the closed session: %v", err)
+	}
+	if n := len(readTape(t, w, first).Events); n != 2 {
+		t.Errorf("the closed tape has %d events, want 2", n)
 	}
 }

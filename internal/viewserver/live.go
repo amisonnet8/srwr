@@ -2,7 +2,7 @@ package viewserver
 
 import (
 	"os"
-	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -65,7 +65,7 @@ func (c *conn) liveStart(raw []byte) (any, *jsonrpc.Error) {
 
 	res := liveStartResult{Frames: []wireFrame{}, Hidden: timeline.Hidden{}, w: w}
 	if id, ok := c.srv.newestTape(); ok {
-		if data, err := os.ReadFile(filepath.Join(c.srv.tapesDir(), tape.FileName(id))); err == nil {
+		if data, err := tape.ReadAll(c.srv.tapesDir(), id); err == nil {
 			parsed := tape.Parse(data)
 			w.tapeID, w.offset, w.builder = id, parsed.Consumed, timeline.Build(parsed.Events)
 			res.TapeID = &id
@@ -117,7 +117,11 @@ func (w *liveWatcher) run() {
 func (s *Server) newestTape() (string, bool) {
 	best, bestID := int64(0), ""
 	for _, id := range s.tapeIDs() { // newest name first, so on a tie the later name wins
-		st, err := os.Stat(filepath.Join(s.tapesDir(), tape.FileName(id)))
+		path, found := tape.Find(s.tapesDir(), id)
+		if !found {
+			continue
+		}
+		st, err := os.Stat(path)
 		if err != nil {
 			continue
 		}
@@ -134,13 +138,16 @@ func (w *liveWatcher) tick() error {
 	if !ok {
 		return nil
 	}
-	path := filepath.Join(w.c.srv.tapesDir(), tape.FileName(id))
+	path, found := tape.Find(w.c.srv.tapesDir(), id)
+	if !found {
+		return nil
+	}
 
 	if id != w.tapeID {
 		// Another tape is the newest now: the client starts its list again, with this tape from its first frame.
-		data, err := os.ReadFile(path) //nolint:gosec // id passed tape.ValidID
+		data, err := tape.ReadFile(path)
 		if err != nil {
-			return nil // try again at the next tick
+			return nil //nolint:nilerr // try again at the next tick
 		}
 		parsed := tape.Parse(data)
 		w.tapeID, w.offset, w.builder = id, parsed.Consumed, timeline.Build(parsed.Events)
@@ -156,17 +163,8 @@ func (w *liveWatcher) tick() error {
 		return w.notifyHidden()
 	}
 
-	f, err := os.Open(path) //nolint:gosec // id passed tape.ValidID
-	if err != nil {
-		return nil
-	}
-	defer func() { _ = f.Close() }()
-	st, err := f.Stat()
-	if err != nil || st.Size() <= int64(w.offset) {
-		return nil
-	}
-	buf := make([]byte, st.Size()-int64(w.offset))
-	if n, err := f.ReadAt(buf, int64(w.offset)); err != nil && n < len(buf) {
+	buf := newBytes(path, w.offset)
+	if len(buf) == 0 {
 		return nil
 	}
 	parsed := tape.Parse(buf) // a last line without its newline is left for the next time
@@ -219,4 +217,30 @@ func (w *liveWatcher) send(f timeline.Frame) error {
 		TapeID string    `json:"tapeId"`
 		Frame  wireFrame `json:"frame"`
 	}{w.tapeID, wire(f, w.withText)})
+}
+
+// newBytes returns what the tape at path holds after offset, or nothing. A closed tape is compressed: it is expanded, so that what
+// was written just before the session ended and not yet read is not lost.
+func newBytes(path string, offset int) []byte {
+	if strings.HasSuffix(path, tape.GzSuffix) {
+		data, err := tape.ReadFile(path)
+		if err != nil || len(data) <= offset {
+			return nil
+		}
+		return data[offset:]
+	}
+	f, err := os.Open(path) //nolint:gosec // the path was found from a tape ID that passed tape.ValidID
+	if err != nil {
+		return nil
+	}
+	defer func() { _ = f.Close() }()
+	st, err := f.Stat()
+	if err != nil || st.Size() <= int64(offset) {
+		return nil
+	}
+	buf := make([]byte, st.Size()-int64(offset))
+	if n, err := f.ReadAt(buf, int64(offset)); err != nil && n < len(buf) {
+		return nil
+	}
+	return buf
 }

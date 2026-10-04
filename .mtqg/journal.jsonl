@@ -561,3 +561,5 @@
 {"id":"e9266d8bc75647c1891553b860ab9ca0","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-04T22:31:03Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"786336f292274b608988be9919b26922","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-04T22:38:58Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"f897877a446742fd89aeaaa078c5b022","op":"create","type":"memo","text":"改善3 sub: UIゲート資料を dev/review/sub/ に作った（案A=ふつうのreplaceのコマ、案B=sub表示）。人間の了承まで実装しない","v":1,"ts":"2026-10-04T22:44:09Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"97b5349ccb2c449597448d088f727179","op":"create","type":"qa","status":"open","text":"改善3 sub の画面（UIゲート dev/review/sub/）：案C＝ファイルごとに1コマ、external と同じ左右の差分、理由はタブとエディタの間の帯（左は青の空の帯、右は橙で理由・文字は右の中央）、Vimも同じ。一覧は sub a.go (2 hits)。承認するか","v":1,"ts":"2026-10-04T23:17:04Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"97b5349ccb2c449597448d088f727179","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-04T23:17:08Z","author":{"kind":"ai","name":"claude-code"}}

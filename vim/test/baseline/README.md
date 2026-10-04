@@ -18,3 +18,5 @@
 - 2026-10-03 `qsoku ui-accept`（版 d552e26）：replay-long-why dark、replay-long-why light、replay-long-why-narrow dark、vscode long_why を、人間が OK を付けた画面に差し替えた
 
 - 2026-10-03 `qsoku ui-accept`（版 576b4c8-dirty）：replay-why-basic en dark、replay-why-basic en light、replay-external en dark、replay-external en light、replay-no-why en dark、replay-no-why en light、replay-long-why en dark、replay-long-why en light、replay-long-why-narrow en dark、live-basic en dark、live-basic en light、live-external en dark、live-external en light、vscode all_basic en、vscode all_ext en、vscode all_nowhy en、vscode long_why en、vscode live_basic en、vscode live_ext en、vscode long_why ja を、人間が OK を付けた画面に差し替えた
+
+- 2026-10-04 `qsoku ui-accept`（版 v0.1.1-11-g418b6a2-dirty）：replay-failure en dark、replay-failure en light、replay-failure ja dark、replay-failure ja light、vscode with_failure en、vscode with_failure ja を、人間が OK を付けた画面に差し替えた

@@ -1,0 +1,634 @@
+[
+ {
+  "frame": 0,
+  "label": "d1",
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260101-0001-with-failure/a.go",
+    "column": 1,
+    "text": "package main\n\n◆ main を確かめる\nfunc main() {}\n",
+    "options": {
+     "lineNumbers": 0
+    },
+    "reveal": 4,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#1d3a5c",
+       "light": {
+        "backgroundColor": "#cfe3fb"
+       }
+      },
+      "ranges": [
+       {
+        "line": 3
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#0b61a4",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 2
+       }
+      ]
+     },
+     {
+      "opts": {
+       "before": {
+        "color": {
+         "id": "editorLineNumber.foreground"
+        }
+       }
+      },
+      "ranges": [
+       {
+        "line": 0,
+        "before": "1  "
+       },
+       {
+        "line": 1,
+        "before": "2  "
+       },
+       {
+        "line": 2,
+        "before": "   "
+       },
+       {
+        "line": 3,
+        "before": "3  "
+       },
+       {
+        "line": 4,
+        "before": "4  "
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  a.go:3",
+    "description": "main を確かめる",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  replace  a.go:3-5",
+    "description": "メッセージを出す",
+    "color": "charts.orange",
+    "kind": "replace"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "color": "rgba(255, 255, 255, 0.4)",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "1/2",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260101-0001-with-failure",
+  "viewMessage": "Hiding: failure (2)"
+ },
+ {
+  "frame": 1,
+  "label": "d2",
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260101-0001-with-failure/a.go",
+    "column": 1,
+    "text": "package main\n\n◆ メッセージを出す\nfunc main() {\n\tprintln(\"hi\")\n}\n",
+    "options": {
+     "lineNumbers": 0
+    },
+    "reveal": 4,
+    "decorations": [
+     {
+      "opts": {
+       "before": {
+        "color": {
+         "id": "editorLineNumber.foreground"
+        }
+       }
+      },
+      "ranges": [
+       {
+        "line": 0,
+        "before": "1  "
+       },
+       {
+        "line": 1,
+        "before": "2  "
+       },
+       {
+        "line": 2,
+        "before": "   "
+       },
+       {
+        "line": 3,
+        "before": "3  "
+       },
+       {
+        "line": 4,
+        "before": "4  "
+       },
+       {
+        "line": 5,
+        "before": "5  "
+       },
+       {
+        "line": 6,
+        "before": "6  "
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#583c27",
+       "light": {
+        "backgroundColor": "#fde3c8"
+       }
+      },
+      "ranges": [
+       {
+        "line": 3
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#b45f06",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 2
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  a.go:3",
+    "description": "main を確かめる",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  replace  a.go:3-5",
+    "description": "メッセージを出す",
+    "color": "charts.orange",
+    "kind": "replace"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "color": "rgba(255, 255, 255, 0.4)",
+    "visible": true
+   },
+   {
+    "text": "2/2",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260101-0001-with-failure",
+  "viewMessage": "Hiding: failure (2)"
+ },
+ {
+  "frame": 0,
+  "label": "f1",
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260101-0001-with-failure/a.go",
+    "column": 1,
+    "text": "package main\n\n◆ main を確かめる\nfunc main() {}\n",
+    "options": {
+     "lineNumbers": 0
+    },
+    "reveal": 4,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#1d3a5c",
+       "light": {
+        "backgroundColor": "#cfe3fb"
+       }
+      },
+      "ranges": [
+       {
+        "line": 3
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#0b61a4",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 2
+       }
+      ]
+     },
+     {
+      "opts": {
+       "before": {
+        "color": {
+         "id": "editorLineNumber.foreground"
+        }
+       }
+      },
+      "ranges": [
+       {
+        "line": 0,
+        "before": "1  "
+       },
+       {
+        "line": 1,
+        "before": "2  "
+       },
+       {
+        "line": 2,
+        "before": "   "
+       },
+       {
+        "line": 3,
+        "before": "3  "
+       },
+       {
+        "line": 4,
+        "before": "4  "
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  a.go:3",
+    "description": "main を確かめる",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  failure  invalid_range",
+    "description": "もう一度、main を確かめる",
+    "color": "srwr.failureForeground",
+    "kind": "failure"
+   },
+   {
+    "label": "3  replace  a.go:3-5",
+    "description": "メッセージを出す",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "4  failure  selection_stale",
+    "description": "もう一度、メッセージを出す",
+    "color": "srwr.failureForeground",
+    "kind": "failure"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "color": "rgba(255, 255, 255, 0.4)",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "1/4",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260101-0001-with-failure",
+  "viewMessage": ""
+ },
+ {
+  "frame": 1,
+  "label": "f2",
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260101-0001-with-failure/failure1/failure: select (invalid_range)?failure=1",
+    "column": 1,
+    "text": "✖ select failed (invalid_range)\nThe path is absolute. Give a path relative to the workspace\n\nwhy    もう一度、main を確かめる\ntool   select\nrange  lines 3\nfile   (not shown)\n",
+    "options": {
+     "lineNumbers": 1
+    },
+    "reveal": null,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#d50000",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 0
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  a.go:3",
+    "description": "main を確かめる",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  failure  invalid_range",
+    "description": "もう一度、main を確かめる",
+    "color": "srwr.failureForeground",
+    "kind": "failure"
+   },
+   {
+    "label": "3  replace  a.go:3-5",
+    "description": "メッセージを出す",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "4  failure  selection_stale",
+    "description": "もう一度、メッセージを出す",
+    "color": "srwr.failureForeground",
+    "kind": "failure"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "2/4",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260101-0001-with-failure",
+  "viewMessage": ""
+ },
+ {
+  "frame": 2,
+  "label": "f3",
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260101-0001-with-failure/a.go",
+    "column": 1,
+    "text": "package main\n\n◆ メッセージを出す\nfunc main() {\n\tprintln(\"hi\")\n}\n",
+    "options": {
+     "lineNumbers": 0
+    },
+    "reveal": 4,
+    "decorations": [
+     {
+      "opts": {
+       "before": {
+        "color": {
+         "id": "editorLineNumber.foreground"
+        }
+       }
+      },
+      "ranges": [
+       {
+        "line": 0,
+        "before": "1  "
+       },
+       {
+        "line": 1,
+        "before": "2  "
+       },
+       {
+        "line": 2,
+        "before": "   "
+       },
+       {
+        "line": 3,
+        "before": "3  "
+       },
+       {
+        "line": 4,
+        "before": "4  "
+       },
+       {
+        "line": 5,
+        "before": "5  "
+       },
+       {
+        "line": 6,
+        "before": "6  "
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#583c27",
+       "light": {
+        "backgroundColor": "#fde3c8"
+       }
+      },
+      "ranges": [
+       {
+        "line": 3
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#b45f06",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 2
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  a.go:3",
+    "description": "main を確かめる",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  failure  invalid_range",
+    "description": "もう一度、main を確かめる",
+    "color": "srwr.failureForeground",
+    "kind": "failure"
+   },
+   {
+    "label": "3  replace  a.go:3-5",
+    "description": "メッセージを出す",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "4  failure  selection_stale",
+    "description": "もう一度、メッセージを出す",
+    "color": "srwr.failureForeground",
+    "kind": "failure"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "3/4",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260101-0001-with-failure",
+  "viewMessage": ""
+ },
+ {
+  "frame": 3,
+  "label": "f4",
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260101-0001-with-failure/failure3/failure: replace (selection_stale)?failure=3",
+    "column": 1,
+    "text": "✖ replace failed (selection_stale)\nan edit overlapped the range after the select. Call select again\n\nwhy    もう一度、メッセージを出す\ntool   replace\nrange  -\nfile   a.go\n",
+    "options": {
+     "lineNumbers": 1
+    },
+    "reveal": null,
+    "decorations": [
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#d50000",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 0
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  select  a.go:3",
+    "description": "main を確かめる",
+    "color": "charts.blue",
+    "kind": "select"
+   },
+   {
+    "label": "2  failure  invalid_range",
+    "description": "もう一度、main を確かめる",
+    "color": "srwr.failureForeground",
+    "kind": "failure"
+   },
+   {
+    "label": "3  replace  a.go:3-5",
+    "description": "メッセージを出す",
+    "color": "charts.orange",
+    "kind": "replace"
+   },
+   {
+    "label": "4  failure  selection_stale",
+    "description": "もう一度、メッセージを出す",
+    "color": "srwr.failureForeground",
+    "kind": "failure"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "color": "rgba(255, 255, 255, 0.4)",
+    "visible": true
+   },
+   {
+    "text": "4/4",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260101-0001-with-failure",
+  "viewMessage": ""
+ }
+]

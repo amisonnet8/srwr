@@ -214,7 +214,7 @@ v0.2.0 に向けた機能（mtqg `cbfe6a6716`）。テープに残る `failure`�
 - [x] 表示サーバー（`timeline.Filter`、番号の振り直し、`frame/state` は元のコマの位置に写す）
 - [x] VSCode：漏斗ボタン、失敗の画面、赤、`Hiding: …`
 - [x] Vim：`ts`・`tr`・`te`・`tf`、`:SrwrToggle`、失敗の画面、ステータス行の `hidden: …`
-- [ ] 確認の自動化：`qsoku ui-open vscode|vim with-failure`、`qsoku ui-check` の `replay-failure`・`with_failure`（基準を `qsoku ui-accept` で取る）
+- [x] 確認の自動化：`qsoku ui-open vscode|vim with-failure`、`qsoku ui-check` の `replay-failure`・`with_failure`（基準は `qsoku ui-accept` で取った。人間の OK：赤を #d50000 に直したあと）
 
 ---
 

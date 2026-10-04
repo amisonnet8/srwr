@@ -116,6 +116,17 @@ MCP の応答では `isError: true` になり、本文は次の JSON。
 
 途中で落ちても、次に srwr が触れたとき、実ファイルとの食い違いが `external` として見える。
 
+## AI が犯しやすいミス
+
+AI がこの2つのツールを使って実際に犯したミス。どれも、コードのあるふつうのエラーで、失敗した呼び出しは [`failure`](tape_ja.md#failure) としてテープに書かれる。
+
+- **`file` は、作業場からの相対パスで渡す。** `/home/me/app/main.go` のような絶対パスは `invalid_range`、`../main.go` も `invalid_range` になる。`cmd/app/main.go` の形で書く。
+- **空範囲は、1 行ずれやすい。** `endLine = startLine - 1` は「`startLine` 行目の直前」を指すので、`startLine: 13, endLine: 12` は 12 行目と 13 行目の間になる。先にその場所の前後の行を読み、番号を確かめてから `select` を呼ぶ。
+- **新しい `select` の行番号は、今のファイルの行番号で渡す。** ほかの編集で行がずれたとき、すでに発行したトークンは srwr が補正するが、新しい `select` の `startLine`・`endLine` は補正しない。ほかの編集のあとは、ファイルを読み直すか、返ってきた `lines` で確かめる。
+- **新しいファイルは、`select` と `replace` では作れない。** `select` は `file_not_found` になる。シェルのコマンドで作る。作ったファイルは、`created: true` の [`external`](tape_ja.md#external) として記録される。
+- **同じ場所を続けて直すときは、`replace` が返した新しいトークンを使う。** 使ったトークンは使い切りで、もう一度使うと `selection_stale` になる。
+- **エラーを読む。** `invalid_range` は `lineCount`（ファイルの行数）を返すので、番号を直すにはそれで足りる。
+
 ## 関連
 
 - 記録されるもの：[tape.md](tape_ja.md)

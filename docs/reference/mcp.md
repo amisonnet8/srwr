@@ -116,6 +116,17 @@ The file to detect is learned from the token, so decoding comes first. With a fo
 
 Even if the process dies in between, the next time srwr touches the files, the mismatch with the real file shows up as `external`.
 
+## Mistakes an AI tends to make
+
+These are the mistakes seen when an AI used the two tools. Each is an ordinary error with a code, and a failed call is written to the tape as a [`failure`](tape.md#failure).
+
+- **Give `file` as a path relative to the workspace.** An absolute path such as `/home/me/app/main.go` is `invalid_range`, and so is `../main.go`. Write `cmd/app/main.go`.
+- **An empty range is easy to place one line off.** `endLine = startLine - 1` means "just before line `startLine`", so `startLine: 13, endLine: 12` is between lines 12 and 13. Read the lines on both sides of the place first, and check the numbers before calling `select`.
+- **The line numbers of a new `select` are the numbers of the file now.** srwr corrects the token it has already issued when another edit moves the lines, but not the `startLine` and `endLine` of a new `select`. After other edits, read the file again, or check the returned `lines`.
+- **A new file cannot be made with `select` and `replace`.** `select` gives `file_not_found`. Make it with a shell command. The file is then recorded as an [`external`](tape.md#external) with `created: true`.
+- **To change the same place again, use the new token that `replace` returned.** The token you used is spent: using it again gives `selection_stale`.
+- **Read the error.** `invalid_range` returns `lineCount` (the number of lines of the file), which is enough to correct the numbers.
+
 ## Related
 
 - What is recorded: [tape.md](tape.md)

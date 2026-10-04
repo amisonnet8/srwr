@@ -8,18 +8,19 @@
 - 数が合わないときの失敗は、`failure`（`tool: "sub"`、コード `count_mismatch`）として書く
 
 ## 決めること（推奨案：案A）
-1. **コマの見せ方**
-   - **案A（推奨）**：sub の1か所＝ふつうの replace のコマ。橙の理由の行、置き換えた行は薄い橙。一覧の種類も `replace`。同じ理由が続くので、一括だと読める。画面・プロトコル・拡張・Vim・基準を変えない
-   - 案B：種類を `sub`、理由の行の頭に `[2/3]` を付ける。プロトコルにフィールドを足し、拡張・Vim・基準を直す（`protocolVersion` も上がる）
+1. **コマの見せ方**（人間の案 = 案C を推奨）
+   - **案C（推奨）**：sub は**ファイルごとに1コマ**。external と同じ**左右2つの画面の差分**（左＝前・青、右＝後・橙、変わった行だけ塗る）。**右の先頭に理由の行**（橙・白の太字）。一覧は `sub  a.go (2 hits)` の1行。当たりが多くても、コマは増えない
+   - 案A：当たりごとに、ふつうの replace のコマ。画面は変わらないが、当たりが多いとコマが多い
+   - 案Cで変わるもの：コマに新しい種類 `sub`（差分のコマ＋理由）。プロトコル（`protocolVersion` を上げる）・拡張・Vim・基準。テープは、ファイルごとに `replace` を1つ（範囲＝最初の当たりから最後の当たりを含む行、`tool: "sub"`）で、形式のフィールドは足さない
 2. **失敗の画面**：`✖ sub failed (count_mismatch)`。ほかは select・replace の失敗と同じ。メッセージに、見つけた数とファイルごとの数を言う
 3. **`file`**：複数ファイルを渡す sub の失敗は、`file` を `(not shown)` にする（1つだけなら、そのファイル）
 
 ## 画像（`images/`、dark と light）
-- `vscode-sub-frame-a`・`vscode-sub-frame-b`：sub の2か所目のコマ（案A・案B）
-- `vscode-ops-a`・`vscode-ops-b`：操作一覧（案A・案B）
+- `vscode-sub-diff-c`・`vscode-ops-c`：案C のコマ（左右の差分）と操作一覧
+- `vscode-sub-frame-a`・`vscode-ops-a`：案A のコマと操作一覧
 - `vscode-failure-frame`：数が合わなかった失敗
-- `vim-sub-frame`・`vim-failure-frame`：Vim の、案Aのコマと失敗
+- `vim-sub-diff-c`・`vim-sub-frame`（案A）・`vim-failure-frame`：Vim のコマと失敗
 
 ## 了承してほしいこと
-1. コマの見せ方（案A か 案B）
+1. コマの見せ方（案C か 案A）
 2. 失敗の画面（特に文言）

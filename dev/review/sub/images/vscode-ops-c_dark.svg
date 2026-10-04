@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="620" height="106" viewBox="0 0 620 106" role="img" aria-label="Operations list, option C (dark)">
+<rect x="0" y="0" width="620" height="106" fill="#1e1e1e"/>
+<rect x="0" y="0" width="620" height="98" fill="#252526"/>
+<rect x="0" y="0" width="620" height="24" fill="#2d2d2d"/>
+<text x="16" y="16" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11" font-weight="bold">Operations</text>
+<text x="90" y="16" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11">20261005-1030-c3d4</text>
+<circle cx="16" cy="35" r="4.5" fill="#4aa3ff"/>
+<text x="30" y="39" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">1  select  a.go:12</text>
+<text x="180.79999999999998" y="39" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Check the helper's uses</text>
+<rect x="0" y="46" width="620" height="22" fill="#3a3d41"/>
+<circle cx="16" cy="57" r="4.5" fill="#f0883e"/>
+<text x="30" y="61" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">2  sub  a.go (2 hits)</text>
+<text x="203.6" y="61" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+<circle cx="16" cy="79" r="4.5" fill="#f0883e"/>
+<text x="30" y="83" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">3  sub  b.go (1 hit)</text>
+<text x="196.0" y="83" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+</svg>

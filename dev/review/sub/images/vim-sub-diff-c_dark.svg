@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1176" height="246" viewBox="0 0 1176 246" role="img" aria-label="Vim, sub as a diff (dark)">
+<rect x="0" y="0" width="1176" height="246" fill="#1e1e1e"/>
+<text x="0" y="13" fill="#9d9d9d" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">Before  ⚠ sub: a.go</text>
+<text x="588.0" y="13" fill="#9d9d9d" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">After  a.go</text>
+<rect x="588.0" y="18" width="588.0" height="17" fill="#f0883e"/>
+<text x="596.0" y="30" fill="#ffffff" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" font-weight="bold" xml:space="preserve" style="white-space:pre">Rename the helper to the new naming rule</text>
+<rect x="0" y="35" width="588.0" height="17" fill="#1d3a5c"/>
+<rect x="588.0" y="35" width="588.0" height="17" fill="#583c27"/>
+<text x="0" y="47" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">  12  		return oldName(id)</text>
+<text x="588.0" y="47" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">  12  		return newName(id)</text>
+<text x="0" y="64" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">  13  	}</text>
+<text x="588.0" y="64" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">  13  	}</text>
+<rect x="0" y="69" width="588.0" height="17" fill="#1d3a5c"/>
+<rect x="588.0" y="69" width="588.0" height="17" fill="#583c27"/>
+<text x="0" y="81" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">  30  		return oldName(x)</text>
+<text x="588.0" y="81" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">  30  		return newName(x)</text>
+<text x="0" y="98" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="115" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="132" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="149" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="166" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="183" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="200" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="217" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="234" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+</svg>

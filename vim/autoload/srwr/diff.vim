@@ -20,6 +20,9 @@ export def Label(f: dict<any>): string
       '⚠ Changed after recording (' .. (gone ? 'no longer exists' : 'diff from current file') .. '): ' .. name,
       '⚠ 録画のあとで変更（' .. (gone ? '今は存在しない' : '今のファイルとの差分') .. '）：' .. name)
   endif
+  if f.kind ==# 'sub'
+    return lang.Pick('⚠ sub: ' .. name, '⚠ sub：' .. name)
+  endif
   const deleted = get(f, 'deleted', false)
   return lang.Pick(
     '⚠ Changed outside srwr' .. (deleted ? ' (deleted)' : '') .. ': ' .. name,
@@ -73,8 +76,9 @@ def ScrollNearTop(w: number, lnum: number)
   win_execute(w, 'call winrestview({topline: ' .. top .. ', lnum: ' .. lnum .. ', col: 1})')
 enddef
 
-# Enter shows frame f as a diff. It returns true when it had to create the right-hand window.
-export def Enter(s: dict<any>, f: dict<any>, before: string, after: string): bool
+# Enter shows frame f as a diff. It returns true when it had to create the right-hand window. A sub frame has a band of rows
+# above the text, the same number on both sides: its why on the right (orange), empty rows on the left (blue).
+export def Enter(s: dict<any>, f: dict<any>, before: string, after: string, band: list<string> = []): bool
   var created = false
   if !Active(s)
     win_gotoid(s.win)
@@ -88,21 +92,30 @@ export def Enter(s: dict<any>, f: dict<any>, before: string, after: string): boo
   const nameBase = 'srwr://' .. s.tape
   buf.Name(s.buf, s.win, nameBase .. '/before/' .. f.file)
   buf.Name(s.diffBuf, s.diffWin, nameBase .. '/after/' .. f.file)
-  buf.SetLines(s.buf, buf.Lines(before))
-  buf.SetLines(s.diffBuf, buf.Lines(after))
+  const n = len(band)
+  buf.SetLines(s.buf, repeat([''], n) + buf.Lines(before))
+  buf.SetLines(s.diffBuf, band + buf.Lines(after))
   TakeAwayDiffColors()
   for w in [s.win, s.diffWin]
-    win_execute(w, 'setlocal number')
+    win_execute(w, n > 0 ? 'setlocal nonumber' : 'setlocal number')
     win_execute(w, 'diffoff | diffthis | setlocal fillchars+=diff:\ ')
     win_execute(w, 'setlocal foldtext=srwr#diff#FoldText()')
   endfor
   var firsts: dict<number> = {}
   for [w, b, tone] in [[s.win, s.buf, 'select'], [s.diffWin, s.diffBuf, 'replace']]
     paint.Clear(b)
-    const lines = Changed(w)
+    # The band rows differ between the sides (the why against empty rows), so they are not changed lines.
+    const lines = filter(Changed(w), (_, l) => l > n)
     for lnum in lines
       paint.Line(b, lnum, 'srwr_' .. tone)
     endfor
+    if n > 0
+      for k in range(1, n)
+        paint.Line(b, k, 'srwr_why_' .. tone)
+      endfor
+      # The band makes 'number' wrong: the file's own numbers are drawn instead.
+      paint.Numbers(b, 1, n)
+    endif
     firsts[string(w)] = empty(lines) ? 0 : lines[0]
   endfor
   # The first changed line goes about 30% from the top of the window (from the top of the file, a change that is

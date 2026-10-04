@@ -16,8 +16,9 @@ export def Len(tl: dict<any>): number
   return len(tl.frames)
 enddef
 
+# IsDiff tells the frames shown as two windows, before and after: external and final, and sub (a replace of several places of a file).
 export def IsDiff(frame: dict<any>): bool
-  return frame.kind ==# 'external' || frame.kind ==# 'final'
+  return frame.kind ==# 'external' || frame.kind ==# 'final' || frame.kind ==# 'sub'
 enddef
 
 # ContentAt is the content of file after frame i. A file no frame has touched yet is as it was

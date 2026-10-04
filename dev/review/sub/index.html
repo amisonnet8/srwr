@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>sub ゲート</title>
+<style>
+:root{--bg:#fff;--fg:#1f2328;--dim:#59636e;--card:#f6f8fa;--line:#d1d9e0;--accent:#0b61a4}
+@media (prefers-color-scheme: dark){:root{--bg:#0d1117;--fg:#e6edf3;--dim:#9198a1;--card:#161b22;--line:#30363d;--accent:#4aa3ff}}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.7 system-ui,'Hiragino Sans','Noto Sans JP',sans-serif}
+main{max-width:1240px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:22px;margin:0 0 4px} h2{font-size:18px;margin:32px 0 8px;border-bottom:1px solid var(--line);padding-bottom:4px} h4{font-size:12px;margin:6px 0;color:var(--dim)}
+.lead{color:var(--dim);margin:0 0 12px} code{background:var(--card);padding:0 4px;border-radius:3px}
+li{margin:6px 0}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px 12px 12px;margin:14px 0}
+.pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:12px}
+.pair svg{width:100%;height:auto;border:1px solid var(--line);border-radius:4px}
+.note{color:var(--dim);margin:0 0 6px;font-size:13px}
+.ok{border:2px solid var(--accent);border-radius:6px;padding:8px 16px;margin-top:24px}
+</style></head><body><main>
+<h1>sub ゲート：複数ファイルの文字列置換 <code>sub</code> の画面</h1>
+<p class="lead">確定デザイン（docs/reference/vscode.md・vim.md）は、ここに書いた所だけ変えます。画像は dark と light の両方です。例：<code>oldName</code> を <code>newName</code> にする。a.go に2か所、b.go に1か所。</p>
+<h2>作るもの</h2>
+<ul><li>新しい MCP ツール <strong>sub</strong>：<code>files</code>・<code>old</code>・<code>new</code>・<code>count</code>・<code>why</code>。<code>count</code>（全部のファイルでの当たりの数）が合わなければ、何も変えない。文字列だけ（正規表現は無い）</li>
+<li>テープには、<strong>当たった場所ごとに <code>replace</code> を1つ</strong>、同じ <code>why</code> で書く（<code>tool: "sub"</code> が付く）</li>
+<li>数が合わない失敗は <code>failure</code>（<code>tool: "sub"</code>、コード <code>count_mismatch</code>）</li></ul>
+<h2>1. コマの見せ方（案A か 案B）</h2>
+<ul><li><strong>案A（推奨）</strong>：sub の1か所＝ふつうの replace のコマ。一覧の種類も <code>replace</code>。画面・プロトコル・拡張・Vim・基準を変えない</li>
+<li>案B：種類を <code>sub</code>、理由の行の頭に <code>[2/3]</code>。プロトコルにフィールドを足し、拡張・Vim・基準を直す（<code>protocolVersion</code> も上がる）</li></ul>
+<div class="fig"><p class="note">案A：sub の2か所目（a.go:30）のコマ。ふつうの replace のコマと同じ</p><div class="pair"><div><h4>dark</h4><svg xmlns="http://www.w3.org/2000/svg" width="1280" height="330" viewBox="0 0 1280 330" role="img" aria-label="A sub frame in VSCode, option A (dark)">
+<rect x="0" y="0" width="1280" height="330" fill="#1e1e1e"/>
+<rect x="0" y="0" width="1280" height="28" fill="#2d2d2d"/>
+<text x="640" y="18" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12" text-anchor="middle">srwr-view  –  replace 2/3</text>
+<rect x="0" y="28" width="48" height="278" fill="#333333"/>
+<rect x="48" y="28" width="560" height="98" fill="#252526"/>
+<rect x="48" y="28" width="560" height="24" fill="#2d2d2d"/>
+<text x="64" y="44" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11" font-weight="bold">Operations</text>
+<text x="138" y="44" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11">20261005-1030-c3d4</text>
+<circle cx="64" cy="63" r="4.5" fill="#f0883e"/>
+<text x="78" y="67" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">1  replace  a.go:12</text>
+<text x="236.4" y="67" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+<rect x="48" y="74" width="560" height="22" fill="#3a3d41"/>
+<circle cx="64" cy="85" r="4.5" fill="#f0883e"/>
+<text x="78" y="89" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">2  replace  a.go:30</text>
+<text x="236.4" y="89" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+<circle cx="64" cy="107" r="4.5" fill="#f0883e"/>
+<text x="78" y="111" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">3  replace  b.go:7</text>
+<text x="228.79999999999998" y="111" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+<rect x="608" y="28" width="672" height="28" fill="#2d2d2d"/>
+<text x="624" y="46" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">a.go  (srwr-replay)</text>
+<text x="622" y="76" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">28</text>
+<text x="668" y="76" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">func (s *Store) Save(id string) error {</text>
+<text x="622" y="96" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">29</text>
+<text x="668" y="96" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	if id == "" {</text>
+<rect x="608" y="102" width="672" height="20" fill="#f0883e"/>
+<text x="668" y="116" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13" font-weight="bold">Rename the helper to the new naming rule</text>
+<rect x="608" y="122" width="672" height="20" fill="#583c27"/>
+<text x="622" y="136" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">30</text>
+<text x="668" y="136" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">		return errEmpty</text>
+<text x="622" y="156" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">31</text>
+<text x="668" y="156" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	}</text>
+<text x="622" y="176" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">32</text>
+<text x="668" y="176" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	return s.saveByID(id)</text>
+<rect x="0" y="306" width="1280" height="24" fill="#007acc"/>
+<text x="14" y="322" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">‹ Back</text>
+<text x="80" y="322" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Forward ›</text>
+<text x="160" y="322" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">2/3</text>
+</svg>
+</div><div><h4>light</h4><svg xmlns="http://www.w3.org/2000/svg" width="1280" height="330" viewBox="0 0 1280 330" role="img" aria-label="A sub frame in VSCode, option A (light)">
+<rect x="0" y="0" width="1280" height="330" fill="#ffffff"/>
+<rect x="0" y="0" width="1280" height="28" fill="#e7e7e7"/>
+<text x="640" y="18" fill="#333333" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12" text-anchor="middle">srwr-view  –  replace 2/3</text>
+<rect x="0" y="28" width="48" height="278" fill="#2c2c2c"/>
+<rect x="48" y="28" width="560" height="98" fill="#f3f3f3"/>
+<rect x="48" y="28" width="560" height="24" fill="#e7e7e7"/>
+<text x="64" y="44" fill="#333333" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11" font-weight="bold">Operations</text>
+<text x="138" y="44" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11">20261005-1030-c3d4</text>
+<circle cx="64" cy="63" r="4.5" fill="#b45f06"/>
+<text x="78" y="67" fill="#1f1f1f" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">1  replace  a.go:12</text>
+<text x="236.4" y="67" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+<rect x="48" y="74" width="560" height="22" fill="#e4e6f1"/>
+<circle cx="64" cy="85" r="4.5" fill="#b45f06"/>
+<text x="78" y="89" fill="#1f1f1f" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">2  replace  a.go:30</text>
+<text x="236.4" y="89" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+<circle cx="64" cy="107" r="4.5" fill="#b45f06"/>
+<text x="78" y="111" fill="#1f1f1f" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">3  replace  b.go:7</text>
+<text x="228.79999999999998" y="111" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+<rect x="608" y="28" width="672" height="28" fill="#e7e7e7"/>
+<text x="624" y="46" fill="#333333" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">a.go  (srwr-replay)</text>
+<text x="622" y="76" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">28</text>
+<text x="668" y="76" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">func (s *Store) Save(id string) error {</text>
+<text x="622" y="96" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">29</text>
+<text x="668" y="96" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	if id == "" {</text>
+<rect x="608" y="102" width="672" height="20" fill="#b45f06"/>
+<text x="668" y="116" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13" font-weight="bold">Rename the helper to the new naming rule</text>
+<rect x="608" y="122" width="672" height="20" fill="#fde3c8"/>
+<text x="622" y="136" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">30</text>
+<text x="668" y="136" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">		return errEmpty</text>
+<text x="622" y="156" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">31</text>
+<text x="668" y="156" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	}</text>
+<text x="622" y="176" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">32</text>
+<text x="668" y="176" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	return s.saveByID(id)</text>
+<rect x="0" y="306" width="1280" height="24" fill="#007acc"/>
+<text x="14" y="322" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">‹ Back</text>
+<text x="80" y="322" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Forward ›</text>
+<text x="160" y="322" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">2/3</text>
+</svg>
+</div></div></div>
+<div class="fig"><p class="note">案B：理由の行の頭に <code>[2/3]</code>。バーの題も <code>sub 2/3</code></p><div class="pair"><div><h4>dark</h4><svg xmlns="http://www.w3.org/2000/svg" width="1280" height="330" viewBox="0 0 1280 330" role="img" aria-label="A sub frame in VSCode, option B (dark)">
+<rect x="0" y="0" width="1280" height="330" fill="#1e1e1e"/>
+<rect x="0" y="0" width="1280" height="28" fill="#2d2d2d"/>
+<text x="640" y="18" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12" text-anchor="middle">srwr-view  –  sub 2/3</text>
+<rect x="0" y="28" width="48" height="278" fill="#333333"/>
+<rect x="48" y="28" width="560" height="98" fill="#252526"/>
+<rect x="48" y="28" width="560" height="24" fill="#2d2d2d"/>
+<text x="64" y="44" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11" font-weight="bold">Operations</text>
+<text x="138" y="44" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11">20261005-1030-c3d4</text>
+<circle cx="64" cy="63" r="4.5" fill="#f0883e"/>
+<text x="78" y="67" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">1  sub 1/3  a.go:12</text>
+<text x="236.4" y="67" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+<rect x="48" y="74" width="560" height="22" fill="#3a3d41"/>
+<circle cx="64" cy="85" r="4.5" fill="#f0883e"/>
+<text x="78" y="89" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">2  sub 2/3  a.go:30</text>
+<text x="236.4" y="89" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+<circle cx="64" cy="107" r="4.5" fill="#f0883e"/>
+<text x="78" y="111" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">3  sub 3/3  b.go:7</text>
+<text x="228.79999999999998" y="111" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+<rect x="608" y="28" width="672" height="28" fill="#2d2d2d"/>
+<text x="624" y="46" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">a.go  (srwr-replay)</text>
+<text x="622" y="76" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">28</text>
+<text x="668" y="76" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">func (s *Store) Save(id string) error {</text>
+<text x="622" y="96" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">29</text>
+<text x="668" y="96" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	if id == "" {</text>
+<rect x="608" y="102" width="672" height="20" fill="#f0883e"/>
+<text x="668" y="116" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13" font-weight="bold">[2/3] Rename the helper to the new naming rule</text>
+<rect x="608" y="122" width="672" height="20" fill="#583c27"/>
+<text x="622" y="136" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">30</text>
+<text x="668" y="136" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">		return errEmpty</text>
+<text x="622" y="156" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">31</text>
+<text x="668" y="156" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	}</text>
+<text x="622" y="176" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">32</text>
+<text x="668" y="176" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	return s.saveByID(id)</text>
+<rect x="0" y="306" width="1280" height="24" fill="#007acc"/>
+<text x="14" y="322" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">‹ Back</text>
+<text x="80" y="322" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Forward ›</text>
+<text x="160" y="322" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">2/3</text>
+</svg>
+</div><div><h4>light</h4><svg xmlns="http://www.w3.org/2000/svg" width="1280" height="330" viewBox="0 0 1280 330" role="img" aria-label="A sub frame in VSCode, option B (light)">
+<rect x="0" y="0" width="1280" height="330" fill="#ffffff"/>
+<rect x="0" y="0" width="1280" height="28" fill="#e7e7e7"/>
+<text x="640" y="18" fill="#333333" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12" text-anchor="middle">srwr-view  –  sub 2/3</text>
+<rect x="0" y="28" width="48" height="278" fill="#2c2c2c"/>
+<rect x="48" y="28" width="560" height="98" fill="#f3f3f3"/>
+<rect x="48" y="28" width="560" height="24" fill="#e7e7e7"/>
+<text x="64" y="44" fill="#333333" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11" font-weight="bold">Operations</text>
+<text x="138" y="44" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11">20261005-1030-c3d4</text>
+<circle cx="64" cy="63" r="4.5" fill="#b45f06"/>
+<text x="78" y="67" fill="#1f1f1f" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">1  sub 1/3  a.go:12</text>
+<text x="236.4" y="67" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+<rect x="48" y="74" width="560" height="22" fill="#e4e6f1"/>
+<circle cx="64" cy="85" r="4.5" fill="#b45f06"/>
+<text x="78" y="89" fill="#1f1f1f" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">2  sub 2/3  a.go:30</text>
+<text x="236.4" y="89" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+<circle cx="64" cy="107" r="4.5" fill="#b45f06"/>
+<text x="78" y="111" fill="#1f1f1f" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">3  sub 3/3  b.go:7</text>
+<text x="228.79999999999998" y="111" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+<rect x="608" y="28" width="672" height="28" fill="#e7e7e7"/>
+<text x="624" y="46" fill="#333333" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">a.go  (srwr-replay)</text>
+<text x="622" y="76" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">28</text>
+<text x="668" y="76" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">func (s *Store) Save(id string) error {</text>
+<text x="622" y="96" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">29</text>
+<text x="668" y="96" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	if id == "" {</text>
+<rect x="608" y="102" width="672" height="20" fill="#b45f06"/>
+<text x="668" y="116" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13" font-weight="bold">[2/3] Rename the helper to the new naming rule</text>
+<rect x="608" y="122" width="672" height="20" fill="#fde3c8"/>
+<text x="622" y="136" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">30</text>
+<text x="668" y="136" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">		return errEmpty</text>
+<text x="622" y="156" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">31</text>
+<text x="668" y="156" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	}</text>
+<text x="622" y="176" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">32</text>
+<text x="668" y="176" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	return s.saveByID(id)</text>
+<rect x="0" y="306" width="1280" height="24" fill="#007acc"/>
+<text x="14" y="322" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">‹ Back</text>
+<text x="80" y="322" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Forward ›</text>
+<text x="160" y="322" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">2/3</text>
+</svg>
+</div></div></div>
+<div class="fig"><p class="note">案A：操作一覧。同じ理由の replace が3つ並ぶ</p><div class="pair"><div><h4>dark</h4><svg xmlns="http://www.w3.org/2000/svg" width="620" height="128" viewBox="0 0 620 128" role="img" aria-label="Operations list, option A (dark)">
+<rect x="0" y="0" width="620" height="128" fill="#1e1e1e"/>
+<rect x="0" y="0" width="620" height="120" fill="#252526"/>
+<rect x="0" y="0" width="620" height="24" fill="#2d2d2d"/>
+<text x="16" y="16" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11" font-weight="bold">Operations</text>
+<text x="90" y="16" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11">20261005-1030-c3d4</text>
+<circle cx="16" cy="35" r="4.5" fill="#4aa3ff"/>
+<text x="30" y="39" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">1  select  a.go:12</text>
+<text x="180.79999999999998" y="39" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Check the helper's uses</text>
+<circle cx="16" cy="57" r="4.5" fill="#f0883e"/>
+<text x="30" y="61" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">2  replace  a.go:12</text>
+<text x="188.4" y="61" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+<rect x="0" y="68" width="620" height="22" fill="#3a3d41"/>
+<circle cx="16" cy="79" r="4.5" fill="#f0883e"/>
+<text x="30" y="83" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">3  replace  a.go:30</text>
+<text x="188.4" y="83" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+<circle cx="16" cy="101" r="4.5" fill="#f0883e"/>
+<text x="30" y="105" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">4  replace  b.go:7</text>
+<text x="180.79999999999998" y="105" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+</svg>
+</div><div><h4>light</h4><svg xmlns="http://www.w3.org/2000/svg" width="620" height="128" viewBox="0 0 620 128" role="img" aria-label="Operations list, option A (light)">
+<rect x="0" y="0" width="620" height="128" fill="#ffffff"/>
+<rect x="0" y="0" width="620" height="120" fill="#f3f3f3"/>
+<rect x="0" y="0" width="620" height="24" fill="#e7e7e7"/>
+<text x="16" y="16" fill="#333333" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11" font-weight="bold">Operations</text>
+<text x="90" y="16" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11">20261005-1030-c3d4</text>
+<circle cx="16" cy="35" r="4.5" fill="#0b61a4"/>
+<text x="30" y="39" fill="#1f1f1f" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">1  select  a.go:12</text>
+<text x="180.79999999999998" y="39" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Check the helper's uses</text>
+<circle cx="16" cy="57" r="4.5" fill="#b45f06"/>
+<text x="30" y="61" fill="#1f1f1f" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">2  replace  a.go:12</text>
+<text x="188.4" y="61" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+<rect x="0" y="68" width="620" height="22" fill="#e4e6f1"/>
+<circle cx="16" cy="79" r="4.5" fill="#b45f06"/>
+<text x="30" y="83" fill="#1f1f1f" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">3  replace  a.go:30</text>
+<text x="188.4" y="83" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+<circle cx="16" cy="101" r="4.5" fill="#b45f06"/>
+<text x="30" y="105" fill="#1f1f1f" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">4  replace  b.go:7</text>
+<text x="180.79999999999998" y="105" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+</svg>
+</div></div></div>
+<div class="fig"><p class="note">案B：操作一覧。種類が <code>sub 1/3</code> … <code>sub 3/3</code></p><div class="pair"><div><h4>dark</h4><svg xmlns="http://www.w3.org/2000/svg" width="620" height="128" viewBox="0 0 620 128" role="img" aria-label="Operations list, option B (dark)">
+<rect x="0" y="0" width="620" height="128" fill="#1e1e1e"/>
+<rect x="0" y="0" width="620" height="120" fill="#252526"/>
+<rect x="0" y="0" width="620" height="24" fill="#2d2d2d"/>
+<text x="16" y="16" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11" font-weight="bold">Operations</text>
+<text x="90" y="16" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11">20261005-1030-c3d4</text>
+<circle cx="16" cy="35" r="4.5" fill="#4aa3ff"/>
+<text x="30" y="39" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">1  select  a.go:12</text>
+<text x="180.79999999999998" y="39" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Check the helper's uses</text>
+<circle cx="16" cy="57" r="4.5" fill="#f0883e"/>
+<text x="30" y="61" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">2  sub 1/3  a.go:12</text>
+<text x="188.4" y="61" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+<rect x="0" y="68" width="620" height="22" fill="#3a3d41"/>
+<circle cx="16" cy="79" r="4.5" fill="#f0883e"/>
+<text x="30" y="83" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">3  sub 2/3  a.go:30</text>
+<text x="188.4" y="83" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+<circle cx="16" cy="101" r="4.5" fill="#f0883e"/>
+<text x="30" y="105" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">4  sub 3/3  b.go:7</text>
+<text x="180.79999999999998" y="105" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+</svg>
+</div><div><h4>light</h4><svg xmlns="http://www.w3.org/2000/svg" width="620" height="128" viewBox="0 0 620 128" role="img" aria-label="Operations list, option B (light)">
+<rect x="0" y="0" width="620" height="128" fill="#ffffff"/>
+<rect x="0" y="0" width="620" height="120" fill="#f3f3f3"/>
+<rect x="0" y="0" width="620" height="24" fill="#e7e7e7"/>
+<text x="16" y="16" fill="#333333" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11" font-weight="bold">Operations</text>
+<text x="90" y="16" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11">20261005-1030-c3d4</text>
+<circle cx="16" cy="35" r="4.5" fill="#0b61a4"/>
+<text x="30" y="39" fill="#1f1f1f" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">1  select  a.go:12</text>
+<text x="180.79999999999998" y="39" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Check the helper's uses</text>
+<circle cx="16" cy="57" r="4.5" fill="#b45f06"/>
+<text x="30" y="61" fill="#1f1f1f" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">2  sub 1/3  a.go:12</text>
+<text x="188.4" y="61" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+<rect x="0" y="68" width="620" height="22" fill="#e4e6f1"/>
+<circle cx="16" cy="79" r="4.5" fill="#b45f06"/>
+<text x="30" y="83" fill="#1f1f1f" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">3  sub 2/3  a.go:30</text>
+<text x="188.4" y="83" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+<circle cx="16" cy="101" r="4.5" fill="#b45f06"/>
+<text x="30" y="105" fill="#1f1f1f" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">4  sub 3/3  b.go:7</text>
+<text x="180.79999999999998" y="105" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+</svg>
+</div></div></div>
+<h2>2. 失敗の画面</h2>
+<p><code>✖ sub failed (count_mismatch)</code>。メッセージに、見つけた数とファイルごとの数を言う。複数ファイルのときは <code>file</code> を <code>(not shown)</code> にする。</p>
+<div class="fig"><p class="note">VSCode：数が合わなかった sub（3つのはずが4つ）</p><div class="pair"><div><h4>dark</h4><svg xmlns="http://www.w3.org/2000/svg" width="1280" height="300" viewBox="0 0 1280 300" role="img" aria-label="A failed sub in VSCode (dark)">
+<rect x="0" y="0" width="1280" height="300" fill="#1e1e1e"/>
+<rect x="0" y="0" width="1280" height="28" fill="#2d2d2d"/>
+<text x="640" y="18" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12" text-anchor="middle">srwr-view  –  failure 2/2</text>
+<rect x="0" y="28" width="48" height="248" fill="#333333"/>
+<rect x="48" y="28" width="560" height="76" fill="#252526"/>
+<rect x="48" y="28" width="560" height="24" fill="#2d2d2d"/>
+<text x="64" y="44" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11" font-weight="bold">Operations</text>
+<text x="138" y="44" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11">20261005-1030-c3d4</text>
+<circle cx="64" cy="63" r="4.5" fill="#4aa3ff"/>
+<text x="78" y="67" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">1  select  a.go:12</text>
+<text x="228.79999999999998" y="67" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Check the helper's uses</text>
+<rect x="48" y="74" width="560" height="22" fill="#3a3d41"/>
+<circle cx="64" cy="85" r="4.5" fill="#f85149"/>
+<text x="78" y="89" fill="#d4d4d4" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">2  failure  count_mismatch</text>
+<text x="289.6" y="89" fill="#9d9d9d" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+<rect x="608" y="28" width="672" height="28" fill="#2d2d2d"/>
+<text x="624" y="46" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">failure: sub (count_mismatch)</text>
+<rect x="608" y="56" width="672" height="28" fill="#c62828"/>
+<text x="624" y="75" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13" font-weight="bold">✖  sub failed  (count_mismatch)</text>
+<text x="624" y="110" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">Expected 3 hits of "oldName", found 4 (a.go: 3, b.go: 1). Nothing was changed.</text>
+<text x="624" y="144" fill="#9d9d9d" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">why</text>
+<text x="696" y="144" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">Rename the helper to the new naming rule</text>
+<text x="624" y="166" fill="#9d9d9d" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">tool</text>
+<text x="696" y="166" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">sub</text>
+<text x="624" y="188" fill="#9d9d9d" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">file</text>
+<text x="696" y="188" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">(not shown)</text>
+<rect x="0" y="276" width="1280" height="24" fill="#007acc"/>
+<text x="14" y="292" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">‹ Back</text>
+<text x="80" y="292" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Forward ›</text>
+<text x="160" y="292" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">2/2</text>
+</svg>
+</div><div><h4>light</h4><svg xmlns="http://www.w3.org/2000/svg" width="1280" height="300" viewBox="0 0 1280 300" role="img" aria-label="A failed sub in VSCode (light)">
+<rect x="0" y="0" width="1280" height="300" fill="#ffffff"/>
+<rect x="0" y="0" width="1280" height="28" fill="#e7e7e7"/>
+<text x="640" y="18" fill="#333333" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12" text-anchor="middle">srwr-view  –  failure 2/2</text>
+<rect x="0" y="28" width="48" height="248" fill="#2c2c2c"/>
+<rect x="48" y="28" width="560" height="76" fill="#f3f3f3"/>
+<rect x="48" y="28" width="560" height="24" fill="#e7e7e7"/>
+<text x="64" y="44" fill="#333333" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11" font-weight="bold">Operations</text>
+<text x="138" y="44" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="11">20261005-1030-c3d4</text>
+<circle cx="64" cy="63" r="4.5" fill="#0b61a4"/>
+<text x="78" y="67" fill="#1f1f1f" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">1  select  a.go:12</text>
+<text x="228.79999999999998" y="67" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Check the helper's uses</text>
+<rect x="48" y="74" width="560" height="22" fill="#e4e6f1"/>
+<circle cx="64" cy="85" r="4.5" fill="#d32f2f"/>
+<text x="78" y="89" fill="#1f1f1f" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13">2  failure  count_mismatch</text>
+<text x="289.6" y="89" fill="#6e6e6e" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Rename the helper to the new naming rule</text>
+<rect x="608" y="28" width="672" height="28" fill="#e7e7e7"/>
+<text x="624" y="46" fill="#333333" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">failure: sub (count_mismatch)</text>
+<rect x="608" y="56" width="672" height="28" fill="#c62828"/>
+<text x="624" y="75" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13" font-weight="bold">✖  sub failed  (count_mismatch)</text>
+<text x="624" y="110" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">Expected 3 hits of "oldName", found 4 (a.go: 3, b.go: 1). Nothing was changed.</text>
+<text x="624" y="144" fill="#6e6e6e" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">why</text>
+<text x="696" y="144" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">Rename the helper to the new naming rule</text>
+<text x="624" y="166" fill="#6e6e6e" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">tool</text>
+<text x="696" y="166" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">sub</text>
+<text x="624" y="188" fill="#6e6e6e" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">file</text>
+<text x="696" y="188" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">(not shown)</text>
+<rect x="0" y="276" width="1280" height="24" fill="#007acc"/>
+<text x="14" y="292" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">‹ Back</text>
+<text x="80" y="292" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Forward ›</text>
+<text x="160" y="292" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">2/2</text>
+</svg>
+</div></div></div>
+<h2>3. Vim（案Aの場合）</h2>
+<div class="fig"><p class="note">Vim：sub の2か所目のコマ</p><div class="pair"><div><h4>dark</h4><svg xmlns="http://www.w3.org/2000/svg" width="1176" height="382" viewBox="0 0 1176 382" role="img" aria-label="Vim, sub (dark)">
+<rect x="0" y="0" width="1176" height="382" fill="#1e1e1e"/>
+<text x="0" y="13" fill="#9d9d9d" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">srwr  replace 2/3   a.go:30   (Back: [[   Forward: ]])</text>
+<text x="0" y="30" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre"></text>
+<rect x="0" y="35" width="1176" height="17" fill="#f0883e"/>
+<text x="0" y="47" fill="#ffffff" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" font-weight="bold" xml:space="preserve" style="white-space:pre">    Rename the helper to the new naming rule</text>
+<text x="0" y="64" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">  28  func (s *Store) Save(id string) error {</text>
+<text x="0" y="81" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">  29  	if id == "" {</text>
+<rect x="0" y="86" width="1176" height="17" fill="#583c27"/>
+<text x="0" y="98" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">  30  		return errEmpty</text>
+<text x="0" y="115" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">  31  	}</text>
+<text x="0" y="132" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">  32  	return s.saveByID(id)</text>
+<text x="0" y="149" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="166" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="183" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="200" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="217" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="234" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="251" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="268" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="285" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="302" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="319" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="336" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="353" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="370" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+</svg>
+</div><div><h4>light</h4><svg xmlns="http://www.w3.org/2000/svg" width="1176" height="382" viewBox="0 0 1176 382" role="img" aria-label="Vim, sub (light)">
+<rect x="0" y="0" width="1176" height="382" fill="#ffffff"/>
+<text x="0" y="13" fill="#6e6e6e" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">srwr  replace 2/3   a.go:30   (Back: [[   Forward: ]])</text>
+<text x="0" y="30" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre"></text>
+<rect x="0" y="35" width="1176" height="17" fill="#b45f06"/>
+<text x="0" y="47" fill="#ffffff" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" font-weight="bold" xml:space="preserve" style="white-space:pre">    Rename the helper to the new naming rule</text>
+<text x="0" y="64" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">  28  func (s *Store) Save(id string) error {</text>
+<text x="0" y="81" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">  29  	if id == "" {</text>
+<rect x="0" y="86" width="1176" height="17" fill="#fde3c8"/>
+<text x="0" y="98" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">  30  		return errEmpty</text>
+<text x="0" y="115" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">  31  	}</text>
+<text x="0" y="132" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">  32  	return s.saveByID(id)</text>
+<text x="0" y="149" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="166" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="183" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="200" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="217" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="234" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="251" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="268" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="285" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="302" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="319" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="336" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="353" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="370" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+</svg>
+</div></div></div>
+<div class="fig"><p class="note">Vim：数が合わなかった sub</p><div class="pair"><div><h4>dark</h4><svg xmlns="http://www.w3.org/2000/svg" width="1176" height="382" viewBox="0 0 1176 382" role="img" aria-label="Vim, failure (dark)">
+<rect x="0" y="0" width="1176" height="382" fill="#1e1e1e"/>
+<text x="0" y="13" fill="#9d9d9d" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">srwr  failure 2/2   (Back: [[   Forward: ]])</text>
+<text x="0" y="30" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre"></text>
+<rect x="0" y="35" width="1176" height="17" fill="#c62828"/>
+<text x="0" y="47" fill="#ffffff" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" font-weight="bold" xml:space="preserve" style="white-space:pre">✖  sub failed  (count_mismatch)</text>
+<text x="0" y="64" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre"></text>
+<text x="0" y="81" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">Expected 3 hits of "oldName", found 4 (a.go: 3, b.go: 1). Nothing was changed.</text>
+<text x="0" y="98" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre"></text>
+<text x="0" y="115" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">why   Rename the helper to the new naming rule</text>
+<text x="0" y="132" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">tool  sub</text>
+<text x="0" y="149" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">file  (not shown)</text>
+<text x="0" y="166" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="183" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="200" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="217" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="234" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="251" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="268" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="285" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="302" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="319" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="336" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="353" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="370" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+</svg>
+</div><div><h4>light</h4><svg xmlns="http://www.w3.org/2000/svg" width="1176" height="382" viewBox="0 0 1176 382" role="img" aria-label="Vim, failure (light)">
+<rect x="0" y="0" width="1176" height="382" fill="#ffffff"/>
+<text x="0" y="13" fill="#6e6e6e" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">srwr  failure 2/2   (Back: [[   Forward: ]])</text>
+<text x="0" y="30" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre"></text>
+<rect x="0" y="35" width="1176" height="17" fill="#c62828"/>
+<text x="0" y="47" fill="#ffffff" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" font-weight="bold" xml:space="preserve" style="white-space:pre">✖  sub failed  (count_mismatch)</text>
+<text x="0" y="64" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre"></text>
+<text x="0" y="81" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">Expected 3 hits of "oldName", found 4 (a.go: 3, b.go: 1). Nothing was changed.</text>
+<text x="0" y="98" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre"></text>
+<text x="0" y="115" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">why   Rename the helper to the new naming rule</text>
+<text x="0" y="132" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">tool  sub</text>
+<text x="0" y="149" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">file  (not shown)</text>
+<text x="0" y="166" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="183" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="200" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="217" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="234" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="251" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="268" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="285" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="302" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="319" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="336" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="353" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+<text x="0" y="370" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">~</text>
+</svg>
+</div></div></div>
+<div class="ok"><strong>了承してほしいこと</strong><ol><li>コマの見せ方（案A か 案B）</li><li>失敗の画面（特に文言）</li></ol></div>
+</main></body></html>

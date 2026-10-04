@@ -266,7 +266,11 @@ func planMCP(root string) (plan, error) {
 	}
 	p.change.Detail = lang.Pick("registered srwr mcp", "srwr mcp を登録しました")
 	if others > 0 {
-		p.change.Detail += lang.Sprintf(" (%d other servers left as they were)", "（ほかのサーバー %d 件はそのまま）", others)
+		if others == 1 {
+			p.change.Detail += lang.Sprintf(" (%d other server left as it was)", "（ほかのサーバー %d 件はそのまま）", others)
+		} else {
+			p.change.Detail += lang.Sprintf(" (%d other servers left as they were)", "（ほかのサーバー %d 件はそのまま）", others)
+		}
 	}
 	return p, nil
 }

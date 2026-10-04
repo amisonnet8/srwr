@@ -42,3 +42,13 @@ func TestEnglishErrors(t *testing.T) {
 		}
 	}
 }
+
+func TestEnglishDetailAgreesWithOneOtherServer(t *testing.T) {
+	t.Setenv("SRWR_LANG", "")
+	root := ws(t, true, map[string]string{".mcp.json": `{"mcpServers":{"a":{"command":"x"}}}`})
+	for _, c := range run(t, root, false).Changes {
+		if c.Path == ".mcp.json" && c.Detail != "registered srwr mcp (1 other server left as it was)" {
+			t.Errorf("%q", c.Detail)
+		}
+	}
+}

@@ -130,7 +130,7 @@ func TestTapesCheck(t *testing.T) {
 		"  M    other.go\n",
 		"  ??   new.txt\n",
 		"not recorded by the settings (1): secret.txt",
-		"On the tape: 1 files.",
+		"On the tape: 1 file.",
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("output lacks %q:\n%s", want, out)

@@ -70,7 +70,7 @@ $ srwr tapes check
 Tape 20261004-1200-7k7f (current session)
 Changed in the work tree but not on the tape (1):
   M    README.md
-On the tape: 1 files.
+On the tape: 1 file.
 ```
 
 The exit code is 1 when there is a warning, 0 when there is none. It only reads: it takes no lock and writes nothing.

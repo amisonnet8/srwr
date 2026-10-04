@@ -178,3 +178,16 @@ func TestUsageNamesRootForEverySubcommand(t *testing.T) {
 		}
 	}
 }
+
+func TestFileCountAgreesWithTheNumber(t *testing.T) {
+	for _, c := range []struct {
+		lang string
+		n    int
+		want string
+	}{{"", 0, "0 files"}, {"", 1, "1 file"}, {"", 3, "3 files"}, {"ja", 1, "1"}, {"ja", 3, "3"}} {
+		t.Setenv("SRWR_LANG", c.lang)
+		if got := fileCount(c.n); got != c.want {
+			t.Errorf("lang %q, %d: %q, want %q", c.lang, c.n, got, c.want)
+		}
+	}
+}

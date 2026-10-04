@@ -312,6 +312,17 @@ func errAge(s string) error {
 	return fmt.Errorf(lang.Pick("--older-than %q must look like 30d or 12h", "--older-than %q は 30d や 12h の形で指定してください"), s)
 }
 
+// fileCount is "1 file" or "3 files" (in Japanese, just the number).
+func fileCount(n int) string {
+	switch {
+	case lang.Ja():
+		return fmt.Sprintf("%d", n)
+	case n == 1:
+		return "1 file"
+	}
+	return fmt.Sprintf("%d files", n)
+}
+
 // count is "1 tape" or "3 tapes" (in Japanese, "3 本").
 func count(n int) string {
 	if lang.Ja() {
@@ -401,7 +412,7 @@ func tapesCheck(ws *session.Workspace, id string, stdout, stderr io.Writer) int 
 	if len(unrecorded) > 0 {
 		_, _ = fmt.Fprintf(stdout, lang.Pick("Changed, and not recorded by the settings (%d): %s\n", "変わったが、設定で記録しないファイル（%d）：%s\n"), len(unrecorded), strings.Join(unrecorded, ", "))
 	}
-	_, _ = fmt.Fprintf(stdout, lang.Pick("On the tape: %d files.\n", "テープにあるファイル：%d\n"), len(onTape))
+	_, _ = fmt.Fprintf(stdout, lang.Pick("On the tape: %s.\n", "テープにあるファイル：%s\n"), fileCount(len(onTape)))
 	if len(missing) > 0 && startedDirty {
 		_, _ = fmt.Fprintln(stdout, lang.Pick("The work tree had uncommitted changes when this tape started, so some of these may be older than the tape.", "このテープを始めたとき、作業ツリーに未コミットの変更がありました。上のうち、テープより古いものがあるかもしれません。"))
 	}

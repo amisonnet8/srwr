@@ -14,8 +14,9 @@ const maxFailureMessage = 300
 
 // failedCall is a select or replace that gave the client an error, as far as the tape wants to know it.
 type failedCall struct {
-	tool      string // toolSelect or toolReplace
-	file      string // select: the path as given; "" when there is none
+	tool      string   // toolSelect, toolReplace or toolSub
+	file      string   // select: the path as given; "" when there is none
+	files     []string // sub: the paths as given
 	startLine *int
 	endLine   *int
 	selection *string // replace: the token as given
@@ -27,6 +28,7 @@ type failedCall struct {
 const (
 	toolSelect  = "select"
 	toolReplace = "replace"
+	toolSub     = "sub"
 )
 
 // recordFailure writes a failure event for a call that failed (docs/reference/tape.md). It never changes the answer the client
@@ -50,15 +52,27 @@ func (f failedCall) info(tx *session.Tx) *tape.FailureInfo {
 		Code: f.err.Code, Message: f.err.Message,
 	}
 	var file string
+	given := f.file
+	if f.tool == toolSub {
+		// The file is told only when there is one, since a failure about several files is about none of them.
+		if len(f.files) == 1 {
+			given = f.files[0]
+		}
+		for _, in := range f.files {
+			if _, perr := cleanPath(in); perr != nil && perr.Code == CodeInvalidRange {
+				info.Message = "A path is absolute or points outside the workspace"
+			}
+		}
+	}
 	switch f.tool {
-	case toolSelect:
-		if f.file != "" {
-			rel, perr := cleanPath(f.file)
+	case toolSelect, toolSub:
+		if given != "" {
+			rel, perr := cleanPath(given)
 			switch {
 			case perr == nil:
 				file = rel
 			case perr.Code == CodeInvalidRange:
-				if isAbsolute(f.file) {
+				if isAbsolute(given) {
 					info.Message = "The path is absolute. Give a path relative to the workspace"
 				} else {
 					info.Message = "The path points outside the workspace"

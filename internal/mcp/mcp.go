@@ -115,6 +115,8 @@ func (s *Server) call(params json.RawMessage) (any, *jsonrpc.Error) {
 		return s.callSelect(p.Arguments), nil
 	case tools.Replace:
 		return s.callReplace(p.Arguments), nil
+	case tools.Sub:
+		return s.callSub(p.Arguments), nil
 	}
 	return nil, &jsonrpc.Error{Code: jsonrpc.InvalidParams, Message: "unknown tool: " + p.Name}
 }
@@ -203,6 +205,52 @@ func (s *Server) callReplace(raw json.RawMessage) toolResult {
 	}
 	return success(replaceOK{OK: true, Selection: res.Selection, StartLine: res.StartLine, EndLine: res.EndLine,
 		Lines: res.Lines, Before: res.Before, After: res.After})
+}
+
+type subArgs struct {
+	Files *[]string `json:"files"`
+	Old   *string   `json:"old"`
+	New   *string   `json:"new"`
+	Count *int      `json:"count"`
+	Why   *string   `json:"why"`
+}
+
+type subOK struct {
+	OK    bool        `json:"ok"`
+	Count int         `json:"count"`
+	Files []subFileOK `json:"files"`
+}
+
+type subFileOK struct {
+	File      string   `json:"file"`
+	Hits      int      `json:"hits"`
+	StartLine int      `json:"startLine"`
+	EndLine   int      `json:"endLine"`
+	Selection string   `json:"selection"`
+	Lines     []string `json:"lines"`
+}
+
+func (s *Server) callSub(raw json.RawMessage) toolResult {
+	var a subArgs
+	if err := decodeArgs(raw, &a); err != nil {
+		s.Core.RecordInputFailure(tools.Sub, err.Code, err.Message)
+		return failure(*err)
+	}
+	if missing := firstMissing(map[string]bool{"files": a.Files == nil, "old": a.Old == nil, "new": a.New == nil, "count": a.Count == nil, "why": a.Why == nil},
+		"files", "old", "new", "count", "why"); missing != "" {
+		e := core.Error{Code: core.CodeInvalidInput, Message: "missing required input: " + missing}
+		s.Core.RecordInputFailure(tools.Sub, e.Code, e.Message)
+		return failure(e)
+	}
+	res, cerr := s.Core.Sub(core.SubInput{Files: *a.Files, Old: *a.Old, New: *a.New, Count: *a.Count, Why: *a.Why})
+	if cerr != nil {
+		return failure(*cerr)
+	}
+	out := subOK{OK: true, Count: res.Count, Files: []subFileOK{}}
+	for _, f := range res.Files {
+		out.Files = append(out.Files, subFileOK{File: f.File, Hits: f.Hits, StartLine: f.StartLine, EndLine: f.EndLine, Selection: f.Selection, Lines: f.Lines})
+	}
+	return success(out)
 }
 
 // decodeArgs reads the arguments of a call. A value of the wrong type is invalid_input, like a missing one.

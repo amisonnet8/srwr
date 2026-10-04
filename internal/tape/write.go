@@ -44,6 +44,9 @@ func Marshal(e Event) ([]byte, error) {
 			{"fileShaBefore", e.FileShaBefore}, {"fileShaAfter", e.FileShaAfter},
 		}
 		fs = appendSource(fs, e)
+		if e.Hits > 0 {
+			fs = append(fs, field{"hits", e.Hits})
+		}
 	case TypeFailure:
 		if e.Failure == nil {
 			return nil, fmt.Errorf("failure event %d has no failure", e.Seq)

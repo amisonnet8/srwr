@@ -411,3 +411,42 @@ func TestFilter(t *testing.T) {
 		t.Errorf("an unknown name = %q, want final", bad)
 	}
 }
+
+func TestSubFrame(t *testing.T) {
+	ev := parse(t,
+		`{"v":1,"seq":1,"ts":"2026-10-05T03:00:01.000Z","type":"snapshot","file":"a.go","text":"1\nfoo\n3\nfoo\n"}`,
+		`{"v":1,"seq":2,"ts":"2026-10-05T03:00:02.000Z","type":"replace","file":"a.go","from":null,"startLine":2,"endLine":4,"oldText":"foo\n3\nfoo","newText":"bar\n3\nbar","newStartLine":2,"newEndLine":4,"selection":"sel_1","why":"名前を変える","source":"mcp","tool":"sub","hits":2}`,
+	)
+	f := Build(ev).Frames()
+	if len(f) != 1 {
+		t.Fatalf("frames = %+v", f)
+	}
+	x := f[0]
+	if x.Kind != KindSub || x.Hits != 2 || x.Why == nil || *x.Why != "名前を変える" || x.Before != "1\nfoo\n3\nfoo\n" || x.After != "1\nbar\n3\nbar\n" || x.Range != (Range{2, 4}) {
+		t.Errorf("sub frame = %+v", x)
+	}
+	if b, _ := json.Marshal(x); !strings.Contains(string(b), `"kind":"sub"`) || !strings.Contains(string(b), `"hits":2`) {
+		t.Errorf("json = %s", b)
+	}
+	// A replace of another kind has no hits.
+	other := Build(parse(t,
+		`{"v":1,"seq":1,"ts":"2026-10-05T03:00:01.000Z","type":"snapshot","file":"a.go","text":"1\n"}`,
+		`{"v":1,"seq":2,"ts":"2026-10-05T03:00:02.000Z","type":"replace","file":"a.go","from":null,"startLine":1,"endLine":1,"oldText":"1","newText":"2","newStartLine":1,"newEndLine":1,"selection":null,"why":null,"source":"hook","tool":"Edit"}`,
+	)).Frames()[0]
+	if b, _ := json.Marshal(other); other.Kind != KindReplace || strings.Contains(string(b), "hits") {
+		t.Errorf("hook replace = %s", b)
+	}
+}
+
+func TestFilterGroupsSubWithReplace(t *testing.T) {
+	frames := []Frame{{Index: 0, Kind: KindSelect, File: "a"}, {Index: 1, Kind: KindSub, File: "a"}, {Index: 2, Kind: KindReplace, File: "a"}}
+	k, _ := NewKinds([]string{"select"})
+	shown, orig, hidden := Filter(frames, k)
+	if len(shown) != 1 || !slices.Equal(orig, []int{0}) || hidden[KindReplace] != 2 || len(hidden) != 1 {
+		t.Errorf("select only: orig %v, hidden %v", orig, hidden)
+	}
+	k, _ = NewKinds([]string{"replace"})
+	if _, orig, _ = Filter(frames, k); !slices.Equal(orig, []int{1, 2}) {
+		t.Errorf("replace only: orig %v", orig)
+	}
+}

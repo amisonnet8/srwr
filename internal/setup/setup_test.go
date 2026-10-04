@@ -100,7 +100,8 @@ const wantStrictSettings = `{
   "permissions": {
     "allow": [
       "mcp__srwr__select",
-      "mcp__srwr__replace"
+      "mcp__srwr__replace",
+      "mcp__srwr__sub"
     ],
     "deny": [
       "Edit",

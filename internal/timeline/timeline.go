@@ -15,6 +15,7 @@ const (
 	KindReplace  = tape.TypeReplace
 	KindExternal = tape.TypeExternal
 	KindFinal    = "final"
+	KindSub      = "sub" // a replace made by the sub tool: shown as a diff, with its reason
 	KindFailure  = "failure"
 )
 
@@ -40,6 +41,7 @@ type Frame struct {
 	From      *string `json:"from"`
 	Parent    *int    `json:"parent"`
 	Deleted   bool    `json:"deleted,omitempty"`
+	Hits      int     `json:"hits,omitempty"` // sub frames only: how many places it changed in the file
 
 	// failure frames only: the tool that failed, the error code, and the message (the real path is left out of the tape).
 	Tool    string `json:"tool,omitempty"`
@@ -142,6 +144,9 @@ func (b *Builder) Add(e tape.Event) bool {
 		f.Why, f.Selection = cloneString(e.Why), cloneString(e.Selection)
 		b.state.Apply(e)
 		f.After = b.text(e.File)
+		if e.HookTool == "sub" {
+			f.Kind, f.Hits = KindSub, e.Hits
+		}
 	case tape.TypeExternal:
 		b.state.Apply(e)
 		switch {

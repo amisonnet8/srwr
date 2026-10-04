@@ -42,7 +42,7 @@ type ToolInfo struct {
 //	snapshot: Seq, TS, File, FileHash, Text (never nil), Sha
 //	select:   Seq, TS, File, StartLine, EndLine, Why, Selection, Source, HookTool
 //	replace:  Seq, TS, File, From, StartLine, EndLine, OldText, NewText, NewStartLine, NewEndLine,
-//	          Selection, Why, FileShaBefore, FileShaAfter, Source, HookTool
+//	          Selection, Why, FileShaBefore, FileShaAfter, Source, HookTool, Hits
 //	failure:  Seq, TS, Failure
 //	external: Seq, TS, File, Author, DetectedBy, ExpectedSha, ActualSha, Hunks or Text (both nil when unknown), Created, Deleted
 //
@@ -93,6 +93,7 @@ type Event struct {
 	NewEndLine    int
 	FileShaBefore string
 	FileShaAfter  string
+	Hits          int // a replace made by sub: how many places it changed in the file (0 is a replace of any other kind)
 
 	// external
 	DetectedBy  string

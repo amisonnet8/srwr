@@ -10,6 +10,7 @@ const (
 	CodeContentMismatch   = "content_mismatch"
 	CodeContentNotFound   = "content_not_found"
 	CodeContentAmbiguous  = "content_ambiguous"
+	CodeCountMismatch     = "count_mismatch"
 	CodeFileNotFound      = "file_not_found"
 	CodeInvalidRange      = "invalid_range"
 	CodeIgnoredFile       = "ignored_file"

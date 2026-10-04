@@ -153,7 +153,7 @@ func TestToolsList(t *testing.T) {
 	if err := json.Unmarshal([]byte(got[0]), &r); err != nil {
 		t.Fatal(err)
 	}
-	if len(r.Result.Tools) != 2 || r.Result.Tools[0].Name != "select" || r.Result.Tools[1].Name != "replace" {
+	if len(r.Result.Tools) != 3 || r.Result.Tools[0].Name != "select" || r.Result.Tools[1].Name != "replace" || r.Result.Tools[2].Name != "sub" {
 		t.Fatalf("tools = %+v", r.Result.Tools)
 	}
 	for _, tool := range r.Result.Tools {
@@ -245,6 +245,31 @@ func TestSelectAndReplace(t *testing.T) {
 	}
 }
 
+func TestSub(t *testing.T) {
+	root := t.TempDir()
+	for name, text := range map[string]string{"a.go": "foo\nx\nfoo\n", "b.go": "foo\n"} {
+		if err := os.WriteFile(filepath.Join(root, name), []byte(text), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	got := serve(t, root, toolCall(1, "sub", `{"files":["a.go","b.go"],"old":"foo","new":"bar & <baz>","count":3,"why":"名前を変える"}`))
+	m, isErr := body(t, got[0])
+	files, _ := m["files"].([]any)
+	if isErr || m["ok"] != true || m["count"] != float64(3) || len(files) != 2 {
+		t.Fatalf("sub = %v %v", m, isErr)
+	}
+	a := files[0].(map[string]any)
+	if a["file"] != "a.go" || a["hits"] != float64(2) || a["startLine"] != float64(1) || a["endLine"] != float64(3) || a["selection"] == "" {
+		t.Errorf("a.go = %v", a)
+	}
+	if l := a["lines"].([]any); len(l) != 3 || l[0] != "bar & <baz>" {
+		t.Errorf("lines = %v", l)
+	}
+	if b, _ := os.ReadFile(filepath.Join(root, "b.go")); string(b) != "bar & <baz>\n" { //nolint:gosec // a path in a temporary directory
+		t.Errorf("b.go = %q", b)
+	}
+}
+
 func TestToolErrors(t *testing.T) {
 	root := t.TempDir()
 	if err := os.WriteFile(filepath.Join(root, "a.go"), []byte("1\n2\n"), 0o600); err != nil {
@@ -273,6 +298,11 @@ func TestToolErrors(t *testing.T) {
 		{"replace without newText", "replace", `{"selection":"sel_x","why":"w"}`, "invalid_input", nil},
 		{"replace with a bad token", "replace", `{"selection":"sel_x","newText":"","why":"w"}`, "invalid_selection", nil},
 		{"replace with newText as a number", "replace", `{"selection":"sel_x","newText":1,"why":"w"}`, "invalid_input", nil},
+		{"sub without count", "sub", `{"files":["a.go"],"old":"1","new":"x","why":"w"}`, "invalid_input", nil},
+		{"sub with files as a string", "sub", `{"files":"a.go","old":"1","new":"x","count":1,"why":"w"}`, "invalid_input", nil},
+		{"sub with count as a string", "sub", `{"files":["a.go"],"old":"1","new":"x","count":"1","why":"w"}`, "invalid_input", nil},
+		{"sub with no files", "sub", `{"files":[],"old":"1","new":"x","count":1,"why":"w"}`, "invalid_input", nil},
+		{"sub with the wrong count", "sub", `{"files":["a.go"],"old":"1","new":"x","count":2,"why":"w"}`, "count_mismatch", map[string]any{"a.go": float64(1)}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

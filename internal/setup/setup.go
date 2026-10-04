@@ -79,7 +79,7 @@ const (
 
 var (
 	forbidden   = []string{"Edit", "Write", "MultiEdit", "NotebookEdit"}
-	allowed     = []string{"mcp__srwr__select", "mcp__srwr__replace"}
+	allowed     = []string{"mcp__srwr__select", "mcp__srwr__replace", "mcp__srwr__sub"}
 	ignoreLines = []string{".srwr/key", ".srwr/lock", ".srwr/active", ".srwr/init-backup/"}
 )
 

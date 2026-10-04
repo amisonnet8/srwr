@@ -1,7 +1,7 @@
 package timeline
 
 // Kinds is the set of kinds of frames a client wants: select, replace, external and failure. The frames of the final diff
-// (final) follow external.
+// (final) follow external, and those of sub follow replace.
 type Kinds map[string]bool
 
 // AllKinds are the names a client may ask for.
@@ -28,12 +28,20 @@ func NewKinds(names []string) (Kinds, string) {
 	return k, ""
 }
 
+// group is the kind a person turns on and off for a kind of frame: final goes with external, sub with replace.
+func group(kind string) string {
+	switch kind {
+	case KindFinal:
+		return KindExternal
+	case KindSub:
+		return KindReplace
+	}
+	return kind
+}
+
 // Shows says whether a frame of this kind is sent.
 func (k Kinds) Shows(kind string) bool {
-	if kind == KindFinal {
-		kind = KindExternal
-	}
-	return k[kind]
+	return k[group(kind)]
 }
 
 // Hidden counts, for each kind that is left out, how many frames were. final counts as external. A kind with none is not in it.
@@ -50,11 +58,7 @@ func Filter(frames []Frame, k Kinds) (shown []Frame, orig []int, hidden Hidden) 
 			orig = append(orig, i)
 			continue
 		}
-		kind := f.Kind
-		if kind == KindFinal {
-			kind = KindExternal
-		}
-		hidden[kind]++
+		hidden[group(f.Kind)]++
 	}
 	return shown, orig, hidden
 }

@@ -107,6 +107,7 @@ func parseLine(line []byte) (Event, bool) {
 			e.NewEndLine, _ = getInt(m, "newEndLine")
 			e.FileShaBefore, _ = getString(m, "fileShaBefore")
 			e.FileShaAfter, _ = getString(m, "fileShaAfter")
+			e.Hits, _ = getInt(m, "hits")
 		}
 	case TypeExternal:
 		e.Author = getAuthor(m)

@@ -1,4 +1,4 @@
-// Package tools defines the two MCP tools, select and replace: their names, the text the AI reads
+// Package tools defines the MCP tools, select, replace and sub: their names, the text the AI reads
 // and the schema of their input. What they do is in internal/core.
 package tools
 
@@ -13,6 +13,7 @@ type Tool struct {
 const (
 	Select  = "select"
 	Replace = "replace"
+	Sub     = "sub"
 )
 
 const whyDescription = "The reason, in one sentence, in the language of the conversation with the user. It is for people to read. Empty or blank is not allowed"
@@ -59,6 +60,25 @@ func List() []Tool {
 					"why":       map[string]any{"type": "string", "minLength": 1, "pattern": `\S`, "description": whyDescription},
 				},
 				"required": []string{"selection", "newText", "why"},
+			},
+		},
+		{
+			Name: Sub,
+			Description: "Replace a text with another in several files at once, like a simple sed, and record why. old is searched for as plain text (not a regular expression), left to right, places do not overlap. " +
+				"count is how many places you expect in all the files together. If the number found is different, nothing is changed and the error says how many there are in each file; this is the check that you changed what you meant. " +
+				"The result has, for each file that changed, hits (how many places), startLine and endLine (the lines from the first place to the last, after the change), selection (a token for those lines, usable by replace) and lines. " +
+				"Use select and replace instead when the places must be chosen one by one. " +
+				"why is required: say why you change it, in the language of the conversation with the user.",
+			InputSchema: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"files": map[string]any{"type": "array", "minItems": 1, "items": map[string]any{"type": "string", "minLength": 1}, "description": "Paths relative to the workspace. Existing files only"},
+					"old":   map[string]any{"type": "string", "minLength": 1, "description": "The text to look for. It may have several lines (LF)"},
+					"new":   map[string]any{"type": "string", "description": "The text to put in its place. An empty string deletes it"},
+					"count": map[string]any{"type": "integer", "minimum": 1, "description": "How many places you expect in all the files together"},
+					"why":   map[string]any{"type": "string", "minLength": 1, "pattern": `\S`, "description": whyDescription},
+				},
+				"required": []string{"files", "old", "new", "count", "why"},
 			},
 		},
 	}

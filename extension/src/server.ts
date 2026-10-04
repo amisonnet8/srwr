@@ -2,7 +2,7 @@
 // JSON-RPC 2.0 on its standard input and output. This file does not import vscode, so tests can run it as it is.
 import { ChildProcessWithoutNullStreams, spawn } from "node:child_process";
 import { pick } from "./lang";
-import { Frame, toFrame } from "./timeline";
+import { Frame, Hidden, ShownKind, toFrame } from "./timeline";
 
 export const PROTOCOL_VERSION = 1;
 
@@ -17,12 +17,18 @@ export interface TapeInfo {
 // What the display parts use to reach the server. Tests replace it with a fake (test/fakeserver.ts).
 export interface ServerClient {
   listTapes(): Promise<TapeInfo[]>;
-  // Opens a tape and returns all its frames with before/after, including the final diff.
-  openTape(tapeId: string): Promise<Frame[]>;
+  // Opens a tape and returns the frames of the kinds asked for, with before/after (the final diff follows external), and
+  // how many frames of each kind were left out.
+  openTape(tapeId: string, kinds: ShownKind[]): Promise<{ frames: Frame[]; hidden: Hidden }>;
   closeTape(tapeId: string): Promise<void>;
   // Starts watching. Returns the frames so far; later ones arrive through onFrame. A frame with a tapeId that differs
   // from before means the live view moved to another tape.
-  liveStart(onFrame: (tapeId: string, frame: Frame) => void): Promise<{ tapeId: string | null; frames: Frame[] }>;
+  // onHidden gets the new count of the frames that were left out, when more of them arrive.
+  liveStart(
+    onFrame: (tapeId: string, frame: Frame) => void,
+    kinds: ShownKind[],
+    onHidden: (tapeId: string, hidden: Hidden) => void,
+  ): Promise<{ tapeId: string | null; frames: Frame[]; hidden: Hidden }>;
   liveStop(): Promise<void>;
   dispose(): void;
 }
@@ -69,7 +75,7 @@ interface Pending {
 interface Message {
   id?: number;
   method?: string;
-  params?: { tapeId: string; frame: Record<string, unknown> };
+  params?: { tapeId: string; frame: Record<string, unknown>; hidden?: Hidden };
   result?: unknown;
   error?: { message: string; data?: { code?: string } };
 }
@@ -84,6 +90,7 @@ export class ServerProcess implements ServerClient {
   private nextId = 0;
   private readonly pending = new Map<number, Pending>();
   private onFrame: ((tapeId: string, frame: Frame) => void) | undefined;
+  private onHidden: ((tapeId: string, hidden: Hidden) => void) | undefined;
   private disposed = false;
 
   constructor(private readonly cfg: ServerProcessOptions) {}
@@ -94,31 +101,38 @@ export class ServerProcess implements ServerClient {
     return r.tapes;
   }
 
-  async openTape(tapeId: string): Promise<Frame[]> {
+  async openTape(tapeId: string, kinds: ShownKind[]): Promise<{ frames: Frame[]; hidden: Hidden }> {
     await this.initialize();
-    const r = (await this.request("tape/open", { tapeId, withText: true })) as { frames: Record<string, unknown>[] };
-    return r.frames.map(toFrame);
+    const r = (await this.request("tape/open", { tapeId, withText: true, kinds })) as { frames: Record<string, unknown>[]; hidden?: Hidden };
+    return { frames: r.frames.map(toFrame), hidden: r.hidden ?? {} };
   }
 
   async closeTape(tapeId: string): Promise<void> {
     await this.request("tape/close", { tapeId });
   }
 
-  async liveStart(onFrame: (tapeId: string, frame: Frame) => void): Promise<{ tapeId: string | null; frames: Frame[] }> {
+  async liveStart(
+    onFrame: (tapeId: string, frame: Frame) => void,
+    kinds: ShownKind[],
+    onHidden: (tapeId: string, hidden: Hidden) => void,
+  ): Promise<{ tapeId: string | null; frames: Frame[]; hidden: Hidden }> {
     await this.initialize();
     this.onFrame = onFrame;
-    const r = (await this.request("live/start", { withText: true })) as { tapeId: string | null; frames: Record<string, unknown>[] };
-    return { tapeId: r.tapeId, frames: r.frames.map(toFrame) };
+    this.onHidden = onHidden;
+    const r = (await this.request("live/start", { withText: true, kinds })) as { tapeId: string | null; frames: Record<string, unknown>[]; hidden?: Hidden };
+    return { tapeId: r.tapeId, frames: r.frames.map(toFrame), hidden: r.hidden ?? {} };
   }
 
   async liveStop(): Promise<void> {
     this.onFrame = undefined;
+    this.onHidden = undefined;
     await this.request("live/stop", {});
   }
 
   dispose(): void {
     this.disposed = true;
     this.onFrame = undefined;
+    this.onHidden = undefined;
     const child = this.child;
     this.child = undefined;
     this.failAll(new ServerError("server_exited", pick("the extension has shut down", "拡張は終了している")));
@@ -255,6 +269,8 @@ export class ServerProcess implements ServerClient {
     if (m.id === undefined) {
       if (m.method === "live/frame" && m.params) {
         this.onFrame?.(m.params.tapeId, toFrame(m.params.frame));
+      } else if (m.method === "live/hidden" && m.params) {
+        this.onHidden?.(m.params.tapeId, m.params.hidden ?? {});
       }
       return;
     }

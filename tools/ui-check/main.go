@@ -78,7 +78,7 @@ func run(args []string, out io.Writer) error {
 		}
 	}
 	if len(args) != 3 || args[0] != "open" || (args[1] != "vscode" && args[1] != "vim") {
-		return errors.New("usage: ui-check open <vscode|vim> <why-basic|external|no-why|long-why|live>")
+		return errors.New("usage: ui-check open <vscode|vim> <why-basic|external|no-why|long-why|with-failure|live>")
 	}
 	name := args[2]
 	check := name
@@ -86,7 +86,7 @@ func run(args []string, out io.Writer) error {
 		check, _ = splitLight(name)
 	}
 	if _, ok := tapes[check]; !ok && check != "live" {
-		return fmt.Errorf("unknown tape %q: why-basic, external, no-why, long-why or live (Vim: and the same with -light)", name)
+		return fmt.Errorf("unknown tape %q: why-basic, external, no-why, long-why, with-failure or live (Vim: and the same with -light)", name)
 	}
 	root, err := os.Getwd()
 	if err != nil {
@@ -111,6 +111,11 @@ func openVSCode(root, name string, out io.Writer) error {
 	}
 	if name == "long-why" {
 		if err := addLongWhy(bin, workspace); err != nil {
+			return err
+		}
+	}
+	if name == "with-failure" {
+		if err := addWithFailure(bin, workspace); err != nil {
 			return err
 		}
 	}

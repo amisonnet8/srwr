@@ -24,15 +24,17 @@ export def Session(): dict<any>
 enddef
 
 # Start opens the live tab. tapeId and frames come from live/start (the past frames are only listed).
-export def Start(root: string, tapeId: any, frames: list<dict<any>>)
+export def Start(root: string, tapeId: any, frames: list<dict<any>>, hidden: dict<any> = {})
   replay.SetOnLiveClose(StopWatching)
-  replay.OpenLive(tapeId, frames, root)
+  replay.OpenLive(tapeId, frames, root, hidden)
 enddef
 
 # OnNotify is the handler of the server's notifications.
 export def OnNotify(method: string, params: dict<any>)
   if method ==# 'live/frame' && Active()
     replay.Append(params.tapeId, params.frame)
+  elseif method ==# 'live/hidden' && Active()
+    replay.SetHidden(params.tapeId, params.hidden)
   endif
 enddef
 

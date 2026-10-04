@@ -103,7 +103,7 @@ If a `replace` is made with a selection token issued before an `external`, the t
 
 ### failure
 
-Recorded when a `select` or a `replace` fails (the AI gets an error). It is for finding out what mistakes the AI makes. It is not a step of the replay: a viewer does not show it as a frame.
+Recorded when a `select` or a `replace` fails (the AI gets an error). It is for finding out what mistakes the AI makes. A viewer shows it as a frame only when it is asked to (red; see [vscode.md](vscode.md)); by default it is left out.
 
 ```json
 {"v":1,"seq":7,"ts":"…","type":"failure","tool":"select","file":null,"startLine":3,"endLine":9,"selection":null,"why":"Checking the main function","code":"invalid_range","message":"The path is absolute. Give a path relative to the workspace"}

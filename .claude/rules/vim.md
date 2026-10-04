@@ -44,6 +44,13 @@
 - 仮想テキストの本文は `prop_list()` で取れない。行番号の文字は、疑似端末の画面（`term_scrape()`）で確かめる
 - Vim 9.0.0784 の環境は、`pkill` が効かないことがある。サーバーを止めるテストは `server.Pid()` を `kill` する
 
+## 表示する種類（R15）
+
+- select・replace・external・failure を ON/OFF できる（`docs/reference/vim.md` 6c）。絞るのは表示サーバー（`kinds`）。キーは srwr のバッファの中だけ：`ts`・`tr`・`te`・`tf`。`:SrwrToggle {種類}`。`ui.vim` の `kinds` が覚える（保存しない）
+- 切り替えは `ui.Toggle`。開いているテープは `tape/open` をやり直して `replay.Open(…, at)` で、`seq` が一番近いコマ（`timeline.NearestBySeq`）から始める。ライブは `Live()` をやり直す。キーは `replay.SetOnToggle` で `ui.vim` につなぐ（`replay.vim` が `ui.vim` を import しないため）
+- 隠している数はステータス行の右端（`%=`）に出す（`timeline.HiddenText`）。`live/hidden` の通知は `replay.SetHidden`
+- failure のコマは再生のバッファに説明を書き（`timeline.FailureLines`）、1行目を `srwr_why_failure`（赤）で塗る。バッファの名前は `srwr://<テープ>/failure<index>`
+
 ## UI
 
 - 見え方は `docs/reference/vim.md`・基準 `vim/test/baseline/`。**VSCode と同じ情報を同じ色で見せる**ことが確定。足さない

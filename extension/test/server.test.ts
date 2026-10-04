@@ -5,7 +5,7 @@ import path from "node:path";
 import { afterEach, test } from "node:test";
 import { setJapanese } from "../src/lang";
 import { ServerError, ServerProcess } from "../src/server";
-import { Frame } from "../src/timeline";
+import { DEFAULT_KINDS, Frame } from "../src/timeline";
 import { binPath, copyWorkspace, goldenFrames, loadGolden, tapeLines, until } from "./helpers";
 
 // The error texts these tests look at are the Japanese ones (english.test.ts looks at the English ones).
@@ -57,7 +57,7 @@ for (const [id, golden] of [
 ] as const) {
   test(`tape/open ${id}: every frame equals the golden data (with the final diff against the real files)`, async () => {
     const s = real(copyWorkspace());
-    const got = await s.openTape(id);
+    const got = (await s.openTape(id, DEFAULT_KINDS)).frames;
     const want = goldenFrames(loadGolden(golden));
     assert.equal(got.length, want.length);
     got.forEach((f, i) => assert.deepEqual(f, want[i], `frame ${i}`));
@@ -75,7 +75,7 @@ test("live: the frames so far, then the appended ones in order", async () => {
   fs.writeFileSync(tape, lines.slice(0, 3).join("\n") + "\n"); // header, snapshot, first select
   const s = real(root);
   const got: Array<[string, Frame]> = [];
-  const r = await s.liveStart((id, f) => got.push([id, f]));
+  const r = await s.liveStart((id, f) => got.push([id, f]), DEFAULT_KINDS, () => undefined);
   assert.equal(r.tapeId, "20260930-0000-live");
   assert.equal(r.frames.length, 1);
   for (const l of lines.slice(3)) {
@@ -92,8 +92,8 @@ test("live: the frames so far, then the appended ones in order", async () => {
 
 test("tape/open of a tape that is not there", async () => {
   const s = real(copyWorkspace());
-  await assert.rejects(s.openTape("20200101-0000-none"), (e: ServerError) => e.code === "tape_not_found");
-  await assert.rejects(s.openTape("../x"), (e: ServerError) => e.code === "invalid_params");
+  await assert.rejects(s.openTape("20200101-0000-none", DEFAULT_KINDS), (e: ServerError) => e.code === "tape_not_found");
+  await assert.rejects(s.openTape("../x", DEFAULT_KINDS), (e: ServerError) => e.code === "invalid_params");
 });
 
 test("the binary does not exist", async () => {

@@ -40,6 +40,9 @@ var checks = []check{
 	{"理由なしのコマ", "理由の行が無い", []testRef{nodeTest("a frame without why"), vimTest("test_view.vim")}},
 	{"長い理由の折り返し", "行数・字下げ・全文・幅ごとの違い", []testRef{
 		nodeTest("wrapWhy"), goTest("tools/ui-check", "TestLongWhyTapeIsMadeByTheRealMCP"), goTest("tools/ui-check", "TestVerifyLongWhy")}},
+	{"失敗のコマと、表示する種類", "絞り込み（kinds）・番号の振り直し・隠した数・ライブの新着・赤い行・キー（ts tr te tf）・漏斗ボタン", []testRef{
+		goTest("internal/viewserver", "TestTapeOpenKinds"), goTest("internal/viewserver", "TestFrameStateWithKinds"), goTest("internal/viewserver", "TestLiveKinds"),
+		goTest("tools/ui-check", "TestFailureTapeIsMadeByTheRealMCP"), nodeTest("the funnel button"), nodeTest("a failure frame"), vimTest("test_kinds.vim")}},
 	{"差分のコマ", "左右の塗り・見出し・最初の変更行が上から3割・行き来しても増えない", []testRef{
 		nodeTest("a diff frame: two editors"), nodeTest("a final frame: headings"), nodeTest("going back and forth over diff frames never piles up editors"), vimTest("test_diff.vim")}},
 	{"操作一覧", "行の文字列・丸の色・今の行", []testRef{nodeTest("the list: numbered from 1, kinds, dots"), vimTest("test_list.vim")}},

@@ -28,6 +28,20 @@ export def SetOnLiveClose(F: func())
   OnLiveClose = F
 enddef
 
+def NoToggle(_kind: string)
+enddef
+
+var OnToggle: func(string) = NoToggle
+
+# SetOnToggle registers what the keys ts, tr, te and tf call (the kinds of frames are chosen where the server is spoken to).
+export def SetOnToggle(F: func(string))
+  OnToggle = F
+enddef
+
+def Toggle(kind: string)
+  OnToggle(kind)
+enddef
+
 export def Active(): bool
   return !empty(s)
 enddef
@@ -165,12 +179,26 @@ export def Goto(i: number)
   const f: dict<any> = s.tl.frames[s.index]
   if timeline.IsDiff(f)
     ShowDiff(f)
+  elseif f.kind ==# 'failure'
+    LeaveDiff()
+    RenderFailure(f)
   else
     LeaveDiff()
     Render(f, timeline.ContentAt(s.tl, f.file, s.index))
   endif
   sidebar.Mark(s.index)
   UpdateStatus()
+enddef
+
+# RenderFailure shows a failure: it has no file to open, so the buffer explains it, with the first row in red.
+def RenderFailure(f: dict<any>)
+  ShowFile('failure' .. f.index)
+  # The explanation is not code: without this the filetype of the last file (its colors for select, range...) would stay.
+  win_execute(s.win, 'setlocal filetype= syntax=')
+  buf.SetLines(s.buf, timeline.FailureLines(f))
+  paint.Line(s.buf, 1, 'srwr_why_failure')
+  setwinvar(s.win, '&number', 0)
+  win_execute(s.win, 'call winrestview({topline: 1, lnum: 1, col: 1, leftcol: 0})')
 enddef
 
 def ShowDiff(f: dict<any>)
@@ -216,9 +244,11 @@ enddef
 # or 'new' (live, frames waiting); 'cut' is not text but the place where a line that is too long is cut.
 # `room` is the width the line has; the close hint is left out when all of the line
 # with it does not fit, so that the live mark is never cut off. `lead` is what comes before it in this window.
-export def StatusParts(index: number, total: number, live: bool, where: string, room: number, lead: string = ''): list<list<string>>
+export def StatusParts(index: number, total: number, live: bool, where: string, room: number, lead: string = '', hidden: string = ''): list<list<string>>
+  # What the server left out goes at the right end ('right'): "hidden: failure (2)".
+  const rightEnd: list<list<string>> = hidden ==# '' ? [] : [['', 'right'], ['  ' .. hidden, '']]
   if live && total == 0
-    return [[lang.Pick("srwr  ● LIVE  (waiting for the AI's operations)", 'srwr  ● LIVE  （AI の操作を待っています）'), '']]
+    return [[lang.Pick("srwr  ● LIVE  (waiting for the AI's operations)", 'srwr  ● LIVE  （AI の操作を待っています）'), '']] + rightEnd
   endif
   const behind = total - 1 - index
   var parts: list<list<string>> = [
@@ -243,11 +273,11 @@ export def StatusParts(index: number, total: number, live: bool, where: string, 
   if live
     var withHint = copy(parts)
     add(withHint, ['  ' .. CloseHint(), ''])
-    if strdisplaywidth(lead .. join(mapnew(withHint, (_, p) => p[0]), '')) <= room
-      return withHint
+    if strdisplaywidth(lead .. join(mapnew(withHint + rightEnd, (_, p) => p[0]), '')) <= room
+      return withHint + rightEnd
     endif
   endif
-  return parts
+  return parts + rightEnd
 enddef
 
 # StatusString is StatusParts as a value for 'statusline'.
@@ -257,6 +287,8 @@ export def StatusString(parts: list<list<string>>, lead: string = ''): string
     const t = substitute(text, '%', '%%', 'g')
     if style ==# 'cut'
       out ..= '%<'
+    elseif style ==# 'right'
+      out ..= '%='
     elseif style ==# 'dim'
       out ..= '%#SrwrDim#' .. t .. '%*'
     elseif style ==# 'new'
@@ -272,7 +304,7 @@ def Where(): string
   const n = timeline.Len(s.tl)
   if s.index >= 0 && s.index < n
     const f: dict<any> = s.tl.frames[s.index]
-    return f.file .. ':' .. timeline.FormatRange(f.range)
+    return f.kind ==# 'failure' ? 'failure: ' .. get(f, 'tool', '') : f.file .. ':' .. timeline.FormatRange(f.range)
   endif
   return ''
 enddef
@@ -282,7 +314,7 @@ export def Status(room: number = 1000): string
   if !Active()
     return ''
   endif
-  return join(mapnew(StatusParts(s.index, timeline.Len(s.tl), s.live, Where(), room), (_, p) => p[0]), '')
+  return join(mapnew(StatusParts(s.index, timeline.Len(s.tl), s.live, Where(), room, '', timeline.HiddenText(s.hidden)), (_, p) => p[0]), '')
 enddef
 
 def WinWidth(w: number): number
@@ -299,9 +331,9 @@ def UpdateStatus()
     const f: dict<any> = s.tl.frames[s.index]
     const lead = lang.Pick('After  ', '後  ')
     setwinvar(s.win, '&statusline', StatusString([[lang.Pick('Before  ', '前  ') .. diff.Label(f), '']]))
-    setwinvar(s.diffWin, '&statusline', StatusString(StatusParts(s.index, n, s.live, Where(), WinWidth(s.diffWin), lead), lead))
+    setwinvar(s.diffWin, '&statusline', StatusString(StatusParts(s.index, n, s.live, Where(), WinWidth(s.diffWin), lead, timeline.HiddenText(s.hidden)), lead))
   else
-    setwinvar(s.win, '&statusline', StatusString(StatusParts(s.index, n, s.live, Where(), WinWidth(s.win))))
+    setwinvar(s.win, '&statusline', StatusString(StatusParts(s.index, n, s.live, Where(), WinWidth(s.win), '', timeline.HiddenText(s.hidden))))
   endif
 enddef
 
@@ -311,7 +343,8 @@ def MapKeys(win: number)
   for [lhs, fn] in [
       [']]', 'StepForward()'], ['<Right>', 'StepForward()'],
       ['[[', 'StepBack()'], ['<Left>', 'StepBack()'],
-      ['q', 'Close()']]
+      ['q', 'Close()'],
+      ['ts', "Toggle('select')"], ['tr', "Toggle('replace')"], ['te', "Toggle('external')"], ['tf', "Toggle('failure')"]]
     win_execute(win, 'nnoremap <buffer><silent><nowait> ' .. lhs .. ' <ScriptCmd>' .. fn .. '<CR>')
   endfor
   if s.live
@@ -330,6 +363,7 @@ export def Append(tapeId: string, f: dict<any>)
   if tapeId !=# s.tape
     s.tape = tapeId
     s.tl = timeline.New()
+    s.hidden = {}
     s.index = -1
     s.wanted = -1
     LeaveDiff()
@@ -347,6 +381,24 @@ export def Append(tapeId: string, f: dict<any>)
   endif
 enddef
 
+# SetHidden is the count of the frames the server leaves out, which changes as frames of those kinds arrive (live/hidden).
+export def SetHidden(tapeId: string, hidden: dict<any>)
+  if !Active() || !s.live
+    return
+  endif
+  if tapeId !=# s.tape
+    s.tape = tapeId
+    s.tl = timeline.New()
+    s.index = -1
+    s.wanted = -1
+    LeaveDiff()
+    s.file = ''
+    sidebar.Fill(s.tl)
+  endif
+  s.hidden = hidden
+  UpdateStatus()
+enddef
+
 # Latest goes back to the newest frame and follows again.
 export def Latest()
   if Active() && s.live && timeline.Len(s.tl) > 0
@@ -359,12 +411,13 @@ enddef
 
 # OpenLive starts the live view in a new tab: the replay screen, on a list that grows. The frames up to now
 # (from live/start) are only listed; nothing is shown until a frame arrives or a step is made.
-export def OpenLive(tapeId: any, frames: list<dict<any>>, root: string)
-  Open(type(tapeId) == v:t_string ? tapeId : 'live', frames, root, true)
+export def OpenLive(tapeId: any, frames: list<dict<any>>, root: string, hidden: dict<any> = {})
+  Open(type(tapeId) == v:t_string ? tapeId : 'live', frames, root, true, hidden)
 enddef
 
 # Open starts the replay of a tape in a new tab. frames come from tape/open with withText.
-export def Open(tapeId: string, frames: list<dict<any>>, root: string, live: bool = false)
+# hidden is how many frames of each kind the server left out; `at` is the frame to start at (the first one by default).
+export def Open(tapeId: string, frames: list<dict<any>>, root: string, live: bool = false, hidden: dict<any> = {}, at: number = 0)
   if Active()
     Close()
   endif
@@ -374,6 +427,7 @@ export def Open(tapeId: string, frames: list<dict<any>>, root: string, live: boo
   s = {
     tape: tapeId, tl: timeline.New(frames), root: root, index: -1, file: '',
     diffWin: 0, diffBuf: 0, win: win_getid(), buf: bufnr(), tab: tabId, live: live, wanted: live ? len(frames) - 1 : -1,
+    hidden: hidden,
   }
   buf.SetupReadonly()
   silent keepalt file srwr://opening
@@ -394,8 +448,9 @@ export def Open(tapeId: string, frames: list<dict<any>>, root: string, live: boo
     sidebar.Mark(s.index)
     UpdateStatus()
   elseif timeline.Len(s.tl) > 0
-    Goto(0)
+    Goto(at)
   else
+    buf.SetLines(s.buf, [lang.Pick('No frames to show', '表示するコマがありません')])
     UpdateStatus()
   endif
 enddef

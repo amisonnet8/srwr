@@ -31,8 +31,8 @@ func TestPrepareWorkspace(t *testing.T) {
 		t.Error("a file of the last run is still there")
 	}
 	for name, f := range tapes {
-		if name == "long-why" {
-			continue // added by addLongWhy
+		if name == "long-why" || name == "with-failure" {
+			continue // added by addLongWhy and addWithFailure
 		}
 		if _, err := os.Stat(filepath.Join(dst, ".srwr", "tapes", f.ID+".tape.jsonl")); err != nil {
 			t.Errorf("tape %s: %v", f.ID, err)
@@ -67,8 +67,8 @@ func TestPrepareWorkspaceLiveHasNoTapes(t *testing.T) {
 
 func TestFixedTapesAreWhereTheNamesSay(t *testing.T) {
 	for name, f := range tapes {
-		if name == "long-why" {
-			continue // made on the spot (TestLongWhyTapeIsMadeByTheRealMCP)
+		if name == "long-why" || name == "with-failure" {
+			continue // made on the spot (TestLongWhyTapeIsMadeByTheRealMCP, TestFailureTapeIsMadeByTheRealMCP)
 		}
 		if _, err := os.Stat(filepath.Join(fixture, ".srwr", "tapes", f.ID+".tape.jsonl")); err != nil {
 			t.Errorf("%s: %v", name, err)
@@ -305,5 +305,43 @@ func TestVimOpensInEnglishUnlessJapaneseIsAskedFor(t *testing.T) {
 				t.Errorf("SRWR_LANG=%q: %q lacks %q", tc.in, got, w)
 			}
 		}
+	}
+}
+
+func TestFailureTapeIsMadeByTheRealMCP(t *testing.T) {
+	bin, err := filepath.Abs("../../bin/srwr")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(bin); err != nil {
+		t.Skip("bin/srwr is not built (qsoku bin)")
+	}
+	extra := t.TempDir()
+	if err := makeFailureTape(bin, extra); err != nil {
+		t.Fatal(err)
+	}
+	b, err := os.ReadFile(filepath.Join(extra, ".srwr", "tapes", failureTape+".tape.jsonl")) //nolint:gosec // a path in a temporary directory
+	if err != nil {
+		t.Fatal(err)
+	}
+	var types, codes []string
+	for _, l := range strings.Split(strings.TrimSpace(string(b)), "\n") {
+		var e struct{ Type, Code string }
+		if err := json.Unmarshal([]byte(l), &e); err != nil {
+			t.Fatal(err)
+		}
+		types = append(types, e.Type)
+		if e.Type == "failure" {
+			codes = append(codes, e.Code)
+		}
+	}
+	if got := strings.Join(types, ","); got != "header,snapshot,select,failure,replace,failure" {
+		t.Errorf("events = %s", got)
+	}
+	if got := strings.Join(codes, ","); got != "invalid_range,selection_stale" {
+		t.Errorf("codes = %s", got)
+	}
+	if strings.Contains(string(b), "/work/") {
+		t.Errorf("the real path of the absolute-path call is on the tape:\n%s", b)
 	}
 }

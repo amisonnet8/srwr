@@ -8,6 +8,7 @@ import { REPLAY_SCHEME, ReplayProvider, ReplaySession } from "./replay";
 import { ServerClient, ServerError, ServerProcess, TapeInfo, resolveCommand } from "./server";
 import { OpsView } from "./sidebar";
 import { localStamp } from "./times";
+import { ALL_KINDS, DEFAULT_KINDS, nearestBySeq, ShownKind } from "./timeline";
 
 const TAPE_SUFFIX = ".tape.jsonl";
 
@@ -31,6 +32,8 @@ export function activate(context: vscode.ExtensionContext, createServer: ServerF
   const controls = new Controls();
   let replay: ReplaySession | undefined;
   let live: LiveView | undefined;
+  // Which kinds of frames are shown. Not saved: a new start is the default (srwr has no setting for the look).
+  let kinds: ShownKind[] = [...DEFAULT_KINDS];
   const active = (): ReplaySession | LiveView | undefined => replay ?? live;
 
   const workspaceRoot = (): string | undefined => vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -113,17 +116,65 @@ export function activate(context: vscode.ExtensionContext, createServer: ServerF
     }
     stopLive();
     closeReplay();
-    let frames;
+    await openReplay(root, chosen.tape.tapeId, -1);
+  };
+
+  // Opens a tape with the kinds that are shown, and goes to the frame nearest to seq (the first one when there is no seq).
+  const openReplay = async (root: string, tapeId: string, seq: number): Promise<void> => {
+    let r;
     try {
-      frames = await serverFor(root).openTape(chosen.tape.tapeId);
+      r = await serverFor(root).openTape(tapeId, kinds);
     } catch (e) {
       await showServerError(e);
       return;
     }
-    replay = new ReplaySession(chosen.tape.tapeId, frames, provider, presenter);
+    replay = new ReplaySession(tapeId, r.frames, provider, presenter, r.hidden);
     ops.setSource(replay);
     controls.bind(replay);
-    await replay.goto(0);
+    await replay.goto(seq < 0 ? 0 : Math.max(nearestBySeq(r.frames, seq), 0));
+  };
+
+  const startLive = (root: string): Promise<void> => {
+    const view = new LiveView(presenter, serverFor(root), provider, kinds);
+    live = view;
+    ops.setSource(view);
+    controls.bind(view);
+    return view.start().catch((e) => {
+      if (live === view) {
+        stopLive();
+      }
+      return showServerError(e);
+    });
+  };
+
+  // The funnel button: the kinds of frames to show, as a multi-select list. Applying it opens the tape (or the live view) again.
+  const chooseKinds = async (): Promise<void> => {
+    const root = workspaceRoot();
+    const current = replay ?? live;
+    if (!root || !current) {
+      return;
+    }
+    const describe: Record<ShownKind, string> = {
+      select: pick("What the AI looked at", "AI が見た範囲"),
+      replace: pick("What the AI changed", "AI が変えた所"),
+      external: pick("Changes made outside srwr (and the diff after the recording)", "srwr の外での変更（と、録画のあとの差分）"),
+      failure: pick("Calls that failed (select, replace)", "失敗した呼び出し（select・replace）"),
+    };
+    const items: Array<vscode.QuickPickItem & { shown: ShownKind }> = ALL_KINDS.map((k) => ({ label: k, description: describe[k], picked: kinds.includes(k), shown: k }));
+    const chosen = await vscode.window.showQuickPick(items, { canPickMany: true as const, placeHolder: pick("Frames to show", "表示するコマ") });
+    if (!chosen) {
+      return;
+    }
+    kinds = ALL_KINDS.filter((k) => chosen.some((c) => c.shown === k));
+    if (replay) {
+      const seq = replay.timeline.frames[replay.index]?.seq ?? -1;
+      const tapeId = replay.title;
+      closeReplay();
+      await openReplay(root, tapeId, seq);
+    } else if (live) {
+      stopLive();
+      await startLive(root);
+    }
   };
 
   context.subscriptions.push(
@@ -151,17 +202,9 @@ export function activate(context: vscode.ExtensionContext, createServer: ServerF
       }
       closeReplay();
       stopLive();
-      const view = new LiveView(presenter, serverFor(root), provider);
-      live = view;
-      ops.setSource(view);
-      controls.bind(view);
-      return view.start().catch((e) => {
-        if (live === view) {
-          stopLive();
-        }
-        return showServerError(e);
-      });
+      return startLive(root);
     }),
+    vscode.commands.registerCommand("srwr.chooseKinds", chooseKinds),
     vscode.commands.registerCommand("srwr.liveStop", stopLive),
 
     output,

@@ -3,7 +3,13 @@
 
 import { pick } from "./lang";
 
-export type FrameKind = "select" | "replace" | "external" | "final";
+export type FrameKind = "select" | "replace" | "external" | "final" | "failure";
+
+// The kinds a person can turn on and off (final follows external), and what the server was told is hidden: kind -> how many.
+export type ShownKind = "select" | "replace" | "external" | "failure";
+export const ALL_KINDS: ShownKind[] = ["select", "replace", "external", "failure"];
+export const DEFAULT_KINDS: ShownKind[] = ["select", "replace", "external"];
+export type Hidden = Record<string, number>;
 
 export interface LineRange {
   start: number;
@@ -13,6 +19,7 @@ export interface LineRange {
 // Only the fields the editor uses (docs/reference/protocol.md). Unknown fields are ignored.
 export interface Frame {
   index: number;
+  seq?: number; // the seq of the tape; used to find the nearest frame again after the kinds shown were changed
   kind: FrameKind;
   file: string;
   range: LineRange;
@@ -20,17 +27,21 @@ export interface Frame {
   before: string;
   after: string;
   deleted?: boolean;
+  // failure frames only
+  tool?: string;
+  code?: string;
+  message?: string;
 }
 
-// select is blue, everything that changes a file is orange.
-export type Tone = "select" | "replace";
+// select is blue, everything that changes a file is orange, a failure is red.
+export type Tone = "select" | "replace" | "failure";
 
 export function isDiff(f: Frame): boolean {
   return f.kind === "external" || f.kind === "final";
 }
 
 export function toneOf(f: Frame): Tone {
-  return f.kind === "select" ? "select" : "replace";
+  return f.kind === "select" ? "select" : f.kind === "failure" ? "failure" : "replace";
 }
 
 export function basename(file: string): string {
@@ -51,6 +62,7 @@ export function toFrame(raw: Record<string, unknown>): Frame {
   const f = raw as unknown as Frame;
   return {
     index: f.index,
+    seq: typeof f.seq === "number" ? f.seq : 0,
     kind: f.kind,
     file: f.file,
     range: f.range,
@@ -58,6 +70,7 @@ export function toFrame(raw: Record<string, unknown>): Frame {
     before: typeof f.before === "string" ? f.before : "",
     after: typeof f.after === "string" ? f.after : "",
     ...(f.deleted ? { deleted: true } : {}),
+    ...(f.kind === "failure" ? { tool: f.tool ?? "", code: f.code ?? "", message: f.message ?? "" } : {}),
   };
 }
 
@@ -80,12 +93,12 @@ export class Timeline {
   // undefined when no frame touches it.
   contentAt(file: string, i: number): string | undefined {
     for (let j = Math.min(i, this.frames.length - 1); j >= 0; j--) {
-      if (this.frames[j].file === file) {
+      if (this.frames[j].file === file && this.frames[j].kind !== "failure") {
         return this.frames[j].after;
       }
     }
     for (let j = Math.max(i + 1, 0); j < this.frames.length; j++) {
-      if (this.frames[j].file === file) {
+      if (this.frames[j].file === file && this.frames[j].kind !== "failure") {
         return this.frames[j].before;
       }
     }
@@ -146,3 +159,15 @@ export function changedLines(before: string[], after: string[]): { before: numbe
 }
 
 export const MAX_LCS_CELLS = 4_000_000;
+
+// The frame to go to after the kinds that are shown were changed: the one whose seq is nearest to seq (the earlier one on a tie).
+// -1 when there is no frame.
+export function nearestBySeq(frames: Frame[], seq: number): number {
+  let best = -1;
+  for (const f of frames) {
+    if (best < 0 || Math.abs((f.seq ?? 0) - seq) < Math.abs((frames[best].seq ?? 0) - seq)) {
+      best = f.index;
+    }
+  }
+  return best;
+}

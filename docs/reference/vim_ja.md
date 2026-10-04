@@ -22,6 +22,7 @@ AI エージェントを動かしているターミナルから、そのまま V
 | `:SrwrLive` | ライブ視聴 |
 | `:SrwrNext`・`:SrwrPrev`・`:SrwrClose` | コマ送り（進む・戻る）と、閉じる（下の「キー」と同じ） |
 | `:SrwrLatest` | ライブで、最新のコマへ戻る |
+| `:SrwrToggle {select\|replace\|external\|failure}` | コマの種類の表示を ON/OFF（「表示するコマの種類」のキーと同じ） |
 
 設定は `g:srwr_path`（`srwr` のバイナリの場所）だけ。srwr に見た目の設定はない（色は、ハイライトグループで上書きできる。後の章を見る）。
 
@@ -73,6 +74,8 @@ VSCode（[vscode.md](vscode_ja.md)）と同じ情報を、同じ順で、同じ�
 | `SrwrCurrent` | 操作一覧の今のコマ | `#3a3d41` | `#e4e6f1` |
 | `SrwrDotSelect`・`SrwrDotReplace` | 操作一覧の丸（青・橙） | `#4aa3ff`・`#f0883e` | `#0b61a4`・`#b45f06` |
 | `SrwrDotExternal` | 操作一覧の丸（外部変更・録画後） | `#b180d7` | `#652d90` |
+| `SrwrWhyFailure` | 失敗のコマの理由の行 | `#c62828`、白の太字 | 同じ |
+| `SrwrDotFailure` | 操作一覧の丸（失敗。赤） | `#f85149` | `#d32f2f` |
 | `SrwrDim` | 使えないボタン | 灰色 | 灰色 |
 
 - 256色の端末でも見分けられる値を持つ（`ctermbg`）。`termguicolors` があればその色を使う
@@ -113,6 +116,17 @@ VSCode（[vscode.md](vscode_ja.md)）と同じ情報を、同じ順で、同じ�
 | `[[`・`<Left>` | `:SrwrPrev` | 1つ戻る |
 | `L` | `:SrwrLatest` | ライブで、最新のコマへ戻り、また追う |
 | `q` | `:SrwrClose` | 閉じる |
+
+### 6b. 失敗のコマ
+- 失敗のコマには、開くファイルがないので、再生のバッファは**説明**になる：赤い行 `✖ select が失敗しました  (invalid_range)`（`SrwrWhyFailure`、白の太字。`replace` なら `replace が失敗しました`）、続けてエラー文、空行、`why`・`tool`・`range`（`select` のときだけ）・`file`（伏せたときは `(not shown)`）。ステータス行は `failure: select`
+- 操作一覧の失敗の行は、赤い丸（`SrwrDotFailure`）、種類 `failure`（日本語の画面は `失敗`）、`ファイル:範囲` の代わりにエラーコード
+
+### 6c. 表示するコマの種類
+- 種類 **select・replace・external・failure** を、それぞれ ON/OFF できる。始めは select・replace・external が ON、**failure が OFF**。`final` は external に連れる
+- キー（srwr のバッファの中だけ）：`ts` select、`tr` replace、`te` external、`tf` failure。`:SrwrToggle {種類}` でも同じ。このバッファの中では、`t` の次の `s`・`r`・`e`・`f` は srwr が使う
+- 切り替えると、選んだ種類でテープを開き直し（[protocol_ja.md](protocol_ja.md)）、今のコマに一番近いコマ（記録の順で）へ移る。ライブは、また最新を追う
+- 番号は、表示しているものの 1、2、3…。ステータス行の右端に、隠している数を出す：`hidden: failure (2)`（日本語の画面は `隠している: failure (2)`）。ライブでは、届くコマに合わせて数が変わる。OFF の種類は、一覧にもコマ送りにも出ず、「L: LIVE に戻る（新着 N）」は**表示している種類だけ**を数える。何も表示しないときは、再生のバッファに「表示するコマがありません」と出す
+- 選んだ内容は保存しない：Vim が動いている間だけ覚え、開き直すとデフォルトに戻る。srwr は、そのための設定を足さない
 
 ### 7. ライブ（`srwr view --live`・`:SrwrLive`）
 - **録画と同じ画面**（理由の行、色、差分のコマ、操作一覧）。実ファイルには触れない。見せるのは、サーバーが渡す本文（`withText`）

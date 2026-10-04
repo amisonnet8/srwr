@@ -17,6 +17,9 @@ import (
 type liveWatcher struct {
 	c        *conn
 	withText bool
+	kinds    timeline.Kinds
+	shown    int             // how many frames of this tape were sent: the next one has this index
+	hidden   timeline.Hidden // how many of each kind were left out
 
 	// What has been read: the tape, how far, and what was made of it. Only the goroutine touches these once it runs.
 	tapeID  string
@@ -31,8 +34,9 @@ type liveWatcher struct {
 
 // liveStartResult is the response to live/start.
 type liveStartResult struct {
-	TapeID *string     `json:"tapeId"`
-	Frames []wireFrame `json:"frames"`
+	TapeID *string         `json:"tapeId"`
+	Frames []wireFrame     `json:"frames"`
+	Hidden timeline.Hidden `json:"hidden,omitempty"`
 
 	w *liveWatcher
 }
@@ -45,22 +49,29 @@ func (r liveStartResult) After() bool {
 
 func (c *conn) liveStart(raw []byte) (any, *jsonrpc.Error) {
 	var p struct {
-		WithText bool `json:"withText"`
+		WithText bool      `json:"withText"`
+		Kinds    *[]string `json:"kinds"`
 	}
 	if err := decode(raw, &p); err != nil {
 		return nil, err
 	}
+	kinds, kerr := parseKinds(p.Kinds)
+	if kerr != nil {
+		return nil, kerr
+	}
 	c.stopLive()
-	w := &liveWatcher{c: c, withText: p.WithText, builder: timeline.NewBuilder(), quit: make(chan struct{}), done: make(chan struct{})}
+	w := &liveWatcher{c: c, withText: p.WithText, kinds: kinds, hidden: timeline.Hidden{}, builder: timeline.NewBuilder(), quit: make(chan struct{}), done: make(chan struct{})}
 	c.live = w
 
-	res := liveStartResult{Frames: []wireFrame{}, w: w}
+	res := liveStartResult{Frames: []wireFrame{}, Hidden: timeline.Hidden{}, w: w}
 	if id, ok := c.srv.newestTape(); ok {
 		if data, err := os.ReadFile(filepath.Join(c.srv.tapesDir(), tape.FileName(id))); err == nil {
 			parsed := tape.Parse(data)
 			w.tapeID, w.offset, w.builder = id, parsed.Consumed, timeline.Build(parsed.Events)
 			res.TapeID = &id
-			res.Frames = wireAll(w.builder.Frames(), p.WithText)
+			shown, _, hidden := timeline.Filter(w.builder.Frames(), kinds)
+			w.shown, w.hidden = len(shown), hidden
+			res.Frames, res.Hidden = wireAll(shown, p.WithText), hidden
 		}
 	}
 	return res, nil
@@ -133,12 +144,16 @@ func (w *liveWatcher) tick() error {
 		}
 		parsed := tape.Parse(data)
 		w.tapeID, w.offset, w.builder = id, parsed.Consumed, timeline.Build(parsed.Events)
+		w.shown, w.hidden = 0, timeline.Hidden{}
 		for _, f := range w.builder.Frames() {
-			if err := w.send(f); err != nil {
+			if err := w.offer(f); err != nil {
 				return err
 			}
 		}
-		return nil
+		if len(w.hidden) == 0 {
+			return nil
+		}
+		return w.notifyHidden()
 	}
 
 	f, err := os.Open(path) //nolint:gosec // id passed tape.ValidID
@@ -156,15 +171,47 @@ func (w *liveWatcher) tick() error {
 	}
 	parsed := tape.Parse(buf) // a last line without its newline is left for the next time
 	w.offset += parsed.Consumed
+	before := len(w.hidden)
+	left := w.hiddenTotal()
 	for _, e := range parsed.Events {
 		if w.builder.Add(e) {
 			frames := w.builder.Frames()
-			if err := w.send(frames[len(frames)-1]); err != nil {
+			if err := w.offer(frames[len(frames)-1]); err != nil {
 				return err
 			}
 		}
 	}
+	if len(w.hidden) != before || w.hiddenTotal() != left {
+		return w.notifyHidden()
+	}
 	return nil
+}
+
+// offer sends a frame if the client asked for its kind, numbered after the ones sent. Otherwise it only counts it.
+func (w *liveWatcher) offer(f timeline.Frame) error {
+	if !w.kinds.Shows(f.Kind) {
+		w.hidden[f.Kind]++
+		return nil
+	}
+	f.Index = w.shown
+	w.shown++
+	return w.send(f)
+}
+
+func (w *liveWatcher) hiddenTotal() int {
+	n := 0
+	for _, v := range w.hidden {
+		n += v
+	}
+	return n
+}
+
+// notifyHidden tells the client how many frames of each kind are left out now.
+func (w *liveWatcher) notifyHidden() error {
+	return w.c.out.Notify("live/hidden", struct {
+		TapeID string          `json:"tapeId"`
+		Hidden timeline.Hidden `json:"hidden"`
+	}{w.tapeID, w.hidden})
 }
 
 func (w *liveWatcher) send(f timeline.Frame) error {

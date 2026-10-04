@@ -34,6 +34,7 @@ srwr は、前のリポジトリで一度作った（段階 P0〜P5 と、UI の
 | R12 | P11 | README |
 | R13 | P11 | 配布 |
 | R14 | — | 片付け |
+| R15 | — | コマの種類ごとの表示 ON/OFF と、failure のコマ【UIゲート】 |
 
 ---
 
@@ -203,6 +204,17 @@ R10 までは、確認者が日本語の方が得意なので、日本語で作�
 - [x] `handoff/` の中で、まだリポジトリに取り込んでいない決まり・落とし穴が無いか確かめる（固定データ・golden・基準は全部写してあり、画面の仕様は `docs/reference/` にある。残りは前のリポジトリに原本がある）
 - [x] `handoff/` を消す（了承：承認した画像も残さず消す）。`handoff/` を読むコメント・ルール・`vim-baseline` を直した
 - [x] `docs/` の最終確認（`internal/docs` のテスト、導入の手順・未定・`protocolVersion` を読み直した）
+
+## R15：コマの種類ごとの表示 ON/OFF と、failure のコマ【UIゲート】
+
+v0.2.0 に向けた機能（mtqg `cbfe6a6716`）。テープに残る `failure`（213678face）を赤いコマとして出し、select・replace・external・failure を表示 ON/OFF できる。デフォルトは failure だけ OFF。
+
+- [x] **ゲート**：`dev/review/R15/`（画像と決めること8項目）で了承をもらった
+- [x] プロトコル：`tape/open`・`live/start` の `kinds`、`hidden`、`live/hidden`、`failure` のコマ（`docs/reference/protocol.md`）
+- [x] 表示サーバー（`timeline.Filter`、番号の振り直し、`frame/state` は元のコマの位置に写す）
+- [x] VSCode：漏斗ボタン、失敗の画面、赤、`Hiding: …`
+- [x] Vim：`ts`・`tr`・`te`・`tf`、`:SrwrToggle`、失敗の画面、ステータス行の `hidden: …`
+- [ ] 確認の自動化：`qsoku ui-open vscode|vim with-failure`、`qsoku ui-check` の `replay-failure`・`with_failure`（基準を `qsoku ui-accept` で取る）
 
 ---
 

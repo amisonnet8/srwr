@@ -121,14 +121,19 @@ func (s *Server) readTape(id string) (tape.Result, *jsonrpc.Error) {
 
 func (c *conn) tapeOpen(raw []byte) (any, *jsonrpc.Error) {
 	var p struct {
-		TapeID   string `json:"tapeId"`
-		WithText bool   `json:"withText"`
+		TapeID   string    `json:"tapeId"`
+		WithText bool      `json:"withText"`
+		Kinds    *[]string `json:"kinds"`
 	}
 	if err := decode(raw, &p); err != nil {
 		return nil, err
 	}
 	if err := tapeParam(p.TapeID); err != nil {
 		return nil, err
+	}
+	kinds, kerr := parseKinds(p.Kinds)
+	if kerr != nil {
+		return nil, kerr
 	}
 	res, rerr := c.srv.readTape(p.TapeID)
 	if rerr != nil {
@@ -139,11 +144,13 @@ func (c *conn) tapeOpen(raw []byte) (any, *jsonrpc.Error) {
 	if c.diffFrames {
 		frames = timeline.AppendFinals(frames, b.State(), b.Files(), c.srv.readCurrent)
 	}
-	c.opened[p.TapeID] = &openTape{frames: frames}
+	shown, orig, hidden := timeline.Filter(frames, kinds)
+	c.opened[p.TapeID] = &openTape{all: frames, orig: orig}
 	return struct {
-		Frames []wireFrame `json:"frames"`
-		TapeID string      `json:"tapeId"`
-	}{wireAll(frames, p.WithText), p.TapeID}, nil
+		Frames []wireFrame     `json:"frames"`
+		Hidden timeline.Hidden `json:"hidden,omitempty"`
+		TapeID string          `json:"tapeId"`
+	}{wireAll(shown, p.WithText), hidden, p.TapeID}, nil
 }
 
 func (c *conn) tapeClose(raw []byte) (any, *jsonrpc.Error) {
@@ -183,7 +190,7 @@ func (c *conn) frameState(raw []byte) (any, *jsonrpc.Error) {
 		return nil, rpcError(serverError, codeTapeNotFound, "the tape is not open: "+p.TapeID)
 	}
 	i := *p.Index
-	if i < -1 || i >= len(t.frames) {
+	if i < -1 || i >= len(t.orig) {
 		return nil, invalidParams("index is out of range: " + itoa(i))
 	}
 
@@ -193,14 +200,16 @@ func (c *conn) frameState(raw []byte) (any, *jsonrpc.Error) {
 		Content *string `json:"content"`
 	}{}
 	file := p.File
+	at := -1 // the frame among all of them
 	if i >= 0 {
-		res.Before, res.After = t.frames[i].Before, t.frames[i].After
+		at = t.orig[i]
+		res.Before, res.After = t.all[at].Before, t.all[at].After
 		if file == "" {
-			file = t.frames[i].File
+			file = t.all[at].File
 		}
 	}
 	if file != "" {
-		if text, ok := timeline.ContentAt(t.frames, file, i); ok {
+		if text, ok := timeline.ContentAt(t.all, file, at); ok {
 			res.Content = &text
 		}
 	}

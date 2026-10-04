@@ -11,6 +11,7 @@ export interface Shot extends Screen {
   frame: number;
   label?: string;
   quickPick?: unknown;
+  viewMessage?: string; // the line under the heading of the list; only in captureKinds, so the older baselines are unchanged
 }
 
 function newApp(root: string) {
@@ -55,6 +56,36 @@ export async function captureReplay(tapeId: string, extra?: string): Promise<Sho
   } finally {
     close();
   }
+}
+
+// Opens a tape (failure is left out), takes every frame; then turns failure on with the funnel button (the same command, all four
+// kinds picked) and takes every frame again. The labels are d1... for the first, f1... for the second.
+export async function captureKinds(tapeId: string, extra?: string): Promise<Shot[]> {
+  const { app, close } = newApp(copyWorkspace(extra));
+  try {
+    state.pickQuickPick = (items) => items.find((i) => i.tape?.tapeId === tapeId);
+    await app.run("srwr.openTape");
+    const shots: Shot[] = [];
+    const take = async (prefix: string): Promise<void> => {
+      const n = screen().tree.length;
+      for (let i = 0; i < n; i++) {
+        await app.run("srwr.goto", i);
+        shots.push({ frame: position(), label: `${prefix}${i + 1}`, ...screen(), viewMessage: viewMessage() });
+      }
+    };
+    await take("d");
+    state.pickQuickPick = (items) => items.filter((i) => i.shown !== undefined); // all four kinds
+    await app.run("srwr.chooseKinds");
+    await take("f");
+    return shots;
+  } finally {
+    close();
+  }
+}
+
+// What the list says under its heading ("Hiding: failure (2)").
+function viewMessage(): string | undefined {
+  return state.trees.get("srwr.ops")?.view.message;
 }
 
 type Stage = { label: string; do: (h: Live) => Promise<void> };
@@ -170,13 +201,18 @@ async function main(): Promise<void> {
   out("live_basic", await liveBasic());
   out("live_ext", await liveExt());
   const extra = process.argv[3];
-  if (extra && !liveOnly) {
+  if (extra && extra !== "-" && !liveOnly) {
     out("long_why", await captureReplay(longWhyTape, extra));
+  }
+  const extraFailure = process.argv[4];
+  if (extraFailure && !liveOnly) {
+    out("with_failure", await captureKinds(failureTape, extraFailure));
   }
 }
 
 // The tape qsoku ui-check makes on the spot (tools/ui-check/maketape.go).
 export const longWhyTape = "20260101-0000-long-why";
+export const failureTape = "20260101-0001-with-failure";
 
 if (require.main === module) {
   require("./setup");

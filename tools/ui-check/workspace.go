@@ -20,7 +20,10 @@ var tapes = map[string]struct {
 	"external":  {"20260930-0949-external", "2026-09-30 09:49:46", "11コマ。6コマ目の外部変更、10・11の録画後は左右の差分（前＝青、後＝橙、変わった行だけ）。見やすいか"},
 	"no-why":    {"20260930-0053-no-why", "2026-09-30 00:53:32", "12コマ。理由の行が無く、範囲の色だけ。11・12は録画後の差分"},
 	// long-why is made on the spot by the real srwr mcp (addLongWhy), not kept in the fixtures. It is the newest tape of its workspace.
-	"long-why": {longWhyTape, "一覧の一番上（20260101-0000-long-why.tape.jsonl）", "2コマ。select（青）と replace（橙）の理由の行が、複数行に折り返され、2行目以降が字下げされ、全文が読めて、行番号は理由の行だけ空白。範囲がその直下に見えるか"},
+	// with-failure is made the same way (addWithFailure): two calls that failed are on it as failure frames, which are left out until
+	// the kinds are changed (the funnel button in VSCode, tf in Vim).
+	"with-failure": {failureTape, "一覧の一番上（20260101-0001-with-failure.tape.jsonl）", "初めは2コマ（failure は隠れていて、一覧の上に「Hiding: failure (2)」、Vim は右下に「hidden: failure (2)」）。failure を出すと4コマになり、2コマ目と4コマ目が赤い「✖ … failed」の説明の画面。赤が橙と見分けられ、説明が読めるか"},
+	"long-why":     {longWhyTape, "一覧の一番上（20260101-0000-long-why.tape.jsonl）", "2コマ。select（青）と replace（橙）の理由の行が、複数行に折り返され、2行目以降が字下げされ、全文が読めて、行番号は理由の行だけ空白。範囲がその直下に見えるか"},
 }
 
 // liveLook is what to look at in the live view, which is fed by feedLive and has no tape to pick (the words are those of the
@@ -43,6 +46,19 @@ func addLongWhy(bin, workspace string) error {
 	}
 	defer func() { _ = os.RemoveAll(extra) }()
 	if err := makeLongWhyTape(bin, extra); err != nil {
+		return err
+	}
+	return copyTree(extra+"/.", workspace)
+}
+
+// addWithFailure makes the tape with two failures with the real `srwr mcp` and puts it, and the file it changed, in the workspace.
+func addWithFailure(bin, workspace string) error {
+	extra, err := os.MkdirTemp("", "srwr-ui-extra-")
+	if err != nil {
+		return err
+	}
+	defer func() { _ = os.RemoveAll(extra) }()
+	if err := makeFailureTape(bin, extra); err != nil {
 		return err
 	}
 	return copyTree(extra+"/.", workspace)

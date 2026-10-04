@@ -103,7 +103,7 @@ srwr の外でファイルが変わったことを検知したとき。`snapshot
 
 ### failure
 
-`select`・`replace` が失敗したとき（AI がエラーを受け取ったとき）に記録する。AI がどんなミスをするかを知るためのもの。再生の1ステップではなく、ビューワーはコマとして出さない。
+`select`・`replace` が失敗したとき（AI がエラーを受け取ったとき）に記録する。AI がどんなミスをするかを知るためのもの。ビューワーは、頼まれたときだけコマとして出す（赤。[vscode_ja.md](vscode_ja.md)）。ふだんは出さない。
 
 ```json
 {"v":1,"seq":7,"ts":"…","type":"failure","tool":"select","file":null,"startLine":3,"endLine":9,"selection":null,"why":"main 関数を確認する","code":"invalid_range","message":"The path is absolute. Give a path relative to the workspace"}

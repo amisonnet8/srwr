@@ -35,6 +35,7 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 | Range | Dark theme `#1d3a5c` / light theme `#cfe3fb` | Dark theme `#583c27` / light theme `#fde3c8` |
 
 - The color of the reason line is the same in both themes (to keep the white bold text readable). Only the range changes with the theme
+- A **failure** (a `select` or `replace` that gave the AI an error) is **red**: the reason line `#c62828` (white bold, the same in both themes), and the dot in the operation list `charts.red`. Red and orange are told apart by the mark `✖` and the word `failure` as well
 - For an external change (a change made outside srwr), only the dot in the operation list is **purple** (`charts.purple`). The color of the range follows how diffs are shown (3 below)
 
 ### 2. Frames of select and replace
@@ -58,10 +59,15 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 - When it goes back to an ordinary frame, the editor on the right is closed. **Tabs do not pile up when you move back and forth**
 - One frame per change. If there is no change, none is shown
 
+### 3b. Failure frames
+
+- A failure frame has no file to open (a failure is often about an absolute path, a file that is not recorded, or a wrong input). It is shown as a **virtual document that explains it**: a red line `✖ select failed (invalid_range)` (white bold; for a `replace` it reads `replace failed`), then the message, then `why`, `tool` and `range` (the range given to a `select`; a `replace` has none) and `file` (`(not shown)` when it is left out). The editor tab is named `failure: select (invalid_range)`
+- It is on the list only when `failure` is shown (see 8 below)
+
 ### 4. The operation list (the left panel)
 
 - "srwr" at the left edge → "Operations". The frames are listed **in the order recorded, 1, 2, 3… from the top**. The number is the same as the position in the bottom bar (5/7). There is no indenting by parent and child
-- Each row: `number  kind  file:range` (`37`, `39-41`; an empty range reads `before 12`), with the `why` as the description. The color of the dot at the front tells them apart: select = blue, replace = orange, external and final = purple. The kinds are written `select`, `replace`, `external` and `final` (in the Japanese UI: `select`, `replace`, `外部変更` and `録画後`)
+- Each row: `number  kind  file:range` (`37`, `39-41`; an empty range reads `before 12`), with the `why` as the description. The color of the dot at the front tells them apart: select = blue, replace = orange, external and final = purple. The kinds are written `select`, `replace`, `external`, `final` and `failure` (in the Japanese UI: `select`, `replace`, `外部変更`, `録画後` and `失敗`). A failure row is a **red** dot, and its place is the error code (`invalid_range`) instead of `file:range`
 - Clicking moves to that frame. The row of the current frame is selected
 - The ☓ at the top right closes the tape (or the live view)
 
@@ -79,6 +85,16 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 - **When you step back to an old frame with the stepping**, the screen does not move and only the number of new frames is counted. The bottom bar shows "Back to LIVE (N new)" (on an orange background). Pressing it moves to the newest and follows again
 - When it moves to another tape, the list is rebuilt and shown from the beginning
 
+### 8. Which frames to show
+
+- The kinds **select, replace, external and failure** can each be turned on or off. At the start, select, replace and external are on and **failure is off**. `final` (the diff after the recording) follows external
+- The **funnel button** at the top right of the operation list (and the command `srwr: Choose Frames to Show`) opens a multi-select list with the four kinds. Applying it opens the tape again with the chosen kinds ([protocol.md](protocol.md)) and moves to the frame nearest to the current one (by the order recorded). In live, it opens again and follows the newest
+- The numbers are 1, 2, 3… of what is shown, so the number on the list is still the position in the bottom bar
+- Under the heading of the list it says what is left out: `Hiding: failure (2)`. In live the count follows the frames that arrive
+- A kind that is off does not appear in the list or in stepping. In live, **"Back to LIVE (N new)" counts only the kinds that are shown**
+- When nothing is shown, the screen says "No frames to show"
+- The choice is not saved: it is kept while the extension runs, and a new start is the default. srwr adds no setting for it
+
 ### 7. The tape picker
 
 - "Open a tape" shows the tapes that have one or more operations, newest first (the start time with seconds in the time zone of the machine, then the number of operations and the files, and the tape file name below). Choosing one shows it from the first frame
@@ -92,6 +108,7 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 | srwr: Forward / Back (`srwr.stepForward`, `srwr.stepBack`) | Stepping (works in live too) |
 | srwr: Start Live View / Stop Live View (`srwr.liveStart`, `srwr.liveStop`) | |
 | srwr: Back to LIVE (`srwr.liveLatest`) | Moves to the newest and follows again |
+| srwr: Choose Frames to Show (`srwr.chooseKinds`) | Turns the kinds select, replace, external and failure on and off |
 | `srwr.goto` | Internal (a click in the operation list). Not shown in the command palette |
 
 | Setting | Default | Meaning |

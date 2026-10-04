@@ -99,6 +99,36 @@ def Replay(tape: string)
   endfor
 enddef
 
+# kinds:<tape>:<n>:<m>. The tape is opened as it is: n frames, failure left out (labels d1...). Then `tf` turns failure on, the tape
+# opens again with m frames, and every frame is taken from the first (labels f1...).
+def Kinds(spec: string)
+  const [tape, shown, withFailure] = split(spec, ':')
+  const n = str2nr(shown)
+  const m = str2nr(withFailure)
+  term = Start('SrwrOpen ' .. tape)
+  WaitScreen('srwr  1/' .. n .. ' ', 'the first frame')
+  for i in range(1, n)
+    if i > 1
+      Keys(']]')
+    endif
+    WaitScreen('srwr  ' .. i .. '/' .. n .. ' ', 'frame ' .. i)
+    Record('d' .. i)
+  endfor
+  Keys('tf')
+  WaitScreen('srwr  \d\+/' .. m .. ' ', 'the tape opened again with failure')
+  for i in range(m)
+    Keys('[[')
+  endfor
+  WaitScreen('srwr  1/' .. m .. ' ', 'the first frame again')
+  for i in range(1, m)
+    if i > 1
+      Keys(']]')
+    endif
+    WaitScreen('srwr  ' .. i .. '/' .. m .. ' ', 'frame ' .. i)
+    Record('f' .. i)
+  endfor
+enddef
+
 def TapeLines(name: string): list<string>
   return readfile(repo .. '/extension/test/fixtures/ui-check/.srwr/tapes/' .. name .. '.tape.jsonl')
 enddef
@@ -145,6 +175,8 @@ enddef
 
 if scenario =~# '^replay:'
   Replay(scenario[7 :])
+elseif scenario =~# '^kinds:'
+  Kinds(scenario[6 :])
 elseif scenario ==# 'live-basic'
   Live('20260930-0054-why-basic', 1, [
     ['L1_waiting', 'none', 0, 1, 1],

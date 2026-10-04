@@ -8,6 +8,7 @@
   "srwr.liveStart.title": "srwr: Start Live View",
   "srwr.liveStop.title": "srwr: Stop Live View",
   "srwr.liveLatest.title": "srwr: Back to LIVE",
+  "srwr.chooseKinds.title": "srwr: Choose Frames to Show",
   "view.ops.name": "Operations",
   "view.ops.welcome": "No tape is open.\n[Open a tape](command:srwr.openTape)\n[Start live view](command:srwr.liveStart)",
   "config.path.description": "Location of the srwr binary (the view server). The default, \"srwr\", is searched for on the PATH. If it is not found, give an absolute path."

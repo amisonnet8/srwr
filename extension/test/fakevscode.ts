@@ -288,7 +288,7 @@ export const window = {
     return t;
   },
   createTreeView(id: string, o: { treeDataProvider: any }) {
-    const view = { description: undefined as string | undefined, reveal: async () => undefined, dispose: () => state.trees.delete(id) };
+    const view = { description: undefined as string | undefined, message: undefined as string | undefined, reveal: async () => undefined, dispose: () => state.trees.delete(id) };
     state.trees.set(id, { provider: o.treeDataProvider, view });
     return view;
   },

@@ -41,10 +41,11 @@
 |---|---|---|
 | `initialize` | 要求 | `{client:"vscode"\|"vim", protocolVersion:1, options:{diffFrames}}` → `{serverVersion, protocolVersion:1}`。`options` の既定は `diffFrames` が `true`。知らない `options` は無視する |
 | `tapes/list` | 要求 | `{}` → `{tapes:[TapeInfo…]}`。操作を1つ以上持つテープだけを、新しい順に（テープを始めた時刻の順。headerのないテープは最後の更新の時刻）。読めないテープは載せない |
-| `tape/open` | 要求 | `{tapeId, withText?:false}` → `{tapeId, frames:[Frame…]}`。コマの列。`diffFrames` が真なら、作業場の今のファイルと比べた**最後の差分**（`final`）を末尾に含む。同じ `tapeId` をもう一度開くと、読み直す |
+| `tape/open` | 要求 | `{tapeId, withText?:false, kinds?}` → `{tapeId, frames:[Frame…], hidden?}`。コマの列。`diffFrames` が真なら、作業場の今のファイルと比べた**最後の差分**（`final`）を末尾に含む。同じ `tapeId` をもう一度開くと、読み直す |
 | `frame/state` | 要求 | `{tapeId, index, file?}` → `{before, after, content}`。`index` のコマの変更前・変更後（`index` が −1 のときは両方 `""`）。`content` は `file`（省略時はそのコマのファイル）の、そのコマを終えた時点の内容。どのコマも触れていないファイルは `null` |
 | `tape/close` | 要求 | `{tapeId}` → `{}` |
-| `live/start` | 要求 | `{withText?:false}` → `{tapeId:string\|null, frames:[Frame…]}`。今のテープ（更新時刻が最新のもの）の、**ここまでのコマ**（クライアントは表示せず、一覧に載せるだけ）。返事のあと、見張りが始まる |
+| `live/start` | 要求 | `{withText?:false, kinds?}` → `{tapeId:string\|null, frames:[Frame…], hidden?}`。今のテープ（更新時刻が最新のもの）の、**ここまでのコマ**（クライアントは表示せず、一覧に載せるだけ）。返事のあと、見張りが始まる |
+| `live/hidden` | 通知（サーバー→クライアント） | `{tapeId, hidden}`。クライアントが頼んでいない種類のコマが届いたので、隠したコマの数が変わった |
 | `live/frame` | 通知（サーバー→クライアント） | `{tapeId, frame:Frame}`。追記されたコマ。`tapeId` が今までと違う（別のテープに移った）ときは、クライアントは列を作り直す。そのテープのコマは先頭から送る |
 | `live/stop` | 要求 | `{}` → `{}`。見張りをやめる |
 | `shutdown` | 要求 | `{}` → `{}`。返事を書いたあと、サーバーは終了する |
@@ -63,26 +64,29 @@
 | `replace` | テープの `replace` | ファイル、変更前後の範囲とテキスト、`why`（`null` のことがある）、`seq`、系譜（`from`→`selection`） |
 | `external` | テープの `external` | ファイル、変更前（直前の内容）と変更後（`text`）、削除されたか |
 | `final` | テープの最後の内容と、今のファイルの比較 | ファイル、変更前（テープの最後）と変更後（今のファイル）、今は存在しないか |
+| `failure` | テープの `failure`（AI がエラーを受け取った `select`・`replace`） | `tool`・`code`・`message`・`why`。`file` は、分からないときと伏せるときは `""`。`range` は `select` に渡された範囲（ないときは `{start:0,end:-1}`）。変更前後の本文は空 |
 
 Frame のフィールド：
 
 | フィールド | 内容 |
 |---|---|
 | `index` | 0 から始まる、列の中の位置 |
-| `kind` | `select`・`replace`・`external`・`final` |
+| `kind` | `select`・`replace`・`external`・`final`・`failure` |
 | `seq`・`ts` | テープの `seq`、時刻（エポックミリ秒。読めなければ前のコマの値、最初は 0）。`final` は最後のコマの値 |
 | `file` | 作業場からの相対パス（`/` 区切り） |
 | `range` | `{start, end}`。変更後の側の範囲（`select`＝その範囲、`replace`＝新しい範囲、`external`・`final`＝ファイル全体）。`end < start` は空範囲 |
 | `oldRange` | `replace` だけ。変更前の側の範囲 |
 | `why`・`selection`・`from` | 文字列または `null` |
 | `parent` | 系譜の親（`from` が指すコマの `index`）、なければ `null` |
+| `tool`・`code`・`message` | `failure` だけ。ツール（`select`・`replace`）、エラーコード、エラー文（実際のパスは伏せてある。[tape_ja.md](tape_ja.md#failure)） |
 | `deleted` | 差分のコマだけ。変更後にファイルが存在しない（そのときだけ `true`。それ以外は出さない） |
 | `before`・`after` | **`withText` が真のときだけ**。変更前・変更後の全文。ふだんは `frame/state` で取る（大きいテープで、全コマが全文を持たないため） |
 
+- **送る種類（`kinds`）**：`tape/open` と `live/start` は `kinds`（`select`・`replace`・`external`・`failure` の配列）を受ける。サーバーは、その種類だけを送り、**0 から番号を振り直す**（`index` は送ったものの中の位置で、`frame/state` もその `index` を受ける）。送らなかった数は `hidden` で返す（`{"failure": 2}` のような形。送らなかったものがない種類は入れない。何も送らなかったものがないときは、`hidden` 自体を出さない）。`final` は `external` に連れる。省略すると `["select","replace","external"]`：頼まない限り `failure` のコマは送らない。知らない名前は `invalid_params`。空の配列は何も送らない。表示する種類を替えるときは、クライアントが別の `kinds` でもう一度開く。`frame/state` は、送らなかったコマに左右されない：ファイルの内容は、送らなかったコマも含めた結果になる
 - ライブのコマ（`live/start`・`live/frame`）に、最後の差分は含まれない（`external` はテープに書かれたものが出る）
 - **最後の差分は、サーバーが決める。** クライアントは出すだけ
 - テープの項目が増えても（`source`・`tool`・`vcs` など）、クライアントは使わなくてよい
-- **VSCode・Vim が使うフィールド**は、`index`・`kind`・`file`・`range`・`why`・`before`・`after`・`deleted` だけ。`seq`・`ts`・`selection`・`from`・`parent`・`oldRange` は使わない。ライブでも本文（`before`・`after`）を使うので、`live/start` に `withText: true` を渡す
+- **VSCode・Vim が使うフィールド**は、`index`・`kind`・`file`・`range`・`why`・`before`・`after`・`deleted`、`failure` では `tool`・`code`・`message`、それに `seq`（表示する種類を替えたとき、今に一番近いコマを探し直すため）だけ。`ts`・`selection`・`from`・`parent`・`oldRange` は使わない。ライブでも本文（`before`・`after`）を使うので、`live/start` に `withText: true` を渡す
 
 ## サーバーの振る舞い
 

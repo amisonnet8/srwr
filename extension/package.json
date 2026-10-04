@@ -24,7 +24,8 @@
       { "command": "srwr.goto", "title": "%srwr.goto.title%" },
       { "command": "srwr.liveStart", "title": "%srwr.liveStart.title%", "icon": "$(broadcast)" },
       { "command": "srwr.liveStop", "title": "%srwr.liveStop.title%" },
-      { "command": "srwr.liveLatest", "title": "%srwr.liveLatest.title%" }
+      { "command": "srwr.liveLatest", "title": "%srwr.liveLatest.title%" },
+      { "command": "srwr.chooseKinds", "title": "%srwr.chooseKinds.title%", "icon": "$(filter)" }
     ],
     "viewsContainers": {
       "activitybar": [{ "id": "srwr", "title": "srwr", "icon": "media/srwr.svg" }]
@@ -44,7 +45,8 @@
       "view/title": [
         { "command": "srwr.openTape", "when": "view == srwr.ops", "group": "navigation@1" },
         { "command": "srwr.liveStart", "when": "view == srwr.ops", "group": "navigation@2" },
-        { "command": "srwr.closeTape", "when": "view == srwr.ops && srwr.hasTape", "group": "navigation@3" }
+        { "command": "srwr.chooseKinds", "when": "view == srwr.ops && srwr.hasTape", "group": "navigation@3" },
+        { "command": "srwr.closeTape", "when": "view == srwr.ops && srwr.hasTape", "group": "navigation@4" }
       ]
     },
     "configuration": {

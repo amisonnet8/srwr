@@ -26,7 +26,51 @@ const (
 // makeLongWhyTape makes, in extra, the workspace pieces of the tape (a.go and .srwr/tapes/<longWhyTape>.tape.jsonl), which can be
 // copied over the fixed workspace. bin is the srwr binary; the work happens in a temporary directory.
 func makeLongWhyTape(bin, extra string) error {
-	work, err := os.MkdirTemp("", "srwr-longwhy-")
+	return makeTape(bin, extra, longWhyTape, func(c *mcpClient) error {
+		sel, err := c.tool("select", map[string]any{"file": "a.go", "startLine": 3, "endLine": 3, "why": longSelectWhy})
+		if err != nil {
+			return err
+		}
+		token, _ := sel["selection"].(string)
+		_, err = c.tool("replace", map[string]any{"selection": token, "newText": mainReplacement, "why": longReplaceWhy})
+		return err
+	})
+}
+
+// failureTape is the tape of a select and a replace that went well and two calls that failed (an absolute path, and a token that
+// went stale), made by the real `srwr mcp`. Shown with failure off it has 2 frames; with failure on, 4.
+const failureTape = "20260101-0001-with-failure"
+
+const mainReplacement = "func main() {\n\tprintln(\"hi\")\n}"
+
+// makeFailureTape makes, in extra, the workspace pieces of failureTape. a.go is the same as the long-why tape leaves it, so that
+// the two can share one workspace.
+func makeFailureTape(bin, extra string) error {
+	return makeTape(bin, extra, failureTape, func(c *mcpClient) error {
+		sel, err := c.tool("select", map[string]any{"file": "a.go", "startLine": 3, "endLine": 3, "why": "main を確かめる"})
+		if err != nil {
+			return err
+		}
+		// A path that is absolute: the AI is told to give a relative one, and the tape keeps a failure.
+		if _, err := c.tool("select", map[string]any{"file": "/work/a.go", "startLine": 3, "endLine": 3, "why": "もう一度、main を確かめる"}); err == nil {
+			return fmt.Errorf("a select with an absolute path did not fail")
+		}
+		token, _ := sel["selection"].(string)
+		if _, err := c.tool("replace", map[string]any{"selection": token, "newText": mainReplacement, "why": "メッセージを出す"}); err != nil {
+			return err
+		}
+		// The same token again: an edit overlapped its range, so it is stale.
+		if _, err := c.tool("replace", map[string]any{"selection": token, "newText": mainReplacement, "why": "もう一度、メッセージを出す"}); err == nil {
+			return fmt.Errorf("a replace with a stale token did not fail")
+		}
+		return nil
+	})
+}
+
+// makeTape runs a session of the real `srwr mcp` on a.go in a temporary directory and puts the one tape it made (with fixed times)
+// and the file as it was left into extra under the id.
+func makeTape(bin, extra, id string, session func(c *mcpClient) error) error {
+	work, err := os.MkdirTemp("", "srwr-maketape-")
 	if err != nil {
 		return err
 	}
@@ -47,13 +91,7 @@ func makeLongWhyTape(bin, extra string) error {
 		_ = c.close()
 		return err
 	}
-	sel, err := c.tool("select", map[string]any{"file": "a.go", "startLine": 3, "endLine": 3, "why": longSelectWhy})
-	if err != nil {
-		_ = c.close()
-		return err
-	}
-	token, _ := sel["selection"].(string)
-	if _, err := c.tool("replace", map[string]any{"selection": token, "newText": "func main() {\n\tprintln(\"hi\")\n}", "why": longReplaceWhy}); err != nil {
+	if err := session(c); err != nil {
 		_ = c.close()
 		return err
 	}
@@ -71,10 +109,10 @@ func makeLongWhyTape(bin, extra string) error {
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(filepath.Join(extra, ".srwr", "tapes", longWhyTape+".tape.jsonl"), fixTimes(tape), 0o600); err != nil { //nolint:gosec // the directory of this run
+	if err := os.WriteFile(filepath.Join(extra, ".srwr", "tapes", id+".tape.jsonl"), fixTimes(tape), 0o600); err != nil { //nolint:gosec // the directory of this run
 		return err
 	}
-	// The file as the replace left it, so that the tape has no frame for a change after the recording.
+	// The file as the last replace left it, so that the tape has no frame for a change after the recording.
 	after, err := os.ReadFile(filepath.Join(work, "a.go")) //nolint:gosec // the temporary directory
 	if err != nil {
 		return err

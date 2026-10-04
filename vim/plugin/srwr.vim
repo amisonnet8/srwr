@@ -40,9 +40,14 @@ def Latest()
   ui.Latest()
 enddef
 
+def Toggle(kind: string)
+  ui.Toggle(trim(kind))
+enddef
+
 command! -nargs=? SrwrOpen call <SID>Open(<q-args>)
 command! SrwrLive call <SID>Live()
 command! SrwrNext call <SID>Next()
 command! SrwrPrev call <SID>Prev()
 command! SrwrClose call <SID>Close()
 command! SrwrLatest call <SID>Latest()
+command! -nargs=1 SrwrToggle call <SID>Toggle(<q-args>)

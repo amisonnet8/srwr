@@ -22,6 +22,7 @@ From the terminal where the AI agent runs, you can replay a tape in Vim as it is
 | `:SrwrLive` | Live viewing |
 | `:SrwrNext`, `:SrwrPrev`, `:SrwrClose` | Stepping (forward, back), and closing (the same as "Keys" below) |
 | `:SrwrLatest` | In live, goes back to the newest frame |
+| `:SrwrToggle {select\|replace\|external\|failure}` | Turns a kind of frame on or off (the same as the keys in "Which frames to show") |
 
 The only setting is `g:srwr_path` (where the `srwr` binary is). srwr has no settings for the look (the colors can be overridden with highlight groups; see below).
 
@@ -73,6 +74,8 @@ The same as [vscode.md](vscode.md). **select is blue, and what changes a file is
 | `SrwrCurrent` | The current frame in the operation list | `#3a3d41` | `#e4e6f1` |
 | `SrwrDotSelect`, `SrwrDotReplace` | The dots in the operation list (blue, orange) | `#4aa3ff`, `#f0883e` | `#0b61a4`, `#b45f06` |
 | `SrwrDotExternal` | The dots in the operation list (external change, final) | `#b180d7` | `#652d90` |
+| `SrwrWhyFailure` | The reason line of a failure frame | `#c62828`, white bold | the same |
+| `SrwrDotFailure` | The dots in the operation list (failure, red) | `#f85149` | `#d32f2f` |
 | `SrwrDim` | Buttons that cannot be used | gray | gray |
 
 - It has values that can be told apart even on a 256-color terminal (`ctermbg`). If `termguicolors` is on, those colors are used
@@ -113,6 +116,17 @@ The same as [vscode.md](vscode.md). **select is blue, and what changes a file is
 | `[[`, `<Left>` | `:SrwrPrev` | One back |
 | `L` | `:SrwrLatest` | In live, go back to the newest frame and follow again |
 | `q` | `:SrwrClose` | Close |
+
+### 6b. Failure frames
+- A failure frame has no file to open, so the replay buffer is an **explanation**: a red line `✖ select failed  (invalid_range)` (`SrwrWhyFailure`, white bold; for a `replace`, `replace failed`), then the message, a blank line, and `why`, `tool`, `range` (a `select` only) and `file` (`(not shown)` when it is left out). The status line says `failure: select`
+- In the operation list a failure row has a red dot (`SrwrDotFailure`), the kind `failure`, and the error code in the place of `file:range`
+
+### 6c. Which frames to show
+- The kinds **select, replace, external and failure** can each be turned on or off. At the start, select, replace and external are on and **failure is off**. `final` follows external
+- Keys (only inside the buffers of srwr): `ts` select, `tr` replace, `te` external, `tf` failure. `:SrwrToggle {kind}` does the same. In these buffers `t` followed by `s`, `r`, `e` or `f` is taken by srwr
+- A change opens the tape again with the chosen kinds ([protocol.md](protocol.md)) and moves to the frame nearest to the current one (by the order recorded); in live it follows the newest again
+- The numbers are 1, 2, 3… of what is shown. The right end of the status line says what is left out: `hidden: failure (2)`; in live the count follows the frames that arrive. A kind that is off is not in the list or in stepping, and "L: Back to LIVE (N new)" **counts only the kinds that are shown**. When nothing is shown, the replay buffer says "No frames to show"
+- The choice is not saved: it is kept while Vim runs, and a new start is the default. srwr adds no setting for it
 
 ### 7. Live (`srwr view --live`, `:SrwrLive`)
 - **The same screen as replay** (reason line, colors, diff frames, operation list). Real files are not touched. What is shown is the text the server hands over (`withText`)

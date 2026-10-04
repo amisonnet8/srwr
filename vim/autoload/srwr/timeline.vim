@@ -25,14 +25,14 @@ enddef
 export def ContentAt(tl: dict<any>, file: string, i: number): any
   var j = min([i, len(tl.frames) - 1])
   while j >= 0
-    if tl.frames[j].file ==# file
+    if tl.frames[j].file ==# file && tl.frames[j].kind !=# 'failure'
       return tl.frames[j].after
     endif
     j -= 1
   endwhile
   j = max([i + 1, 0])
   while j < len(tl.frames)
-    if tl.frames[j].file ==# file
+    if tl.frames[j].file ==# file && tl.frames[j].kind !=# 'failure'
       return tl.frames[j].before
     endif
     j += 1
@@ -53,9 +53,48 @@ export def FormatRange(r: dict<any>): string
   return r.start == r.end ? string(r.start) : r.start .. '-' .. r.end
 enddef
 
-# Tone is the color of a frame: select is blue, everything that changes a file is orange.
+# Tone is the color of a frame: select is blue, everything that changes a file is orange, a failure is red.
 export def Tone(f: dict<any>): string
-  return f.kind ==# 'select' ? 'select' : 'replace'
+  return f.kind ==# 'select' ? 'select' : f.kind ==# 'failure' ? 'failure' : 'replace'
+enddef
+
+# NearestBySeq is the index of the frame whose seq is nearest to seq (the earlier one on a tie), or -1 when there is no frame.
+export def NearestBySeq(tl: dict<any>, seq: number): number
+  var best = -1
+  for f in tl.frames
+    const d = abs(get(f, 'seq', 0) - seq)
+    if best < 0 || d < abs(get(tl.frames[best], 'seq', 0) - seq)
+      best = f.index
+    endif
+  endfor
+  return best
+enddef
+
+# HiddenText says what the server left out: "hidden: failure (2)", or '' when nothing.
+export def HiddenText(hidden: dict<any>): string
+  var parts: list<string> = []
+  for kind in ['select', 'replace', 'external', 'failure']
+    if get(hidden, kind, 0) > 0
+      add(parts, kind .. ' (' .. hidden[kind] .. ')')
+    endif
+  endfor
+  return empty(parts) ? '' : lang.Pick('hidden: ', '隠している: ') .. join(parts, ', ')
+enddef
+
+# FailureLines are the rows of a failure frame, which has no file to show: a red first row, the message, and what is known of the call.
+export def FailureLines(f: dict<any>): list<string>
+  const tool = get(f, 'tool', '')
+  const why = Why(f)
+  const range = tool ==# 'select' ? lang.Pick('lines ' .. FormatRange(f.range), FormatRange(f.range) .. ' 行') : '-'
+  return [
+    lang.Pick('✖ ' .. tool .. ' failed  (' .. get(f, 'code', '') .. ')', '✖ ' .. tool .. ' が失敗しました  (' .. get(f, 'code', '') .. ')'),
+    get(f, 'message', ''),
+    '',
+    'why    ' .. (why ==# '' ? lang.Pick('(none)', '(なし)') : why),
+    'tool   ' .. tool,
+    'range  ' .. range,
+    'file   ' .. (f.file ==# '' ? '(not shown)' : f.file),
+  ]
 enddef
 
 # Why is the why of a frame, or '' when there is none.

@@ -5,7 +5,7 @@ import { Nav } from "./controls";
 import { insertBanner, wrapWhy } from "./lines";
 import { OpsSource } from "./sidebar";
 import { Presenter } from "./present";
-import { basename, changedLines, Frame, isDiff, Timeline, splitLines, toneOf } from "./timeline";
+import { basename, changedLines, formatRange, Frame, Hidden, isDiff, Timeline, splitLines, toneOf } from "./timeline";
 
 export const REPLAY_SCHEME = "srwr-replay";
 
@@ -45,6 +45,7 @@ export class ReplaySession implements OpsSource, Nav, vscode.Disposable {
     frames: Frame[],
     private readonly provider: ReplayProvider,
     private readonly presenter: Presenter,
+    private hiddenCounts: Hidden = {},
   ) {
     this.title = tapeId;
     this.timeline = new Timeline(frames);
@@ -53,6 +54,16 @@ export class ReplaySession implements OpsSource, Nav, vscode.Disposable {
 
   current(): number {
     return this.index;
+  }
+
+  hidden(): Hidden {
+    return this.hiddenCounts;
+  }
+
+  // Live: the count of the frames that were left out changed.
+  setHidden(h: Hidden): void {
+    this.hiddenCounts = h;
+    this.fire();
   }
 
   // Live: adds a frame at the end.
@@ -64,6 +75,7 @@ export class ReplaySession implements OpsSource, Nav, vscode.Disposable {
   // Live: the view moved to another tape; start over.
   reset(): void {
     this.timeline.frames.length = 0;
+    this.hiddenCounts = {};
     this.index = -1;
     this.banner = undefined;
     this.gen++;
@@ -111,6 +123,11 @@ export class ReplaySession implements OpsSource, Nav, vscode.Disposable {
       const f = this.timeline.frames[Number(m[1])];
       return f ? (m[2] === "before" ? f.before : f.after) : "";
     }
+    const fm = /(?:^|&)failure=(\d+)/.exec(uri.query);
+    if (fm) {
+      const f = this.timeline.frames[Number(fm[1])];
+      return f ? failureText(f).join("\n") + "\n" : "";
+    }
     return this.contentFor(uri.path.split("/").slice(2).join("/"));
   }
 
@@ -148,6 +165,11 @@ export class ReplaySession implements OpsSource, Nav, vscode.Disposable {
       return;
     }
     await this.closeAfterSide();
+    if (f.kind === "failure") {
+      this.banner = undefined;
+      await this.showFailure(f, g);
+      return;
+    }
 
     const rows = f.why ? wrapWhy(f.why, WHY_WIDTH) : [];
     this.banner = rows.length > 0 ? { file: f.file, at: f.range.start, rows } : undefined;
@@ -163,6 +185,20 @@ export class ReplaySession implements OpsSource, Nav, vscode.Disposable {
       this.presenter.showLineNumbers(editor, f.range.start, n);
     }
     editor.revealRange(shown, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+    this.fire();
+  }
+
+  // A failure frame: it has no file to open, so a document that explains it, with its first row in red.
+  private async showFailure(f: Frame, g: number): Promise<void> {
+    const label = failureTitle(f);
+    const uri = vscode.Uri.from({ scheme: REPLAY_SCHEME, path: `/${this.title}/failure${f.index}/${label}`, query: `failure=${f.index}` });
+    const doc = await vscode.workspace.openTextDocument(uri);
+    const editor = await vscode.window.showTextDocument(doc, { preview: true, preserveFocus: true });
+    if (g !== this.gen) {
+      return;
+    }
+    this.presenter.show(editor, { range: { start: 1, end: 0 }, tone: "failure", banner: { line: 1, rows: 1 } });
+    editor.revealRange(new vscode.Range(0, 0, 0, 0), vscode.TextEditorRevealType.AtTop);
     this.fire();
   }
 
@@ -275,4 +311,29 @@ export function diffTitle(f: Frame): string {
     );
   }
   return pick(`⚠ Changed outside srwr${f.deleted ? " (deleted)" : ""}: ${name}`, `⚠ srwrの外で変更${f.deleted ? "（削除）" : ""}：${name}`);
+}
+
+// The tab title of a failure frame.
+export function failureTitle(f: Frame): string {
+  return `${pick("failure", "失敗")}: ${f.tool ?? ""} (${f.code ?? ""})`;
+}
+
+// The rows of a failure frame: a red first row, the message, then what is known of the call. Plain text, so the tests can look at it.
+export function failureText(f: Frame): string[] {
+  const tool = f.tool ?? "";
+  const rows = [
+    pick(`\u2716 ${tool} failed (${f.code ?? ""})`, `\u2716 ${tool} が失敗しました (${f.code ?? ""})`),
+    f.message ?? "",
+    "",
+  ];
+  const known: Array<[string, string]> = [
+    ["why", f.why ?? pick("(none)", "(なし)")],
+    ["tool", tool],
+    ["range", tool === "select" ? pick(`lines ${formatRange(f.range)}`, `${formatRange(f.range)} 行`) : "-"],
+    ["file", f.file !== "" ? f.file : "(not shown)"],
+  ];
+  for (const [k, v] of known) {
+    rows.push(`${k.padEnd(6)} ${v}`);
+  }
+  return rows;
 }

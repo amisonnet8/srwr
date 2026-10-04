@@ -15,6 +15,7 @@ const (
 	KindReplace  = tape.TypeReplace
 	KindExternal = tape.TypeExternal
 	KindFinal    = "final"
+	KindFailure  = "failure"
 )
 
 // Range is a range of lines, 1-based and inclusive. End < Start is an empty range.
@@ -39,6 +40,11 @@ type Frame struct {
 	From      *string `json:"from"`
 	Parent    *int    `json:"parent"`
 	Deleted   bool    `json:"deleted,omitempty"`
+
+	// failure frames only: the tool that failed, the error code, and the message (the real path is left out of the tape).
+	Tool    string `json:"tool,omitempty"`
+	Code    string `json:"code,omitempty"`
+	Message string `json:"message,omitempty"`
 
 	Before string `json:"-"`
 	After  string `json:"-"`
@@ -110,6 +116,10 @@ func (b *Builder) Add(e tape.Event) bool {
 	case tape.TypeSnapshot:
 		b.state.Apply(e)
 		return false
+	case tape.TypeFailure:
+		// A failure is a frame, but not an operation: it has no file to open, so it is not counted in Ops or Files.
+		b.frames = append(b.frames, failureFrame(len(b.frames), e, b.timestamp(e)))
+		return true
 	case tape.TypeSelect, tape.TypeReplace, tape.TypeExternal:
 	default:
 		return false
@@ -213,14 +223,30 @@ func AppendFinals(frames []Frame, state *tape.State, files []string, read func(r
 // or, if none did yet, before the first frame after i that does. ok is false if no frame touches the file.
 func ContentAt(frames []Frame, file string, i int) (text string, ok bool) {
 	for j := min(i, len(frames)-1); j >= 0; j-- {
-		if frames[j].File == file {
+		if frames[j].File == file && frames[j].Kind != KindFailure { // a failure names a file but holds no text
 			return frames[j].After, true
 		}
 	}
 	for j := max(i+1, 0); j < len(frames); j++ {
-		if frames[j].File == file {
+		if frames[j].File == file && frames[j].Kind != KindFailure {
 			return frames[j].Before, true
 		}
 	}
 	return "", false
+}
+
+// failureFrame makes the frame of a failure event. File is "" when the tape left it out. Range is what a select was given, or
+// an empty range at 0 when there is none.
+func failureFrame(index int, e tape.Event, ts int64) Frame {
+	f := Frame{Index: index, Kind: KindFailure, Seq: e.Seq, TS: ts, Range: Range{Start: 0, End: -1}}
+	if fi := e.Failure; fi != nil {
+		if fi.File != nil {
+			f.File = *fi.File
+		}
+		if fi.StartLine != nil && fi.EndLine != nil {
+			f.Range = Range{Start: *fi.StartLine, End: *fi.EndLine}
+		}
+		f.Why, f.Tool, f.Code, f.Message = cloneString(fi.Why), fi.Tool, fi.Code, fi.Message
+	}
+	return f
 }

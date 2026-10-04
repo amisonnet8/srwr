@@ -159,6 +159,8 @@ func tapeOf(full string) string {
 	switch {
 	case strings.Contains(name, "long-why") || name == "long_why":
 		return "long-why"
+	case strings.Contains(name, "failure") || name == "with_failure":
+		return "with-failure"
 	case strings.Contains(name, "why-basic") || name == "all_basic":
 		return "why-basic"
 	case strings.Contains(name, "no-why") || name == "all_nowhy":
@@ -196,7 +198,7 @@ func lookSteps(r *Report) []string {
 		// A real VSCode is looked at for the two tapes that show every part of the screen (the diff frames, the list, the picker, the
 		// bar; the live bar). The other captures are the same texts, which the machine compares.
 		t := tapeOf(c.Name)
-		if (t != "external" && t != "live") || seen[t] {
+		if (t != "external" && t != "live" && t != "with-failure") || seen[t] {
 			continue
 		}
 		seen[t] = true
@@ -220,6 +222,11 @@ func vscodeSteps(tape, _ string) string {
 		fmt.Sprintf("開いた VSCode で、左端のカセットのアイコンを押し、「Open a tape」を選ぶ（VSCode の表示言語が English のとき）。出てきた一覧から「%s」を選ぶ", html.EscapeString(t.Started)),
 		"1 コマ目が開く。見る：" + look,
 		"下のバーの「Forward」を押して次のコマへ進み、同じように見る。「Back」で戻れる",
+	}
+	if tape == "with-failure" {
+		steps = append(steps[:4], "下のバーのすぐ上の、操作一覧の右上にある漏斗のボタンを押す（コマンドパレットの「srwr: Choose Frames to Show」でもよい）。4つの選択肢が出るので、「failure」にチェックを付けて Enter を押す。4コマになり、一覧の上の「Hiding: failure (2)」が消える",
+			"一覧の2行目（赤い丸の failure）を押す。赤い行「✖ select failed (invalid_range)」と、エラー文、why・tool・range・file が読めるか。赤が橙（replace）と見分けられるか。4行目も同じ形か見る",
+			"漏斗のボタンでもう一度 failure のチェックを外すと、2コマに戻る")
 	}
 	if tape == "live" {
 		steps = []string{

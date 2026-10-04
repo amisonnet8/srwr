@@ -32,6 +32,8 @@ var screenRuns = []screenRun{
 	{Name: "replay-no-why", Scenario: "replay:20260930-0053-no-why", Themes: []string{"dark", "light"}},
 	{Name: "replay-long-why", Scenario: "replay:" + longWhyTape, Themes: []string{"dark", "light"}},
 	{Name: "replay-long-why-narrow", Scenario: "replay:" + longWhyTape, Themes: []string{"dark"}, Rows: 50, Cols: 80},
+	// failure is left out when the tape is opened; the scenario turns it on (tf) and takes every frame again.
+	{Name: "replay-failure", Scenario: "kinds:" + failureTape + ":2:4", Themes: []string{"dark", "light"}},
 	{Name: "live-basic", Scenario: "live-basic", Themes: []string{"dark", "light"}, Live: true},
 	{Name: "live-external", Scenario: "live-external", Themes: []string{"dark", "light"}, Live: true},
 }
@@ -40,7 +42,7 @@ var screenRuns = []screenRun{
 var vscodeFiles = []struct {
 	Name string
 	Live bool
-}{{"all_basic", false}, {"all_ext", false}, {"all_nowhy", false}, {"long_why", false}, {"live_basic", true}, {"live_ext", true}}
+}{{"all_basic", false}, {"all_ext", false}, {"all_nowhy", false}, {"long_why", false}, {"with_failure", false}, {"live_basic", true}, {"live_ext", true}}
 
 // Status of a capture compared with its baseline.
 const (
@@ -160,20 +162,31 @@ func runCheck(root string, liveOnly bool, out io.Writer) (*Report, string, error
 		return nil, "", err
 	}
 	defer func() { _ = os.RemoveAll(extra) }()
-	haveLong := false
+	// The tape with failures is in a workspace of its own: in the same one it would be one more tape in the picker of the long-why captures.
+	extraFailure, err := os.MkdirTemp("", "srwr-ui-extra-failure-")
+	if err != nil {
+		return nil, "", err
+	}
+	defer func() { _ = os.RemoveAll(extraFailure) }()
+	haveLong, haveFailure := false, false
 	if !liveOnly {
-		log("その場で作るテープ（長い理由）")
+		log("その場で作るテープ（長い理由、失敗を含むもの）")
 		if err := makeLongWhyTape(bin, extra); err != nil {
 			rep.Problems = append(rep.Problems, "長い理由のテープを作れなかった："+err.Error())
 		} else {
 			haveLong = true
 		}
+		if err := makeFailureTape(bin, extraFailure); err != nil {
+			rep.Problems = append(rep.Problems, "失敗を含むテープを作れなかった："+err.Error())
+		} else {
+			haveFailure = true
+		}
 	}
 
 	log("Vim の画面を取る")
-	rep.Vim = captureVimAll(root, bin, dir, extra, haveLong, liveOnly, rep)
+	rep.Vim = captureVimAll(root, bin, dir, extras{long: extra, failure: extraFailure, haveLong: haveLong, haveFailure: haveFailure}, liveOnly, rep)
 	log("VSCode（拡張）の画面を取る")
-	rep.VSCode = captureVSCode(root, dir, extra, haveLong, liveOnly)
+	rep.VSCode = captureVSCode(root, dir, extras{long: extra, failure: extraFailure, haveLong: haveLong, haveFailure: haveFailure}, liveOnly)
 
 	if err := writeReport(dir, rep); err != nil {
 		return rep, dir, err
@@ -217,8 +230,14 @@ func copyTree(src, dst string) error {
 	return nil
 }
 
+// extras are the tapes made on the spot (each in a directory of its own, copied over the fixed workspace where a capture needs it).
+type extras struct {
+	long, failure         string
+	haveLong, haveFailure bool
+}
+
 // workspaceFor makes a workspace for one Vim run: the fixed workspace, with the tape made on the spot over it.
-func workspaceFor(root, extra string, withExtra bool) (string, error) {
+func workspaceFor(root, extra string, withExtra bool) (string, error) { // extra is one directory of extras
 	ws, err := os.MkdirTemp("", "srwr-ui-ws-")
 	if err != nil {
 		return "", err
@@ -234,7 +253,7 @@ func workspaceFor(root, extra string, withExtra bool) (string, error) {
 	return ws, nil
 }
 
-func captureVimAll(root, bin, dir, extra string, haveLong, liveOnly bool, rep *Report) []CaptureResult {
+func captureVimAll(root, bin, dir string, ex extras, liveOnly bool, rep *Report) []CaptureResult {
 	type job struct {
 		sc          screenRun
 		theme, lang string
@@ -244,7 +263,10 @@ func captureVimAll(root, bin, dir, extra string, haveLong, liveOnly bool, rep *R
 		if liveOnly && !sc.Live {
 			continue
 		}
-		if strings.Contains(sc.Name, "long-why") && !haveLong {
+		if strings.Contains(sc.Name, "long-why") && !ex.haveLong {
+			continue
+		}
+		if strings.Contains(sc.Name, "failure") && !ex.haveFailure {
 			continue
 		}
 		for _, lang := range screenLangs {
@@ -262,16 +284,20 @@ func captureVimAll(root, bin, dir, extra string, haveLong, liveOnly bool, rep *R
 			defer wg.Done()
 			sem <- struct{}{}
 			defer func() { <-sem }()
-			results[i] = captureVimOne(root, bin, dir, extra, j.sc, j.theme, j.lang, rep)
+			results[i] = captureVimOne(root, bin, dir, ex, j.sc, j.theme, j.lang, rep)
 		}()
 	}
 	wg.Wait()
 	return results
 }
 
-func captureVimOne(root, bin, dir, extra string, sc screenRun, theme, lang string, rep *Report) CaptureResult {
+func captureVimOne(root, bin, dir string, ex extras, sc screenRun, theme, lang string, rep *Report) CaptureResult {
 	res := CaptureResult{Name: sc.Name + " " + lang + " " + theme}
-	ws, err := workspaceFor(root, extra, strings.Contains(sc.Scenario, longWhyTape))
+	extra, withExtra := ex.long, strings.Contains(sc.Scenario, longWhyTape)
+	if strings.Contains(sc.Scenario, failureTape) {
+		extra, withExtra = ex.failure, true
+	}
+	ws, err := workspaceFor(root, extra, withExtra)
 	if err != nil {
 		return CaptureResult{Name: res.Name, Status: statusError, Error: err.Error()}
 	}
@@ -370,23 +396,29 @@ func (r *Report) addProblem(s string) {
 	r.Problems = append(r.Problems, s)
 }
 
-func captureVSCode(root, dir, extra string, haveLong, liveOnly bool) []CaptureResult {
+func captureVSCode(root, dir string, ex extras, liveOnly bool) []CaptureResult {
 	var out []CaptureResult
 	for _, lang := range screenLangs {
-		out = append(out, captureVSCodeIn(root, dir, extra, lang, haveLong, liveOnly)...)
+		out = append(out, captureVSCodeIn(root, dir, ex, lang, liveOnly)...)
 	}
 	return out
 }
 
 // captureVSCodeIn takes the screens of the extension in one language (the fake vscode says its language is lang).
-func captureVSCodeIn(root, dir, extra, lang string, haveLong, liveOnly bool) []CaptureResult {
+func captureVSCodeIn(root, dir string, ex extras, lang string, liveOnly bool) []CaptureResult {
 	outDir := filepath.Join(dir, "vscode", lang)
 	if err := os.MkdirAll(outDir, 0o750); err != nil {
 		return []CaptureResult{{Name: "vscode " + lang, Status: statusError, Error: err.Error()}}
 	}
 	args := []string{"--require", "./out/test/setup.js", "out/test/capture.js", outDir}
-	if haveLong {
-		args = append(args, extra)
+	// capture.js <dir> [<extra of the long why> [<extra of the failures>]]; "-" says there is none of the first.
+	switch {
+	case ex.haveLong && ex.haveFailure:
+		args = append(args, ex.long, ex.failure)
+	case ex.haveLong:
+		args = append(args, ex.long)
+	case ex.haveFailure:
+		args = append(args, "-", ex.failure)
 	}
 	env := []string{"SRWR_TEST_LANG=" + lang}
 	if liveOnly {
@@ -398,7 +430,10 @@ func captureVSCodeIn(root, dir, extra, lang string, haveLong, liveOnly bool) []C
 		if liveOnly && !f.Live {
 			continue
 		}
-		if f.Name == "long_why" && !haveLong {
+		if f.Name == "long_why" && !ex.haveLong {
+			continue
+		}
+		if f.Name == "with_failure" && !ex.haveFailure {
 			continue
 		}
 		res := CaptureResult{Name: f.Name + " " + lang, File: filepath.Join("vscode", lang, f.Name+".json"), Target: filepath.Join("extension", "test", "baseline", lang, f.Name+".json")}

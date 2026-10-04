@@ -25,6 +25,13 @@
 - **コマの移動は1つずつ順に処理し、古い移動は飛ばす**（`ReplaySession.goto`）。移動のたびに世代番号を増やすだけだと、古い移動が、新しい移動の後始末のあとで右のエディタを開いてしまう。右のタブを閉じるかは、フラグでなく、毎回タブを調べて決める（R4 で見つけた。`view.test.ts` の「quick successive steps」）
 - 画面の更新を待つテストは、`sleep` でなく、`activate` が返す `settled()`（ライブの描画が追いついたら解決する）か、`until(条件)` で待つ
 
+## 表示する種類（R15）
+
+- select・replace・external・failure を ON/OFF できる（`docs/reference/vscode.md` 8）。**絞るのは表示サーバー**（`tape/open`・`live/start` の `kinds`）。拡張は、渡されたコマを描くだけ。切り替えは、選んだ種類でテープを開き直し、`seq` が一番近いコマへ移る（`nearestBySeq`）。ライブは開き直して最新を追う
+- 選んだ内容は保存しない（設定を足さない）。`extension.ts` の変数 `kinds` が覚える
+- failure のコマは開くファイルがない（`file` が `""`）。`Timeline.contentAt` は failure のコマを「ファイルに触れたコマ」とみなさない。失敗の画面は仮想ドキュメント（`failure=<index>`）で、1行目を赤（`#c62828`）で塗る
+- 一覧の下の文言（`Hiding: …`、`No frames to show`）は `TreeView.message`
+
 ## 言語と時刻（R10.5）
 
 - 文言は英語が既定で、`vscode.env.language` が `ja` で始まれば日本語。`src/lang.ts` の `pick(en, ja)` を、**呼ぶときに**評価する（モジュールの定数に `pick` の結果を置くと、言語が決まる前に評価される。`sidebar.ts` の種類の名前で踏んだ）。`activate` の最初で `setJapanese` を呼ぶ

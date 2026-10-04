@@ -40,6 +40,13 @@ var vimGuide = map[string][]string{
 		"`]]` を押して2コマ目（replace）へ。橙の理由の行が同じように折り返され、その直下に範囲（薄い橙）があるか見ます",
 		"`q` で閉じます",
 	},
+	"with-failure": {
+		"左に操作一覧（2コマ）、右にコマが開きます。右下に「hidden: failure (2)」と出ます（失敗した呼び出しが2件、隠れています）",
+		"`tf` を押します（半角で t と f）。4コマになり、一覧に赤い丸の「failure」が2行（invalid_range、selection_stale）増えます。右下の「hidden: …」は消えます",
+		"`[[` で1コマ目へ戻り、`]]` で2コマ目へ進みます。赤い行「✖ select failed  (invalid_range)」と、エラー文、why・tool・range・file が読めるか。赤が橙（replace）と見分けられるか見ます",
+		"`]]` で4コマ目まで進みます。同じ形で「✖ replace failed  (selection_stale)」が出るか見ます",
+		"もう一度 `tf` を押すと failure が隠れて2コマに戻ります。`q` で閉じます",
+	},
 	"live": {
 		"Vim が開いて約5秒後から、3秒ごとに1コマずつ追記されます（全部で6コマ、約20秒）。それまでは「Live view (waiting for the AI's operations)」と出ます",
 		"見る（追っている間）：コマが届くたびに画面が最新のコマに替わり、ステータス行に「● LIVE」が出続けるか。ちらつかないか",
@@ -95,6 +102,11 @@ func openVim(root, name string, out io.Writer) error {
 	}
 	if name == "long-why" {
 		if err := addLongWhy(bin, workspace); err != nil {
+			return err
+		}
+	}
+	if name == "with-failure" {
+		if err := addWithFailure(bin, workspace); err != nil {
 			return err
 		}
 	}

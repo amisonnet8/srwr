@@ -13,7 +13,7 @@ import (
 )
 
 // The checks that a machine decides. If an item is dropped from the table, nobody checks it.
-var checklistItems = []string{"起動と一覧", "select・replace の表示", "行番号", "理由なしのコマ", "長い理由の折り返し", "差分のコマ", "操作一覧",
+var checklistItems = []string{"起動と一覧", "select・replace の表示", "行番号", "理由なしのコマ", "長い理由の折り返し", "失敗のコマと、表示する種類", "差分のコマ", "操作一覧",
 	"下のバー", "コマ送りの操作", "ライブ", "ダーク・ライト", "後始末", "失敗の案内", "既知の不具合（2件）"}
 
 func TestEveryChecklistItemHasTestsThatExist(t *testing.T) {
@@ -44,7 +44,7 @@ func TestEveryChecklistItemHasTestsThatExist(t *testing.T) {
 		}
 	}
 	if strings.Join(names, ",") != strings.Join(checklistItems, ",") {
-		t.Errorf("the items are %v, want the items of CHECKLIST 2章 %v", names, checklistItems)
+		t.Errorf("the items are %v, want %v", names, checklistItems)
 	}
 }
 
@@ -278,7 +278,7 @@ func TestBreakingTheVimClientIsFoundAndNamed(t *testing.T) {
 		}
 	}
 	rep := &Report{}
-	res := captureVimOne(root, bin, dir, "", sc, "dark", "ja", rep)
+	res := captureVimOne(root, bin, dir, extras{}, sc, "dark", "ja", rep)
 	if res.Status != statusDiff {
 		t.Fatalf("status = %s (%s), want diff", res.Status, res.Error)
 	}

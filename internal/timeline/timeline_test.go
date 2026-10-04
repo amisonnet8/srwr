@@ -356,15 +356,58 @@ func TestCreatedExternalFrame(t *testing.T) {
 	}
 }
 
-func TestFailureIsNotAFrame(t *testing.T) {
+func TestFailureIsAFrameButNotAnOperation(t *testing.T) {
 	ev := parse(t,
 		`{"v":1,"seq":1,"ts":"2026-10-04T03:00:01.000Z","type":"snapshot","file":"a.go","text":"1\n2\n"}`,
 		`{"v":1,"seq":2,"ts":"2026-10-04T03:00:02.000Z","type":"failure","tool":"select","file":null,"startLine":9,"endLine":9,"selection":null,"why":"w","code":"invalid_range","message":"m"}`,
 		`{"v":1,"seq":3,"ts":"2026-10-04T03:00:03.000Z","type":"select","file":"a.go","startLine":1,"endLine":1,"why":"w","selection":"sel_1"}`,
+		`{"v":1,"seq":4,"ts":"2026-10-04T03:00:04.000Z","type":"failure","tool":"replace","file":"a.go","startLine":null,"endLine":null,"selection":"sel_1","why":null,"code":"selection_stale","message":"m2"}`,
 	)
 	b := Build(ev)
 	f := b.Frames()
-	if len(f) != 1 || b.Ops() != 1 || f[0].Index != 0 || f[0].Seq != 3 || f[0].Kind != KindSelect {
-		t.Errorf("frames = %+v, ops %d", f, b.Ops())
+	if len(f) != 3 || b.Ops() != 1 || !slices.Equal(b.Files(), []string{"a.go"}) {
+		t.Fatalf("frames = %+v, ops %d, files %v", f, b.Ops(), b.Files())
+	}
+	if x := f[0]; x.Kind != KindFailure || x.Index != 0 || x.File != "" || x.Range != (Range{9, 9}) || x.Tool != "select" || x.Code != "invalid_range" || x.Message != "m" || x.Why == nil || *x.Why != "w" || x.Before != "" || x.After != "" {
+		t.Errorf("first failure = %+v", x)
+	}
+	if x := f[1]; x.Kind != KindSelect || x.Index != 1 || x.Seq != 3 {
+		t.Errorf("select = %+v", x)
+	}
+	if x := f[2]; x.Kind != KindFailure || x.File != "a.go" || x.Range != (Range{0, -1}) || x.Tool != "replace" || x.Why != nil {
+		t.Errorf("second failure = %+v", x)
+	}
+}
+
+func TestFilter(t *testing.T) {
+	frames := []Frame{
+		{Index: 0, Kind: KindSelect, File: "a"}, {Index: 1, Kind: KindFailure}, {Index: 2, Kind: KindReplace, File: "a"},
+		{Index: 3, Kind: KindExternal, File: "b"}, {Index: 4, Kind: KindFailure}, {Index: 5, Kind: KindFinal, File: "b"},
+	}
+	shown, orig, hidden := Filter(frames, DefaultKinds())
+	if len(shown) != 4 || !slices.Equal(orig, []int{0, 2, 3, 5}) {
+		t.Fatalf("default: shown %+v, orig %v", shown, orig)
+	}
+	for i, f := range shown {
+		if f.Index != i {
+			t.Errorf("frame %d has index %d: the frames are numbered again", i, f.Index)
+		}
+	}
+	if len(hidden) != 1 || hidden[KindFailure] != 2 {
+		t.Errorf("hidden = %v", hidden)
+	}
+	k, bad := NewKinds([]string{"replace", "failure"})
+	if bad != "" {
+		t.Fatal(bad)
+	}
+	_, orig, hidden = Filter(frames, k)
+	if !slices.Equal(orig, []int{1, 2, 4}) || hidden[KindSelect] != 1 || hidden[KindExternal] != 2 || len(hidden) != 2 { // final counts as external
+		t.Errorf("replace+failure: orig %v, hidden %v", orig, hidden)
+	}
+	if none, _, _ := Filter(frames, Kinds{}); len(none) != 0 {
+		t.Errorf("nothing asked for, %d shown", len(none))
+	}
+	if _, bad := NewKinds([]string{"select", "final"}); bad != "final" {
+		t.Errorf("an unknown name = %q, want final", bad)
 	}
 }

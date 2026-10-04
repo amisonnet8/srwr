@@ -54,7 +54,7 @@ test("changedLines: a rest that is too big counts as all changed", () => {
 
 test("toFrame fills in what is missing and ignores the rest", () => {
   const f = toFrame({ index: 3, kind: "select", file: "a.go", range: { start: 1, end: 2 }, why: null, seq: 9, jumpLabel: "x" });
-  assert.deepEqual(f, { index: 3, kind: "select", file: "a.go", range: { start: 1, end: 2 }, why: null, before: "", after: "" });
+  assert.deepEqual(f, { index: 3, seq: 9, kind: "select", file: "a.go", range: { start: 1, end: 2 }, why: null, before: "", after: "" });
   assert.equal(toFrame({ index: 0, kind: "final", file: "a", range: { start: 1, end: 0 }, why: null, deleted: true }).deleted, true);
 });
 

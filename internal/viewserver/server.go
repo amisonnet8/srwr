@@ -72,9 +72,24 @@ type conn struct {
 	live   *liveWatcher
 }
 
-// openTape is a tape the client has opened: the frames, for frame/state.
+// openTape is a tape the client has opened, for frame/state. all is every frame of the tape (the final diff included), and
+// orig[i] is where the i-th frame that was sent is among them: the client numbers the frames it was sent, and the text of a
+// file after a frame has to count the frames that were left out too.
 type openTape struct {
-	frames []timeline.Frame
+	all  []timeline.Frame
+	orig []int
+}
+
+// parseKinds reads the kinds a client asks for. Left out, it is the default (everything but failure).
+func parseKinds(names *[]string) (timeline.Kinds, *jsonrpc.Error) {
+	if names == nil {
+		return timeline.DefaultKinds(), nil
+	}
+	k, bad := timeline.NewKinds(*names)
+	if bad != "" {
+		return nil, invalidParams("unknown kind: " + bad)
+	}
+	return k, nil
 }
 
 func rpcError(rpcCode int, code, message string) *jsonrpc.Error {

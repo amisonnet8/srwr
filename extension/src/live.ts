@@ -6,7 +6,7 @@ import { Presenter } from "./present";
 import { ReplayProvider, ReplaySession } from "./replay";
 import { ServerClient } from "./server";
 import { OpsSource } from "./sidebar";
-import { Frame, Timeline } from "./timeline";
+import { Frame, Hidden, ShownKind, Timeline } from "./timeline";
 
 export class LiveView implements OpsSource, Nav, vscode.Disposable {
   readonly title = pick("Live view", "ライブ視聴");
@@ -26,6 +26,7 @@ export class LiveView implements OpsSource, Nav, vscode.Disposable {
     presenter: Presenter,
     private readonly server: ServerClient,
     provider: ReplayProvider,
+    private readonly kinds: ShownKind[],
   ) {
     this.session = new ReplaySession("live", [], provider, presenter);
   }
@@ -44,6 +45,15 @@ export class LiveView implements OpsSource, Nav, vscode.Disposable {
 
   current(): number {
     return this.session.index;
+  }
+
+  hidden(): Hidden {
+    return this.session.hidden();
+  }
+
+  // The seq of the frame on the screen, for finding the nearest one again after the kinds changed. -1 when none.
+  currentSeq(): number {
+    return this.timeline.frames[this.session.index]?.seq ?? -1;
   }
 
   position(): { index: number; length: number } {
@@ -66,7 +76,11 @@ export class LiveView implements OpsSource, Nav, vscode.Disposable {
   // Asks the server to watch. The frames up to now are only listed, not shown. Frames appended later, and frames of a
   // tape that shows up later (from its start), arrive as notifications and are shown.
   async start(): Promise<void> {
-    const r = await this.server.liveStart((id, f) => this.onFrame(id, f));
+    const r = await this.server.liveStart(
+      (id, f) => this.onFrame(id, f),
+      this.kinds,
+      (id, h) => this.onHidden(id, h),
+    );
     if (this.disposed) {
       // Closed while waiting. The server has started watching, so it is asked to stop.
       this.server.liveStop().catch(() => undefined);
@@ -78,6 +92,7 @@ export class LiveView implements OpsSource, Nav, vscode.Disposable {
       this.timeline.append(f);
     }
     this.wanted = r.frames.length - 1;
+    this.session.setHidden(r.hidden);
     this.session.setIndex(this.wanted);
     const early = this.early ?? [];
     this.early = undefined;
@@ -128,6 +143,20 @@ export class LiveView implements OpsSource, Nav, vscode.Disposable {
   private enqueue(f: () => Promise<void>): Promise<void> {
     this.queue = this.queue.then(f).catch((e) => console.error("srwr-view:", e));
     return this.queue;
+  }
+
+  // More frames of a kind that is left out arrived. A different tape starts its count again.
+  private onHidden(tapeId: string, h: Hidden): void {
+    if (this.disposed || this.early) {
+      return;
+    }
+    if (tapeId !== this.tapeId) {
+      // The view moved to another tape that has no frame to show yet.
+      this.tapeId = tapeId;
+      this.session.reset();
+      this.wanted = -1;
+    }
+    this.session.setHidden(h);
   }
 
   private onFrame(tapeId: string, f: Frame): void {

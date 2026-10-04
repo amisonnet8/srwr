@@ -8,6 +8,7 @@
   "srwr.liveStart.title": "srwr: ライブ視聴を開始",
   "srwr.liveStop.title": "srwr: ライブ視聴を停止",
   "srwr.liveLatest.title": "srwr: LIVE に戻る",
+  "srwr.chooseKinds.title": "srwr: 表示するコマを選ぶ",
   "view.ops.name": "操作一覧",
   "view.ops.welcome": "テープが開かれていません。\n[テープを開く](command:srwr.openTape)\n[ライブ視聴を開始](command:srwr.liveStart)",
   "config.path.description": "srwr のバイナリ（表示サーバー）の場所。既定の「srwr」は、PATH から探す。見つからないときは、絶対パスを指定する。"

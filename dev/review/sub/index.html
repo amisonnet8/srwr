@@ -20,7 +20,7 @@ li{margin:6px 0}
 <h2>作るもの</h2>
 <ul><li>新しい MCP ツール <strong>sub</strong>：文字列を、複数ファイルで置き換える。当たりの数が合わなければ、何も変えない</li>
 <li>画面：<strong>ファイルごとに1コマ</strong>。external と同じ左右の差分（左＝前・青、右＝後・橙）</li>
-<li>理由は、タブとエディタの間の<strong>橙の帯</strong>。VSCode は右の先頭に理由の行、左の先頭に同じ色の空の行（文字は右の中央）。Vim も同じに、右の窓の上に理由（文字は右の窓の中央）、左の窓の上に同じ色の空の帯</li>
+<li>理由は、タブとエディタの間の<strong>帯</strong>（右は橙、左は青）。VSCode は右の先頭に理由の行、左の先頭に空の行（青）（文字は右の中央）。Vim も同じに、右の窓の上に理由（文字は右の窓の中央）、左の窓の上に空の帯（青）</li>
 <li>一覧は <code>sub a.go (2 hits)</code> の1行。数が合わない失敗は <code>✖ sub failed (count_mismatch)</code>（赤）</li></ul>
 <h2>VSCode</h2>
 <div class="fig"><p class="note">sub のコマ：a.go の2か所を置き換えた左右の差分</p><div class="pair"><div><h4>dark</h4><svg xmlns="http://www.w3.org/2000/svg" width="1280" height="340" viewBox="0 0 1280 340" role="img" aria-label="A sub frame as a left/right diff in VSCode, sub frame (dark)">
@@ -43,7 +43,7 @@ li{margin:6px 0}
 <text x="390" y="46" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Before  ⚠ sub: a.go</text>
 <rect x="829" y="28" width="451" height="28" fill="#2d2d2d"/>
 <text x="841" y="46" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">After  a.go</text>
-<rect x="378" y="56" width="902" height="22" fill="#f0883e"/>
+<rect x="378" y="56" width="451" height="22" fill="#0b61a4"/><rect x="829" y="56" width="451" height="22" fill="#f0883e"/>
 <rect x="378" y="82" width="451" height="20" fill="#1d3a5c"/>
 <text x="388" y="96" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">12</text>
 <text x="428" y="96" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">		return oldName(id)</text>
@@ -90,7 +90,7 @@ li{margin:6px 0}
 <text x="390" y="46" fill="#333333" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Before  ⚠ sub: a.go</text>
 <rect x="829" y="28" width="451" height="28" fill="#e7e7e7"/>
 <text x="841" y="46" fill="#333333" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">After  a.go</text>
-<rect x="378" y="56" width="902" height="22" fill="#b45f06"/>
+<rect x="378" y="56" width="451" height="22" fill="#0b61a4"/><rect x="829" y="56" width="451" height="22" fill="#b45f06"/>
 <rect x="378" y="82" width="451" height="20" fill="#cfe3fb"/>
 <text x="388" y="96" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">12</text>
 <text x="428" y="96" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">		return oldName(id)</text>
@@ -223,7 +223,7 @@ li{margin:6px 0}
 <rect x="0" y="0" width="1176" height="246" fill="#1e1e1e"/>
 <text x="0" y="13" fill="#9d9d9d" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">Before  ⚠ sub: a.go</text>
 <text x="588.0" y="13" fill="#9d9d9d" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">After  a.go</text>
-<rect x="0" y="18" width="1176" height="17" fill="#f0883e"/>
+<rect x="0" y="18" width="588" height="17" fill="#0b61a4"/><rect x="588" y="18" width="588" height="17" fill="#f0883e"/>
 <text x="714" y="30" fill="#ffffff" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" font-weight="bold" xml:space="preserve" style="white-space:pre">Rename the helper to the new naming rule</text>
 <rect x="0" y="35" width="588.0" height="17" fill="#1d3a5c"/>
 <rect x="588.0" y="35" width="588.0" height="17" fill="#583c27"/>
@@ -249,7 +249,7 @@ li{margin:6px 0}
 <rect x="0" y="0" width="1176" height="246" fill="#ffffff"/>
 <text x="0" y="13" fill="#6e6e6e" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">Before  ⚠ sub: a.go</text>
 <text x="588.0" y="13" fill="#6e6e6e" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">After  a.go</text>
-<rect x="0" y="18" width="1176" height="17" fill="#b45f06"/>
+<rect x="0" y="18" width="588" height="17" fill="#0b61a4"/><rect x="588" y="18" width="588" height="17" fill="#b45f06"/>
 <text x="714" y="30" fill="#ffffff" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" font-weight="bold" xml:space="preserve" style="white-space:pre">Rename the helper to the new naming rule</text>
 <rect x="0" y="35" width="588.0" height="17" fill="#cfe3fb"/>
 <rect x="588.0" y="35" width="588.0" height="17" fill="#fde3c8"/>

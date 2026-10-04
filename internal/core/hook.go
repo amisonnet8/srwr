@@ -120,11 +120,11 @@ const (
 	maxNewFileSize = 256 << 10
 )
 
-// observeNew records the new files a Bash command made: files git lists as untracked (and does not ignore) that the tape has no
-// content of. Outside a git work tree there are none to find, and that is not worth stopping the agent for. Every file goes
+// observeNew records the new files a Bash command made: files git lists as new (untracked, or added to the index) and does not ignore, that the
+// tape has no content of. Outside a git work tree there are none to find, and that is not worth stopping the agent for. Every file goes
 // through readTarget, so the files that are not recorded, binary files and links out of the workspace are left out.
 func (c *Core) observeNew(tx *session.Tx) (notes []string, err error) {
-	files, verr := vcs.Untracked(c.WS.Root())
+	files, verr := vcs.NewFiles(c.WS.Root())
 	if verr != nil {
 		return nil, nil //nolint:nilerr // no git work tree means no list of new files; that must not stop the agent
 	}

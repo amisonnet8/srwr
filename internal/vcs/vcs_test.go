@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -279,7 +280,7 @@ func TestChangesOutsideGit(t *testing.T) {
 	}
 }
 
-func TestUntracked(t *testing.T) {
+func TestNewFiles(t *testing.T) {
 	needGit(t)
 	root := t.TempDir()
 	if real, err := filepath.EvalSymlinks(root); err == nil {
@@ -287,6 +288,7 @@ func TestUntracked(t *testing.T) {
 	}
 	runGit(t, root, "init", "-q")
 	write(t, root, "tracked.go", "t\n")
+	write(t, root, "moved.go", "m\n")
 	write(t, root, ".gitignore", "built.txt\n")
 	runGit(t, root, "add", ".")
 	runGit(t, root, "commit", "-q", "-m", "first")
@@ -295,15 +297,22 @@ func TestUntracked(t *testing.T) {
 	write(t, root, "sub/deep/new2.go", "n\n")
 	write(t, root, "built.txt", "ignored\n")
 	write(t, root, ".srwr/tapes/x.jsonl", "tape\n")
-	got, err := Untracked(root)
+	// A command that writes a file and adds it to the index in the same go leaves it tracked.
+	write(t, root, "intent.go", "i\n")
+	runGit(t, root, "add", "-N", "intent.go")
+	write(t, root, "staged.go", "s\n")
+	runGit(t, root, "add", "staged.go")
+	runGit(t, root, "mv", "moved.go", "renamed.go")
+	got, err := NewFiles(root)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := "new.go sub/deep/new2.go"; strings.Join(got, " ") != want {
-		t.Errorf("untracked = %v, want %s", got, want)
+	sort.Strings(got)
+	if want := "intent.go new.go renamed.go staged.go sub/deep/new2.go"; strings.Join(got, " ") != want {
+		t.Errorf("new files = %v, want %s", got, want)
 	}
 	// A workspace in a directory of the repository sees only what is below it, with paths relative to it.
-	sub, err := Untracked(filepath.Join(root, "sub"))
+	sub, err := NewFiles(filepath.Join(root, "sub"))
 	if err != nil || strings.Join(sub, " ") != "deep/new2.go" {
 		t.Errorf("sub = %v, %v", sub, err)
 	}

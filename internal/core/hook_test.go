@@ -335,6 +335,29 @@ func TestHookRecordsANewFileMadeByBash(t *testing.T) {
 	e.checkTape()
 }
 
+// A command that makes a file and adds it to git in the same go (git add, git add -N) still leaves its content on the tape.
+func TestHookRecordsANewFileThatBashAddedToGit(t *testing.T) {
+	e := newEnv(t)
+	e.gitInit()
+	e.write("seen.txt", "x\n")
+	e.sel(e.c, "seen.txt", 1, 1)
+	e.write("intent.go", "package a\n")
+	e.write("staged.go", "package b\n")
+	for _, args := range [][]string{{"add", "-N", "intent.go"}, {"add", "staged.go"}} {
+		cmd := exec.Command("git", args...) //nolint:gosec // git, with fixed arguments, in a temporary directory
+		cmd.Dir = e.root
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+	}
+	e.bash()
+	got := e.createdFiles()
+	if got["intent.go"].File == "" || got["staged.go"].File == "" || len(got) != 2 {
+		t.Fatalf("created = %+v", got)
+	}
+	e.checkTape()
+}
+
 // Entrance 5: the new files are looked for through readTarget, so what is not recorded is left out, and so is what cannot be handled.
 func TestHookNewFilesLeaveOutWhatIsNotRecorded(t *testing.T) {
 	e := newEnv(t)

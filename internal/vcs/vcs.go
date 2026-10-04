@@ -102,20 +102,19 @@ func parseStatus(out, prefix string) []Change {
 	return changes
 }
 
-// Untracked lists the files below root that git does not track and does not ignore (new files), as slash-separated paths
-// relative to root. What is inside .srwr/ is left out. Like Changes it says why it failed; the hook, which must never stop the
-// agent, ignores the error.
-func Untracked(root string) ([]string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), Timeout)
-	defer cancel()
-	out, err := git(ctx, root, "ls-files", "--others", "--exclude-standard", "-z", "--", ".", ":(exclude).srwr")
+// NewFiles lists the files below root that are new to git and that git does not ignore, as slash-separated paths relative to
+// root: untracked ones, and ones added to the index since HEAD ("git add", "git add -N", "git mv"), which a command that
+// writes a file and adds it in one go leaves behind. What is inside .srwr/ is left out. Like Changes it says why it failed;
+// the hook, which must never stop the agent, ignores the error.
+func NewFiles(root string) ([]string, error) {
+	changes, err := Changes(root)
 	if err != nil {
-		return nil, errNotGit
+		return nil, err
 	}
 	var files []string
-	for _, f := range strings.Split(out, "\x00") {
-		if f != "" {
-			files = append(files, f)
+	for _, c := range changes {
+		if strings.ContainsAny(c.Status, "?ARC") {
+			files = append(files, c.Path)
 		}
 	}
 	return files, nil

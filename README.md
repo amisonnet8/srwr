@@ -96,6 +96,8 @@ To view in VSCode, install the extension **srwr-view** as well (it does not cont
 
 3. **Look at what happened** (below).
 
+A whole round with every command, from `srwr init` to tidying up the tapes, is in [docs/examples/workflow.md](docs/examples/workflow.md).
+
 ## 👀 Viewing a tape
 
 | Where | How |

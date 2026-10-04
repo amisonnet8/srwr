@@ -59,7 +59,7 @@
 │   ├── ui-check/           ← UI の確認の自動化：`run`（qsoku ui-check）・`live`・`accept`・`open`、自動の検証の項目の表（checks.go）、長い理由のテープ（maketape.go）、確認ページ（page.go）（R4〜R6）
 │   └── vim-oldest.sh       ← 最も古い Vim（9.0.0784）をビルドして `vim-test` を動かす（R5）
 ├── docs/images/            ← README の画像（バナーは手書き、デモ・VSCode の絵は `qsoku readme-media` で作る。コミットする）
-├── docs/                   ← 外部向けの文書（正本）。英語が `名前.md`、日本語版が `名前_ja.md`。reference/・design/・examples/（`select-replace.md`・`protocol-session.md`・`hook.md`。`internal/docs` が本物と照合する。`internal/docs/testdata/demo-en/`（英語・UTC のテープ）と `demo/`（日本語・古い `+09:00` のテープ）が protocol-session の題材）
+├── docs/                   ← 外部向けの文書（正本）。英語が `名前.md`、日本語版が `名前_ja.md`。reference/・design/・examples/（`select-replace.md`・`workflow.md`（init から片付けまで一回りする例。`internal/docs` の `TestWorkflowExample` が、コマンドの出力を本物と照合する）・`protocol-session.md`・`hook.md`。`internal/docs` が本物と照合する。`internal/docs/testdata/demo-en/`（英語・UTC のテープ）と `demo/`（日本語・古い `+09:00` のテープ）が protocol-session の題材）
 ├── dev/                    ← 開発のうちうち。roadmap.md、publish.md（公開の手順）、review/<段階>/（UIゲートの資料。終わった段階は `<段階>.zip`）
 ├── .vscode/launch.json     ← 拡張を F5 で起動するためだけに置く（R4）
 ├── .devcontainer/          ← 開発環境（devcontainer.json、postCreate.sh）

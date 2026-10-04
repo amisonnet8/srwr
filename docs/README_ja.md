@@ -22,7 +22,7 @@ srwr は、AI エージェントに `select` / `replace` の2コマンドだけ�
 
 ## 読む順番
 
-1. [reference/cli.md](reference/cli_ja.md) — 全体と導入
+1. [reference/cli.md](reference/cli_ja.md) — 全体と導入 → [examples/workflow.md](examples/workflow_ja.md) — `srwr init` から片付けまで、すべてのコマンドで一回り
 2. [reference/mcp.md](reference/mcp_ja.md) → [examples/select-replace.md](examples/select-replace_ja.md) — AI が何をするか
 3. [reference/tape.md](reference/tape_ja.md) — 何が記録されるか
 4. [reference/vscode.md](reference/vscode_ja.md) または [reference/vim.md](reference/vim_ja.md) — どう見るか

@@ -96,6 +96,8 @@ VSCode で見るなら、拡張 **srwr-view** も入れます（拡張は `srwr`
 
 3. **何が起きたかを見る**（次の章）。
 
+`srwr init` からテープの片付けまで、すべてのコマンドで一回りする例は [docs/examples/workflow.md](docs/examples/workflow_ja.md)。
+
 ## 👀 テープを見る
 
 | どこで | やり方 |

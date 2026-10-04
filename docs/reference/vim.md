@@ -74,8 +74,8 @@ The same as [vscode.md](vscode.md). **select is blue, and what changes a file is
 | `SrwrCurrent` | The current frame in the operation list | `#3a3d41` | `#e4e6f1` |
 | `SrwrDotSelect`, `SrwrDotReplace` | The dots in the operation list (blue, orange) | `#4aa3ff`, `#f0883e` | `#0b61a4`, `#b45f06` |
 | `SrwrDotExternal` | The dots in the operation list (external change, final) | `#b180d7` | `#652d90` |
-| `SrwrWhyFailure` | The reason line of a failure frame | `#c62828`, white bold | the same |
-| `SrwrDotFailure` | The dots in the operation list (failure, red) | `#f85149` | `#d32f2f` |
+| `SrwrWhyFailure` | The reason line of a failure frame | `#d50000`, white bold | the same |
+| `SrwrDotFailure` | The dots in the operation list (failure, red) | `#ff3b30` | `#d50000` |
 | `SrwrDim` | Buttons that cannot be used | gray | gray |
 
 - It has values that can be told apart even on a 256-color terminal (`ctermbg`). If `termguicolors` is on, those colors are used

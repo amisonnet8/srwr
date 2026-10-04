@@ -29,7 +29,7 @@
 
 - select・replace・external・failure を ON/OFF できる（`docs/reference/vscode.md` 8）。**絞るのは表示サーバー**（`tape/open`・`live/start` の `kinds`）。拡張は、渡されたコマを描くだけ。切り替えは、選んだ種類でテープを開き直し、`seq` が一番近いコマへ移る（`nearestBySeq`）。ライブは開き直して最新を追う
 - 選んだ内容は保存しない（設定を足さない）。`extension.ts` の変数 `kinds` が覚える
-- failure のコマは開くファイルがない（`file` が `""`）。`Timeline.contentAt` は failure のコマを「ファイルに触れたコマ」とみなさない。失敗の画面は仮想ドキュメント（`failure=<index>`）で、1行目を赤（`#c62828`）で塗る
+- failure のコマは開くファイルがない（`file` が `""`）。`Timeline.contentAt` は failure のコマを「ファイルに触れたコマ」とみなさない。失敗の画面は仮想ドキュメント（`failure=<index>`）で、1行目を赤（`#d50000`）で塗る
 - 一覧の下の文言（`Hiding: …`、`No frames to show`）は `TreeView.message`
 
 ## 言語と時刻（R10.5）

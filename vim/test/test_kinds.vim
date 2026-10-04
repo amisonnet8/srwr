@@ -52,7 +52,7 @@ t.Equal('', getbufvar(s.buf, '&filetype'), 'no filetype: the colors of the last 
 t.Equal('srwr://20261004-1530-kinds/failure1', bufname(s.buf), 'a name that is not a file')
 const status = getwinvar(s.win, '&statusline')
 t.True(status =~# 'failure: select' && status =~# 'hidden: failure (2)' || status =~# '隠している: failure (2)', 'the status line: ' .. status)
-t.Equal(hlget('SrwrWhyFailure')[0].guibg, '#c62828', 'the red of the why row')
+t.Equal(hlget('SrwrWhyFailure')[0].guibg, '#d50000', 'the red of the why row')
 replay.Goto(2)
 t.True(getbufline(s.buf, 1, '$')[0] !~# '✖', 'a replace is shown as usual after it')
 t.Equal(false, getwinvar(s.win, '&number'), 'and its why row has the numbers of the file')

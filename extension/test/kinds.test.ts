@@ -130,14 +130,14 @@ test("a failure frame: a document that explains it, the first row in red, no fil
   assert.ok(rows.some((r) => r === "why    reason"));
   assert.ok(rows.some((r) => r === "range  9 行"));
   assert.ok(rows.some((r) => r === "file   (not shown)"));
-  const red = tab.decorations.find((d) => d.opts.backgroundColor === "#c62828");
+  const red = tab.decorations.find((d) => d.opts.backgroundColor === "#d50000");
   assert.ok(red, "the red row");
   assert.deepEqual(red.ranges, [{ line: 0 }]);
   assert.equal(red.opts.color, "#ffffff");
   assert.equal(red.opts.fontWeight, "bold");
   // The list: a red dot, the word 失敗, the error code in the place of file:range.
   const tree = scr.tree;
-  assert.deepEqual(tree[1], { label: "2  失敗  invalid_range", description: "reason", color: "charts.red", kind: "failure" });
+  assert.deepEqual(tree[1], { label: "2  失敗  invalid_range", description: "reason", color: "srwr.failureForeground", kind: "failure" });
   // A replace failure has no range.
   await a.run("srwr.goto", 3);
   assert.ok(a.screen().tabs[0].text.includes("range  -"));

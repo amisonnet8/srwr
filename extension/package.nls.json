@@ -8,6 +8,7 @@
   "srwr.liveStart.title": "srwr: Start Live View",
   "srwr.liveStop.title": "srwr: Stop Live View",
   "srwr.liveLatest.title": "srwr: Back to LIVE",
+  "color.failure.description": "The dot of a failure in the operations list",
   "srwr.chooseKinds.title": "srwr: Choose Frames to Show",
   "view.ops.name": "Operations",
   "view.ops.welcome": "No tape is open.\n[Open a tape](command:srwr.openTape)\n[Start live view](command:srwr.liveStart)",

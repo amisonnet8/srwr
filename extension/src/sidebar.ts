@@ -15,7 +15,7 @@ export interface OpsSource {
 }
 
 export function dotColor(f: Frame): string {
-  return f.kind === "select" ? "charts.blue" : f.kind === "replace" ? "charts.orange" : f.kind === "failure" ? "charts.red" : "charts.purple";
+  return f.kind === "select" ? "charts.blue" : f.kind === "replace" ? "charts.orange" : f.kind === "failure" ? "srwr.failureForeground" : "charts.purple";
 }
 
 // The label of a kind: the words select and replace are the names of the two commands; external and final are srwr's own.

@@ -8,6 +8,7 @@
   "srwr.liveStart.title": "srwr: ライブ視聴を開始",
   "srwr.liveStop.title": "srwr: ライブ視聴を停止",
   "srwr.liveLatest.title": "srwr: LIVE に戻る",
+  "color.failure.description": "操作一覧の、失敗の丸の色",
   "srwr.chooseKinds.title": "srwr: 表示するコマを選ぶ",
   "view.ops.name": "操作一覧",
   "view.ops.welcome": "テープが開かれていません。\n[テープを開く](command:srwr.openTape)\n[ライブ視聴を開始](command:srwr.liveStart)",

@@ -50,14 +50,14 @@ export def Setup()
   const rep = {cterm: {bold: true}, gui: {bold: true}, ctermfg: '15', ctermbg: '130', guifg: '#ffffff', guibg: '#b45f06'}
   Define('SrwrWhySelect', sel, sel)
   Define('SrwrWhyReplace', rep, rep)
-  const fail = {cterm: {bold: true}, gui: {bold: true}, ctermfg: '15', ctermbg: '160', guifg: '#ffffff', guibg: '#c62828'}
+  const fail = {cterm: {bold: true}, gui: {bold: true}, ctermfg: '15', ctermbg: '196', guifg: '#ffffff', guibg: '#d50000'}
   Define('SrwrWhyFailure', fail, fail)
   # The operation list: the current line, the dot of each kind, a button that cannot be used now.
   Define('SrwrCurrent', {guibg: '#3a3d41', ctermbg: '238'}, {guibg: '#e4e6f1', ctermbg: '254'})
   Define('SrwrDotSelect', {guifg: '#4aa3ff', ctermfg: '39'}, {guifg: '#0b61a4', ctermfg: '25'})
   Define('SrwrDotReplace', {guifg: '#f0883e', ctermfg: '208'}, {guifg: '#b45f06', ctermfg: '130'})
   Define('SrwrDotExternal', {guifg: '#b180d7', ctermfg: '140'}, {guifg: '#652d90', ctermfg: '54'})
-  Define('SrwrDotFailure', {guifg: '#f85149', ctermfg: '203'}, {guifg: '#d32f2f', ctermfg: '160'})
+  Define('SrwrDotFailure', {guifg: '#ff3b30', ctermfg: '196'}, {guifg: '#d50000', ctermfg: '160'})
   Define('SrwrDim', {guifg: '#808080', ctermfg: '244'}, {guifg: '#909090', ctermfg: '244'})
 
   for [name, group, prio] in [

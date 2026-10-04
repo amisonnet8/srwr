@@ -74,8 +74,8 @@ VSCode（[vscode.md](vscode_ja.md)）と同じ情報を、同じ順で、同じ�
 | `SrwrCurrent` | 操作一覧の今のコマ | `#3a3d41` | `#e4e6f1` |
 | `SrwrDotSelect`・`SrwrDotReplace` | 操作一覧の丸（青・橙） | `#4aa3ff`・`#f0883e` | `#0b61a4`・`#b45f06` |
 | `SrwrDotExternal` | 操作一覧の丸（外部変更・録画後） | `#b180d7` | `#652d90` |
-| `SrwrWhyFailure` | 失敗のコマの理由の行 | `#c62828`、白の太字 | 同じ |
-| `SrwrDotFailure` | 操作一覧の丸（失敗。赤） | `#f85149` | `#d32f2f` |
+| `SrwrWhyFailure` | 失敗のコマの理由の行 | `#d50000`、白の太字 | 同じ |
+| `SrwrDotFailure` | 操作一覧の丸（失敗。赤） | `#ff3b30` | `#d50000` |
 | `SrwrDim` | 使えないボタン | 灰色 | 灰色 |
 
 - 256色の端末でも見分けられる値を持つ（`ctermbg`）。`termguicolors` があればその色を使う

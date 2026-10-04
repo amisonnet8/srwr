@@ -44,6 +44,11 @@ test("every command the code or the UI refers to is declared", () => {
       refs.add(n);
     }
   }
+  // A color the extension declares (package.json contributes.colors) is a name of its own, not a command.
+  const colors: string[] = (pkg.contributes.colors ?? []).map((c: { id: string }) => c.id);
+  for (const c of colors) {
+    refs.delete(c);
+  }
   for (const w of pkg.contributes.viewsWelcome) {
     for (const m of w.contents.matchAll(/command:(srwr\.[A-Za-z]+)/g)) {
       refs.add(m[1]);
@@ -56,6 +61,10 @@ test("every command the code or the UI refers to is declared", () => {
   }
   for (const r of refs) {
     assert.ok(declared.includes(r), `${r} is used but not declared`);
+  }
+  // and the code uses every color it declares
+  for (const c of colors) {
+    assert.ok(srwrNames().has(c), `${c} is declared but the code does not use it`);
   }
 });
 

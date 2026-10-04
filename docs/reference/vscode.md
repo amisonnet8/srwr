@@ -35,7 +35,7 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 | Range | Dark theme `#1d3a5c` / light theme `#cfe3fb` | Dark theme `#583c27` / light theme `#fde3c8` |
 
 - The color of the reason line is the same in both themes (to keep the white bold text readable). Only the range changes with the theme
-- A **failure** (a `select` or `replace` that gave the AI an error) is **red**: the reason line `#c62828` (white bold, the same in both themes), and the dot in the operation list `charts.red`. Red and orange are told apart by the mark `✖` and the word `failure` as well
+- A **failure** (a `select` or `replace` that gave the AI an error) is **red**: the reason line `#d50000` (white bold, the same in both themes), and the dot in the operation list `srwr.failureForeground` (a color of the extension: dark `#ff3b30`, light `#d50000`). Red and orange are told apart by the mark `✖` and the word `failure` as well
 - For an external change (a change made outside srwr), only the dot in the operation list is **purple** (`charts.purple`). The color of the range follows how diffs are shown (3 below)
 
 ### 2. Frames of select and replace

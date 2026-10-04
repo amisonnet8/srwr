@@ -27,6 +27,13 @@
       { "command": "srwr.liveLatest", "title": "%srwr.liveLatest.title%" },
       { "command": "srwr.chooseKinds", "title": "%srwr.chooseKinds.title%", "icon": "$(filter)" }
     ],
+    "colors": [
+      {
+        "id": "srwr.failureForeground",
+        "description": "%color.failure.description%",
+        "defaults": { "dark": "#ff3b30", "light": "#d50000", "highContrast": "#ff3b30", "highContrastLight": "#d50000" }
+      }
+    ],
     "viewsContainers": {
       "activitybar": [{ "id": "srwr", "title": "srwr", "icon": "media/srwr.svg" }]
     },

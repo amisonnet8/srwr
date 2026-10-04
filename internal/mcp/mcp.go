@@ -135,11 +135,14 @@ type selectOK struct {
 func (s *Server) callSelect(raw json.RawMessage) toolResult {
 	var a selectArgs
 	if err := decodeArgs(raw, &a); err != nil {
+		s.Core.RecordInputFailure(tools.Select, err.Code, err.Message)
 		return failure(*err)
 	}
 	if missing := firstMissing(map[string]bool{"file": a.File == nil, "startLine": a.StartLine == nil, "endLine": a.EndLine == nil, "why": a.Why == nil},
 		"file", "startLine", "endLine", "why"); missing != "" {
-		return failure(core.Error{Code: core.CodeInvalidInput, Message: "missing required input: " + missing})
+		e := core.Error{Code: core.CodeInvalidInput, Message: "missing required input: " + missing}
+		s.Core.RecordInputFailure(tools.Select, e.Code, e.Message)
+		return failure(e)
 	}
 	res, cerr := s.Core.Select(core.SelectInput{File: *a.File, StartLine: *a.StartLine, EndLine: *a.EndLine, Why: *a.Why})
 	if cerr != nil {
@@ -164,11 +167,14 @@ type replaceOK struct {
 func (s *Server) callReplace(raw json.RawMessage) toolResult {
 	var a replaceArgs
 	if err := decodeArgs(raw, &a); err != nil {
+		s.Core.RecordInputFailure(tools.Replace, err.Code, err.Message)
 		return failure(*err)
 	}
 	if missing := firstMissing(map[string]bool{"selection": a.Selection == nil, "newText": a.NewText == nil, "why": a.Why == nil},
 		"selection", "newText", "why"); missing != "" {
-		return failure(core.Error{Code: core.CodeInvalidInput, Message: "missing required input: " + missing})
+		e := core.Error{Code: core.CodeInvalidInput, Message: "missing required input: " + missing}
+		s.Core.RecordInputFailure(tools.Replace, e.Code, e.Message)
+		return failure(e)
 	}
 	res, cerr := s.Core.Replace(core.ReplaceInput{Selection: *a.Selection, NewText: *a.NewText, Why: *a.Why})
 	if cerr != nil {

@@ -99,6 +99,8 @@ An error may carry the current content (`actual`). What it holds is decided for 
 | `invalid_range` | `{"lineCount": number of lines}`. None for a path outside the workspace |
 | Others | None |
 
+A failed call is also written to the tape as a [`failure`](tape.md#failure), so that the mistakes the AI makes can be read later. The real path is left out when it is absolute or outside the workspace.
+
 ## The order of processing
 
 When srwr receives a `replace`, it works in this order.

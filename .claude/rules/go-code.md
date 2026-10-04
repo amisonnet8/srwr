@@ -64,6 +64,13 @@
 - **`json.Unmarshal` は `null` をエラーにせず、ゼロ値を入れる。** `"why":null` が空文字列として読めてしまうので、`internal/tape` の `has()` で欠落として扱う
 - **`newText` は「行を `\n` でつないだもの」で、末尾の空行が分からなくなる**（`["a",""]` と `["a"]` は、`Lines` で読み直すと同じ）。行の数は `newStartLine`・`newEndLine` から取る（`tape.NewLines`）。`Splice` に `newText` を渡す前に、行に分けておく（`SpliceLines`）
 
+## 失敗の記録（`failure`）
+
+- `select`・`replace` が失敗したら、`core.recordFailure`（`internal/core/failure.go`）の**1か所**でテープに `failure` を書く。`Core.Select`・`Core.Replace` が、返す前に呼ぶ。MCP の層で弾く失敗（必須の入力がない、型が違う）は `Core.RecordInputFailure`
+- **返事を変えない。** 書けなくても握りつぶす（AI の作業を止めない）。AI に返すエラー文は今のまま（パスを含む）
+- **テープに実際のパスを書かない**：絶対パス・作業場の外・`ignored_file`・`internal_error`（`.srwrignore` が読めないとき）は `file` を `null` にし、エラー文を決まった文に替える。`replace` の `newText` も書かない。新しい失敗の入口を足したら、この伏せを通ることを確かめ、テストを書く
+- `failure` はコマにならない（`timeline.Builder.Add` が飛ばす）。コマに出すのは `cbfe6a6716`
+
 ## エラー
 
 - エラーは握りつぶさない。`docs/reference/mcp.md`・`protocol.md` のエラーコードは定数として定義し、応答までそのまま伝える

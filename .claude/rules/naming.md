@@ -27,6 +27,7 @@
 | 文書の状態 | frame state | あるコマの時点のファイルの内容（差分のコマなら変更前・変更後） |
 | 差分のコマ | diff frame | `external`・`final` のコマ。左右に並べた差分で見せる |
 | 外部変更 | external change（イベントは `external`） | srwr の外で起きたファイルの変更 |
+| 失敗 | failure（イベントは `failure`） | 失敗した `select`・`replace` の記録。コマにはしない |
 | 最後の差分 | final diff（コマは `final`） | テープの最後の内容と、今のファイルとの差分 |
 | 理由 | why | `select`・`replace` に添える理由 |
 | 作業場 | workspace | srwr を使うディレクトリ（`.srwr/` を持つ） |

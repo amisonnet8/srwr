@@ -11,6 +11,7 @@ import (
 
 	"github.com/amisonnet8/srwr/internal/core"
 	"github.com/amisonnet8/srwr/internal/session"
+	"github.com/amisonnet8/srwr/internal/tape"
 )
 
 // serve runs the requests (one JSON value per line) through a Server on a fresh workspace and returns the response lines.
@@ -265,4 +266,45 @@ func TestToolErrors(t *testing.T) {
 func mustJSON(v any) string {
 	b, _ := json.Marshal(v)
 	return string(b)
+}
+
+// A call that fails is on the tape as a failure, including one turned away before it reaches select or replace.
+func TestFailedCallsAreOnTheTape(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "a.go"), []byte("1\n2\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	abs := filepath.Join(root, "a.go")
+	serve(t, root,
+		toolCall(1, "select", `{"file":"a.go","startLine":1,"endLine":1}`),                      // no why
+		toolCall(2, "select", `{"file":`+mustJSON(abs)+`,"startLine":1,"endLine":1,"why":"w"}`), // absolute
+		toolCall(3, "replace", `{"selection":"sel_x","newText":"SECRET NEW TEXT","why":"w"}`),   // bad token
+		toolCall(4, "select", `{"file":"a.go","startLine":"1","endLine":1,"why":"w"}`),          // a line as a string
+	)
+	files, _ := filepath.Glob(filepath.Join(root, ".srwr", "tapes", "*.jsonl"))
+	if len(files) != 1 {
+		t.Fatalf("tapes = %v", files)
+	}
+	b, err := os.ReadFile(files[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	var codes, tools []string
+	for _, e := range tape.Parse(b).Events {
+		if e.Type == tape.TypeFailure {
+			codes, tools = append(codes, e.Failure.Code), append(tools, e.Failure.Tool)
+			if e.Failure.File != nil {
+				t.Errorf("file = %q, want null for %s", *e.Failure.File, e.Failure.Message)
+			}
+		}
+	}
+	if want := "invalid_input invalid_range invalid_selection invalid_input"; strings.Join(codes, " ") != want {
+		t.Errorf("codes = %v, want %s", codes, want)
+	}
+	if want := "select select replace select"; strings.Join(tools, " ") != want {
+		t.Errorf("tools = %v, want %s", tools, want)
+	}
+	if strings.Contains(string(b), root) || strings.Contains(string(b), "SECRET NEW TEXT") {
+		t.Errorf("the tape holds a real path or the new text:\n%s", b)
+	}
 }

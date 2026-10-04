@@ -101,6 +101,21 @@ srwr の外でファイルが変わったことを検知したとき。`snapshot
 
 `external` より前に発行した範囲トークンで `replace` したときも、ふつうに追う（行番号を補正するのは、srwr 自身の編集だけ）。外部変更が、範囲の中身も、範囲より上の行数も変えていなければ、そのトークンは使える。変えていれば、内容の照合で `selection_mismatch` になる。外部変更の中身から、行のずれを推定することはしない。
 
+### failure
+
+`select`・`replace` が失敗したとき（AI がエラーを受け取ったとき）に記録する。AI がどんなミスをするかを知るためのもの。再生の1ステップではなく、ビューワーはコマとして出さない。
+
+```json
+{"v":1,"seq":7,"ts":"…","type":"failure","tool":"select","file":null,"startLine":3,"endLine":9,"selection":null,"why":"main 関数を確認する","code":"invalid_range","message":"The path is absolute. Give a path relative to the workspace"}
+{"v":1,"seq":9,"ts":"…","type":"failure","tool":"replace","file":"cmd/app/main.go","startLine":null,"endLine":null,"selection":"sel_0410R3GZE4KV11C6325D32S7","why":"…","code":"selection_stale","message":"an edit overlapped the range after the select. Call select again"}
+```
+
+- `tool`：`select` または `replace`。`code` と `message` は、AI が受け取ったエラー（[mcp_ja.md](mcp_ja.md)）
+- `file`：作業場の中のパス。分からないときと、伏せるときは `null`。`startLine`・`endLine` は `select` のとき、`selection`（渡されたトークン）は `replace` のとき。`why` は AI が書いたもの。値がないものは `null`
+- **実際のパスは伏せる**：絶対パス、作業場の外を指すパス、記録しないファイルのとき、`file` は `null` で、`message` はパスを含まない文にする（`The path is absolute. Give a path relative to the workspace`、`The path points outside the workspace`、`The file is not recorded`）
+- `replace` の `newText` は書かない。`message` は 300 文字で切る
+- srwr の編集に届く前に見つかる失敗（必須の入力がない、値の型が違う）も記録する。`file` は `null`
+
 ## 範囲トークン
 
 `select` が返す `sel_…` の文字列。`from`・`selection` に入る。AI はそのまま渡すだけで、中身を知らなくてよい。

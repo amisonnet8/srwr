@@ -187,7 +187,7 @@ func TestSelectThenReplace(t *testing.T) {
 	e.checkTape()
 
 	ev := e.events()
-	rep := ev[len(ev)-1]
+	rep := ev[len(ev)-2] // the last is the failure of the stale token
 	if rep.Type != tape.TypeReplace || rep.Source != tape.SourceMCP || rep.FileShaBefore == rep.FileShaAfter {
 		t.Errorf("last event = %+v", rep)
 	}
@@ -330,7 +330,7 @@ func TestExternalChangeBeforeReplace(t *testing.T) {
 	if got, ok := m.Actual.([]string); !ok || !slices.Equal(got, []string{"1", "2"}) {
 		t.Errorf("actual = %#v, want the lines now at 2..3", m.Actual)
 	}
-	if got, want := e.kinds(), []string{"snapshot", "select", "external"}; !slices.Equal(got, want) {
+	if got, want := e.kinds(), []string{"snapshot", "select", "external", "failure"}; !slices.Equal(got, want) {
 		t.Errorf("tape = %v, want %v", got, want)
 	}
 	if got := e.read("f.txt"); got != "0\n1\n2\n3\n4\n" {
@@ -367,7 +367,7 @@ func TestDeletedFile(t *testing.T) {
 
 	_, err := e.c.Select(SelectInput{File: "f.txt", StartLine: 1, EndLine: 1, Why: "w"})
 	wantCode(t, err, CodeFileNotFound)
-	if got, want := e.kinds(), []string{"snapshot", "select", "external"}; !slices.Equal(got, want) {
+	if got, want := e.kinds(), []string{"snapshot", "select", "external", "failure"}; !slices.Equal(got, want) {
 		t.Fatalf("tape = %v, want %v", got, want)
 	}
 	if x := e.events()[3]; !x.Deleted || x.Text != nil {
@@ -376,15 +376,15 @@ func TestDeletedFile(t *testing.T) {
 	// Asking again does not record the deletion twice.
 	_, err = e.c.Replace(ReplaceInput{Selection: s.Selection, NewText: "x", Why: "w"})
 	wantCode(t, err, CodeFileNotFound)
-	if got := len(e.kinds()); got != 3 {
-		t.Errorf("tape has %d events, want 3", got)
+	if got := len(e.kinds()); got != 5 { // the deletion is recorded once; each refused call is a failure
+		t.Errorf("tape has %d events, want 5", got)
 	}
 
 	// The file comes back: a snapshot, and the old token no longer fits.
 	e.write("f.txt", "new 1\nnew 2\n")
 	_, err = e.c.Replace(ReplaceInput{Selection: s.Selection, NewText: "x", Why: "w"})
 	wantCode(t, err, CodeSelectionMismatch)
-	if got, want := e.kinds(), []string{"snapshot", "select", "external", "snapshot"}; !slices.Equal(got, want) {
+	if got, want := e.kinds(), []string{"snapshot", "select", "external", "failure", "failure", "snapshot", "failure"}; !slices.Equal(got, want) {
 		t.Errorf("tape = %v, want %v", got, want)
 	}
 	e.checkTape()
@@ -419,7 +419,7 @@ func TestTokenOfAnotherSession(t *testing.T) {
 	// In the new session everything starts again, with a snapshot of the file as it is.
 	s2 := e.sel(e.c, "f.txt", 1, 1)
 	e.rep(e.c, s2.Selection, "one")
-	if got, want := e.kinds(), []string{"snapshot", "select", "replace"}; !slices.Equal(got, want) {
+	if got, want := e.kinds(), []string{"failure", "snapshot", "select", "replace"}; !slices.Equal(got, want) { // the refused replace started the new tape
 		t.Errorf("the new tape = %v, want %v", got, want)
 	}
 	e.checkTape()
@@ -533,9 +533,16 @@ func TestSelectErrors(t *testing.T) {
 	if want := "f.txt has 3 lines; startLine=9 endLine=9 is out of range"; err.Message != want {
 		t.Errorf("message = %q, want %q", err.Message, want)
 	}
-	// Nothing of a refused call reaches the tape, except what was noticed about the file itself.
-	if got, want := e.kinds(), []string{"snapshot"}; !slices.Equal(got, want) {
-		t.Errorf("tape = %v, want only the snapshot made while checking the range", got)
+	// A refused call leaves only a failure on the tape, besides what was noticed about the file itself.
+	kinds := e.kinds()
+	if kinds[0] != tape.TypeSnapshot || len(kinds) != len(tests)+2 {
+		t.Errorf("tape = %v, want the snapshot made while checking the range and a failure for each of the %d calls", kinds, len(tests)+1)
+	}
+	for _, k := range kinds[1:] {
+		if k != tape.TypeFailure {
+			t.Errorf("tape = %v, want only failures after the snapshot", kinds)
+			break
+		}
 	}
 }
 

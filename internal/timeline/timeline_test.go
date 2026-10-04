@@ -355,3 +355,16 @@ func TestCreatedExternalFrame(t *testing.T) {
 		t.Errorf("empty created frame = %+v", x)
 	}
 }
+
+func TestFailureIsNotAFrame(t *testing.T) {
+	ev := parse(t,
+		`{"v":1,"seq":1,"ts":"2026-10-04T03:00:01.000Z","type":"snapshot","file":"a.go","text":"1\n2\n"}`,
+		`{"v":1,"seq":2,"ts":"2026-10-04T03:00:02.000Z","type":"failure","tool":"select","file":null,"startLine":9,"endLine":9,"selection":null,"why":"w","code":"invalid_range","message":"m"}`,
+		`{"v":1,"seq":3,"ts":"2026-10-04T03:00:03.000Z","type":"select","file":"a.go","startLine":1,"endLine":1,"why":"w","selection":"sel_1"}`,
+	)
+	b := Build(ev)
+	f := b.Frames()
+	if len(f) != 1 || b.Ops() != 1 || f[0].Index != 0 || f[0].Seq != 3 || f[0].Kind != KindSelect {
+		t.Errorf("frames = %+v, ops %d", f, b.Ops())
+	}
+}

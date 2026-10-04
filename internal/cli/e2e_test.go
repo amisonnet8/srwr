@@ -372,8 +372,14 @@ func TestNewSessionAfterAPause(t *testing.T) {
 	}
 	events := readTape(t, newTape)
 	checkSeqs(t, events)
-	if len(events) != 4 { // header, snapshot, select, replace
-		t.Errorf("the new tape has %d events, want 4", len(events))
+	var n int
+	for _, e := range events {
+		if e.Type != tape.TypeFailure {
+			n++
+		}
+	}
+	if n != 4 { // header, snapshot, select, replace (and the failure of the token of the old session)
+		t.Errorf("the new tape has %d events besides failures, want 4", n)
 	}
 }
 
@@ -499,5 +505,36 @@ func TestExternalChangeIsHunksAndReplays(t *testing.T) {
 	}
 	if st := tape.Build(events); st.Files["f.txt"].Text != read(t, root, "f.txt") {
 		t.Error("the tape does not replay to the file")
+	}
+}
+
+// A call that failed is on the tape of the real srwr mcp as a failure with no real path, and it is not a step of the replay.
+func TestFailedCallIsOnTheTapeAndNotAFrame(t *testing.T) {
+	root := t.TempDir()
+	write(t, root, "a.go", "package a\n")
+	c := startClient(t, root)
+	c.initialize()
+	if m, isErr := c.call("select", map[string]any{"file": filepath.Join(root, "a.go"), "startLine": 1, "endLine": 1, "why": "見る"}); !isErr || m["error"].(map[string]any)["code"] != "invalid_range" {
+		t.Fatalf("select with an absolute path: %v (isError %v)", m, isErr)
+	}
+	c.mustSelect("a.go", 1, 1)
+
+	events := readTape(t, tapes(t, root)[0])
+	checkSeqs(t, events)
+	var failures []tape.Event
+	for _, e := range events {
+		if e.Type == tape.TypeFailure {
+			failures = append(failures, e)
+		}
+	}
+	if len(failures) != 1 || failures[0].Failure.File != nil || failures[0].Failure.Code != "invalid_range" || strings.Contains(failures[0].Failure.Message, root) {
+		t.Fatalf("failures = %+v", failures)
+	}
+	if st := tape.Build(events); st.Files["a.go"].Text != "package a\n" {
+		t.Error("the tape does not replay to the file")
+	}
+	english(t)
+	if code, out, errOut := tapesOut(t, root); code != 0 || errOut != "" || !strings.Contains(out, "1 tapes") && !strings.Contains(out, "1 tape") {
+		t.Errorf("srwr tapes: code %d, stderr %q\n%s", code, errOut, out)
 	}
 }

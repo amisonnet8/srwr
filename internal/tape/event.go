@@ -12,6 +12,7 @@ const (
 	TypeSelect   = "select"
 	TypeReplace  = "replace"
 	TypeExternal = "external"
+	TypeFailure  = "failure"
 )
 
 // Sources of a select or replace.
@@ -42,6 +43,7 @@ type ToolInfo struct {
 //	select:   Seq, TS, File, StartLine, EndLine, Why, Selection, Source, HookTool
 //	replace:  Seq, TS, File, From, StartLine, EndLine, OldText, NewText, NewStartLine, NewEndLine,
 //	          Selection, Why, FileShaBefore, FileShaAfter, Source, HookTool
+//	failure:  Seq, TS, Failure
 //	external: Seq, TS, File, Author, DetectedBy, ExpectedSha, ActualSha, Hunks or Text (both nil when unknown), Created, Deleted
 //
 // A field that is null on the tape is nil here. TS is kept as the text on the tape, because
@@ -50,6 +52,9 @@ type Event struct {
 	Type string
 	Seq  int
 	TS   string
+
+	// failure
+	Failure *FailureInfo
 
 	// header
 	Session   string
@@ -95,6 +100,19 @@ type Event struct {
 	ActualSha   string
 	Deleted     bool
 	Created     bool // a new file: the tape held nothing of it, and Hunks (or Text) is the whole file
+}
+
+// FailureInfo is what a failure event holds: a select or replace that gave the AI an error. A value that is not there is nil
+// (null on the tape). File is nil when it is not known or is left out, since the real path of an absolute path is not written.
+type FailureInfo struct {
+	Tool      string
+	File      *string
+	StartLine *int
+	EndLine   *int
+	Selection *string
+	Why       *string
+	Code      string
+	Message   string
 }
 
 // Str returns a pointer to s, for the nullable fields.

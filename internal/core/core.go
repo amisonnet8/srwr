@@ -66,8 +66,16 @@ func (c *Core) run(fn func(tx *session.Tx) error) *Error {
 	return nil
 }
 
-// Select declares the range a client is looking at and returns a token to edit it with.
+// Select declares the range a client is looking at and returns a token to edit it with. A failure is also written to the tape.
 func (c *Core) Select(in SelectInput) (*SelectResult, *Error) {
+	res, cerr := c.doSelect(in)
+	if cerr != nil {
+		c.recordFailure(failedCall{tool: toolSelect, file: in.File, startLine: &in.StartLine, endLine: &in.EndLine, why: &in.Why, err: cerr})
+	}
+	return res, cerr
+}
+
+func (c *Core) doSelect(in SelectInput) (*SelectResult, *Error) {
 	if err := checkWhy(in.Why); err != nil {
 		return nil, err
 	}
@@ -123,8 +131,16 @@ func (c *Core) selectIn(tx *session.Tx, rel string, in SelectInput) (*SelectResu
 	return &SelectResult{Selection: sel, Lines: rangeLines(t.text, in.StartLine, in.EndLine)}, nil
 }
 
-// Replace puts new text in the range a token stands for.
+// Replace puts new text in the range a token stands for. A failure is also written to the tape (without the new text).
 func (c *Core) Replace(in ReplaceInput) (*ReplaceResult, *Error) {
+	res, cerr := c.doReplace(in)
+	if cerr != nil {
+		c.recordFailure(failedCall{tool: toolReplace, selection: &in.Selection, why: &in.Why, err: cerr})
+	}
+	return res, cerr
+}
+
+func (c *Core) doReplace(in ReplaceInput) (*ReplaceResult, *Error) {
 	if strings.TrimSpace(in.Selection) == "" {
 		return nil, newError(CodeInvalidInput, "selection is empty")
 	}

@@ -61,6 +61,22 @@ func parseLine(line []byte) (Event, bool) {
 	if e.Seq, ok = getInt(m, "seq"); !ok {
 		return Event{}, false
 	}
+	if typ == TypeFailure {
+		f := &FailureInfo{File: getNullableString(m, "file"), Selection: getNullableString(m, "selection"), Why: getNullableString(m, "why")}
+		f.Tool, _ = getString(m, "tool")
+		f.Code, _ = getString(m, "code")
+		f.Message, _ = getString(m, "message")
+		if has(m, "startLine") {
+			n, _ := getInt(m, "startLine")
+			f.StartLine = &n
+		}
+		if has(m, "endLine") {
+			n, _ := getInt(m, "endLine")
+			f.EndLine = &n
+		}
+		e.Failure = f
+		return e, true
+	}
 	if e.File, ok = getString(m, "file"); !ok {
 		return Event{}, false
 	}

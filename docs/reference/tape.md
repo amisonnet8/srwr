@@ -101,6 +101,21 @@ Recorded when a change to a file made outside srwr is detected. No `snapshot` fo
 
 If a `replace` is made with a selection token issued before an `external`, the token is followed in the usual way (line numbers are corrected only for the edits srwr made itself). If the external change did not change the range or the number of lines above it, the token still works. If it did, the content check gives `selection_mismatch`. srwr does not estimate the shift of lines from the content of the external change.
 
+### failure
+
+Recorded when a `select` or a `replace` fails (the AI gets an error). It is for finding out what mistakes the AI makes. It is not a step of the replay: a viewer does not show it as a frame.
+
+```json
+{"v":1,"seq":7,"ts":"…","type":"failure","tool":"select","file":null,"startLine":3,"endLine":9,"selection":null,"why":"Checking the main function","code":"invalid_range","message":"The path is absolute. Give a path relative to the workspace"}
+{"v":1,"seq":9,"ts":"…","type":"failure","tool":"replace","file":"cmd/app/main.go","startLine":null,"endLine":null,"selection":"sel_0410R3GZE4KV11C6325D32S7","why":"…","code":"selection_stale","message":"an edit overlapped the range after the select. Call select again"}
+```
+
+- `tool`: `select` or `replace`. `code` and `message` are the error the AI got ([mcp.md](mcp.md))
+- `file`: the path in the workspace, or `null` when it is not known or is left out. `startLine` and `endLine` are for a `select`, and `selection` (the token that was given) for a `replace`; `why` is what the AI wrote. A value that is not there is `null`
+- **The real path is left out** when it is an absolute path, a path outside the workspace, or a file that is not recorded: `file` is `null`, and `message` is a sentence without the path (`The path is absolute. Give a path relative to the workspace`, `The path points outside the workspace`, `The file is not recorded`)
+- `newText` of a `replace` is not written. `message` is cut at 300 characters
+- A failure that is found before the call reaches srwr's editing (a required input is missing, a value has the wrong type) is recorded too, with `file` `null`
+
 ## The selection token
 
 The `sel_…` string that `select` returns. It goes into `from` and `selection`. The AI only passes it on and need not know what is inside.

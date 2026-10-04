@@ -433,3 +433,32 @@ func TestCreatedExternalRoundTrips(t *testing.T) {
 		t.Errorf("text = %q", text)
 	}
 }
+
+func TestFailureRoundTrips(t *testing.T) {
+	two, nine := 3, 9
+	f := &FailureInfo{Tool: "select", StartLine: &two, EndLine: &nine, Why: Str("why"), Code: "invalid_range", Message: "m"}
+	e := Event{Type: TypeFailure, Seq: 7, TS: "2026-10-04T00:00:00.000Z", Failure: f}
+	line, err := Marshal(e)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := `{"v":1,"seq":7,"ts":"2026-10-04T00:00:00.000Z","type":"failure","tool":"select","file":null,"startLine":3,"endLine":9,"selection":null,"why":"why","code":"invalid_range","message":"m"}` + "\n"
+	if string(line) != want {
+		t.Errorf("line = %s, want %s", line, want)
+	}
+	got, ok := parseLine(line)
+	if !ok || got.Seq != 7 || !reflect.DeepEqual(got.Failure, f) {
+		t.Errorf("parsed %+v (ok %v)", got, ok)
+	}
+	// A replace has a token and no range, and a file when it is known.
+	r := &FailureInfo{Tool: "replace", File: Str("a.go"), Selection: Str("sel_x"), Code: "selection_stale", Message: "m"}
+	line, _ = Marshal(Event{Type: TypeFailure, Seq: 8, Failure: r})
+	if got, ok := parseLine(line); !ok || !reflect.DeepEqual(got.Failure, r) || !strings.Contains(string(line), `"startLine":null`) {
+		t.Errorf("replace: %+v %s", got.Failure, line)
+	}
+	// The state does not change.
+	s := Build([]Event{{Type: TypeSnapshot, Seq: 1, File: "a.go", Text: Str("x\n")}, {Type: TypeFailure, Seq: 2, Failure: r}})
+	if s.Files["a.go"].Text != "x\n" || s.LastSeq != 2 {
+		t.Errorf("state = %+v", s)
+	}
+}

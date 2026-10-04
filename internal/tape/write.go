@@ -44,6 +44,16 @@ func Marshal(e Event) ([]byte, error) {
 			{"fileShaBefore", e.FileShaBefore}, {"fileShaAfter", e.FileShaAfter},
 		}
 		fs = appendSource(fs, e)
+	case TypeFailure:
+		if e.Failure == nil {
+			return nil, fmt.Errorf("failure event %d has no failure", e.Seq)
+		}
+		f := e.Failure
+		fs = []field{
+			{"seq", e.Seq}, {"ts", e.TS}, {"type", e.Type}, {"tool", f.Tool}, {"file", f.File},
+			{"startLine", f.StartLine}, {"endLine", f.EndLine}, {"selection", f.Selection}, {"why", f.Why},
+			{"code", f.Code}, {"message", f.Message},
+		}
 	case TypeExternal:
 		fs = []field{
 			{"seq", e.Seq}, {"ts", e.TS}, {"type", e.Type}, {"file", e.File}, {"author", e.Author},

@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 
@@ -45,9 +46,11 @@ func TestSelectTurnsIgnoredFilesAway(t *testing.T) {
 		_, err := e.c.Select(SelectInput{File: rel, StartLine: 1, EndLine: 1, Why: "w"})
 		wantCode(t, err, CodeIgnoredFile)
 	}
-	e.noSecretOnTape(".env", "private", "token.txt")
-	if _, err := os.Stat(filepath.Join(e.root, ".srwr", "active")); err == nil {
-		t.Error("a tape was made by calls that were all turned away")
+	e.noSecretOnTape(".env", "private", "token.txt", "server.PEM")
+	for _, k := range e.kinds() {
+		if k != tape.TypeFailure {
+			t.Errorf("a refused call left a %s on the tape", k)
+		}
 	}
 	e.sel(e.c, "fine.txt", 1, 1) // the others still work
 	e.noSecretOnTape(".env", "private", "token.txt")
@@ -86,8 +89,11 @@ func TestUnreadableSrwrignoreRecordsNothing(t *testing.T) {
 	if herr != nil || len(notes) != 1 {
 		t.Fatalf("hook: notes=%v err=%v, want one note and no error", notes, herr)
 	}
-	if _, err := os.Stat(filepath.Join(e.root, ".srwr", "active")); err == nil {
-		t.Error("a tape was made")
+	e.noSecretOnTape("a.txt", ".srwrignore", e.root)
+	for _, k := range e.kinds() {
+		if k != tape.TypeFailure {
+			t.Errorf("srwr recorded a %s although it could not tell what is secret", k)
+		}
 	}
 }
 
@@ -102,8 +108,8 @@ func TestReplaceTurnsAwayAFileThatIsIgnoredNow(t *testing.T) {
 	if got := e.read("a.txt"); got != "one\ntwo\n" {
 		t.Errorf("the file was written: %q", got)
 	}
-	if got := e.kinds(); len(got) != 2 || got[0] != tape.TypeSnapshot || got[1] != tape.TypeSelect {
-		t.Errorf("kinds = %v, want only what was there before", got)
+	if got := e.kinds(); !slices.Equal(got, []string{tape.TypeSnapshot, tape.TypeSelect, tape.TypeFailure}) {
+		t.Errorf("kinds = %v, want what was there before and the failure", got)
 	}
 }
 

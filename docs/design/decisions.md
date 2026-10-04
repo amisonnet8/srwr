@@ -46,6 +46,10 @@ Even if the process dies in between, the next time srwr touches the files, the m
 
 A change to a file that was never touched cannot be seen, because there is no base. Holding a base (the hash of every file at the start of a session) would make the tape big. This is accepted as a limit ([limitations.md](limitations.md)).
 
+### A failed call is written to the tape, but is not a frame
+
+A call that failed leaves no trace, so a mistake the AI makes again and again (a path that is absolute, a `why` that is missing) can only be found by asking the AI. The tape now holds it as a `failure`. It is not a step of the replay, so the viewers do not change; how to show it is decided together with a switch that turns each kind of frame on and off. The real path is not written when it is absolute, outside the workspace or of a file that is not recorded, since the tape is shared.
+
 ### An external change is inserted in a form that shows its content
 
 A label alone does not tell what changed. So `external` and `final` are shown as a side-by-side diff. The label goes in the heading (the tab title). A line shaped like the `why` line cannot be made on a diff screen.

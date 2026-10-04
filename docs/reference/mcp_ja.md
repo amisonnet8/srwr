@@ -99,6 +99,8 @@ MCP の応答では `isError: true` になり、本文は次の JSON。
 | `invalid_range` | `{"lineCount": 行数}`。作業場の外のパスのときはなし |
 | ほか | なし |
 
+失敗した呼び出しは、AI のミスをあとで読めるように、[`failure`](tape_ja.md#failure) としてテープにも書く。絶対パスや作業場の外のパスは、実際のパスを伏せる。
+
 ## 処理の順序
 
 `replace` を受け取ると、srwr は次の順で処理する。

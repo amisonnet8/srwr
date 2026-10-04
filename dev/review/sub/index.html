@@ -22,10 +22,10 @@ li{margin:6px 0}
 <li>テープには、<strong>当たった場所ごとに <code>replace</code> を1つ</strong>、同じ <code>why</code> で書く（<code>tool: "sub"</code> が付く）</li>
 <li>数が合わない失敗は <code>failure</code>（<code>tool: "sub"</code>、コード <code>count_mismatch</code>）</li></ul>
 <h2>1. コマの見せ方（案C か 案A）</h2>
-<ul><li><strong>案C（推奨・人間の案）</strong>：sub は<strong>ファイルごとに1コマ</strong>。external と同じ左右の差分（左＝前・青、右＝後・橙、変わった行だけ）。<strong>右の先頭に理由の行</strong>。一覧は <code>sub a.go (2 hits)</code> の1行。当たりが多くてもコマは増えない</li>
+<ul><li><strong>案C（推奨・人間の案）</strong>：sub は<strong>ファイルごとに1コマ</strong>。external と同じ左右の差分（左＝前・青、右＝後・橙、変わった行だけ）。<strong>タブとエディタの間に、左右にまたがる理由の帯</strong>（左右の行が揃う）。一覧は <code>sub a.go (2 hits)</code> の1行。当たりが多くてもコマは増えない</li>
 <li>案A：当たりごとに、ふつうの replace のコマ。画面は変わらないが、当たりが多いとコマが多い</li>
 <li>案Cで変わるもの：コマの新しい種類 <code>sub</code>（差分のコマ＋理由）。プロトコル（<code>protocolVersion</code> を上げる）・拡張・Vim・基準。テープは、ファイルごとに <code>replace</code> を1つ（範囲＝最初の当たりから最後の当たりを含む行、<code>tool: "sub"</code>）で、形式のフィールドは足さない</li></ul>
-<div class="fig"><p class="note">案C：a.go の sub（2か所）。左右の差分、右の先頭に理由</p><div class="pair"><div><h4>dark</h4><svg xmlns="http://www.w3.org/2000/svg" width="1280" height="340" viewBox="0 0 1280 340" role="img" aria-label="A sub frame as a left/right diff in VSCode, option C (dark)">
+<div class="fig"><p class="note">案C：a.go の sub（2か所）。左右の差分、タブとエディタの間に理由の帯</p><div class="pair"><div><h4>dark</h4><svg xmlns="http://www.w3.org/2000/svg" width="1280" height="340" viewBox="0 0 1280 340" role="img" aria-label="A sub frame as a left/right diff in VSCode, option C (dark)">
 <rect x="0" y="0" width="1280" height="340" fill="#1e1e1e"/>
 <rect x="0" y="0" width="1280" height="28" fill="#2d2d2d"/>
 <text x="640" y="18" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12" text-anchor="middle">srwr-view  –  sub 2/3</text>
@@ -45,18 +45,18 @@ li{margin:6px 0}
 <text x="390" y="46" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Before  ⚠ sub: a.go</text>
 <rect x="829" y="28" width="451" height="28" fill="#2d2d2d"/>
 <text x="841" y="46" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">After  a.go</text>
-<rect x="378" y="62" width="451" height="20" fill="#1d3a5c"/>
-<text x="388" y="76" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">12</text>
-<text x="428" y="76" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">		return oldName(id)</text>
-<text x="388" y="96" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">13</text>
-<text x="428" y="96" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	}</text>
-<text x="388" y="116" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">14</text>
-<text x="428" y="116" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	…</text>
-<rect x="378" y="122" width="451" height="20" fill="#1d3a5c"/>
-<text x="388" y="136" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">30</text>
-<text x="428" y="136" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">		return oldName(x)</text>
-<rect x="829" y="62" width="451" height="20" fill="#f0883e"/>
-<text x="879" y="76" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13" font-weight="bold">Rename the helper to the new naming rule</text>
+<rect x="378" y="56" width="902" height="22" fill="#f0883e"/>
+<text x="428" y="72" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13" font-weight="bold">Rename the helper to the new naming rule</text>
+<rect x="378" y="82" width="451" height="20" fill="#1d3a5c"/>
+<text x="388" y="96" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">12</text>
+<text x="428" y="96" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">		return oldName(id)</text>
+<text x="388" y="116" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">13</text>
+<text x="428" y="116" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	}</text>
+<text x="388" y="136" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">14</text>
+<text x="428" y="136" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	…</text>
+<rect x="378" y="142" width="451" height="20" fill="#1d3a5c"/>
+<text x="388" y="156" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">30</text>
+<text x="428" y="156" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">		return oldName(x)</text>
 <rect x="829" y="82" width="451" height="20" fill="#583c27"/>
 <text x="839" y="96" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">12</text>
 <text x="879" y="96" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">		return newName(id)</text>
@@ -92,18 +92,18 @@ li{margin:6px 0}
 <text x="390" y="46" fill="#333333" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Before  ⚠ sub: a.go</text>
 <rect x="829" y="28" width="451" height="28" fill="#e7e7e7"/>
 <text x="841" y="46" fill="#333333" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">After  a.go</text>
-<rect x="378" y="62" width="451" height="20" fill="#cfe3fb"/>
-<text x="388" y="76" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">12</text>
-<text x="428" y="76" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">		return oldName(id)</text>
-<text x="388" y="96" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">13</text>
-<text x="428" y="96" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	}</text>
-<text x="388" y="116" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">14</text>
-<text x="428" y="116" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	…</text>
-<rect x="378" y="122" width="451" height="20" fill="#cfe3fb"/>
-<text x="388" y="136" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">30</text>
-<text x="428" y="136" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">		return oldName(x)</text>
-<rect x="829" y="62" width="451" height="20" fill="#b45f06"/>
-<text x="879" y="76" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13" font-weight="bold">Rename the helper to the new naming rule</text>
+<rect x="378" y="56" width="902" height="22" fill="#b45f06"/>
+<text x="428" y="72" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13" font-weight="bold">Rename the helper to the new naming rule</text>
+<rect x="378" y="82" width="451" height="20" fill="#cfe3fb"/>
+<text x="388" y="96" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">12</text>
+<text x="428" y="96" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">		return oldName(id)</text>
+<text x="388" y="116" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">13</text>
+<text x="428" y="116" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	}</text>
+<text x="388" y="136" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">14</text>
+<text x="428" y="136" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	…</text>
+<rect x="378" y="142" width="451" height="20" fill="#cfe3fb"/>
+<text x="388" y="156" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">30</text>
+<text x="428" y="156" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">		return oldName(x)</text>
 <rect x="829" y="82" width="451" height="20" fill="#fde3c8"/>
 <text x="839" y="96" fill="#a0a0a0" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">12</text>
 <text x="879" y="96" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">		return newName(id)</text>
@@ -343,12 +343,12 @@ li{margin:6px 0}
 </svg>
 </div></div></div>
 <h2>3. Vim</h2>
-<div class="fig"><p class="note">Vim 案C：左右の差分、右の先頭に理由</p><div class="pair"><div><h4>dark</h4><svg xmlns="http://www.w3.org/2000/svg" width="1176" height="246" viewBox="0 0 1176 246" role="img" aria-label="Vim, sub as a diff (dark)">
+<div class="fig"><p class="note">Vim 案C：左右の差分、タブとエディタの間に理由の帯</p><div class="pair"><div><h4>dark</h4><svg xmlns="http://www.w3.org/2000/svg" width="1176" height="246" viewBox="0 0 1176 246" role="img" aria-label="Vim, sub as a diff (dark)">
 <rect x="0" y="0" width="1176" height="246" fill="#1e1e1e"/>
 <text x="0" y="13" fill="#9d9d9d" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">Before  ⚠ sub: a.go</text>
 <text x="588.0" y="13" fill="#9d9d9d" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">After  a.go</text>
-<rect x="588.0" y="18" width="588.0" height="17" fill="#f0883e"/>
-<text x="596.0" y="30" fill="#ffffff" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" font-weight="bold" xml:space="preserve" style="white-space:pre">Rename the helper to the new naming rule</text>
+<rect x="0" y="18" width="1176" height="17" fill="#f0883e"/>
+<text x="8" y="30" fill="#ffffff" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" font-weight="bold" xml:space="preserve" style="white-space:pre">Rename the helper to the new naming rule</text>
 <rect x="0" y="35" width="588.0" height="17" fill="#1d3a5c"/>
 <rect x="588.0" y="35" width="588.0" height="17" fill="#583c27"/>
 <text x="0" y="47" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">  12  		return oldName(id)</text>
@@ -373,8 +373,8 @@ li{margin:6px 0}
 <rect x="0" y="0" width="1176" height="246" fill="#ffffff"/>
 <text x="0" y="13" fill="#6e6e6e" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">Before  ⚠ sub: a.go</text>
 <text x="588.0" y="13" fill="#6e6e6e" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">After  a.go</text>
-<rect x="588.0" y="18" width="588.0" height="17" fill="#b45f06"/>
-<text x="596.0" y="30" fill="#ffffff" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" font-weight="bold" xml:space="preserve" style="white-space:pre">Rename the helper to the new naming rule</text>
+<rect x="0" y="18" width="1176" height="17" fill="#b45f06"/>
+<text x="8" y="30" fill="#ffffff" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" font-weight="bold" xml:space="preserve" style="white-space:pre">Rename the helper to the new naming rule</text>
 <rect x="0" y="35" width="588.0" height="17" fill="#cfe3fb"/>
 <rect x="588.0" y="35" width="588.0" height="17" fill="#fde3c8"/>
 <text x="0" y="47" fill="#1f1f1f" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="14" xml:space="preserve" style="white-space:pre">  12  		return oldName(id)</text>

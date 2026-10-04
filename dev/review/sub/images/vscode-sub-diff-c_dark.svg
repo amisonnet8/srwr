@@ -18,18 +18,18 @@
 <text x="390" y="46" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Before  ⚠ sub: a.go</text>
 <rect x="829" y="28" width="451" height="28" fill="#2d2d2d"/>
 <text x="841" y="46" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">After  a.go</text>
-<rect x="378" y="62" width="451" height="20" fill="#1d3a5c"/>
-<text x="388" y="76" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">12</text>
-<text x="428" y="76" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">		return oldName(id)</text>
-<text x="388" y="96" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">13</text>
-<text x="428" y="96" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	}</text>
-<text x="388" y="116" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">14</text>
-<text x="428" y="116" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	…</text>
-<rect x="378" y="122" width="451" height="20" fill="#1d3a5c"/>
-<text x="388" y="136" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">30</text>
-<text x="428" y="136" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">		return oldName(x)</text>
-<rect x="829" y="62" width="451" height="20" fill="#f0883e"/>
-<text x="879" y="76" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13" font-weight="bold">Rename the helper to the new naming rule</text>
+<rect x="378" y="56" width="902" height="22" fill="#f0883e"/>
+<text x="428" y="72" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13" font-weight="bold">Rename the helper to the new naming rule</text>
+<rect x="378" y="82" width="451" height="20" fill="#1d3a5c"/>
+<text x="388" y="96" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">12</text>
+<text x="428" y="96" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">		return oldName(id)</text>
+<text x="388" y="116" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">13</text>
+<text x="428" y="116" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	}</text>
+<text x="388" y="136" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">14</text>
+<text x="428" y="136" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">	…</text>
+<rect x="378" y="142" width="451" height="20" fill="#1d3a5c"/>
+<text x="388" y="156" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">30</text>
+<text x="428" y="156" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">		return oldName(x)</text>
 <rect x="829" y="82" width="451" height="20" fill="#583c27"/>
 <text x="839" y="96" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">12</text>
 <text x="879" y="96" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">		return newName(id)</text>

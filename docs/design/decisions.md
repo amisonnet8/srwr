@@ -60,6 +60,10 @@ So that a shared tape cannot make it read an arbitrary file. When the current fi
 
 If each editor had its own code to read the tape and build the frames, VSCode and Vim would disagree, and every change of the format would mean fixing everything. So the reading side is gathered in one place, the view server (Go), and the promise with the editors is only the [protocol](../reference/protocol.md). A change of the tape format is absorbed in the server.
 
+### No compatibility promise for the tape format until v1
+
+srwr is still experimental and has no users who depend on old tapes. Keeping every old form readable would stop us from making the tape lighter and simpler (for example, dropping the whole-text `snapshot` that repeats an `external`). So until v1 the format may change without compatibility, and a tape is read by the version that wrote it. From v1 on, the promise in [tape.md](../reference/tape.md) applies: fields may be added, and the meaning of an existing one is not changed.
+
 ### Communication is newline-delimited JSON
 
 The LSP format (with headers) is not handled by Vim as it is. Newline-delimited JSON is handled by Vim's own `job` and a channel in `nl` mode as it is, and VSCode can write it without a library. It is the same format as MCP, so the implementation can be shared.

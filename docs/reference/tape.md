@@ -28,7 +28,8 @@ The current session is the one `.srwr/active` (the current tape ID) of the works
 - `ts` is RFC 3339 **in UTC**, with milliseconds and a trailing `Z` (`2026-09-29T02:20:04.123Z`). Tapes written by older versions have an offset such as `+09:00` (the time zone of the machine then); they are read as the same moments, and an old line is never rewritten
 - A field with no value (`why`, `selection`, `from` and so on) is written as `null`, not left out. The exceptions are the optional fields `source` and `tool` (left out when empty) and `deleted` (written only when true)
 - One event per line. A last line that does not end with a line break is treated as being in the middle of being written
-- A reader ignores fields it does not know. To avoid breaking old readers, fields may be added, but the meaning of an existing one is not changed
+- A reader ignores fields it does not know
+- **Until v1, the tape format may change without compatibility.** A tape written by one version is not promised to be read by another. From v1 on, fields may be added, but the meaning of an existing one is not changed
 
 ## Events
 

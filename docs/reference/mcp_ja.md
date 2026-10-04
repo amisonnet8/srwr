@@ -25,20 +25,36 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **2つの
 // 入力
 { "file": "cmd/app/main.go", "startLine": 12, "endLine": 14, "why": "main関数に修正が必要か確認中" }
 // 出力
-{ "ok": true, "selection": "sel_0410R3GZE4KV11C6325D32S7", "lines": ["func main() {", "…", "}"] }
+{ "ok": true, "selection": "sel_0410R3GZE4KV11C6325D32S7", "startLine": 12, "endLine": 14, "lines": ["func main() {", "…", "}"] }
 ```
 
 | 項目 | 意味 |
 |---|---|
 | `file` | 作業場からの相対パス。既存のファイルだけ（新しいファイルは作れない） |
-| `startLine`・`endLine` | 1始まり、両端を含む行番号 |
+| `startLine`・`endLine` | 1始まり、両端を含む行番号。2つとも渡すか、2つとも渡さない（渡さないときは `expect` が範囲を見つける） |
+| `expect` | 任意。範囲がこの内容であること。行を `\n` でつなぐ。下の「内容の確認」 |
 | `why` | なぜここを見るか |
 | `selection` | 範囲トークン。AI はそのまま `replace` に渡す（[範囲トークンとは](../design/token_ja.md)） |
+| 出力の `startLine`・`endLine` | 選んだ範囲（`expect` で見つけたときは、その場所） |
 | `lines` | 範囲の現在の内容。常に返る |
 
 - **挿入位置**：`endLine = startLine - 1` の空範囲は「`startLine` 行目の直前」。たとえば `startLine: 13, endLine: 12` は12行目と13行目の間。ファイルの末尾への追記は `startLine = 行数 + 1`
 - 範囲の条件：`1 ≤ startLine ≤ 行数 + 1`、`startLine - 1 ≤ endLine ≤ 行数`。外れると `invalid_range`
 - 作業場の外を指すパス（`../`、絶対パス）も `invalid_range`
+
+### 内容の確認（`expect`）
+
+`expect` は範囲の内容を、行ごとに書いたもの。行を `\n` でつなぐ（数え方は `newText` と同じ。`""` は0行、最後の `\n` は数えない）。空白も照合する。範囲は行単位なので、行の一部は探さない。
+
+| 呼び方 | 動き |
+|---|---|
+| `startLine`・`endLine` だけ | 今までどおり |
+| `startLine`・`endLine` と `expect` | 範囲が `expect` の行とまったく同じときだけ通る。違えば `content_mismatch`。行番号がずれたことに気づける |
+| `expect` だけ | `expect` の連続した行を、ファイルから探す。ちょうど1か所なら、そこが範囲。なければ `content_not_found`、2か所以上なら `content_ambiguous` |
+
+- 行番号も `expect` もないとき、`startLine` と `endLine` の片方だけのときは、`invalid_input`。行番号なしで `expect` が `""` のときもそう（挿入位置は、行番号で指す）
+- `content_mismatch` は、同じ行がファイルのどこにあるかを言う（最大5か所）。たいていは、それが直し方になる。`content_ambiguous` は、当たった場所を言う（最大10か所）。行番号を付けるか、`expect` の行を増やす
+- `expect` はテープに書かない
 
 ## replace
 
@@ -88,8 +104,11 @@ MCP の応答では `isError: true` になり、本文は次の JSON。
 | `selection_mismatch` | 行番号を補正しても、範囲の内容が `select` したときと違う（srwr の外で変更された疑い） | 内容を確認して `select` し直す |
 | `file_not_found` | 対象のファイルがない、または通常のファイルでない（ディレクトリなど） | — |
 | `invalid_range` | 行番号がファイルの範囲外、または作業場の外のパス | 行数を確認して `select` し直す |
+| `content_mismatch` | 範囲の内容が `expect` と違う | メッセージが言う場所を読んで、`select` し直す |
+| `content_not_found` | `expect`（行番号なし）がファイルにない | 内容を確認する。または行番号を付ける |
+| `content_ambiguous` | `expect`（行番号なし）がファイルの2か所以上にある | 行番号を付ける。または `expect` の行を増やす |
 | `ignored_file` | 記録しないファイルに `select`・`replace` した。 | srwr では扱えない。ユーザーに頼む |
-| `invalid_input` | 必須の入力がない、型が違う、`why` が空。`file` が空か NUL を含む、`selection` が空白だけ、`newText` に CR がある | 入力を直す |
+| `invalid_input` | 必須の入力がない、型が違う、`why` が空。`file` が空か NUL を含む、`startLine` と `endLine` の片方だけがある、または両方なく `expect` もない、`selection` が空白だけ、`newText` に CR がある | 入力を直す |
 | `unsupported_file` | CRLF やバイナリ | — |
 | `internal_error` | I/O エラーなど | — |
 
@@ -98,6 +117,7 @@ MCP の応答では `isError: true` になり、本文は次の JSON。
 | コード | `actual` |
 |---|---|
 | `selection_mismatch` | 補正後の範囲の現在の内容（行の配列） |
+| `content_mismatch` | 範囲の現在の内容（行の配列） |
 | `selection_stale` | 重なった編集の直前まで補正した範囲の、現在の内容（ファイルの範囲内に収める） |
 | `invalid_range` | `{"lineCount": 行数}`。作業場の外のパスのときはなし |
 | ほか | なし |
@@ -115,7 +135,7 @@ MCP の応答では `isError: true` になり、本文は次の JSON。
 5. 内容の照合（一致しなければ `selection_mismatch`）
 6. **先に実ファイルを書き、そのあとテープに追記する**
 
-検知するファイルをトークンから知るので、復号が先になる。偽のトークンでは、外部変更を記録しない。`select` は、パス・記録しないファイル・ファイルの種類の検査（`invalid_range`・`ignored_file`・`file_not_found`・`unsupported_file`）→ 検知 → 範囲の検査（`invalid_range`）→ 記録の順。
+検知するファイルをトークンから知るので、復号が先になる。偽のトークンでは、外部変更を記録しない。`select` は、パス・記録しないファイル・ファイルの種類の検査（`invalid_range`・`ignored_file`・`file_not_found`・`unsupported_file`）→ 検知 → 範囲の検査（`invalid_range`）→ 内容の確認（`content_mismatch`・`content_not_found`・`content_ambiguous`）→ 記録の順。
 
 途中で落ちても、次に srwr が触れたとき、実ファイルとの食い違いが `external` として見える。
 
@@ -125,7 +145,7 @@ AI がこの2つのツールを使って実際に犯したミス。どれも、�
 
 - **`file` は、作業場からの相対パスで渡す。** `/home/me/app/main.go` のような絶対パスは `invalid_range`、`../main.go` も `invalid_range` になる。`cmd/app/main.go` の形で書く。
 - **空範囲は、1 行ずれやすい。** `endLine = startLine - 1` は「`startLine` 行目の直前」を指すので、`startLine: 13, endLine: 12` は 12 行目と 13 行目の間になる。先にその場所の前後の行を読み、番号を確かめてから `select` を呼ぶ。
-- **新しい `select` の行番号は、今のファイルの行番号で渡す。** ほかの編集で行がずれたとき、すでに発行したトークンは srwr が補正するが、新しい `select` の `startLine`・`endLine` は補正しない。ほかの編集のあとは、ファイルを読み直すか、返ってきた `lines`（`replace` のあとは `before`・`after` も）で確かめる。
+- **新しい `select` の行番号は、今のファイルの行番号で渡す。** ほかの編集で行がずれたとき、すでに発行したトークンは srwr が補正するが、新しい `select` の `startLine`・`endLine` は補正しない。ほかの編集のあとは、ファイルを読み直すか、返ってきた `lines`（`replace` のあとは `before`・`after` も）で確かめる。もっと良いのは、`expect` に狙った行を渡すこと。番号が違えば、違う場所を選ばずに断られる。
 - **新しいファイルは、`select` と `replace` では作れない。** `select` は `file_not_found` になる。シェルのコマンドで作る。作ったファイルは、`created: true` の [`external`](tape_ja.md#external) として記録される。
 - **同じ場所を続けて直すときは、`replace` が返した新しいトークンを使う。** 使ったトークンは使い切りで、もう一度使うと `selection_stale` になる。
 - **エラーを読む。** `invalid_range` は `lineCount`（ファイルの行数）を返すので、番号を直すにはそれで足りる。

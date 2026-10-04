@@ -123,12 +123,15 @@ type selectArgs struct {
 	File      *string `json:"file"`
 	StartLine *int    `json:"startLine"`
 	EndLine   *int    `json:"endLine"`
+	Expect    *string `json:"expect"`
 	Why       *string `json:"why"`
 }
 
 type selectOK struct {
 	OK        bool     `json:"ok"`
 	Selection string   `json:"selection"`
+	StartLine int      `json:"startLine"`
+	EndLine   int      `json:"endLine"`
 	Lines     []string `json:"lines"`
 }
 
@@ -138,17 +141,32 @@ func (s *Server) callSelect(raw json.RawMessage) toolResult {
 		s.Core.RecordInputFailure(tools.Select, err.Code, err.Message)
 		return failure(*err)
 	}
-	if missing := firstMissing(map[string]bool{"file": a.File == nil, "startLine": a.StartLine == nil, "endLine": a.EndLine == nil, "why": a.Why == nil},
-		"file", "startLine", "endLine", "why"); missing != "" {
-		e := core.Error{Code: core.CodeInvalidInput, Message: "missing required input: " + missing}
-		s.Core.RecordInputFailure(tools.Select, e.Code, e.Message)
-		return failure(e)
+	if missing := firstMissing(map[string]bool{"file": a.File == nil, "why": a.Why == nil}, "file", "why"); missing != "" {
+		return s.rejectSelect("missing required input: " + missing)
 	}
-	res, cerr := s.Core.Select(core.SelectInput{File: *a.File, StartLine: *a.StartLine, EndLine: *a.EndLine, Why: *a.Why})
+	// The line numbers go together; with none of them, expect says where the range is.
+	switch {
+	case (a.StartLine == nil) != (a.EndLine == nil):
+		return s.rejectSelect("give both startLine and endLine, or neither")
+	case a.StartLine == nil && a.Expect == nil:
+		return s.rejectSelect("missing required input: startLine and endLine (or expect, to find the range by its content)")
+	}
+	in := core.SelectInput{File: *a.File, Why: *a.Why, Expect: a.Expect, Locate: a.StartLine == nil}
+	if !in.Locate {
+		in.StartLine, in.EndLine = *a.StartLine, *a.EndLine
+	}
+	res, cerr := s.Core.Select(in)
 	if cerr != nil {
 		return failure(*cerr)
 	}
-	return success(selectOK{OK: true, Selection: res.Selection, Lines: res.Lines})
+	return success(selectOK{OK: true, Selection: res.Selection, StartLine: res.StartLine, EndLine: res.EndLine, Lines: res.Lines})
+}
+
+// rejectSelect turns a select away for its input, and records that on the tape.
+func (s *Server) rejectSelect(message string) toolResult {
+	e := core.Error{Code: core.CodeInvalidInput, Message: message}
+	s.Core.RecordInputFailure(tools.Select, e.Code, e.Message)
+	return failure(e)
 }
 
 type replaceArgs struct {

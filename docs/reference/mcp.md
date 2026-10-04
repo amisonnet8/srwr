@@ -25,20 +25,36 @@ Declares the range being looked at, and returns a **selection token** for editin
 // input
 { "file": "cmd/app/main.go", "startLine": 12, "endLine": 14, "why": "Checking whether the main function needs a fix" }
 // output
-{ "ok": true, "selection": "sel_0410R3GZE4KV11C6325D32S7", "lines": ["func main() {", "…", "}"] }
+{ "ok": true, "selection": "sel_0410R3GZE4KV11C6325D32S7", "startLine": 12, "endLine": 14, "lines": ["func main() {", "…", "}"] }
 ```
 
 | Item | Meaning |
 |---|---|
 | `file` | A path relative to the workspace. Existing files only (a new file cannot be made) |
-| `startLine`, `endLine` | Line numbers, 1-based, both inclusive |
+| `startLine`, `endLine` | Line numbers, 1-based, both inclusive. Give both or neither (with neither, `expect` finds the range) |
+| `expect` | Optional. The lines the range must hold, joined with `\n`. See "Checking the content" below |
 | `why` | Why it looks here |
 | `selection` | The selection token. The AI passes it to `replace` as it is ([what the token is](../design/token.md)) |
+| `startLine`, `endLine` in the output | The range that was selected (when `expect` found it, this is where) |
 | `lines` | The current content of the range. Always returned |
 
 - **A place to insert**: an empty range with `endLine = startLine - 1` means "just before line `startLine`". For example `startLine: 13, endLine: 12` is between lines 12 and 13. To append to the end of the file, `startLine = number of lines + 1`
 - Conditions of the range: `1 ≤ startLine ≤ number of lines + 1`, `startLine - 1 ≤ endLine ≤ number of lines`. Outside them, `invalid_range`
 - A path that points outside the workspace (`../`, an absolute path) is also `invalid_range`
+
+### Checking the content (`expect`)
+
+`expect` is the content of the range, line by line: the lines joined with `\n` (counted like `newText`: `""` is 0 lines, and a last `\n` is not counted). Whitespace counts. A part of a line is not searched for, since a range is whole lines.
+
+| Call | What happens |
+|---|---|
+| `startLine` and `endLine` only | As before |
+| `startLine`, `endLine` and `expect` | It passes only when the range holds exactly the lines of `expect`. Otherwise `content_mismatch`. This catches line numbers that have moved |
+| `expect` only | srwr looks for the consecutive lines of `expect` in the file. Exactly one place: that is the range. None: `content_not_found`. Two or more: `content_ambiguous` |
+
+- With neither line numbers nor `expect`, or with only one of `startLine` and `endLine`, the call is `invalid_input`. So is an `expect` of `""` without line numbers (a place to insert is pointed at with line numbers)
+- `content_mismatch` says where the same lines are in the file (up to 5 places), which is usually the fix. `content_ambiguous` says where they are (up to 10 places): add line numbers, or more lines to `expect`
+- `expect` is not written to the tape
 
 ## replace
 
@@ -88,8 +104,11 @@ In the MCP response `isError` is `true`, and the body is the following JSON.
 | `selection_mismatch` | Even with the line numbers corrected, the content of the range differs from when `select` was called (it may have been changed outside srwr) | Check the content and call `select` again |
 | `file_not_found` | The target file does not exist, or is not a regular file (a directory, for example) | — |
 | `invalid_range` | The line numbers are outside the file, or the path is outside the workspace | Check the number of lines and call `select` again |
+| `content_mismatch` | The range holds other lines than `expect` | Read where the message says the lines are, and call `select` again |
+| `content_not_found` | `expect` (given without line numbers) is not in the file | Check the content, or give line numbers |
+| `content_ambiguous` | `expect` (given without line numbers) is in the file in more than one place | Give line numbers, or more lines in `expect` |
 | `ignored_file` | `select` or `replace` was used on a file that is not recorded | srwr cannot handle it. Ask the user |
-| `invalid_input` | A required input is missing, has the wrong type, or `why` is empty; `file` is empty or has a NUL; `selection` is blank; `newText` has a CR | Fix the input |
+| `invalid_input` | A required input is missing, has the wrong type, or `why` is empty; `file` is empty or has a NUL; only one of `startLine` and `endLine` is given, or none of them and no `expect`; `selection` is blank; `newText` has a CR | Fix the input |
 | `unsupported_file` | CRLF or binary | — |
 | `internal_error` | An I/O error and the like | — |
 
@@ -98,6 +117,7 @@ An error may carry the current content (`actual`). What it holds is decided for 
 | Code | `actual` |
 |---|---|
 | `selection_mismatch` | The current content of the corrected range (an array of lines) |
+| `content_mismatch` | The current content of the range (an array of lines) |
 | `selection_stale` | The current content of the range, corrected up to just before the overlapping edit (kept inside the file) |
 | `invalid_range` | `{"lineCount": number of lines}`. None for a path outside the workspace |
 | Others | None |
@@ -115,7 +135,7 @@ When srwr receives a `replace`, it works in this order.
 5. Check the content (a mismatch gives `selection_mismatch`)
 6. **Write the real file first, then append to the tape**
 
-The file to detect is learned from the token, so decoding comes first. With a forged token, no external change is recorded. For `select`, the order is: the check of the path, the files that are not recorded and the kind of file (`invalid_range`, `ignored_file`, `file_not_found`, `unsupported_file`), then detection, then the check of the range (`invalid_range`), then recording.
+The file to detect is learned from the token, so decoding comes first. With a forged token, no external change is recorded. For `select`, the order is: the check of the path, the files that are not recorded and the kind of file (`invalid_range`, `ignored_file`, `file_not_found`, `unsupported_file`), then detection, then the check of the range (`invalid_range`), then the check of the content (`content_mismatch`, `content_not_found`, `content_ambiguous`), then recording.
 
 Even if the process dies in between, the next time srwr touches the files, the mismatch with the real file shows up as `external`.
 
@@ -125,7 +145,7 @@ These are the mistakes seen when an AI used the two tools. Each is an ordinary e
 
 - **Give `file` as a path relative to the workspace.** An absolute path such as `/home/me/app/main.go` is `invalid_range`, and so is `../main.go`. Write `cmd/app/main.go`.
 - **An empty range is easy to place one line off.** `endLine = startLine - 1` means "just before line `startLine`", so `startLine: 13, endLine: 12` is between lines 12 and 13. Read the lines on both sides of the place first, and check the numbers before calling `select`.
-- **The line numbers of a new `select` are the numbers of the file now.** srwr corrects the token it has already issued when another edit moves the lines, but not the `startLine` and `endLine` of a new `select`. After other edits, read the file again, or check the returned `lines` (and, after a `replace`, `before` and `after`).
+- **The line numbers of a new `select` are the numbers of the file now.** srwr corrects the token it has already issued when another edit moves the lines, but not the `startLine` and `endLine` of a new `select`. After other edits, read the file again, or check the returned `lines` (and, after a `replace`, `before` and `after`). Better: pass `expect` with the lines you mean, and a wrong number is refused instead of selecting the wrong place.
 - **A new file cannot be made with `select` and `replace`.** `select` gives `file_not_found`. Make it with a shell command. The file is then recorded as an [`external`](tape.md#external) with `created: true`.
 - **To change the same place again, use the new token that `replace` returned.** The token you used is spent: using it again gives `selection_stale`.
 - **Read the error.** `invalid_range` returns `lineCount` (the number of lines of the file), which is enough to correct the numbers.

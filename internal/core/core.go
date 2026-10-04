@@ -5,7 +5,6 @@ package core
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/amisonnet8/srwr/internal/session"
@@ -24,11 +23,18 @@ type SelectInput struct {
 	StartLine int
 	EndLine   int
 	Why       string
+
+	// Expect is the content the range must hold (lines joined with "\n"). With Locate it is also how the range is found: StartLine
+	// and EndLine are then not used. Its content never goes on the tape.
+	Expect *string
+	Locate bool
 }
 
 // SelectResult is what select returns: a token for the range and the lines in it.
 type SelectResult struct {
 	Selection string
+	StartLine int
+	EndLine   int
 	Lines     []string
 }
 
@@ -76,7 +82,11 @@ func (c *Core) run(fn func(tx *session.Tx) error) *Error {
 func (c *Core) Select(in SelectInput) (*SelectResult, *Error) {
 	res, cerr := c.doSelect(in)
 	if cerr != nil {
-		c.recordFailure(failedCall{tool: toolSelect, file: in.File, startLine: &in.StartLine, endLine: &in.EndLine, why: &in.Why, err: cerr})
+		f := failedCall{tool: toolSelect, file: in.File, why: &in.Why, err: cerr}
+		if !in.Locate {
+			f.startLine, f.endLine = &in.StartLine, &in.EndLine
+		}
+		c.recordFailure(f)
 	}
 	return res, cerr
 }
@@ -110,31 +120,27 @@ func (c *Core) selectIn(tx *session.Tx, rel string, in SelectInput) (*SelectResu
 		return nil, err
 	}
 
-	n := len(tape.Lines(t.text))
-	if in.StartLine < 1 || in.StartLine > n+1 || in.EndLine < in.StartLine-1 || in.EndLine > n {
-		return nil, &Error{
-			Code:    CodeInvalidRange,
-			Message: fmt.Sprintf("%s has %d lines; startLine=%d endLine=%d is out of range", rel, n, in.StartLine, in.EndLine),
-			Actual:  map[string]int{"lineCount": n},
-		}
+	start, end, cerr := chooseRange(rel, t.text, in)
+	if cerr != nil {
+		return nil, cerr
 	}
 
 	sel := token.Encode(token.Token{
 		Seq:       uint64(tx.NextSeq()), //nolint:gosec // NextSeq is at least 1
-		StartLine: uint64(in.StartLine),
-		EndLine:   uint64(in.EndLine), //nolint:gosec // checked above: at least StartLine-1, so 0 or more
+		StartLine: uint64(start),        //nolint:gosec // checked in chooseRange: at least 1
+		EndLine:   uint64(end),          //nolint:gosec // checked in chooseRange: at least start-1, so 0 or more
 		FileHash:  token.Hash4(rel),
-		TextHash:  token.Hash4(tape.RangeText(t.text, in.StartLine, in.EndLine)),
+		TextHash:  token.Hash4(tape.RangeText(t.text, start, end)),
 	}, tx.TapeID(), tx.Key())
 
 	err := tx.Append(tape.Event{
-		Type: tape.TypeSelect, Seq: tx.NextSeq(), File: rel, StartLine: in.StartLine, EndLine: in.EndLine,
+		Type: tape.TypeSelect, Seq: tx.NextSeq(), File: rel, StartLine: start, EndLine: end,
 		Why: &in.Why, Selection: &sel, Source: tape.SourceMCP,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &SelectResult{Selection: sel, Lines: rangeLines(t.text, in.StartLine, in.EndLine)}, nil
+	return &SelectResult{Selection: sel, StartLine: start, EndLine: end, Lines: rangeLines(t.text, start, end)}, nil
 }
 
 // Replace puts new text in the range a token stands for. A failure is also written to the tape (without the new text).

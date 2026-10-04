@@ -173,6 +173,14 @@ func TestToolsList(t *testing.T) {
 			}
 		}
 	}
+	// The line numbers are optional: expect can find the range.
+	sel := r.Result.Tools[0].InputSchema
+	if contains(sel.Required, "startLine") || contains(sel.Required, "endLine") || contains(sel.Required, "expect") {
+		t.Errorf("select requires %v: only file and why are required", sel.Required)
+	}
+	if _, ok := sel.Properties["expect"]; !ok {
+		t.Error("select has no expect")
+	}
 	if !contains(r.Result.Tools[0].InputSchema.Required, "file") || !contains(r.Result.Tools[1].InputSchema.Required, "selection") {
 		t.Error("required lists are wrong")
 	}
@@ -214,6 +222,12 @@ func TestSelectAndReplace(t *testing.T) {
 		t.Errorf("file = %q", b)
 	}
 
+	// A select with only expect finds its own range, and says where.
+	found, isErr := call(4, "select", `{"file":"a.go","expect":"a < b && c > d","why":"探す"}`)
+	if isErr || found["startLine"] != float64(2) || found["endLine"] != float64(2) {
+		t.Errorf("select by expect = %v %v", found, isErr)
+	}
+
 	// The result holds the range now and the lines around it; what is empty is [] and not null.
 	for key, want := range map[string]int{"lines": 1, "before": 1, "after": 0} {
 		if l, ok := rep[key].([]any); !ok || len(l) != want {
@@ -248,6 +262,12 @@ func TestToolErrors(t *testing.T) {
 		{"line as a string", "select", `{"file":"a.go","startLine":"1","endLine":1,"why":"w"}`, "invalid_input", nil},
 		{"line as a fraction", "select", `{"file":"a.go","startLine":1.5,"endLine":2,"why":"w"}`, "invalid_input", nil},
 		{"file as a number", "select", `{"file":3,"startLine":1,"endLine":1,"why":"w"}`, "invalid_input", nil},
+		{"only startLine", "select", `{"file":"a.go","startLine":1,"why":"w"}`, "invalid_input", nil},
+		{"only endLine", "select", `{"file":"a.go","endLine":1,"why":"w"}`, "invalid_input", nil},
+		{"no lines and no expect", "select", `{"file":"a.go","why":"w"}`, "invalid_input", nil},
+		{"expect as a number", "select", `{"file":"a.go","expect":1,"why":"w"}`, "invalid_input", nil},
+		{"expect that is not in the file", "select", `{"file":"a.go","expect":"zzz","why":"w"}`, "content_not_found", nil},
+		{"expect that is in the file, in other lines", "select", `{"file":"a.go","startLine":1,"endLine":1,"expect":"2","why":"w"}`, "content_mismatch", []string{"1"}},
 		{"no arguments", "select", `null`, "invalid_input", nil},
 		{"arguments of the wrong shape", "select", `[1]`, "invalid_input", nil},
 		{"replace without newText", "replace", `{"selection":"sel_x","why":"w"}`, "invalid_input", nil},

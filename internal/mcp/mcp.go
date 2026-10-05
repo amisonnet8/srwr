@@ -128,6 +128,7 @@ type lookArgs struct {
 	StartLine *int    `json:"startLine"`
 	EndLine   *int    `json:"endLine"`
 	Expect    *string `json:"expect"`
+	Search    *string `json:"search"`
 	Why       *string `json:"why"`
 }
 
@@ -148,6 +149,9 @@ func (s *Server) callLook(raw json.RawMessage) toolResult {
 	if missing := firstMissing(map[string]bool{"file": a.File == nil, "why": a.Why == nil}, "file", "why"); missing != "" {
 		return s.rejectLook("missing required input: " + missing)
 	}
+	if a.Search != nil {
+		return s.callSearch(a)
+	}
 	// The line numbers go together; with none of them, expect says where the range is.
 	switch {
 	case (a.StartLine == nil) != (a.EndLine == nil):
@@ -164,6 +168,38 @@ func (s *Server) callLook(raw json.RawMessage) toolResult {
 		return failure(*cerr)
 	}
 	return success(lookOK{OK: true, Selection: res.Selection, StartLine: res.StartLine, EndLine: res.EndLine, Lines: res.Lines})
+}
+
+type searchMatchOK struct {
+	Selection string   `json:"selection"`
+	StartLine int      `json:"startLine"`
+	EndLine   int      `json:"endLine"`
+	Lines     []string `json:"lines"`
+	Above     []string `json:"above"`
+	Below     []string `json:"below"`
+}
+
+type searchOK struct {
+	OK      bool            `json:"ok"`
+	Count   int             `json:"count"`
+	Matches []searchMatchOK `json:"matches"`
+	More    int             `json:"more,omitempty"`
+}
+
+// callSearch is look with search: the lines of the file that hold a text, each with a token.
+func (s *Server) callSearch(a lookArgs) toolResult {
+	if a.StartLine != nil || a.EndLine != nil || a.Expect != nil {
+		return s.rejectLook("search is not given with startLine, endLine or expect: it finds the lines by itself")
+	}
+	res, cerr := s.Core.Search(core.SearchInput{File: *a.File, Search: *a.Search, Why: *a.Why})
+	if cerr != nil {
+		return failure(*cerr)
+	}
+	out := searchOK{OK: true, Count: res.Count, Matches: make([]searchMatchOK, len(res.Matches)), More: res.Count - len(res.Matches)}
+	for i, m := range res.Matches {
+		out.Matches[i] = searchMatchOK{Selection: m.Selection, StartLine: m.StartLine, EndLine: m.EndLine, Lines: m.Lines, Above: m.Above, Below: m.Below}
+	}
+	return success(out)
 }
 
 // rejectLook turns a look away for its input, and records that on the tape.

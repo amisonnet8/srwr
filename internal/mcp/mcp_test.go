@@ -446,6 +446,40 @@ func TestEditInsert(t *testing.T) {
 	}
 }
 
+// look with search returns every line that holds the text, each with a token; it is refused with a range or expect.
+func TestLookSearch(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "a.go"), []byte("a\nfoo(1)\nb\nfoo(2)\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	m, isErr := body(t, serve(t, root, toolCall(1, "look", `{"file":"a.go","search":"foo(","why":"w"}`))[0])
+	ms, _ := m["matches"].([]any)
+	if isErr || m["count"] != float64(2) || len(ms) != 2 {
+		t.Fatalf("got %v", m)
+	}
+	first, _ := ms[0].(map[string]any)
+	if first["startLine"] != float64(2) || first["selection"] == "" || len(first["above"].([]any)) != 1 || len(first["below"].([]any)) != 2 {
+		t.Errorf("first = %v", first)
+	}
+	if _, has := m["more"]; has {
+		t.Errorf("more is left out when nothing was left out: %v", m)
+	}
+	m, isErr = body(t, serve(t, root, toolCall(1, "look", `{"file":"a.go","search":"zzz","why":"w"}`))[0])
+	if ms, ok := m["matches"].([]any); isErr || !ok || len(ms) != 0 || m["count"] != float64(0) {
+		t.Errorf("no match: got %v", m)
+	}
+	for _, args := range []string{
+		`{"file":"a.go","search":"foo","startLine":1,"endLine":1,"why":"w"}`,
+		`{"file":"a.go","search":"foo","expect":"a","why":"w"}`,
+		`{"file":"a.go","search":"","why":"w"}`,
+	} {
+		m, isErr = body(t, serve(t, root, toolCall(1, "look", args))[0])
+		if e, _ := m["error"].(map[string]any); !isErr || e["code"] != "invalid_input" {
+			t.Errorf("%s: got %v", args, m)
+		}
+	}
+}
+
 func TestNearMatchesInTheError(t *testing.T) {
 	root := t.TempDir()
 	if err := os.WriteFile(filepath.Join(root, "a.go"), []byte("func f() {\n\treturn 1\n}\n"), 0o600); err != nil {

@@ -128,4 +128,13 @@ func main() {
 }
 ```
 
+## 場所を探す
+
+場所を探すには、`look` に行番号の代わりに `search` を渡す。その文字列を含む行を全部（20件まで）、それぞれの範囲トークンつきで返す。トークンは、そのまま `edit` に渡せる。見た行として、`why` つきでテープに1行ずつ残り、ファイルは変わらない。
+
+```jsonrpc
+→ {"jsonrpc":"2.0","id":10,"method":"tools/call","params":{"name":"look","arguments":{"file":"cmd/main.go","search":"up()","why":"setup と cleanup の呼び出しを探す"}}}
+← {"jsonrpc":"2.0","id":10,"result":{"content":[{"text":"{\"ok\":true,\"count\":2,\"matches\":[{\"selection\":\"sel_045081648KVH3Z5DC93GTFB3\",\"startLine\":4,\"endLine\":4,\"lines\":[\"\\tsetup()\"],\"above\":[\"\",\"func main() {\"],\"below\":[\"\\tcheck()\",\"\\trun()\"]},{\"selection\":\"sel_045GE1Y48KVH3MCC2C6EXB6B\",\"startLine\":7,\"endLine\":7,\"lines\":[\"\\tcleanup()\"],\"above\":[\"\\tcheck()\",\"\\trun()\"],\"below\":[\"}\"]}]}","type":"text"}],"isError":false}}
+```
+
 エラーの一覧は [mcp.md](../reference/mcp_ja.md)。

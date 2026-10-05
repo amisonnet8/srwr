@@ -35,6 +35,7 @@ Looks at a range, and returns a **selection token** for editing that range with 
 | `file` | A path relative to the workspace. Existing files only (make a new file with `new`) |
 | `startLine`, `endLine` | Line numbers, 1-based, both inclusive. Give both or neither (with neither, `expect` finds the range) |
 | `expect` | Optional. The lines the range must hold, joined with `\n`. See "Checking the content" below |
+| `search` | Optional, instead of a range. A text to find in the file. See "Searching" below |
 | `why` | Why it looks here |
 | `selection` | The selection token. The AI passes it to `edit` as it is ([what the token is](../design/token.md)) |
 | `startLine`, `endLine` in the output | The range that was selected (when `expect` found it, this is where) |
@@ -57,6 +58,23 @@ Looks at a range, and returns a **selection token** for editing that range with 
 - With neither line numbers nor `expect`, or with only one of `startLine` and `endLine`, the call is `invalid_input`. So is an `expect` of `""` without line numbers (a place to insert is pointed at with line numbers)
 - `content_mismatch` says where the same lines are in the file (up to 5 places), which is usually the fix. `content_ambiguous` says where they are (up to 10 places): add line numbers, or more lines to `expect`
 - `expect` is not written to the tape
+
+### Searching (`search`)
+
+`file` and `search`, with no `startLine`, `endLine` or `expect`, returns every line of the file that holds the text, so the AI can find a place and edit it without reading the file with another tool.
+
+```jsonc
+// input
+{ "file": "cmd/main.go", "search": "up()", "why": "Find where setup and cleanup are called" }
+// output
+{ "ok": true, "count": 2, "matches": [
+  { "selection": "sel_…", "startLine": 4, "endLine": 4, "lines": ["\tsetup()"], "above": ["", "func main() {"], "below": ["\tcheck()", "\trun()"] },
+  { "selection": "sel_…", "startLine": 7, "endLine": 7, "lines": ["\tcleanup()"], "above": ["\tcheck()", "\trun()"], "below": ["}"] } ] }
+```
+
+- `search` is plain text (not a regular expression), in one line (a line break is `invalid_input`; so is an empty text), and capital letters and spaces count. A line that holds it more than once is one match
+- Each match is **a `look` of that one line**, with its own `selection` (to pass to `edit` as it is), and `above` and `below` (up to 2 lines of the file each). The result is in line order. `count` is how many lines hold the text. At most 20 matches are returned and put on the tape; `more` is how many lines were left out (it is left out when none). No match is not an error: `matches` is `[]` and nothing is written to the tape
+- With `startLine`, `endLine` or `expect`, the call is `invalid_input`. The text searched for is not written to the tape. The same files are refused as for any `look`
 
 ## edit
 

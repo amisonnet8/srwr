@@ -35,6 +35,7 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 | `file` | 作業場からの相対パス。既存のファイルだけ（新しいファイルは `new` で作る） |
 | `startLine`・`endLine` | 1始まり、両端を含む行番号。2つとも渡すか、2つとも渡さない（渡さないときは `expect` が範囲を見つける） |
 | `expect` | 任意。範囲がこの内容であること。行を `\n` でつなぐ。下の「内容の確認」 |
+| `search` | 任意。範囲の代わりに、ファイルから探す文字列。下の「検索」 |
 | `why` | なぜここを見るか |
 | `selection` | 範囲トークン。AI はそのまま `edit` に渡す（[範囲トークンとは](../design/token_ja.md)） |
 | 出力の `startLine`・`endLine` | 選んだ範囲（`expect` で見つけたときは、その場所） |
@@ -57,6 +58,23 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 - 行番号も `expect` もないとき、`startLine` と `endLine` の片方だけのときは、`invalid_input`。行番号なしで `expect` が `""` のときもそう（挿入位置は、行番号で指す）
 - `content_mismatch` は、同じ行がファイルのどこにあるかを言う（最大5か所）。たいていは、それが直し方になる。`content_ambiguous` は、当たった場所を言う（最大10か所）。行番号を付けるか、`expect` の行を増やす
 - `expect` はテープに書かない
+
+### 検索（`search`）
+
+`file` と `search` を渡し、`startLine`・`endLine`・`expect` は渡さないと、その文字列を含む行を全部返す。AI は、別の道具でファイルを読まなくても、場所を見つけて、そのまま編集できる。
+
+```jsonc
+// 入力
+{ "file": "cmd/main.go", "search": "up()", "why": "setup と cleanup の呼び出しを探す" }
+// 出力
+{ "ok": true, "count": 2, "matches": [
+  { "selection": "sel_…", "startLine": 4, "endLine": 4, "lines": ["\tsetup()"], "above": ["", "func main() {"], "below": ["\tcheck()", "\trun()"] },
+  { "selection": "sel_…", "startLine": 7, "endLine": 7, "lines": ["\tcleanup()"], "above": ["\tcheck()", "\trun()"], "below": ["}"] } ] }
+```
+
+- `search` はただの文字列（正規表現ではない）で、1行の中のもの（改行を含む・空は `invalid_input`）。大文字小文字と空白は区別する。1行に何度あっても、その行は1件
+- 当たりは、**その1行の `look`** になる。それぞれに `selection`（そのまま `edit` に渡せる）と、`above`・`below`（ファイルの前後それぞれ最大2行）が付く。並びは行の順。`count` は当たった行の数。返す（テープに書く）のは20件まで。載せなかった行の数が `more`（なければ付かない）。当たりがないのはエラーではなく、`matches` が `[]` で、テープには何も書かない
+- `startLine`・`endLine`・`expect` と一緒なら `invalid_input`。探した文字列はテープに書かない。断られるファイルは、ふつうの `look` と同じ
 
 ## edit
 

@@ -40,6 +40,7 @@ func List() []Tool {
 					"startLine": map[string]any{"type": "integer", "minimum": 1, "description": "First line (1-based)"},
 					"endLine":   map[string]any{"type": "integer", "minimum": 0, "description": "Last line (inclusive); startLine - 1 for an empty range. Give both startLine and endLine, or neither"},
 					"expect":    map[string]any{"type": "string", "description": "The lines the range must hold, joined with \\n (whole lines, whitespace counts). Without startLine and endLine, the range is where these lines are"},
+					"search":    map[string]any{"type": "string", "description": "Instead of a range: a text to find in the file (plain text, one line, case counts). Returns every line that holds it, up to 20, each with a token. Not with startLine, endLine or expect"},
 					"why":       map[string]any{"type": "string", "minLength": 1, "pattern": `\S`, "description": whyDescription},
 				},
 				"required": []string{"file", "why"},

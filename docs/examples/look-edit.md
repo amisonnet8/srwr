@@ -128,4 +128,13 @@ func main() {
 }
 ```
 
+## Search for a place
+
+To find a place, `look` with `search` instead of line numbers returns every line that holds the text (up to 20), each with its own selection token that `edit` takes as it is. The lines are looked at, so each one is on the tape with the `why`; nothing is changed.
+
+```jsonrpc
+→ {"jsonrpc":"2.0","id":10,"method":"tools/call","params":{"name":"look","arguments":{"file":"cmd/main.go","search":"up()","why":"Find where setup and cleanup are called"}}}
+← {"jsonrpc":"2.0","id":10,"result":{"content":[{"text":"{\"ok\":true,\"count\":2,\"matches\":[{\"selection\":\"sel_045081648KVH3Z5DC93GTFB3\",\"startLine\":4,\"endLine\":4,\"lines\":[\"\\tsetup()\"],\"above\":[\"\",\"func main() {\"],\"below\":[\"\\tcheck()\",\"\\trun()\"]},{\"selection\":\"sel_045GE1Y48KVH3MCC2C6EXB6B\",\"startLine\":7,\"endLine\":7,\"lines\":[\"\\tcleanup()\"],\"above\":[\"\\tcheck()\",\"\\trun()\"],\"below\":[\"}\"]}]}","type":"text"}],"isError":false}}
+```
+
 The list of errors is in [mcp.md](../reference/mcp.md).

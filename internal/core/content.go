@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -175,4 +176,100 @@ func correctedFromLook(st *tape.State, rel string, in EditInput) (int, int, bool
 		return in.StartLine, in.EndLine, false
 	}
 	return Correct(st.Edits, rel, look, in.StartLine, in.EndLine)
+}
+
+// locateOld finds where an edit with old and new works: every place where Old is, in the lines asked for (the lines as given, then
+// those lines moved by the changes after the file's last look) or, when there are none or no line numbers, anywhere in the file.
+// The place must be one. The range is the lines the place touches, and put is what those lines become with New in the place of Old
+// (a line break at the end of put is the end of the last line). A failure is a *Error.
+func locateOld(st *tape.State, rel, text string, in EditInput) (start, end int, put string, cerr *Error) {
+	lines := tape.Lines(text)
+	n := len(lines)
+	old, repl := *in.Old, *in.New
+
+	// starts[i] is where line i+1 begins in full, which is the lines each with its line break.
+	starts := make([]int, n+1)
+	var sb strings.Builder
+	for i, l := range lines {
+		starts[i] = sb.Len()
+		sb.WriteString(l)
+		sb.WriteByte('\n')
+	}
+	starts[n] = sb.Len()
+	full := sb.String()
+	lineOf := func(off int) int { return sort.Search(n, func(i int) bool { return starts[i+1] > off }) + 1 }
+
+	// within finds the places of old in the lines a..b, overlapping ones too. A place is its first character.
+	within := func(a, b int) []int {
+		var at []int
+		lo, hi := starts[a-1], starts[b]
+		for from := lo; from+len(old) <= hi; {
+			i := strings.Index(full[from:hi], old)
+			if i < 0 {
+				break
+			}
+			at = append(at, from+i)
+			from += i + 1
+		}
+		return at
+	}
+
+	var hits []int
+	if in.HasLines {
+		if in.StartLine < 1 || in.EndLine > n || in.EndLine < in.StartLine {
+			return 0, 0, "", &Error{
+				Code:    CodeInvalidRange,
+				Message: fmt.Sprintf("%s has %d lines; startLine=%d endLine=%d is out of range", rel, n, in.StartLine, in.EndLine),
+				Actual:  map[string]int{"lineCount": n},
+			}
+		}
+		hits = within(in.StartLine, in.EndLine)
+		if len(hits) == 0 {
+			if a, b, ok := correctedFromLook(st, rel, in); ok && a != in.StartLine && a >= 1 && b <= n && b >= a {
+				hits = within(a, b)
+			}
+		}
+	}
+	if len(hits) == 0 && n > 0 {
+		hits = within(1, n)
+	}
+
+	switch len(hits) {
+	case 0:
+		e := newError(CodeContentNotFound, "old is not in %s (%d lines). Check the content, or call look again", rel, n)
+		return 0, 0, "", withNear(e, "", nearText(strings.TrimSuffix(full, "\n"), old), "old")
+	case 1:
+	default:
+		at := make([]int, len(hits))
+		for i, h := range hits {
+			at[i] = lineOf(h)
+		}
+		return 0, 0, "", newError(CodeContentAmbiguous, "old is in %s in %d places: %s. Give startLine and endLine around the one you mean, or more text in old",
+			rel, len(hits), places(dedup(at), maxAmbiguous))
+	}
+
+	s := hits[0]
+	e := s + len(old)
+	start, end = lineOf(s), lineOf(e-1)
+	r := full[starts[start-1]:s] + repl + full[e:starts[end]]
+	if r != "" && !strings.HasSuffix(r, "\n") { // the line break of the last line went with old: the next line joins what follows
+		if end < n {
+			r += lines[end] + "\n"
+			end++
+		} else {
+			r += "\n"
+		}
+	}
+	return start, end, r, nil
+}
+
+// dedup drops the repeats of a sorted list.
+func dedup(at []int) []int {
+	out := at[:0:0]
+	for i, v := range at {
+		if i == 0 || v != at[i-1] {
+			out = append(out, v)
+		}
+	}
+	return out
 }

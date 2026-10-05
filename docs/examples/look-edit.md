@@ -103,7 +103,7 @@ If `expect` differs from the file only in spaces or tabs (here four spaces were 
 
 ```jsonrpc
 → {"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"name":"replace","arguments":{"files":["cmd/main.go"],"old":"cleanup()","new":"teardown()","count":1,"why":"Rename cleanup"}}}
-← {"jsonrpc":"2.0","id":8,"result":{"content":[{"text":"{\"ok\":false,\"error\":{\"code\":\"use_edit\",\"message\":\"replace is for 2 or more places, and the text is in one place only (cmd/main.go line 6). Use edit for it: actual.edit is the call to make (add why)\",\"actual\":{\"edit\":{\"file\":\"cmd/main.go\",\"startLine\":6,\"endLine\":6,\"expect\":\"\\tcleanup()\",\"newText\":\"\\tteardown()\"},\"hits\":[{\"file\":\"cmd/main.go\",\"startLine\":6,\"endLine\":6,\"lines\":[\"\\tcleanup()\"]}]}}}","type":"text"}],"isError":true}}
+← {"jsonrpc":"2.0","id":8,"result":{"content":[{"text":"{\"ok\":false,\"error\":{\"code\":\"use_edit\",\"message\":\"replace is for 2 or more places, and the text is in one place only (cmd/main.go line 6). Use edit for it: actual.edit is the call to make (add why)\",\"actual\":{\"edit\":{\"file\":\"cmd/main.go\",\"old\":\"cleanup()\",\"new\":\"teardown()\"},\"hits\":[{\"file\":\"cmd/main.go\",\"startLine\":6,\"endLine\":6,\"lines\":[\"\\tcleanup()\"]}]}}}","type":"text"}],"isError":true}}
 ```
 
 ## Insert next to lines
@@ -146,6 +146,15 @@ Edits that share a reason go in one call, with `edits` and one `why`. Each item 
 ← {"jsonrpc":"2.0","id":11,"result":{"content":[{"text":"{\"ok\":true,\"edits\":[{\"selection\":\"sel_046081648KVH3M6NE7HJW31K\",\"startLine\":4,\"endLine\":4,\"lines\":[\"\\tstart()\"],\"above\":[\"\",\"func main() {\"],\"below\":[\"\\tcheck()\",\"\\trun()\"]},{\"selection\":\"sel_0470G2648KVH257ZXQFSTS3K\",\"startLine\":8,\"endLine\":8,\"lines\":[\"\\tstop()\"],\"above\":[\"\\trun()\",\"\\tlog()\"],\"below\":[\"}\"]},{\"selection\":\"sel_046GE1Y48KVH28BMME71JYMC\",\"startLine\":7,\"endLine\":7,\"lines\":[\"\\tlog()\"],\"above\":[\"\\tcheck()\",\"\\trun()\"],\"below\":[\"\\tstop()\",\"}\"]}]}","type":"text"}],"isError":false}}
 ```
 
+## A part of a line
+
+To change a few words, give `file`, `old` and `new` instead of `expect` and `newText`. `old` is a text that is in the file in one place; it need not be whole lines. The range is the lines it touches, and the result is the same as for any edit.
+
+```jsonrpc
+→ {"jsonrpc":"2.0","id":12,"method":"tools/call","params":{"name":"edit","arguments":{"file":"cmd/main.go","old":"stop()","new":"stop(true)","why":"Stop with a flag"}}}
+← {"jsonrpc":"2.0","id":12,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_047GG2648KVH3FFGG4WYYXPE\",\"startLine\":8,\"endLine\":8,\"lines\":[\"\\tstop(true)\"],\"above\":[\"\\trun()\",\"\\tlog()\"],\"below\":[\"}\"]}","type":"text"}],"isError":false}}
+```
+
 The file is now 9 lines.
 
 ```go
@@ -156,7 +165,7 @@ func main() {
 	check()
 	run()
 	log()
-	stop()
+	stop(true)
 }
 ```
 

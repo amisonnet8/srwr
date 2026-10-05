@@ -92,6 +92,7 @@ Changes the range to new text, in one call. An insertion is a change of an empty
 |---|---|
 | `selection` | The token returned by `look`, `edit` or `new`. The file is decided from it (no `file` is needed). Give this, or `file` and `expect`; not both |
 | `file`, `startLine`, `endLine`, `expect` | Without a token: the file, the range as the AI saw it (both line numbers, or neither) and the lines that range holds now, joined with `\n` (as in `look`). See below |
+| `old`, `new` | Instead of `expect` and `newText`, to change a part of a line: with `file`, the text `old` that is in the file in one place only, and `new` that takes its place. See below. Not with `selection`, `expect`, `newText` or `insert` |
 | `newText` | The text after the replacement. `""` is a deletion |
 | `insert` | Optional, `"after"` or `"before"`. Keep the range (the token's, or the lines of `expect`) and put `newText` after (before) it, instead of replacing it. An empty `newText` puts one empty line |
 | `why` | Why it changes it this way |
@@ -119,11 +120,24 @@ An **insertion** (`endLine = startLine - 1`, no `expect`) has no lines to check.
 
 The tape holds the same `edit` as for a token, with `from` of `null`. `expect` is not written to the tape.
 
+### A part of a line (`old` and `new`)
+
+`expect` is whole lines, and the safety of an edit comes from that. To change a few words in a long line, give `file`, **`old`** (the text to replace) and **`new`** (the text that takes its place) instead of `expect` and `newText`. `old` is plain text, may have several lines, and is not a regular expression. `startLine` and `endLine`, if given, are the lines to look in.
+
+```jsonc
+// input
+{ "file": "cmd/main.go", "old": "cleanup()", "new": "teardown()", "why": "cleanup was renamed" }
+```
+
+- `old` must be in the file in **one place** (places that overlap, as `aa` in `aaa`, are two). With line numbers, the lines asked for are searched first, then those lines moved by the changes after the file's last look, then the whole file; the first that has any decides. Zero places is `content_not_found` (with `nearMatches` for places that differ only in spaces or tabs); two or more is `content_ambiguous`, which says the lines: give `startLine` and `endLine`, or more text in `old`.
+- The result is the same as for any edit. The range is the lines `old` touches, whole, and they become what they would be with `new` in the place of `old`. If `old` ends with a line break and `new` does not, the next line joins what follows. On the tape it is the same `edit` as for `expect` (`from` is `null`), with the whole lines as `oldText` and `newText`. `old` and `new` themselves are not written to the tape.
+- `old` is not empty, `old` and `new` are not the same, neither has CR, and they are not given with `selection`, `expect`, `newText` or `insert` (`invalid_input`). They can be used in the items of `edits`.
+
 Files that cannot be handled: files with line breaks other than LF (CRLF), and binary files. They give `unsupported_file`.
 
 ### Several edits in one call (`edits`)
 
-`edits` holds 1 to 50 edits that share one `why`. Instead of `selection`, `file`, `startLine`, `endLine`, `expect`, `newText` and `insert`, which are then **not** given beside it, each item has them: a `selection`, or a `file` and `expect` (with `startLine` and `endLine` if known), a `newText` and, if wanted, an `insert`. It is for the same change in many places that `replace` cannot make (the text differs from place to place).
+`edits` holds 1 to 50 edits that share one `why`. Instead of `selection`, `file`, `startLine`, `endLine`, `expect`, `newText`, `insert`, `old` and `new`, which are then **not** given beside it, each item has them: a `selection`, or a `file` and `expect` (with `startLine` and `endLine` if known), or a `file`, `old` and `new`; a `newText` and, if wanted, an `insert`. It is for the same change in many places that `replace` cannot make (the text differs from place to place).
 
 ```jsonc
 // input
@@ -165,7 +179,7 @@ Replaces a text with another in **2 or more places**, in one file or several, li
 | `why` | Why it changes them |
 | `files` in the output | Only the files that changed. `count` is the number of places in the file. `hits` has one entry for each place, as the file is now: `startLine` and `endLine`, `lines` (what they hold), and `above` and `below` (the one line above and the one line below, `[]` if none). Places on the same line are one entry. At most 20 entries are listed for a file, and `more` is how many were left out. **There is no selection token**: to go on with a place, use `look` |
 
-- **One place is for `edit`.** With a `count` of 1 and the text in exactly one place, the error is `use_edit`, and nothing is changed. Its message says where the place is (`a.go line 12`), without any of the file. `actual` has `hits` (`file`, `startLine`, `endLine`, `lines`: where the place is now) and `edit` (`file`, `startLine`, `endLine`, `expect`, `newText`: the `edit` call that makes the same change, to which only `why` is added)
+- **One place is for `edit`.** With a `count` of 1 and the text in exactly one place, the error is `use_edit`, and nothing is changed. Its message says where the place is (`a.go line 12`), without any of the file. `actual` has `hits` (`file`, `startLine`, `endLine`, `lines`: where the place is now) and `edit` (`file`, `old`, `new`: the `edit` call that makes the same change, to which only `why` is added)
 - If the number found is not `count` (a `count` of 1 with no place, or with two or more, too), the error is `count_mismatch`. Its message and `actual` say how many places each file has (`{"a.go": 3, "b.go": 1}`), and **no file is changed and nothing but the `failure` is written to the tape**
 - Every file is checked as `look` checks it (not recorded, CRLF, binary, outside the workspace). If one of them cannot be used, nothing is changed
 - A change that cannot be told in lines (it adds or removes the final line break of the file) is `invalid_input`: use `look` and `edit` for it
@@ -237,7 +251,7 @@ An error may carry the current content (`actual`). What it holds is decided for 
 | `content_mismatch` | The current content of the range (an array of lines) |
 | `selection_stale` | The current content of the range, corrected up to just before the overlapping edit (kept inside the file) |
 | `count_mismatch` | The number of places in each file (`{"a.go": 3, "b.go": 1}`) |
-| `use_edit` | `{"hits": [{file, startLine, endLine, lines}], "edit": {file, startLine, endLine, expect, newText}}`. `edit` is left out when the change cannot be told in lines |
+| `use_edit` | `{"hits": [{file, startLine, endLine, lines}], "edit": {file, old, new}}`. `edit` is left out when the change cannot be told in lines, or when `old` is in the file in places that overlap |
 | `invalid_range` | `{"lineCount": number of lines}`. None for a path outside the workspace |
 | Others | None |
 

@@ -48,6 +48,10 @@ The result of `edit` (and the `hits` of `replace`) holds the lines just above an
 
 The AI wanted to add a line after a line. An empty range could do it, but only while the file had not changed since a look, so the AI wrote the neighbouring line again as `expect` and `newText`, and could get it wrong. With `insert: "after"` (or `"before"`) the lines are pointed at as usual (a token, or `file` and `expect`, which is checked), so the place is still checked after the file has changed; they are kept, and `newText` goes next to them. An `insert` that is a part of the call, not a new tool or a new tape event: the tape holds an `edit` of an empty range, as before.
 
+### `old` and `new` change a part of a line, apart from `expect`
+
+In an experiment, the AI copied whole long lines (table rows) into `expect` to change a few words, and six calls failed on a character or two. `expect` stays whole lines, because the safety of `file` and `expect` is that a call writes only where the lines the AI saw are. A part of a line is a separate input: `old` and `new` (a text that is in the file in one place, and its replacement), with the same safety by a different check: `old` must be in one place only, in the lines given (if any), else in the file, so a wrong place is refused, not guessed. They are an input of `edit`, not a new tool, and the tape holds the same `edit` of whole lines, as `expect` does, without `old` and `new` themselves. `replace` answers `use_edit` with the same `old` and `new`, so what it says can be sent as it is.
+
 ### srwr absorbs the shifting of line numbers
 
 When a range is given by line numbers, it drifts as edits pile up. This is why the Edit of Claude Code takes the `old_string` form. In srwr the token carries the `seq` at the time it was issued, and srwr corrects the numbers automatically from the later edit history. Then it checks the hash of the content, and edits nothing if it does not match ([token.md](token.md)).

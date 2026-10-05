@@ -188,7 +188,7 @@ func TestSubOfOnePlaceIsUseEdit(t *testing.T) {
 	if len(hits) != 1 || hits[0].File != "c.txt" || hits[0].StartLine != 2 || strings.Join(hits[0].Lines, "|") != "foo SECRETWORD bar" {
 		t.Errorf("hits = %+v", hits)
 	}
-	if call != (useEditCall{File: "c.txt", StartLine: 2, EndLine: 2, Expect: "foo SECRETWORD bar", NewText: "baz bar"}) {
+	if call != (useEditCall{File: "c.txt", Old: "foo SECRETWORD", New: "baz"}) {
 		t.Errorf("edit = %+v", call)
 	}
 	// The failure is on the tape without the texts.
@@ -203,7 +203,7 @@ func TestSubOfOnePlaceIsUseEdit(t *testing.T) {
 	}
 
 	// The call it gives is the one that works.
-	if _, err := e.c.Edit(EditInput{File: call.File, HasLines: true, StartLine: call.StartLine, EndLine: call.EndLine, Expect: &call.Expect, NewText: call.NewText, Why: "change it"}); err != nil {
+	if _, err := e.c.Edit(EditInput{File: call.File, Old: &call.Old, New: &call.New, Why: "change it"}); err != nil {
 		t.Fatal(err)
 	}
 	if e.read("c.txt") != "keep\nbaz bar\nkeep\n" {
@@ -214,6 +214,9 @@ func TestSubOfOnePlaceIsUseEdit(t *testing.T) {
 	e.write("d.txt", "xxx\n")
 	_, err = e.sub([]string{"d.txt"}, "xx", "y", 1)
 	wantCode(t, err, CodeUseEdit)
+	if actual, _ := err.Actual.(map[string]any); actual["edit"] != nil {
+		t.Errorf("edit counts the places of xx in xxx as two, so it is not the call to give: %+v", actual["edit"])
+	}
 
 	// With a count of 1 and no place, or more than one, it is the count that is wrong.
 	_, err = e.sub([]string{"b.txt"}, "zzz", "y", 1)

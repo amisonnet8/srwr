@@ -92,6 +92,7 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 |---|---|
 | `selection` | `look`、`edit`、`new` が返したトークン。ファイルはここから決まる（`file` は不要）。これか、`file` と `expect` のどちらか（両方は不可） |
 | `file`・`startLine`・`endLine`・`expect` | トークンなしのとき：ファイル、AI が見た範囲（行番号は両方か、どちらもなし）、その範囲が今持っている行（`\n` でつなぐ。`look` と同じ）。下を参照 |
+| `old`・`new` | `expect` と `newText` の代わりに、行の一部を直すとき：`file` と一緒に、ファイルの中にただ1か所ある文字列 `old` と、その代わりの `new`。下を見る。`selection`・`expect`・`newText`・`insert` とは一緒に使えない |
 | `newText` | 置き換え後のテキスト。`""` は削除 |
 | `insert` | 省略可。`"after"` か `"before"`。範囲（トークンの範囲、または `expect` の行）を残し、その後ろ（前）に `newText` を足す。置き換えない。`newText` が空なら空行を1つ足す |
 | `why` | なぜこう変えるか |
@@ -119,11 +120,24 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 
 テープには、トークンの場合と同じ `edit` を書く（`from` は `null`）。`expect` はテープに書かない。
 
+### 行の一部を直す（`old` と `new`）
+
+`expect` は行全体で、編集の安全はそこから来る。長い行の数語だけを直すときは、`expect` と `newText` の代わりに、`file`、**`old`**（置き換える文字列）、**`new`**（その代わりの文字列）を渡す。`old` はただの文字列で、複数行でもよく、正規表現ではない。`startLine`・`endLine` を渡せば、その行の中で探す。
+
+```jsonc
+// 入力
+{ "file": "cmd/main.go", "old": "cleanup()", "new": "teardown()", "why": "cleanup の名前を変えたため" }
+```
+
+- `old` は、ファイルの中で**1か所**でなければならない（`aaa` の中の `aa` のように重なる場所は2か所）。行番号があれば、その行、最後の look のあとの変更でずらしたその行、ファイル全体の順に探し、見つかった最初のもので決める。0か所は `content_not_found`（空白やタブだけ違う場所は `nearMatches`）、2か所以上は `content_ambiguous`（行を言う）。`startLine`・`endLine` を渡すか、`old` を長くする
+- 結果はほかの編集と同じ。範囲は `old` にかかる行を丸ごと取ったもので、その行は `old` を `new` に替えたものになる。`old` が改行で終わり `new` がそうでないときは、次の行が後ろにつながる。テープには `expect` のときと同じ `edit`（`from` は `null`）で、`oldText`・`newText` は行全体。`old`・`new` そのものはテープに書かない
+- `old` は空でなく、`old` と `new` は同じでなく、どちらにも CR を含まず、`selection`・`expect`・`newText`・`insert` とは一緒に渡さない（`invalid_input`）。`edits` の項目でも使える
+
 扱えないファイル：LF 以外の改行（CRLF）を含むファイルと、バイナリ。`unsupported_file` になる。
 
 ### 1回で複数の編集をする（`edits`）
 
-`edits` は、1つの `why` を共有する編集を1〜50件持つ。`selection`・`file`・`startLine`・`endLine`・`expect`・`newText`・`insert` は、`edits` の外には**渡さず**、項目ごとに持つ：`selection`、または `file` と `expect`（分かれば `startLine`・`endLine`）、`newText`、必要なら `insert`。場所ごとに文字列が違って `replace` ではできない、同じ種類の変更をたくさんするためのもの。
+`edits` は、1つの `why` を共有する編集を1〜50件持つ。`selection`・`file`・`startLine`・`endLine`・`expect`・`newText`・`insert`・`old`・`new` は、`edits` の外には**渡さず**、項目ごとに持つ：`selection`、または `file` と `expect`（分かれば `startLine`・`endLine`）、または `file`・`old`・`new`、`newText`、必要なら `insert`。場所ごとに文字列が違って `replace` ではできない、同じ種類の変更をたくさんするためのもの。
 
 ```jsonc
 // 入力
@@ -165,7 +179,7 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 | `why` | なぜこう変えるか |
 | 出力の `files` | 変わったファイルだけ。`count` はそのファイルの場所の数。`hits` は場所ごとに1件で、ファイルの今の状態の：`startLine`・`endLine`、`lines`（その行の内容）、`above`・`below`（直前・直後の1行。なければ `[]`）。同じ行にある場所は1件。1ファイルにつき20件まで載せ、`more` が載せなかった件数。**範囲トークンは返さない**：続けて直すときは `look` を使う |
 
-- **1か所は `edit` で行う。** `count` が 1 で、文字列がちょうど1か所にあるとき、エラーは `use_edit` で、何も変えない。メッセージは場所（`a.go line 12`）だけを言い、ファイルの中身は入れない。`actual` に、`hits`（`file`・`startLine`・`endLine`・`lines`：その場所の今の位置）と、`edit`（`file`・`startLine`・`endLine`・`expect`・`newText`：同じ変更をする `edit` の呼び出し。足すのは `why` だけ）が付く
+- **1か所は `edit` で行う。** `count` が 1 で、文字列がちょうど1か所にあるとき、エラーは `use_edit` で、何も変えない。メッセージは場所（`a.go line 12`）だけを言い、ファイルの中身は入れない。`actual` に、`hits`（`file`・`startLine`・`endLine`・`lines`：その場所の今の位置）と、`edit`（`file`・`old`・`new`：同じ変更をする `edit` の呼び出し。足すのは `why` だけ）が付く
 - 見つかった数が `count` と違えば（`count` が 1 で、0か所や2か所以上のときも）`count_mismatch`。メッセージと `actual` が、ファイルごとの場所の数を言う（`{"a.go": 3, "b.go": 1}`）。**どのファイルも変えず、テープには `failure` しか書かない**
 - どのファイルも、`look` と同じ検査をする（記録しない・CRLF・バイナリ・作業場の外）。1つでも使えなければ、何も変えない
 - 行で表せない変更（ファイルの最後の改行を足す・消す）は `invalid_input`。`look` と `edit` で行う
@@ -237,7 +251,7 @@ MCP の応答では `isError: true` になり、本文は次の JSON。
 | `content_mismatch` | 範囲の現在の内容（行の配列） |
 | `selection_stale` | 重なった編集の直前まで補正した範囲の、現在の内容（ファイルの範囲内に収める） |
 | `count_mismatch` | ファイルごとの場所の数（`{"a.go": 3, "b.go": 1}`） |
-| `use_edit` | `{"hits": [{file, startLine, endLine, lines}], "edit": {file, startLine, endLine, expect, newText}}`。行で表せない変更では `edit` を付けない |
+| `use_edit` | `{"hits": [{file, startLine, endLine, lines}], "edit": {file, old, new}}`。行で表せない変更と、`old` が重なる場所にあるときは `edit` を付けない |
 | `invalid_range` | `{"lineCount": 行数}`。作業場の外のパスのときはなし |
 | ほか | なし |
 

@@ -218,6 +218,8 @@ type editArgs struct {
 	Expect    *string         `json:"expect"`
 	NewText   *string         `json:"newText"`
 	Insert    *string         `json:"insert"`
+	Old       *string         `json:"old"`
+	New       *string         `json:"new"`
 	Edits     *[]editItemArgs `json:"edits"`
 	Why       *string         `json:"why"`
 }
@@ -231,6 +233,8 @@ type editItemArgs struct {
 	Expect    *string `json:"expect"`
 	NewText   *string `json:"newText"`
 	Insert    *string `json:"insert"`
+	Old       *string `json:"old"`
+	New       *string `json:"new"`
 }
 
 type editsOK struct {
@@ -267,31 +271,15 @@ func (s *Server) callEdit(raw json.RawMessage) toolResult {
 	if a.Edits != nil {
 		return s.callEdits(a)
 	}
-	if missing := firstMissing(map[string]bool{"newText": a.NewText == nil, "why": a.Why == nil}, "newText", "why"); missing != "" {
-		return s.rejectEdit("missing required input: " + missing)
+	if a.Why == nil {
+		return s.rejectEdit("missing required input: why")
 	}
-	if (a.StartLine == nil) != (a.EndLine == nil) {
-		return s.rejectEdit("give both startLine and endLine, or neither")
+	in, msg := editInputOf(editItemArgs{Selection: a.Selection, File: a.File, StartLine: a.StartLine, EndLine: a.EndLine,
+		Expect: a.Expect, NewText: a.NewText, Insert: a.Insert, Old: a.Old, New: a.New})
+	if msg != "" {
+		return s.rejectEdit(msg)
 	}
-	in := core.EditInput{NewText: *a.NewText, Why: *a.Why, Expect: a.Expect, HasLines: a.StartLine != nil}
-	if a.Selection != nil {
-		in.Selection = *a.Selection
-	}
-	if a.File != nil {
-		in.File = *a.File
-	}
-	if a.Insert != nil {
-		in.Insert = *a.Insert
-	}
-	if in.HasLines {
-		in.StartLine, in.EndLine = *a.StartLine, *a.EndLine
-	}
-	if a.Selection != nil && strings.TrimSpace(*a.Selection) != "" && (a.File != nil || in.HasLines || a.Expect != nil) {
-		return s.rejectEdit("give selection, or file with expect; not both")
-	}
-	if a.Selection == nil && a.File == nil {
-		return s.rejectEdit("missing required input: selection (from look), or file with expect")
-	}
+	in.Why = *a.Why
 	res, cerr := s.Core.Edit(in)
 	if cerr != nil {
 		return failure(*cerr)
@@ -305,29 +293,14 @@ func (s *Server) callEdits(a editArgs) toolResult {
 	if a.Why == nil {
 		return s.rejectEdit("missing required input: why")
 	}
-	if a.Selection != nil || a.File != nil || a.StartLine != nil || a.EndLine != nil || a.Expect != nil || a.NewText != nil || a.Insert != nil {
-		return s.rejectEdit("with edits, give selection, file, startLine, endLine, expect, newText and insert inside each of the edits, not beside it")
+	if a.Selection != nil || a.File != nil || a.StartLine != nil || a.EndLine != nil || a.Expect != nil || a.NewText != nil || a.Insert != nil || a.Old != nil || a.New != nil {
+		return s.rejectEdit("with edits, give selection, file, startLine, endLine, expect, newText, insert, old and new inside each of the edits, not beside it")
 	}
 	in := core.EditsInput{Why: *a.Why, Edits: make([]core.EditInput, len(*a.Edits))}
 	for i, item := range *a.Edits {
-		if item.NewText == nil {
-			return s.rejectEdit(fmt.Sprintf("edits[%d]: missing required input: newText", i))
-		}
-		if (item.StartLine == nil) != (item.EndLine == nil) {
-			return s.rejectEdit(fmt.Sprintf("edits[%d]: give both startLine and endLine, or neither", i))
-		}
-		e := core.EditInput{NewText: *item.NewText, Expect: item.Expect, HasLines: item.StartLine != nil}
-		if item.Selection != nil {
-			e.Selection = *item.Selection
-		}
-		if item.File != nil {
-			e.File = *item.File
-		}
-		if item.Insert != nil {
-			e.Insert = *item.Insert
-		}
-		if e.HasLines {
-			e.StartLine, e.EndLine = *item.StartLine, *item.EndLine
+		e, msg := editInputOf(item)
+		if msg != "" {
+			return s.rejectEdit(fmt.Sprintf("edits[%d]: %s", i, msg))
 		}
 		in.Edits[i] = e
 	}
@@ -340,6 +313,44 @@ func (s *Server) callEdits(a editArgs) toolResult {
 		out.Edits[i] = editItemOK{Selection: r.Selection, StartLine: r.StartLine, EndLine: r.EndLine, Lines: r.Lines, Above: r.Above, Below: r.Below}
 	}
 	return success(out)
+}
+
+// editInputOf makes the input of one edit out of its arguments. msg is not empty when the arguments are not an edit.
+func editInputOf(a editItemArgs) (in core.EditInput, msg string) {
+	hasOld := a.Old != nil || a.New != nil
+	switch {
+	case hasOld && (a.Old == nil || a.New == nil):
+		return in, "give old and new together"
+	case hasOld && a.NewText != nil:
+		return in, "give old and new, or newText; not both"
+	case !hasOld && a.NewText == nil:
+		return in, "missing required input: newText (or old and new)"
+	case (a.StartLine == nil) != (a.EndLine == nil):
+		return in, "give both startLine and endLine, or neither"
+	}
+	in = core.EditInput{Expect: a.Expect, HasLines: a.StartLine != nil, Old: a.Old, New: a.New}
+	if a.NewText != nil {
+		in.NewText = *a.NewText
+	}
+	if a.Selection != nil {
+		in.Selection = *a.Selection
+	}
+	if a.File != nil {
+		in.File = *a.File
+	}
+	if a.Insert != nil {
+		in.Insert = *a.Insert
+	}
+	if in.HasLines {
+		in.StartLine, in.EndLine = *a.StartLine, *a.EndLine
+	}
+	if a.Selection != nil && strings.TrimSpace(*a.Selection) != "" && (a.File != nil || in.HasLines || a.Expect != nil || hasOld) {
+		return in, "give selection, or file with expect (or old and new); not both"
+	}
+	if a.Selection == nil && a.File == nil {
+		return in, "missing required input: selection (from look), or file with expect (or old and new)"
+	}
+	return in, ""
 }
 
 // rejectEdit turns an edit away for its input, and records that on the tape.

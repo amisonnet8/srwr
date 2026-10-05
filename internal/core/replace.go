@@ -250,11 +250,9 @@ type useEditHit struct {
 }
 
 type useEditCall struct {
-	File      string `json:"file"`
-	StartLine int    `json:"startLine"`
-	EndLine   int    `json:"endLine"`
-	Expect    string `json:"expect"`
-	NewText   string `json:"newText"`
+	File string `json:"file"`
+	Old  string `json:"old"`
+	New  string `json:"new"`
 }
 
 // useEdit is the answer to a replace of one place: it changes nothing, and says where the place is and what to call edit with. The
@@ -272,8 +270,8 @@ func useEdit(plans []replacePlan, in ReplaceInput) *Error {
 		}
 		actual := map[string]any{"hits": []useEditHit{{File: p.rel, StartLine: p.a, EndLine: p.b, Lines: rangeLines(p.t.text, p.a, p.b)}}}
 		msg := fmt.Sprintf("replace is for 2 or more places, and the text is in one place only (%s). Use edit for it", where)
-		if cerr == nil {
-			actual["edit"] = useEditCall{File: p.rel, StartLine: p.a, EndLine: p.b, Expect: p.oldText, NewText: strings.Join(p.newLines, "\n")}
+		if cerr == nil && !overlapping(p.t.text, in.Old) {
+			actual["edit"] = useEditCall{File: p.rel, Old: in.Old, New: in.New}
 			msg += ": actual.edit is the call to make (add why)"
 		}
 		return &Error{Code: CodeUseEdit, Message: msg, Actual: actual}
@@ -300,4 +298,18 @@ func nearReplace(e *Error, plans []replacePlan, old string) {
 	}
 	e.Message += fmt.Sprintf(". Differing from old only in spaces or tabs: %s (see nearMatches)", strings.Join(where, ", "))
 	e.NearMatches = all
+}
+
+// overlapping tells whether old is in text in two places that share characters ("aa" in "aaa"): edit counts those as two.
+func overlapping(text, old string) bool {
+	n := 0
+	for from := 0; from < len(text); {
+		i := strings.Index(text[from:], old)
+		if i < 0 {
+			break
+		}
+		n++
+		from += i + 1
+	}
+	return n > 1
 }

@@ -52,6 +52,12 @@ type EditInput struct {
 	HasLines  bool
 	Expect    *string
 
+	// Old and New (both given, or neither) change a part of the text: the one place where Old is (in the lines StartLine to EndLine,
+	// if HasLines) becomes New, and the lines it touches are the range. They are used with File only, not with Selection, Expect,
+	// Insert or NewText. Neither goes on the tape.
+	Old *string
+	New *string
+
 	// Insert, "after" or "before", keeps the range chosen (by the token, or by File and Expect) and puts NewText after or before it.
 	Insert string
 }
@@ -175,7 +181,7 @@ func (c *Core) doEdit(in EditInput) (*EditResult, *Error) {
 		if err != nil {
 			return err
 		}
-		res, err = c.writeEdit(tx, p.rel, p.t, p.a, p.b, putIn(in), in.Why, p.from)
+		res, err = c.writeEdit(tx, p.rel, p.t, p.a, p.b, p.textOf(in), in.Why, p.from)
 		return err
 	})
 	if cerr != nil {
@@ -188,10 +194,13 @@ func (c *Core) doEdit(in EditInput) (*EditResult, *Error) {
 // expect, and rel is then the cleaned path.
 func checkEdit(in EditInput) (byFile bool, rel string, cerr *Error) {
 	byFile = strings.TrimSpace(in.Selection) == ""
+	if cerr := checkOld(in, byFile); cerr != nil {
+		return false, "", cerr
+	}
 	switch {
 	case byFile && in.File == "":
 		return false, "", newError(CodeInvalidInput, "give selection (from look), or file with expect (and startLine and endLine, if you know them)")
-	case !byFile && (in.File != "" || in.HasLines || in.Expect != nil):
+	case !byFile && (in.File != "" || in.HasLines || in.Expect != nil || in.Old != nil):
 		return false, "", newError(CodeInvalidInput, "give selection, or file with expect; not both")
 	}
 	if err := checkWhy(in.Why); err != nil {
@@ -217,12 +226,45 @@ func checkEdit(in EditInput) (byFile bool, rel string, cerr *Error) {
 	return byFile, rel, nil
 }
 
+// checkOld checks the input of an edit with old and new.
+func checkOld(in EditInput, byFile bool) *Error {
+	if in.Old == nil && in.New == nil {
+		return nil
+	}
+	switch {
+	case in.Old == nil || in.New == nil:
+		return newError(CodeInvalidInput, "give old and new together")
+	case !byFile:
+		return newError(CodeInvalidInput, "old and new go with file, not with selection")
+	case in.Expect != nil || in.Insert != "" || in.NewText != "":
+		return newError(CodeInvalidInput, "old and new are not given with expect, newText or insert: they change a part of the text by themselves")
+	case *in.Old == "":
+		return newError(CodeInvalidInput, "old is empty. Give the text to change")
+	case strings.ContainsRune(*in.Old, '\r') || strings.ContainsRune(*in.New, '\r'):
+		return newError(CodeInvalidInput, "old and new must not contain CR (line breaks are LF only)")
+	case *in.Old == *in.New:
+		return newError(CodeInvalidInput, "old and new are the same: nothing would change")
+	case in.HasLines && in.EndLine < in.StartLine:
+		return newError(CodeInvalidInput, "with old, startLine and endLine are the lines to look in: give at least one line")
+	}
+	return nil
+}
+
 // editPlan is where one edit puts its text: the lines a..b of the file rel (an empty range for an insertion), found but not yet written.
 type editPlan struct {
 	rel  string
 	t    target
 	a, b int
 	from *string // the token the range came from, if any
+	put  *string // with old and new: the text that takes the place of the lines a..b (otherwise the NewText of the edit)
+}
+
+// textOf is the text an edit of the plan puts in.
+func (p editPlan) textOf(in EditInput) string {
+	if p.put != nil {
+		return *p.put
+	}
+	return putIn(in)
 }
 
 // loadTarget reads the file rel and records what Observe finds, once for each file of a call: seen holds the files already read.
@@ -290,6 +332,13 @@ func (c *Core) resolveFile(tx *session.Tx, rel string, in EditInput, seen map[st
 	t, err := c.loadTarget(tx, rel, "edit", seen)
 	if err != nil {
 		return editPlan{}, err
+	}
+	if in.Old != nil {
+		a, b, put, cerr := locateOld(tx.State(), rel, t.text, in)
+		if cerr != nil {
+			return editPlan{}, cerr
+		}
+		return editPlan{rel: rel, t: t, a: a, b: b, put: &put}, nil
 	}
 	a, b, cerr := locateEdit(tx.State(), rel, t.text, in)
 	if cerr != nil {

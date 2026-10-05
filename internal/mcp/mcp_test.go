@@ -181,7 +181,7 @@ func TestToolsList(t *testing.T) {
 	if _, ok := sel.Properties["expect"]; !ok {
 		t.Error("select has no expect")
 	}
-	if !contains(r.Result.Tools[0].InputSchema.Required, "file") || !contains(r.Result.Tools[1].InputSchema.Required, "newText") {
+	if !contains(r.Result.Tools[0].InputSchema.Required, "file") || !contains(r.Result.Tools[1].InputSchema.Required, "why") {
 		t.Error("required lists are wrong")
 	}
 	// edit takes a token or a file: neither alone is required, and the by-file inputs exist.
@@ -349,6 +349,10 @@ func TestToolErrors(t *testing.T) {
 		{"edit with selection and expect", "edit", `{"selection":"sel_x","expect":"1","newText":"x","why":"w"}`, "invalid_input", nil},
 		{"edit by file without expect", "edit", `{"file":"a.go","startLine":1,"endLine":1,"newText":"x","why":"w"}`, "invalid_input", nil},
 		{"edit by file with only startLine", "edit", `{"file":"a.go","startLine":1,"expect":"1","newText":"x","why":"w"}`, "invalid_input", nil},
+		{"edit with old but not new", "edit", `{"file":"a.go","old":"1","why":"w"}`, "invalid_input", nil},
+		{"edit with old and newText", "edit", `{"file":"a.go","old":"1","new":"x","newText":"x","why":"w"}`, "invalid_input", nil},
+		{"edit with old and a selection", "edit", `{"selection":"sel_x","old":"1","new":"x","why":"w"}`, "invalid_input", nil},
+		{"edit with old that is not there", "edit", `{"file":"a.go","old":"zzz","new":"x","why":"w"}`, "content_not_found", nil},
 		{"edit by file with expect that is not there", "edit", `{"file":"a.go","expect":"zzz","newText":"x","why":"w"}`, "content_not_found", nil},
 		{"sub without count", "replace", `{"files":["a.go"],"old":"1","new":"x","why":"w"}`, "invalid_input", nil},
 		{"sub with files as a string", "replace", `{"files":"a.go","old":"1","new":"x","count":1,"why":"w"}`, "invalid_input", nil},
@@ -357,7 +361,7 @@ func TestToolErrors(t *testing.T) {
 		{"new without content", "new", `{"file":"n.go","why":"w"}`, "invalid_input", nil},
 		{"new with content as a number", "new", `{"file":"n.go","content":1,"why":"w"}`, "invalid_input", nil},
 		{"new on an existing file", "new", `{"file":"a.go","content":"x","why":"w"}`, "file_exists", nil},
-		{"sub of one place", "replace", `{"files":["a.go"],"old":"1","new":"x","count":1,"why":"w"}`, "use_edit", map[string]any{"hits": []any{map[string]any{"file": "a.go", "startLine": float64(1), "endLine": float64(1), "lines": []any{"1"}}}, "edit": map[string]any{"file": "a.go", "startLine": float64(1), "endLine": float64(1), "expect": "1", "newText": "x"}}},
+		{"sub of one place", "replace", `{"files":["a.go"],"old":"1","new":"x","count":1,"why":"w"}`, "use_edit", map[string]any{"hits": []any{map[string]any{"file": "a.go", "startLine": float64(1), "endLine": float64(1), "lines": []any{"1"}}}, "edit": map[string]any{"file": "a.go", "old": "1", "new": "x"}}},
 		{"sub with the wrong count", "replace", `{"files":["a.go"],"old":"1","new":"x","count":2,"why":"w"}`, "count_mismatch", map[string]any{"a.go": float64(1)}},
 	}
 	for _, tt := range tests {
@@ -515,6 +519,27 @@ func TestEditWithEdits(t *testing.T) {
 	b, _ = os.ReadFile(path) //nolint:gosec // a path in a temporary directory
 	if string(b) != "x\ny\nb\nz\nc\nD\n" {
 		t.Errorf("a refused call changed the file: %q", b)
+	}
+}
+
+func TestEditWithOldAndNew(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "a.go")
+	if err := os.WriteFile(path, []byte("f(a, b)\ng(c)\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	m, isErr := body(t, serve(t, root, toolCall(1, "edit", `{"file":"a.go","old":"a, b","new":"A","why":"w"}`))[0])
+	if isErr || m["ok"] != true || m["startLine"] != float64(1) {
+		t.Fatalf("got %v", m)
+	}
+	m, isErr = body(t, serve(t, root, toolCall(1, "edit",
+		`{"edits":[{"file":"a.go","old":"g(c)","new":"g(C)"},{"file":"a.go","expect":"f(A)","newText":"F(A)"}],"why":"w"}`))[0])
+	if es, _ := m["edits"].([]any); isErr || len(es) != 2 {
+		t.Fatalf("got %v", m)
+	}
+	b, _ := os.ReadFile(path) //nolint:gosec // a path in a temporary directory
+	if string(b) != "F(A)\ng(C)\n" {
+		t.Errorf("file = %q", b)
 	}
 }
 

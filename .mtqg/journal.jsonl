@@ -635,3 +635,4 @@
 {"id":"6bfb2f153d2d4c2591a8f259d99bb0e2","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-05T06:22:29Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"857c91046c674f818280fbf0c6b5bdfd","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-05T06:22:29Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"e8576a5887d947a49be46b9a59bb8580","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-05T06:22:29Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"b1c98d6a537240c796ab1c887266974d","op":"create","type":"memo","text":"v0.1.5 を公開：タグ v0.1.5、GitHub Release（CI がバイナリ6・checksums・vsix を付与）、Marketplace に srwr-view 0.1.5 を人間がアップロード。Release の vsix は checksums と一致、publish-check OK（画像・バッジ9個）。公開後の確認（拡張のページ）は人間。実験の作業場は srwr init の再実行と CLAUDE.md のツール名の修正が必要。","v":1,"ts":"2026-10-05T06:41:50Z","author":{"kind":"ai","name":"claude-code"}}

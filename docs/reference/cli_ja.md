@@ -8,7 +8,7 @@
 
 | コマンド | 使う人 | 役割 |
 |---|---|---|
-| `srwr mcp` | AI（MCP クライアント） | MCP サーバー（stdio）。[`select` / `replace` / `sub`](mcp_ja.md) を提供する |
+| `srwr mcp` | AI（MCP クライアント） | MCP サーバー（stdio）。[`select` / `replace` / `sub` / `new`](mcp_ja.md) を提供する |
 | `srwr hook` | Claude Code の hook | Read・Bash・Grep・Edit を、`srwr mcp` と同じ[テープ](tape_ja.md)に記録する |
 | `srwr view-server` | エディタ（VSCode 拡張・Vim スクリプト） | 表示サーバー。人は直接使わない（[protocol.md](protocol_ja.md)） |
 | `srwr view [テープ]` | 人 | Vim で再生する（[vim.md](vim_ja.md)） |
@@ -54,7 +54,7 @@ srwr を使うディレクトリを**作業場**と呼ぶ。srwr は作業場の
 
 ## srwr mcp
 
-AI に使わせる MCP サーバー。AI エージェント（MCP クライアント）が起動する。作業場は `--root <作業場>`（省略時はカレントディレクトリ）。ツールは `select`・`replace`・`sub` の3つ（[mcp.md](mcp_ja.md)）。同じ作業場で複数起動してもよい。同じセッション（同じテープ）に書き、片方が発行した範囲トークンをもう片方で使える（[tape.md](tape_ja.md)）。
+AI に使わせる MCP サーバー。AI エージェント（MCP クライアント）が起動する。作業場は `--root <作業場>`（省略時はカレントディレクトリ）。ツールは `select`・`replace`・`sub`・`new` の4つ（[mcp.md](mcp_ja.md)）。同じ作業場で複数起動してもよい。同じセッション（同じテープ）に書き、片方が発行した範囲トークンをもう片方で使える（[tape.md](tape_ja.md)）。
 
 ## srwr hook
 
@@ -120,9 +120,10 @@ srwr init [--lenient] [--root <作業場>]
 |---|---|
 | `.srwr/` | ディレクトリと鍵を作る |
 | `.mcp.json` | `srwr mcp` を登録する（既存のサーバーは残して追記。すでに `srwr` があれば触らない） |
-| `.claude/settings.json` | hook の登録、Claude Code が聞かずに使えるようにする設定（`enabledMcpjsonServers` と、`select`・`replace` の許可）、厳格モードなら Edit/Write の禁止（既存の内容は残して追記） |
+| `.claude/settings.json` | hook の登録、Claude Code が聞かずに使えるようにする設定（`enabledMcpjsonServers` と、`select`・`replace`・`sub`・`new` の許可）、厳格モードなら Edit/Write の禁止（既存の内容は残して追記） |
 | `.gitignore` | `.srwr/key`・`.srwr/lock`・`.srwr/active`・`.srwr/init-backup/` を足す（git の管理下の場合）。テープ（`.srwr/tapes/`）は共有できるよう無視しない |
 
+- **srwr を新しいツール（`sub`・`new`）のある版に入れ替えたら、作業場ごとに `srwr init` をもう一度実行する。** 新しいツールの許可を `permissions.allow` に足す。しないと、Claude Code が毎回確認を出すか、ツールを使わない
 - 既存のファイルを壊さない。キーの順や、ほかの設定・サーバー・hook はそのまま残す。書式は2字下げの JSON に整える
 - 書き換える前の内容は `.srwr/init-backup/<日時>/` に残す（変えるファイルがあるときだけ）
 - JSON として読めないファイルがあるとき（またはオブジェクト・配列の形が違うとき）は、何も書き換えずに終了コード 1 で止まる

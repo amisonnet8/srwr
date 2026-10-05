@@ -1,4 +1,4 @@
-// Package tools defines the MCP tools, select, replace and sub: their names, the text the AI reads
+// Package tools defines the MCP tools, select, replace, sub and new: their names, the text the AI reads
 // and the schema of their input. What they do is in internal/core.
 package tools
 
@@ -14,6 +14,7 @@ const (
 	Select  = "select"
 	Replace = "replace"
 	Sub     = "sub"
+	New     = "new"
 )
 
 const whyDescription = "The reason, in one sentence, in the language of the conversation with the user. It is for people to read. Empty or blank is not allowed"
@@ -30,7 +31,7 @@ func List() []Tool {
 				"Line numbers can be wrong, so pass expect too: the lines the range must hold, joined with \\n. If they differ, the select is refused and the message says where those lines are. " +
 				"Or leave out startLine and endLine and pass only expect: srwr finds those consecutive lines (exactly one place is needed; give line numbers if they appear in more than one). " +
 				"To point at a place to insert, use an empty range with endLine = startLine - 1 (just before line startLine; to append to the end of the file, startLine = number of lines + 1). " +
-				"Only existing files can be selected; a new file cannot be created. " +
+				"Only existing files can be selected; create a new file with new. " +
 				"why is required: say why you look here (the reason, not a rephrasing of what you do), in the language of the conversation with the user.",
 			InputSchema: map[string]any{
 				"type": "object",
@@ -79,6 +80,22 @@ func List() []Tool {
 					"why":   map[string]any{"type": "string", "minLength": 1, "pattern": `\S`, "description": whyDescription},
 				},
 				"required": []string{"files", "old", "new", "count", "why"},
+			},
+		},
+		{
+			Name: New,
+			Description: "Create a file that does not exist yet, with its content, and record why. If the file already exists, nothing is changed and the error is file_exists; use select and replace for it. " +
+				"Directories above the file are created when they are missing. The file ends with a line break. " +
+				"The result has selection (a token for the whole content, usable by replace), startLine and endLine. " +
+				"why is required: say why you create the file, in the language of the conversation with the user.",
+			InputSchema: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"file":    map[string]any{"type": "string", "minLength": 1, "description": "Path relative to the workspace. The file must not exist"},
+					"content": map[string]any{"type": "string", "description": "The content of the file. Line breaks are LF. An empty string makes an empty file"},
+					"why":     map[string]any{"type": "string", "minLength": 1, "pattern": `\S`, "description": whyDescription},
+				},
+				"required": []string{"file", "content", "why"},
 			},
 		},
 	}

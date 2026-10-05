@@ -3,7 +3,7 @@
 
 import { pick } from "./lang";
 
-export type FrameKind = "select" | "replace" | "sub" | "external" | "final" | "failure";
+export type FrameKind = "select" | "replace" | "sub" | "new" | "external" | "final" | "failure";
 
 // The kinds a person can turn on and off (final follows external), and what the server was told is hidden: kind -> how many.
 export type ShownKind = "select" | "replace" | "external" | "failure";

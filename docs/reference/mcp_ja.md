@@ -1,16 +1,17 @@
-# MCP ツール（select・replace）
+# MCP ツール（select・replace・sub・new）
 
 *[English](mcp.md) | **日本語***
 
 **読者**：srwr を使う人。AI エージェントに何をさせ、どんなエラーが返るかを知りたい人。
 
-AI エージェントは、MCP サーバー `srwr mcp` が提供する **3つのツール**だけでファイルを編集する。
+AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つのツール**だけでファイルを編集する。
 
 | ツール | やること |
 |---|---|
 | `select` | 見ている範囲を宣言する。範囲トークンが返る |
 | `replace` | 範囲トークンの範囲を、新しいテキストに置き換える |
 | `sub` | 複数のファイルで、文字列を別の文字列に一度に置き換える。場所の数が見込みどおりのときだけ |
+| `new` | まだないファイルを、内容つきで作る |
 
 `select` を経ない `replace` はない。そのため、テープには「見る → 変える」が必ず揃って残る。`sub` は、同じ変更を何か所もするときのもので、場所の数を渡させる。何を変えたかの確かめは、その数で行う。検索や読み取りは、AI がもともと持っている Read・grep に任せる（hook が記録する。[cli.md](cli_ja.md) の `srwr hook`）。
 
@@ -31,7 +32,7 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **3つの
 
 | 項目 | 意味 |
 |---|---|
-| `file` | 作業場からの相対パス。既存のファイルだけ（新しいファイルは作れない） |
+| `file` | 作業場からの相対パス。既存のファイルだけ（新しいファイルは `new` で作る） |
 | `startLine`・`endLine` | 1始まり、両端を含む行番号。2つとも渡すか、2つとも渡さない（渡さないときは `expect` が範囲を見つける） |
 | `expect` | 任意。範囲がこの内容であること。行を `\n` でつなぐ。下の「内容の確認」 |
 | `why` | なぜここを見るか |
@@ -112,9 +113,34 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **3つの
 - テープには、変わったファイルごとに `replace` を1つ、同じ `why` で書く（[tape.md](tape_ja.md#replace)）。ビューワーは、それぞれをファイルの差分として、上に `why` を付けて見せる
 - 正規表現は使えない。場所を1つずつ選びたいときは `select` と `replace` を使う
 
+## new
+
+まだないファイルを、内容つきで作る。理由も記録する。
+
+```jsonc
+// 入力
+{ "file": "internal/config/config.go", "content": "package config\n\nfunc Read() {}", "why": "config パッケージを作り始める" }
+// 出力
+{ "ok": true, "selection": "sel_041G417ZRKYSPWJ7X4Z5PPKP", "startLine": 1, "endLine": 3 }
+```
+
+| 項目 | 意味 |
+|---|---|
+| `file` | 作業場からの相対パス。ファイルがまだないこと |
+| `content` | ファイルの内容。改行は LF（CR は `invalid_input`）。`""` なら空のファイル |
+| `why` | なぜそのファイルを作るか |
+| 出力の `selection` | 内容全体のトークン（`replace` に使える）。`startLine`・`endLine` はその行（空のファイルは `endLine` が 0）。内容は返さない（AI が今書いたもの） |
+
+- ファイルが既にあれば `file_exists` で、何も変えない。変えるときは `select` と `replace` を使う
+- ファイルの上のディレクトリがなければ作る。作業場の外や、記録しない場所を指すリンクが途中にあれば断る（`invalid_range`・`ignored_file`）。何も作らない
+- ファイルは、`content` が改行で終わっていてもいなくても、必ず改行で終わる（`"a"` と `"a\n"` は同じファイルになる）
+- 記録しないファイル（`.env` など）は作れない（`ignored_file`）
+- テープでは `tool` が `new` の `replace` 1つ（[tape.md](tape_ja.md#replace)）。ビューワーは、ファイル全体を `replace` と同じように橙で塗り、上に `why` を出す
+- シェルのコマンドで作ったファイルも記録される。そのときは `created: true` の [`external`](tape_ja.md#external) で、`why` はない
+
 ## why
 
-- `select`・`replace`・`sub` の**3つとも必須**。空白だけも不可（`invalid_input`）
+- `select`・`replace`・`sub`・`new` の**4つとも必須**。空白だけも不可（`invalid_input`）
 - `select` は「なぜここを見るか」、`replace` は「なぜこう変えるか」。「何をしているか」の言い換えではなく、理由を1文で書く
 - **ユーザーとの会話と同じ言語**で書く（ツールの説明文と入力スキーマで求めている）。人が読むためのもの
 
@@ -136,9 +162,10 @@ MCP の応答では `isError: true` になり、本文は次の JSON。
 | `content_mismatch` | 範囲の内容が `expect` と違う | メッセージが言う場所を読んで、`select` し直す |
 | `content_not_found` | `expect`（行番号なし）がファイルにない | 内容を確認する。または行番号を付ける |
 | `content_ambiguous` | `expect`（行番号なし）がファイルの2か所以上にある | 行番号を付ける。または `expect` の行を増やす |
+| `file_exists` | `new` で、既にあるファイルを作ろうとした | 変えるなら `select` と `replace` を使う |
 | `count_mismatch` | `sub` で見つかった場所の数が `count` と違う | ファイルごとの数を読み、正しい `count` で `sub` し直す（または `select` を使う） |
-| `ignored_file` | 記録しないファイルに `select`・`replace`・`sub` した。 | srwr では扱えない。ユーザーに頼む |
-| `invalid_input` | 必須の入力がない、型が違う、`why` が空。`file` が空か NUL を含む、`startLine` と `endLine` の片方だけがある、または両方なく `expect` もない、`selection` が空白だけ、`newText` に CR がある。`sub` では、`files`・`old`・`count` がない・空、同じパスが2回、`old` か `new` に CR がある | 入力を直す |
+| `ignored_file` | 記録しないファイルに `select`・`replace`・`sub`・`new` した。 | srwr では扱えない。ユーザーに頼む |
+| `invalid_input` | 必須の入力がない、型が違う、`why` が空。`file` が空か NUL を含む、`startLine` と `endLine` の片方だけがある、または両方なく `expect` もない、`selection` が空白だけ、`newText` に CR がある。`sub` では、`files`・`old`・`count` がない・空、同じパスが2回、`old` か `new` に CR がある。`new` では、`content` がない・CR がある、ファイルの上のディレクトリがファイルになっている | 入力を直す |
 | `unsupported_file` | CRLF やバイナリ | — |
 | `internal_error` | I/O エラーなど | — |
 
@@ -177,7 +204,7 @@ AI がこれらのツールを使って実際に犯したミス。どれも、�
 - **`file` は、作業場からの相対パスで渡す。** `/home/me/app/main.go` のような絶対パスは `invalid_range`、`../main.go` も `invalid_range` になる。`cmd/app/main.go` の形で書く。
 - **空範囲は、1 行ずれやすい。** `endLine = startLine - 1` は「`startLine` 行目の直前」を指すので、`startLine: 13, endLine: 12` は 12 行目と 13 行目の間になる。先にその場所の前後の行を読み、番号を確かめてから `select` を呼ぶ。
 - **新しい `select` の行番号は、今のファイルの行番号で渡す。** ほかの編集で行がずれたとき、すでに発行したトークンは srwr が補正するが、新しい `select` の `startLine`・`endLine` は補正しない。ほかの編集のあとは、ファイルを読み直すか、返ってきた `lines`（`replace` のあとは `before`・`after` も）で確かめる。もっと良いのは、`expect` に狙った行を渡すこと。番号が違えば、違う場所を選ばずに断られる。
-- **新しいファイルは、`select` と `replace` では作れない。** `select` は `file_not_found` になる。シェルのコマンドで作る。作ったファイルは、`created: true` の [`external`](tape_ja.md#external) として記録される。
+- **新しいファイルは `new` で作る。** 存在しないファイルへの `select` は `file_not_found` になる。シェルのコマンドで作ったファイルも記録されるが、`created: true` の [`external`](tape_ja.md#external) で、`why` はない。
 - **同じ場所を続けて直すときは、`replace` が返した新しいトークンを使う。** 使ったトークンは使い切りで、もう一度使うと `selection_stale` になる。
 - **同じ変更を何か所もするときは、`select` と `replace` を何度も使わず、`count` つきの `sub` を使う。** `count` が違えば、ファイルごとの数を言って断られる。
 - **エラーを読む。** `invalid_range` は `lineCount`（ファイルの行数）を返すので、番号を直すにはそれで足りる。

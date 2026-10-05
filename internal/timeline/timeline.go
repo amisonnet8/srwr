@@ -16,6 +16,7 @@ const (
 	KindExternal = tape.TypeExternal
 	KindFinal    = "final"
 	KindSub      = "sub" // a replace made by the sub tool: shown as a diff, with its reason
+	KindNew      = "new" // a replace made by the new tool: the whole file, shown like a replace
 	KindFailure  = "failure"
 )
 
@@ -144,8 +145,11 @@ func (b *Builder) Add(e tape.Event) bool {
 		f.Why, f.Selection = cloneString(e.Why), cloneString(e.Selection)
 		b.state.Apply(e)
 		f.After = b.text(e.File)
-		if e.HookTool == "sub" {
+		switch e.HookTool {
+		case "sub":
 			f.Kind, f.Hits = KindSub, e.Hits
+		case "new":
+			f.Kind = KindNew
 		}
 	case tape.TypeExternal:
 		b.state.Apply(e)

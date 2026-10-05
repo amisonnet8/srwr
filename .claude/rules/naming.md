@@ -9,7 +9,7 @@
 | 表示サーバー | **表示サーバー**（view-server） | `srwr view-server`。エディタが起動する。人は直接使わない |
 | VSCode 拡張 | **srwr-view** | 拡張ID・表示名とも `srwr-view` |
 | Vim クライアント | **srwr-view.vim** | リポジトリの `vim/`。`srwr view` が埋め込みから起動する |
-| MCP のツール名 | `select`・`replace`・`sub` | この3つだけ（`new` を足す予定。足したら直す） |
+| MCP のツール名 | `select`・`replace`・`sub`・`new` | この4つだけ |
 | 拡張のコマンド・設定 | 接頭辞 `srwr.`（例：`srwr.openTape`、`srwr.path`） | コマンドパレットの表記は「srwr: 〜」 |
 | Vim のコマンド・変数・ハイライト | コマンド `:Srwr…`（例：`:SrwrOpen`）、変数 `g:srwr_…`（snake_case）、ハイライト `Srwr…`（例：`SrwrWhyReplace`） | `docs/reference/vim.md` |
 

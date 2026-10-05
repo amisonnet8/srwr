@@ -14,7 +14,7 @@ const maxFailureMessage = 300
 
 // failedCall is a select or replace that gave the client an error, as far as the tape wants to know it.
 type failedCall struct {
-	tool      string   // toolSelect, toolReplace or toolSub
+	tool      string   // toolSelect, toolReplace, toolSub or toolNew
 	file      string   // select: the path as given; "" when there is none
 	files     []string // sub: the paths as given
 	startLine *int
@@ -29,6 +29,7 @@ const (
 	toolSelect  = "select"
 	toolReplace = "replace"
 	toolSub     = "sub"
+	toolNew     = "new"
 )
 
 // recordFailure writes a failure event for a call that failed (docs/reference/tape.md). It never changes the answer the client
@@ -65,7 +66,7 @@ func (f failedCall) info(tx *session.Tx) *tape.FailureInfo {
 		}
 	}
 	switch f.tool {
-	case toolSelect, toolSub:
+	case toolSelect, toolSub, toolNew:
 		if given != "" {
 			rel, perr := cleanPath(given)
 			switch {

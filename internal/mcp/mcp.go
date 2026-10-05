@@ -117,6 +117,8 @@ func (s *Server) call(params json.RawMessage) (any, *jsonrpc.Error) {
 		return s.callReplace(p.Arguments), nil
 	case tools.Sub:
 		return s.callSub(p.Arguments), nil
+	case tools.New:
+		return s.callNew(p.Arguments), nil
 	}
 	return nil, &jsonrpc.Error{Code: jsonrpc.InvalidParams, Message: "unknown tool: " + p.Name}
 }
@@ -251,6 +253,38 @@ func (s *Server) callSub(raw json.RawMessage) toolResult {
 		out.Files = append(out.Files, subFileOK{File: f.File, Hits: f.Hits, StartLine: f.StartLine, EndLine: f.EndLine, Selection: f.Selection, Lines: f.Lines})
 	}
 	return success(out)
+}
+
+type newArgs struct {
+	File    *string `json:"file"`
+	Content *string `json:"content"`
+	Why     *string `json:"why"`
+}
+
+type newOK struct {
+	OK        bool   `json:"ok"`
+	Selection string `json:"selection"`
+	StartLine int    `json:"startLine"`
+	EndLine   int    `json:"endLine"`
+}
+
+func (s *Server) callNew(raw json.RawMessage) toolResult {
+	var a newArgs
+	if err := decodeArgs(raw, &a); err != nil {
+		s.Core.RecordInputFailure(tools.New, err.Code, err.Message)
+		return failure(*err)
+	}
+	if missing := firstMissing(map[string]bool{"file": a.File == nil, "content": a.Content == nil, "why": a.Why == nil},
+		"file", "content", "why"); missing != "" {
+		e := core.Error{Code: core.CodeInvalidInput, Message: "missing required input: " + missing}
+		s.Core.RecordInputFailure(tools.New, e.Code, e.Message)
+		return failure(e)
+	}
+	res, cerr := s.Core.New(core.NewInput{File: *a.File, Content: *a.Content, Why: *a.Why})
+	if cerr != nil {
+		return failure(*cerr)
+	}
+	return success(newOK{OK: true, Selection: res.Selection, StartLine: res.StartLine, EndLine: res.EndLine})
 }
 
 // decodeArgs reads the arguments of a call. A value of the wrong type is invalid_input, like a missing one.

@@ -106,6 +106,10 @@ The same as [vscode.md](vscode.md). **select is blue, and what changes a file is
 - One frame for each file a `sub` changed, shown like an external change: two windows side by side, before on the left and after on the right, only the changed lines painted (blue and orange). **The `why` is in a band at the top of both windows**: the same number of rows on both sides, the `why` on the right (white bold on orange, wrapped to the width of the window and centered in it), empty rows on blue on the left. The file's own line numbers are drawn at the left of each row, and the band rows have none
 - The heading of the left status line is "Before  ⚠ sub: main.go". In the operation list a row reads `● n sub     file (N hits)` with an orange dot
 
+### 4c. Frames of new
+
+- A file made by `new` is shown like a `replace` frame, in one window: the whole file painted orange, the `why` in the orange rows above it. In the operation list a row reads `● n new     file:range` with an orange dot
+
 ### 5. The operation list
 - The frames are listed **in the order recorded, 1, 2, 3…** (the number is the same as the position in the status line). There is no indenting by parent and child
 - Each row: `● number kind file:range  why` (the range is `37`, `39-41`, or `before 12` for an empty range; the same order as the list of VSCode: dot, number, kind, file name). The color of the dot tells them apart (select = blue, replace = orange, external and final = purple). An external change is `external`, and the final diff is `final`
@@ -127,7 +131,7 @@ The same as [vscode.md](vscode.md). **select is blue, and what changes a file is
 - In the operation list a failure row has a red dot (`SrwrDotFailure`), the kind `failure`, and the error code in the place of `file:range`
 
 ### 6c. Which frames to show
-- The kinds **select, replace, external and failure** can each be turned on or off. At the start, select, replace and external are on and **failure is off**. `final` follows external
+- The kinds **select, replace, external and failure** can each be turned on or off. At the start, select, replace and external are on and **failure is off**. `final` follows external, and `sub` and `new` follow replace
 - Keys (only inside the buffers of srwr): `ts` select, `tr` replace, `te` external, `tf` failure. `:SrwrToggle {kind}` does the same. In these buffers `t` followed by `s`, `r`, `e` or `f` is taken by srwr
 - A change opens the tape again with the chosen kinds ([protocol.md](protocol.md)) and moves to the frame nearest to the current one (by the order recorded); in live it follows the newest again
 - The numbers are 1, 2, 3… of what is shown. The right end of the status line says what is left out: `hidden: failure (2)`; in live the count follows the frames that arrive. A kind that is off is not in the list or in stepping, and "L: Back to LIVE (N new)" **counts only the kinds that are shown**. When nothing is shown, the replay buffer says "No frames to show"

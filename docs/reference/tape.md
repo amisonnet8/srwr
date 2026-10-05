@@ -91,6 +91,7 @@ A `select` recorded by the hook (Read and the like) has a `why` of `null`. It ha
 - The `seq` inside a selection token is the `seq` of the event that issued the token
 - A `replace` recorded by the hook (Edit) has `from`, `selection` and `why` of `null`, `source` of `hook` and `tool` of `Edit`. The range is the whole lines that contain the replaced place
 - A `replace` made by `sub` ([mcp.md](mcp.md#sub)) has `source` of `mcp`, `tool` of `sub`, `from` of `null`, and `hits`, the number of places it changed in the file. There is **one for each file** that changed, with the same `why`. The range is the whole lines from the first place to the last (so `oldText` holds the lines in between too), and `selection` is the token of the range after the change
+- A `replace` made by `new` ([mcp.md](mcp.md#new)) has `source` of `mcp`, `tool` of `new`, `from` of `null` and `fileShaBefore` of `""` (there was no file). It is an insertion into an empty file: `startLine` 1, `endLine` 0, `oldText` empty, and `newText` the content as lines (`newStartLine` 1, `newEndLine` the number of lines; 0 for an empty file). If the tape held the file as deleted, it is there again after this event
 
 ### external
 
@@ -103,7 +104,7 @@ Recorded when a change to a file made outside srwr is detected. No `snapshot` fo
 - `hunks`: **the lines that changed**, against the content the tape held before (the one `expectedSha` is the hash of). The places come from top to bottom and do not overlap. `startLine` and `endLine` are the lines before, `newText` the lines after (joined with `\n`), and `newStartLine` and `newEndLine` their numbers, as in `replace`. An insertion has `endLine = startLine - 1`; a deletion has an empty `newText` and `newEndLine = newStartLine - 1`. Applying them to the content before gives the content after, which `actualSha` is the hash of. It is replayed as a diff frame (a side-by-side diff)
 - `text`: **the whole text of the file after the change**, written instead of `hunks` when the change cannot be told as lines (only the line break at the end of the file changed) or is too big to compare. When the file was gone it is `null`, `actualSha` is an empty string, and `deleted: true` is added
 - `created`: written (as `true`) when the file is **new**: the tape held no content of it, and a shell command made it. `expectedSha` is an empty string and `hunks` (or `text`) holds the whole file, so it is replayed as a diff frame with an empty left side. Only the hook finds these (see `srwr hook` in [cli.md](cli.md))
-- `detectedBy`: what led to the detection (`select`, `replace`, `sub`, `hook`)
+- `detectedBy`: what led to the detection (`select`, `replace`, `sub`, `new`, `hook`)
 - `author.kind` is always `external` (srwr cannot know who changed it)
 - An `external` of the old forms can be read too: one with the whole `text` and a `snapshot` after it, and one without `text` (then the `snapshot` right after it is shown as the content after the change)
 
@@ -113,17 +114,17 @@ If a `replace` is made with a selection token issued before an `external`, the t
 
 ### failure
 
-Recorded when a `select`, a `replace` or a `sub` fails (the AI gets an error). It is for finding out what mistakes the AI makes. A viewer shows it as a frame only when it is asked to (red; see [vscode.md](vscode.md)); by default it is left out.
+Recorded when a `select`, a `replace`, a `sub` or a `new` fails (the AI gets an error). It is for finding out what mistakes the AI makes. A viewer shows it as a frame only when it is asked to (red; see [vscode.md](vscode.md)); by default it is left out.
 
 ```json
 {"v":1,"seq":7,"ts":"…","type":"failure","tool":"select","file":null,"startLine":3,"endLine":9,"selection":null,"why":"Checking the main function","code":"invalid_range","message":"The path is absolute. Give a path relative to the workspace"}
 {"v":1,"seq":9,"ts":"…","type":"failure","tool":"replace","file":"cmd/app/main.go","startLine":null,"endLine":null,"selection":"sel_0410R3GZE4KV11C6325D32S7","why":"…","code":"selection_stale","message":"an edit overlapped the range after the select. Call select again"}
 ```
 
-- `tool`: `select`, `replace` or `sub`. `code` and `message` are the error the AI got ([mcp.md](mcp.md))
-- `file`: the path in the workspace, or `null` when it is not known or is left out (for a `sub` it is the file only when one file was given). `startLine` and `endLine` are for a `select`, and `selection` (the token that was given) for a `replace`; `why` is what the AI wrote. A value that is not there is `null`
+- `tool`: `select`, `replace`, `sub` or `new`. `code` and `message` are the error the AI got ([mcp.md](mcp.md))
+- `file`: the path in the workspace, or `null` when it is not known or is left out (for a `sub` it is the file only when one file was given; for a `new` it is the file given). `startLine` and `endLine` are for a `select`, and `selection` (the token that was given) for a `replace`; `why` is what the AI wrote. A value that is not there is `null`
 - **The real path is left out** when it is an absolute path, a path outside the workspace, or a file that is not recorded: `file` is `null`, and `message` is a sentence without the path (`The path is absolute. Give a path relative to the workspace`, `The path points outside the workspace`, `The file is not recorded`)
-- `newText` of a `replace`, and `old` and `new` of a `sub`, are not written. `message` is cut at 300 characters
+- `newText` of a `replace`, `old` and `new` of a `sub`, and `content` of a `new`, are not written. `message` is cut at 300 characters
 - A failure that is found before the call reaches srwr's editing (a required input is missing, a value has the wrong type) is recorded too, with `file` `null`
 
 ## The selection token

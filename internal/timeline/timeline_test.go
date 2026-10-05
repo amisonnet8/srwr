@@ -438,6 +438,28 @@ func TestSubFrame(t *testing.T) {
 	}
 }
 
+func TestNewFrame(t *testing.T) {
+	ev := parse(t,
+		`{"v":1,"seq":1,"ts":"2026-10-05T03:00:01.000Z","type":"replace","file":"a.go","from":null,"startLine":1,"endLine":0,"oldText":"","newText":"package a\n\nvar X = 1","newStartLine":1,"newEndLine":3,"selection":"sel_1","why":"作る","source":"mcp","tool":"new","fileShaBefore":""}`,
+	)
+	f := Build(ev).Frames()
+	if len(f) != 1 {
+		t.Fatalf("frames = %+v", f)
+	}
+	x := f[0]
+	if x.Kind != KindNew || x.Before != "" || x.After != "package a\n\nvar X = 1\n" || x.Range != (Range{1, 3}) || x.Why == nil || *x.Why != "作る" {
+		t.Errorf("new frame = %+v", x)
+	}
+	if b, _ := json.Marshal(x); !strings.Contains(string(b), `"kind":"new"`) || strings.Contains(string(b), "hits") {
+		t.Errorf("json = %s", b)
+	}
+	frames := []Frame{{Index: 0, Kind: KindNew, File: "a"}, {Index: 1, Kind: KindReplace, File: "a"}}
+	k, _ := NewKinds([]string{"select"})
+	if shown, _, hidden := Filter(frames, k); len(shown) != 0 || hidden[KindReplace] != 2 {
+		t.Errorf("select only: shown %v, hidden %v", shown, hidden)
+	}
+}
+
 func TestFilterGroupsSubWithReplace(t *testing.T) {
 	frames := []Frame{{Index: 0, Kind: KindSelect, File: "a"}, {Index: 1, Kind: KindSub, File: "a"}, {Index: 2, Kind: KindReplace, File: "a"}}
 	k, _ := NewKinds([]string{"select"})

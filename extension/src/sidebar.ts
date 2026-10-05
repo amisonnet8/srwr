@@ -15,12 +15,12 @@ export interface OpsSource {
 }
 
 export function dotColor(f: Frame): string {
-  return f.kind === "select" ? "charts.blue" : f.kind === "replace" || f.kind === "sub" ? "charts.orange" : f.kind === "failure" ? "srwr.failureForeground" : "charts.purple";
+  return f.kind === "select" ? "charts.blue" : f.kind === "replace" || f.kind === "sub" || f.kind === "new" ? "charts.orange" : f.kind === "failure" ? "srwr.failureForeground" : "charts.purple";
 }
 
 // The label of a kind: the words select and replace are the names of the two commands; external and final are srwr's own.
 function kindLabel(kind: Frame["kind"]): string {
-  return { select: "select", replace: "replace", sub: "sub", external: pick("external", "外部変更"), final: pick("final", "録画後"), failure: pick("failure", "失敗") }[kind];
+  return { select: "select", replace: "replace", sub: "sub", new: "new", external: pick("external", "外部変更"), final: pick("final", "録画後"), failure: pick("failure", "失敗") }[kind];
 }
 
 // "Hiding: failure (2)" under the heading of the list; "No frames to show" when nothing is there.

@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"unicode/utf8"
 
 	"github.com/amisonnet8/srwr/internal/ignore"
@@ -53,7 +54,8 @@ func (c *Core) readTarget(rel string) (target, *Error) {
 	}
 	full := filepath.Join(c.WS.Root(), filepath.FromSlash(rel))
 	real, err := filepath.EvalSymlinks(full)
-	if errors.Is(err, fs.ErrNotExist) {
+	// A file below a file (a/b when a is a file) is not there either.
+	if errors.Is(err, fs.ErrNotExist) || errors.Is(err, syscall.ENOTDIR) {
 		return target{}, nil
 	}
 	if err != nil {

@@ -363,3 +363,26 @@ test("a sub frame is listed with its file and the number of places, in orange", 
   assert.equal(row.description, "名前を変える");
   assert.equal(row.color, "charts.orange");
 });
+
+// A new frame: the whole file in one editor, painted like a replace, with its why in a line above.
+function serverWithNew(): FakeServer {
+  const s = new FakeServer();
+  const id = "20261005-1100-new";
+  const after = "package a\n\nvar X = 1\n";
+  const frames = [{ index: 0, kind: "new" as const, seq: 1, file: "a.go", range: { start: 1, end: 3 }, why: "パッケージを作る", before: "", after }];
+  s.frames.set(id, frames);
+  s.tapes.push({ tapeId: id, startedAt: "2026-10-05T11:00:00+09:00", ops: 1, files: ["a.go"] });
+  return s;
+}
+
+test("a new frame: one editor with the whole file painted like a replace, listed as new in orange", async () => {
+  const a = await openTape(serverWithNew(), "20261005-1100-new");
+  const s = a.screen();
+  assert.equal(s.tabs.length, 1);
+  assert.equal(s.tabs[0].text, "◆ パッケージを作る\npackage a\n\nvar X = 1\n");
+  const colors = colorsOf(s.tabs[0]);
+  assert.ok(colors.includes("#b45f06") && colors.includes("#583c27"), `${colors}`);
+  const row = s.tree[0];
+  assert.match(String(row.label), /^1  new  a\.go:1-3$/);
+  assert.equal(row.color, "charts.orange");
+});

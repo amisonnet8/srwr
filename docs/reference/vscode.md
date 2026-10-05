@@ -67,6 +67,11 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 - The left tab is "Before ⚠ sub: main.go", the right tab "After main.go"
 - In the operation list a row reads `number  sub  file (N hits)` (`N か所` in the Japanese UI), with an orange dot and the `why` as the description. A frame of `sub` is turned on and off with `replace` (see 8 below)
 
+### 3a2. Frames of new
+
+- `new` creates a file (a `replace` with `tool: "new"` on the tape, [mcp.md](mcp.md#new)). It is shown like a `replace` frame, **in one editor**: the whole file painted orange, the `why` in the orange line above it. There is no left and right: the left side would be empty
+- In the operation list a row reads `number  new  file:range` (`1-5` for the whole file), with an orange dot and the `why` as the description. A frame of `new` is turned on and off with `replace` (see 8 below)
+
 ### 3b. Failure frames
 
 - A failure frame has no file to open (a failure is often about an absolute path, a file that is not recorded, or a wrong input). It is shown as a **virtual document that explains it**: a red line `✖ select failed (invalid_range)` (white bold; for a `replace` it reads `replace failed`), then the message, then `why`, `tool` and `range` (the range given to a `select`; a `replace` has none) and `file` (`(not shown)` when it is left out). The editor tab is named `failure: select (invalid_range)`
@@ -75,7 +80,7 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 ### 4. The operation list (the left panel)
 
 - "srwr" at the left edge → "Operations". The frames are listed **in the order recorded, 1, 2, 3… from the top**. The number is the same as the position in the bottom bar (5/7). There is no indenting by parent and child
-- Each row: `number  kind  file:range` (a `sub` frame has `file (N hits)` in place of `file:range`) (`37`, `39-41`; an empty range reads `before 12`), with the `why` as the description. The color of the dot at the front tells them apart: select = blue, replace = orange, external and final = purple. The kinds are written `select`, `replace`, `external`, `final` and `failure` (in the Japanese UI: `select`, `replace`, `外部変更`, `録画後` and `失敗`). A failure row is a **red** dot, and its place is the error code (`invalid_range`) instead of `file:range`
+- Each row: `number  kind  file:range` (a `sub` frame has `file (N hits)` in place of `file:range`) (`37`, `39-41`; an empty range reads `before 12`), with the `why` as the description. The color of the dot at the front tells them apart: select = blue, replace = orange, external and final = purple. The kinds are written `select`, `replace`, `sub`, `new`, `external`, `final` and `failure` (in the Japanese UI: `select`, `replace`, `sub`, `new`, `外部変更`, `録画後` and `失敗`). A failure row is a **red** dot, and its place is the error code (`invalid_range`) instead of `file:range`
 - Clicking moves to that frame. The row of the current frame is selected
 - The ☓ at the top right closes the tape (or the live view)
 
@@ -95,7 +100,7 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 
 ### 8. Which frames to show
 
-- The kinds **select, replace, external and failure** can each be turned on or off. At the start, select, replace and external are on and **failure is off**. `final` (the diff after the recording) follows external
+- The kinds **select, replace, external and failure** can each be turned on or off. At the start, select, replace and external are on and **failure is off**. `final` (the diff after the recording) follows external, and `sub` and `new` follow replace
 - The **funnel button** at the top right of the operation list (and the command `srwr: Choose Frames to Show`) opens a multi-select list with the four kinds. Applying it opens the tape again with the chosen kinds ([protocol.md](protocol.md)) and moves to the frame nearest to the current one (by the order recorded). In live, it opens again and follows the newest
 - The numbers are 1, 2, 3… of what is shown, so the number on the list is still the position in the bottom bar
 - Under the heading of the list it says what is left out: `Hiding: failure (2)`. In live the count follows the frames that arrive

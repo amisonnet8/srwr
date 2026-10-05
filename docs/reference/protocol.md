@@ -63,28 +63,29 @@ The arguments are a JSON object (`{}` if none).
 | `select` | A `select` of the tape (whether `source` is `mcp` or `hook`) | File, range, `why` (may be `null`), `seq`, lineage (`selection`) |
 | `replace` | A `replace` of the tape | File, the range and text before and after, `why` (may be `null`), `seq`, lineage (`from` → `selection`) |
 | `sub` | A `replace` of the tape made by `sub` (`tool` is `sub`): one file, all its places | File, the range and the text before and after, `why`, `seq`, `hits` (the number of places). Shown as a diff, like `external`, with the `why` in a band above both sides |
+| `new` | A `replace` of the tape made by `new` (`tool` is `new`): a whole new file | File, the range (the whole file) and the text after (before is empty), `why`, `seq`. Shown like a `replace`: one editor, the file painted orange, the `why` above it |
 | `external` | An `external` of the tape | File, before (the content just before) and after (`text`), whether it was deleted |
 | `final` | The last content of the tape compared with the current file | File, before (the end of the tape) and after (the current file), whether it no longer exists |
-| `failure` | A `failure` of the tape (a `select` or `replace` that gave the AI an error) | `tool`, `code`, `message`, `why`; `file` is `""` when it is not known or is left out; `range` is the range given to a `select` (`{start:0,end:-1}` when there is none). The text before and after is empty |
+| `failure` | A `failure` of the tape (a `select`, `replace`, `sub` or `new` that gave the AI an error) | `tool`, `code`, `message`, `why`; `file` is `""` when it is not known or is left out; `range` is the range given to a `select` (`{start:0,end:-1}` when there is none). The text before and after is empty |
 
 The fields of a Frame:
 
 | Field | Content |
 |---|---|
 | `index` | The position in the list, starting from 0 |
-| `kind` | `select`, `replace`, `sub`, `external`, `final`, `failure` |
+| `kind` | `select`, `replace`, `sub`, `new`, `external`, `final`, `failure` |
 | `seq`, `ts` | The `seq` of the tape, and the time (epoch milliseconds; the value of the frame before if it cannot be read, 0 for the first). `final` has the value of the last frame |
 | `file` | A path relative to the workspace (separated by `/`) |
-| `range` | `{start, end}`. The range on the "after" side (`select` = that range, `replace` and `sub` = the new range, `external` and `final` = the whole file). `end < start` is an empty range |
+| `range` | `{start, end}`. The range on the "after" side (`select` = that range, `replace`, `sub` and `new` = the new range, `external` and `final` = the whole file). `end < start` is an empty range |
 | `oldRange` | `replace` only. The range on the "before" side |
 | `why`, `selection`, `from` | A string or `null` |
 | `parent` | The parent in the lineage (the `index` of the frame `from` points to), or `null` |
-| `tool`, `code`, `message` | `failure` only: the tool (`select`, `replace`), the error code, and the message (the real path is left out; see [tape.md](tape.md#failure)) |
+| `tool`, `code`, `message` | `failure` only: the tool (`select`, `replace`, `sub`, `new`), the error code, and the message (the real path is left out; see [tape.md](tape.md#failure)) |
 | `hits` | `sub` only. The number of places it changed in the file (not output otherwise) |
 | `deleted` | Diff frames only. The file does not exist after the change (`true` only then; not output otherwise) |
 | `before`, `after` | **Only when `withText` is true.** The whole text before and after. Usually it is fetched with `frame/state` (so that not every frame carries the whole text in a big tape) |
 
-- **Which kinds are sent (`kinds`)**: `tape/open` and `live/start` take `kinds`, a list of `select`, `replace`, `external`, `failure`. The server sends only those, **numbers the frames from 0 again** (so `index` is the position in what is sent, and `frame/state` takes that `index`), and tells how many it left out: `hidden` is an object such as `{"failure": 2}` (a kind with none left out is not in it; when nothing is left out, `hidden` is not there). `final` follows `external`, and `sub` follows `replace`. Left out, `kinds` is `["select","replace","external"]`: `failure` frames are not sent unless asked for. An unknown name is `invalid_params`. An empty list sends nothing. To change what is shown, a client opens the tape again with other `kinds`. `frame/state` is not affected by what is left out: the content of a file after a frame includes the frames that are not sent
+- **Which kinds are sent (`kinds`)**: `tape/open` and `live/start` take `kinds`, a list of `select`, `replace`, `external`, `failure`. The server sends only those, **numbers the frames from 0 again** (so `index` is the position in what is sent, and `frame/state` takes that `index`), and tells how many it left out: `hidden` is an object such as `{"failure": 2}` (a kind with none left out is not in it; when nothing is left out, `hidden` is not there). `final` follows `external`, and `sub` and `new` follow `replace`. Left out, `kinds` is `["select","replace","external"]`: `failure` frames are not sent unless asked for. An unknown name is `invalid_params`. An empty list sends nothing. To change what is shown, a client opens the tape again with other `kinds`. `frame/state` is not affected by what is left out: the content of a file after a frame includes the frames that are not sent
 - The frames of live (`live/start`, `live/frame`) do not include the final diff (an `external` appears as written on the tape)
 - **The server decides the final diff.** The client only shows it
 - Even if items are added to the tape (`source`, `tool`, `vcs` and so on), the client need not use them

@@ -42,6 +42,7 @@ func (s *State) Apply(e Event) {
 			f = &File{}
 			s.Files[e.File] = f
 		}
+		f.Deleted = false
 		f.Text = SpliceLines(f.Text, e.StartLine, e.EndLine, NewLines(e))
 		s.Replaces = append(s.Replaces, e)
 	case TypeExternal:

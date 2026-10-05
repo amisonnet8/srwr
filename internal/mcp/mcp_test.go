@@ -153,7 +153,7 @@ func TestToolsList(t *testing.T) {
 	if err := json.Unmarshal([]byte(got[0]), &r); err != nil {
 		t.Fatal(err)
 	}
-	if len(r.Result.Tools) != 3 || r.Result.Tools[0].Name != "select" || r.Result.Tools[1].Name != "replace" || r.Result.Tools[2].Name != "sub" {
+	if len(r.Result.Tools) != 4 || r.Result.Tools[0].Name != "select" || r.Result.Tools[1].Name != "replace" || r.Result.Tools[2].Name != "sub" || r.Result.Tools[3].Name != "new" {
 		t.Fatalf("tools = %+v", r.Result.Tools)
 	}
 	for _, tool := range r.Result.Tools {
@@ -270,6 +270,26 @@ func TestSub(t *testing.T) {
 	}
 }
 
+func TestNew(t *testing.T) {
+	root := t.TempDir()
+	got := serve(t, root, toolCall(1, "new", `{"file":"pkg/a.go","content":"package pkg\n\nvar X = 1","why":"パッケージを作る"}`))
+	m, isErr := body(t, got[0])
+	if isErr || m["ok"] != true || m["startLine"] != float64(1) || m["endLine"] != float64(3) || m["selection"] == "" {
+		t.Fatalf("new = %v %v", m, isErr)
+	}
+	if _, has := m["lines"]; has {
+		t.Errorf("the answer has lines: %v", m)
+	}
+	if b, _ := os.ReadFile(filepath.Join(root, "pkg", "a.go")); string(b) != "package pkg\n\nvar X = 1\n" { //nolint:gosec // a path in a temporary directory
+		t.Errorf("file = %q", b)
+	}
+	// A file that exists is refused.
+	got = serve(t, root, toolCall(1, "new", `{"file":"pkg/a.go","content":"x","why":"w"}`))
+	if m, isErr = body(t, got[0]); !isErr || m["error"].(map[string]any)["code"] != "file_exists" {
+		t.Errorf("second new = %v %v", m, isErr)
+	}
+}
+
 func TestToolErrors(t *testing.T) {
 	root := t.TempDir()
 	if err := os.WriteFile(filepath.Join(root, "a.go"), []byte("1\n2\n"), 0o600); err != nil {
@@ -302,6 +322,9 @@ func TestToolErrors(t *testing.T) {
 		{"sub with files as a string", "sub", `{"files":"a.go","old":"1","new":"x","count":1,"why":"w"}`, "invalid_input", nil},
 		{"sub with count as a string", "sub", `{"files":["a.go"],"old":"1","new":"x","count":"1","why":"w"}`, "invalid_input", nil},
 		{"sub with no files", "sub", `{"files":[],"old":"1","new":"x","count":1,"why":"w"}`, "invalid_input", nil},
+		{"new without content", "new", `{"file":"n.go","why":"w"}`, "invalid_input", nil},
+		{"new with content as a number", "new", `{"file":"n.go","content":1,"why":"w"}`, "invalid_input", nil},
+		{"new on an existing file", "new", `{"file":"a.go","content":"x","why":"w"}`, "file_exists", nil},
 		{"sub with the wrong count", "sub", `{"files":["a.go"],"old":"1","new":"x","count":2,"why":"w"}`, "count_mismatch", map[string]any{"a.go": float64(1)}},
 	}
 	for _, tt := range tests {

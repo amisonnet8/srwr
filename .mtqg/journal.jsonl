@@ -622,3 +622,5 @@
 {"id":"2c643e607e7444159b0237a9d563530f","op":"create","type":"qa","status":"open","text":"why の帯を各変更のまとまりの上に出す案：全部に全文(A)か、最初だけ全文で以降は1行(B)か。UIゲートで画像を見て決める。","v":1,"ts":"2026-10-05T05:05:00Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"bfad82b86d2c4a599b838b93ad4e0a73","op":"create","type":"qa","re":"2c643e607e7444159b0237a9d563530f","text":"案Aで了承：各変更のまとまりの上に why の全文を毎回出す。まとまり＝変更行が続く塊、間に変わらない行が1行でもあれば別のまとまり。最初の表示は最初のまとまりの帯が上から約30%。","v":1,"ts":"2026-10-05T05:09:26Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"8221d2e23c124f49b6626f62ffe3ff7e","op":"create","type":"todo","status":"open","text":"【帯】replace のコマに hunks を足す(timeline/protocol)、VSCode と Vim の帯を各まとまりの上に出す、文書・基準を直す (todo 08980f4c3e の実装の中身)","v":1,"ts":"2026-10-05T05:09:26Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"08980f4c3e1c4789b2c1707ee8a53c11","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-05T05:39:44Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"8221d2e23c124f49b6626f62ffe3ff7e","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-05T05:39:44Z","author":{"kind":"ai","name":"claude-code"}}

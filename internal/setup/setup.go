@@ -78,8 +78,11 @@ const (
 )
 
 var (
-	forbidden   = []string{"Edit", "Write", "MultiEdit", "NotebookEdit"}
-	allowed     = []string{"mcp__srwr__select", "mcp__srwr__replace", "mcp__srwr__sub", "mcp__srwr__new"}
+	forbidden = []string{"Edit", "Write", "MultiEdit", "NotebookEdit"}
+	allowed   = []string{"mcp__srwr__look", "mcp__srwr__edit", "mcp__srwr__replace", "mcp__srwr__new"}
+	// retired are the permissions of tools that no longer exist (select and sub of version 0.1.4 and before). replace and new are
+	// still tools, so their permissions stay.
+	retired     = []string{"mcp__srwr__select", "mcp__srwr__sub"}
 	ignoreLines = []string{".srwr/key", ".srwr/lock", ".srwr/active", ".srwr/init-backup/"}
 )
 
@@ -326,7 +329,15 @@ func planSettings(root string, lenient bool) (plan, error) {
 			allowAdded = true
 		}
 	}
-	perms.set("allow", allow)
+	allowKept := make([]any, 0, len(allow))
+	for _, a := range allow {
+		if str, ok := a.(string); ok && slices.Contains(retired, str) {
+			allowAdded = true // the file changes
+			continue
+		}
+		allowKept = append(allowKept, a)
+	}
+	perms.set("allow", allowKept)
 
 	deny, err := stringList(perms, "deny", where+lang.Pick(", permissions", " の permissions"))
 	if err != nil {

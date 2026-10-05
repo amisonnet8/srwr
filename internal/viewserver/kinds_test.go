@@ -59,12 +59,12 @@ func TestTapeOpenKinds(t *testing.T) {
 
 	// Left out: everything but failure, and nothing is said to be hidden (the count would be an item of its own).
 	r, got := openWith(t, root, nil)
-	if kindsOf(r) != "select replace" || len(r.Hidden) != 1 || r.Hidden["failure"] != 2 {
+	if kindsOf(r) != "look edit" || len(r.Hidden) != 1 || r.Hidden["failure"] != 2 {
 		t.Errorf("default: %s hidden %v\n%s", kindsOf(r), r.Hidden, got[1])
 	}
 	// failure asked for: the frames are in the order recorded, and numbered from 0 over what is sent.
-	r, _ = openWith(t, root, []string{"select", "replace", "external", "failure"})
-	if kindsOf(r) != "select failure replace failure" || len(r.Hidden) != 0 {
+	r, _ = openWith(t, root, []string{"look", "edit", "external", "failure"})
+	if kindsOf(r) != "look failure edit failure" || len(r.Hidden) != 0 {
 		t.Fatalf("all: %s hidden %v", kindsOf(r), r.Hidden)
 	}
 	for i, f := range r.Frames {
@@ -72,24 +72,24 @@ func TestTapeOpenKinds(t *testing.T) {
 			t.Errorf("frame %d has index %d", i, f.Index)
 		}
 	}
-	if f := r.Frames[1]; f.File != "" || f.Tool != "select" || f.Code != "invalid_range" || !strings.Contains(f.Message, "absolute") {
+	if f := r.Frames[1]; f.File != "" || f.Tool != "look" || f.Code != "invalid_range" || !strings.Contains(f.Message, "absolute") {
 		t.Errorf("the first failure = %+v", f)
 	}
-	if f := r.Frames[3]; f.File != "a.go" || f.Tool != "replace" || f.Code != "selection_stale" {
+	if f := r.Frames[3]; f.File != "a.go" || f.Tool != "edit" || f.Code != "selection_stale" {
 		t.Errorf("the second failure = %+v", f)
 	}
 	// Only replace.
-	r, _ = openWith(t, root, []string{"replace"})
-	if kindsOf(r) != "replace" || r.Hidden["select"] != 1 || r.Hidden["failure"] != 2 {
+	r, _ = openWith(t, root, []string{"edit"})
+	if kindsOf(r) != "edit" || r.Hidden["look"] != 1 || r.Hidden["failure"] != 2 {
 		t.Errorf("replace only: %s hidden %v", kindsOf(r), r.Hidden)
 	}
 	// Nothing.
 	r, _ = openWith(t, root, []string{})
-	if len(r.Frames) != 0 || r.Hidden["select"] != 1 || r.Hidden["replace"] != 1 || r.Hidden["failure"] != 2 {
+	if len(r.Frames) != 0 || r.Hidden["look"] != 1 || r.Hidden["edit"] != 1 || r.Hidden["failure"] != 2 {
 		t.Errorf("none: %s hidden %v", kindsOf(r), r.Hidden)
 	}
 	// A name that is not a kind.
-	_, got = openWith(t, root, []string{"select", "final"})
+	_, got = openWith(t, root, []string{"look", "final"})
 	if rpc, code := errorOf(t, got[1]); rpc != -32602 || code != "invalid_params" {
 		t.Errorf("unknown kind: %s", got[1])
 	}
@@ -119,8 +119,8 @@ func TestFrameStateWithKinds(t *testing.T) {
 	if s := ask([]string{"failure"}, 1); s.Content == nil || *s.Content != "1\ntwo\n3\n" {
 		t.Errorf("second failure: %+v", s)
 	}
-	// With select and replace shown, index 1 is the replace.
-	if s := ask([]string{"select", "replace"}, 1); s.Before != "1\n2\n3\n" || s.After != "1\ntwo\n3\n" {
+	// With look and edit shown, index 1 is the edit.
+	if s := ask([]string{"look", "edit"}, 1); s.Before != "1\n2\n3\n" || s.After != "1\ntwo\n3\n" {
 		t.Errorf("replace: %+v", s)
 	}
 	// Past what was sent.
@@ -177,7 +177,7 @@ func TestLiveWithFailureShown(t *testing.T) {
 	in, out := pipe(t, &Server{Root: root, PollInterval: fast})
 	in.send(initReq(1, nil))
 	out.next()
-	in.send(req(2, "live/start", map[string]any{"kinds": []string{"select", "replace", "external", "failure"}}))
+	in.send(req(2, "live/start", map[string]any{"kinds": []string{"look", "edit", "external", "failure"}}))
 	out.next()
 	appendTo(t, root, "20261001-1000-aaaa", failureLine(3)+"\n")
 	line := out.next()

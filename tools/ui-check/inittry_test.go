@@ -79,11 +79,11 @@ func TestInitTryReport(t *testing.T) {
 	if _, err := hook.Run(strings.NewReader(string(b)), c); err != nil {
 		t.Fatal(err)
 	}
-	sel, cerr := c.Select(core.SelectInput{File: "pad.go", StartLine: 1, EndLine: 1, Why: "見る"})
+	sel, cerr := c.Look(core.LookInput{File: "pad.go", StartLine: 1, EndLine: 1, Why: "見る"})
 	if cerr != nil {
 		t.Fatal(cerr)
 	}
-	if _, cerr := c.Replace(core.ReplaceInput{Selection: sel.Selection, NewText: "package trial", Why: "直す"}); cerr != nil {
+	if _, cerr := c.Edit(core.EditInput{Selection: sel.Selection, NewText: "package trial", Why: "直す"}); cerr != nil {
 		t.Fatal(cerr)
 	}
 	id, _ := ws.Current()

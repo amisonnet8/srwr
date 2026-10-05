@@ -39,7 +39,7 @@
 
 - **AI の作業を止めない。** 失敗しても標準エラー出力に出して**終了コード 0**。終了コード 2 は Claude Code が道具の実行を止める。コマンドラインの誤りだけが 1（止めない失敗）
 - 記録は `internal/core` の `Hook` に集める（`mcp` と同じ `Workspace.Do` の中。ロック・セッション・テープの読み足しが同じ）。`internal/hook` は JSON と Bash の読み取りを読んで `core.HookRequest` を作るだけ
-- パスは `toRel` で作業場からの相対にし、`core.cleanPath`・`readTarget` を通す（外を指すパス・リンクは記録しない）。記録しないファイル（R8）の判定は `core.readTarget` の1か所（hook・`observeAll` も `select`・`replace` もここを通る）
+- パスは `toRel` で作業場からの相対にし、`core.cleanPath`・`readTarget` を通す（外を指すパス・リンクは記録しない）。記録しないファイル（R8）の判定は `core.readTarget` の1か所（hook・`observeAll` も `look`・`edit`・`replace`・`new` もここを通る）
 - **Edit は、ファイルを先に書いた後で呼ばれる（`PostToolUse`）。** 編集前の内容は、テープが持つもの、なければ `tool_response.originalFile`。`old_string` → `new_string` を当てて今のファイルと一致しなければ、`replace` を作らず `external` にする
 - **Bash の後は、新しいファイルも探す**（`core.observeNew`）。`internal/vcs` の `NewFiles`（git の未追跡と、インデックスに追加したばかり＝`git add`・`git add -N` のファイル）から得て、**必ず `readTarget` を通す**（記録しない設定・バイナリ・CRLF・外を指すリンクを飛ばす）。1回に50件・1件256 KiB まで。git が使えなくても黙って何もしない。`created: true` の `external` として書く
 - Bash の読み取りは、**先頭のコマンドだけ**を見る。`$( )`・書き込みのリダイレクト・`sed -i`・`tail -f` などは読み取りとして扱わない。Bash のあとは、読み取りでなくても `ObserveAll`
@@ -67,9 +67,9 @@
 
 ## 失敗の記録（`failure`）
 
-- `select`・`replace` が失敗したら、`core.recordFailure`（`internal/core/failure.go`）の**1か所**でテープに `failure` を書く。`Core.Select`・`Core.Replace` が、返す前に呼ぶ。MCP の層で弾く失敗（必須の入力がない、型が違う）は `Core.RecordInputFailure`
-- **`select` の `expect` の中身も、テープに書かない**（`replace` の `newText` と同じ。ファイルの内容が入りうる）。`expect` だけで範囲を探す呼び出し（`Locate`）の失敗は、`startLine`・`endLine` を `null` にする
-- **`sub` の失敗**（`core.Sub`）も同じ1か所で書く。`old`・`new` はテープに書かない（`newText` と同じ）。`file` は、ファイルを1つだけ渡したときだけ書く。複数のときは、パスの誤りの文も決まった文に替える（どれかのパスが実際のパスを含みうるため）。`sub` は、全部のファイルを読んで数えて計画を立ててから書く（数が違えば何も書かない。`count_mismatch`）。変えたファイルごとに `replace` を1つ（`tool: "sub"`・`hits`）
+- `look`・`edit` が失敗したら、`core.recordFailure`（`internal/core/failure.go`）の**1か所**でテープに `failure` を書く。`Core.Look`・`Core.Edit` が、返す前に呼ぶ。MCP の層で弾く失敗（必須の入力がない、型が違う）は `Core.RecordInputFailure`
+- **`look` の `expect` の中身も、テープに書かない**（`edit` の `newText` と同じ。ファイルの内容が入りうる）。`expect` だけで範囲を探す呼び出し（`Locate`）の失敗は、`startLine`・`endLine` を `null` にする
+- **`replace` の失敗**（`core.Replace`。版 0.1.4 までの `sub`）も同じ1か所で書く。`old`・`new` はテープに書かない（`newText` と同じ）。`file` は、ファイルを1つだけ渡したときだけ書く。複数のときは、パスの誤りの文も決まった文に替える（どれかのパスが実際のパスを含みうるため）。`replace` は、全部のファイルを読んで数えて計画を立ててから書く（数が違えば何も書かない。`count_mismatch`）。変えたファイルごとに `replace` を1つ（`hits`）
 - **`new` の失敗**（`core.New`）も同じ1か所。`content` は書かない。`file` は渡したパスを、今の伏せ（絶対パス・外・`ignored_file`）に通して書く。ファイルは、同じディレクトリの一時ファイルに書いて `os.Link` で置く（先にできていたら `file_exists`。鍵と同じ先勝ち）。**親ディレクトリは、いちばん近い既にある祖先を `EvalSymlinks` して、作業場の中か・記録しない場所でないかを確かめてから作る**（`readTarget` は、まだないパスの途中のリンクを見ない）。`readTarget` は、`a/b` の `a` がファイルのとき（`ENOTDIR`）も「ない」として扱う
 - **返事を変えない。** 書けなくても握りつぶす（AI の作業を止めない）。AI に返すエラー文は今のまま（パスを含む）
 - **テープに実際のパスを書かない**：絶対パス・作業場の外・`ignored_file`・`internal_error`（`.srwrignore` が読めないとき）は `file` を `null` にし、エラー文を決まった文に替える。`replace` の `newText` も書かない。新しい失敗の入口を足したら、この伏せを通ることを確かめ、テストを書く
@@ -83,7 +83,7 @@
 
 ## 記録しないファイル
 
-- `select`・`replace`・hook・external の検知の**すべての入口で**、`internal/ignore` を通す。1か所でも漏れると、秘密情報がテープに入る
+- `look`・`edit`・`replace`・`new`・hook・external の検知の**すべての入口で**、`internal/ignore` を通す。1か所でも漏れると、秘密情報がテープに入る
 - 判定は `core.readTarget` の1か所に置いてある（`.srwrignore` は呼ばれるたびに読む。読めなければ何も記録しない）。**新しい入口を足すときは、`readTarget` を通ることを確かめ、その入口のテストを書く**
 
 ## テスト

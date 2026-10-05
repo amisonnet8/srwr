@@ -16,15 +16,15 @@ The biggest risk was that "the AI always edits through the two commands" would b
 
 With this, srwr is the only proper way to change a file. What there is to check also changes, from "does it obey the rule" to "**can the work be done with just two commands**". Editing through Bash (`sed -i`, redirects, and so on) cannot be shut out, so it is detected as `external` and shown. This is strict mode ([cli.md](../reference/cli.md)). If the user prefers, lenient mode is also available: nothing is forbidden, and a hook records instead.
 
-### `select` is the precondition of `replace`
+### `look` and `edit`: looking comes before changing
 
-A `select` that only returns content looks to the AI like a call with "cost and no gain", and tends to be skipped. With the selection token, `replace` is impossible without `select`. `select` becomes a step that cannot be skipped, so the tape always holds "look, then change". For the AI too, there is no need to handle line numbers or hashes: it just passes the string it received.
+A `look` that only returns content looks to the AI like a call with "cost and no gain", and tends to be skipped. In the first design `replace` was impossible without `select`, and `select` was a step that could not be skipped. In practice the AI skipped it with the other tools (`sub`, and a second call per place): 69 of 74 calls of `sub` in one experiment changed one place only, and `select` → `replace` was used twice. So the tools were renamed and cut anew: `look` (look; the token it returns is accepted by `edit`), `edit` (change a range, one call), `replace` (the same change in several places, no longer for one place) and `new`. A range is kept on the tape for every change, so the tape still holds "look, then change". For the AI too, there is no need to handle line numbers or hashes: it just passes the string it received.
 
 ### srwr absorbs the shifting of line numbers
 
 When a range is given by line numbers, it drifts as edits pile up. This is why the Edit of Claude Code takes the `old_string` form. In srwr the token carries the `seq` at the time it was issued, and srwr corrects the numbers automatically from the later edit history. Then it checks the hash of the content, and edits nothing if it does not match ([token.md](token.md)).
 
-### Only two commands
+### Four tools only (look, edit, replace, new)
 
 There are no commands for moving a cursor, fetching or searching. Searching and reading are left to the Read and grep the AI already has. srwr's responsibility is only "to record the moment a file really changes, and the range being looked at just before". This keeps visualization simple, and also helps the AI use the tool well, because an LLM tends to choose wrongly when there are many similar tools.
 
@@ -106,7 +106,7 @@ The screen specifications are in [vscode.md](../reference/vscode.md) and [vim.md
 | Decision | Reason |
 |---|---|
 | **Viewing is frame-by-frame stepping only.** There is no autoplay, speed or real-time button | The viewer steps one frame at a time while reading the reason. Motion does not help understanding, and adds things to verify |
-| **select is blue, replace is orange**, two colors. Only the dots of external and final changes are purple | A few colors are enough to tell the kinds apart |
+| **look is blue, edit is orange**, two colors. Only the dots of external and final changes are purple | A few colors are enough to tell the kinds apart |
 | **The reason line is inserted before the range, as a real line** (white bold text on a dark background). The range has the lighter version of the same color | The reason and the code can be read one after the other in the same place. What is inserted is in a virtual document, so the real file is not affected. In return the line numbers would not match, so the real file's own numbers are drawn by the extension |
 | **A diff is side by side, with only the changed lines painted (before = blue, after = orange)** | What changed is clear from the content. The standard diff screen of VSCode cannot change its colors, so two editors, left and right, get our own colors |
 | **The operation list is flat, numbered from 1** | Indenting by parent and child is hard to read and has no use. The number is the same as the position in the bottom bar |

@@ -526,46 +526,46 @@
   ],
   "tree": [
    {
-    "label": "1  select  text.go:37",
+    "label": "1  look  text.go:37",
     "description": "Truncate が幅ちょうどの文字列まで切り詰めてしまう原因の比較。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  select  text.go:103",
+    "label": "2  look  text.go:103",
     "description": "Wrap が日本語で早く折り返すのは単語幅をバイト数で測っているため。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "3  select  parse.go:39-41",
+    "label": "3  look  parse.go:39-41",
     "description": "末尾の空欄が落ちるのは、最後の欄を中身があるときだけ追加しているため。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "4  select  parse.go:40-42",
+    "label": "4  look  parse.go:40-42",
     "description": "最後の欄の追加条件を if ブロックごと置き換えるため、そのブロックだけを対象にする。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "5  replace  text.go:37",
+    "label": "5  edit  text.go:37",
     "description": "幅ちょうどの文字列は収まっているので、切り詰めずに返すべきだから。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "6  replace  text.go:103",
+    "label": "6  edit  text.go:103",
     "description": "折り返し幅は表示幅で定義されているので、バイト数ではなく表示幅で比べる必要があるから。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "7  replace  parse.go:40",
+    "label": "7  edit  parse.go:40",
     "description": "区切りの数+1 が欄の数なので、最後の欄は空でも必ず1欄として数えるべきだから。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    }
   ],
   "status": [
@@ -1136,46 +1136,46 @@
   ],
   "tree": [
    {
-    "label": "1  select  text.go:37",
+    "label": "1  look  text.go:37",
     "description": "Truncate が幅ちょうどの文字列まで切り詰めてしまう原因の比較。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  select  text.go:103",
+    "label": "2  look  text.go:103",
     "description": "Wrap が日本語で早く折り返すのは単語幅をバイト数で測っているため。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "3  select  parse.go:39-41",
+    "label": "3  look  parse.go:39-41",
     "description": "末尾の空欄が落ちるのは、最後の欄を中身があるときだけ追加しているため。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "4  select  parse.go:40-42",
+    "label": "4  look  parse.go:40-42",
     "description": "最後の欄の追加条件を if ブロックごと置き換えるため、そのブロックだけを対象にする。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "5  replace  text.go:37",
+    "label": "5  edit  text.go:37",
     "description": "幅ちょうどの文字列は収まっているので、切り詰めずに返すべきだから。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "6  replace  text.go:103",
+    "label": "6  edit  text.go:103",
     "description": "折り返し幅は表示幅で定義されているので、バイト数ではなく表示幅で比べる必要があるから。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "7  replace  parse.go:40",
+    "label": "7  edit  parse.go:40",
     "description": "区切りの数+1 が欄の数なので、最後の欄は空でも必ず1欄として数えるべきだから。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    }
   ],
   "status": [
@@ -1573,46 +1573,46 @@
   ],
   "tree": [
    {
-    "label": "1  select  text.go:37",
+    "label": "1  look  text.go:37",
     "description": "Truncate が幅ちょうどの文字列まで切り詰めてしまう原因の比較。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  select  text.go:103",
+    "label": "2  look  text.go:103",
     "description": "Wrap が日本語で早く折り返すのは単語幅をバイト数で測っているため。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "3  select  parse.go:39-41",
+    "label": "3  look  parse.go:39-41",
     "description": "末尾の空欄が落ちるのは、最後の欄を中身があるときだけ追加しているため。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "4  select  parse.go:40-42",
+    "label": "4  look  parse.go:40-42",
     "description": "最後の欄の追加条件を if ブロックごと置き換えるため、そのブロックだけを対象にする。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "5  replace  text.go:37",
+    "label": "5  edit  text.go:37",
     "description": "幅ちょうどの文字列は収まっているので、切り詰めずに返すべきだから。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "6  replace  text.go:103",
+    "label": "6  edit  text.go:103",
     "description": "折り返し幅は表示幅で定義されているので、バイト数ではなく表示幅で比べる必要があるから。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "7  replace  parse.go:40",
+    "label": "7  edit  parse.go:40",
     "description": "区切りの数+1 が欄の数なので、最後の欄は空でも必ず1欄として数えるべきだから。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    }
   ],
   "status": [
@@ -2010,46 +2010,46 @@
   ],
   "tree": [
    {
-    "label": "1  select  text.go:37",
+    "label": "1  look  text.go:37",
     "description": "Truncate が幅ちょうどの文字列まで切り詰めてしまう原因の比較。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  select  text.go:103",
+    "label": "2  look  text.go:103",
     "description": "Wrap が日本語で早く折り返すのは単語幅をバイト数で測っているため。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "3  select  parse.go:39-41",
+    "label": "3  look  parse.go:39-41",
     "description": "末尾の空欄が落ちるのは、最後の欄を中身があるときだけ追加しているため。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "4  select  parse.go:40-42",
+    "label": "4  look  parse.go:40-42",
     "description": "最後の欄の追加条件を if ブロックごと置き換えるため、そのブロックだけを対象にする。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "5  replace  text.go:37",
+    "label": "5  edit  text.go:37",
     "description": "幅ちょうどの文字列は収まっているので、切り詰めずに返すべきだから。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "6  replace  text.go:103",
+    "label": "6  edit  text.go:103",
     "description": "折り返し幅は表示幅で定義されているので、バイト数ではなく表示幅で比べる必要があるから。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "7  replace  parse.go:40",
+    "label": "7  edit  parse.go:40",
     "description": "区切りの数+1 が欄の数なので、最後の欄は空でも必ず1欄として数えるべきだから。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    }
   ],
   "status": [
@@ -2619,46 +2619,46 @@
   ],
   "tree": [
    {
-    "label": "1  select  text.go:37",
+    "label": "1  look  text.go:37",
     "description": "Truncate が幅ちょうどの文字列まで切り詰めてしまう原因の比較。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  select  text.go:103",
+    "label": "2  look  text.go:103",
     "description": "Wrap が日本語で早く折り返すのは単語幅をバイト数で測っているため。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "3  select  parse.go:39-41",
+    "label": "3  look  parse.go:39-41",
     "description": "末尾の空欄が落ちるのは、最後の欄を中身があるときだけ追加しているため。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "4  select  parse.go:40-42",
+    "label": "4  look  parse.go:40-42",
     "description": "最後の欄の追加条件を if ブロックごと置き換えるため、そのブロックだけを対象にする。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "5  replace  text.go:37",
+    "label": "5  edit  text.go:37",
     "description": "幅ちょうどの文字列は収まっているので、切り詰めずに返すべきだから。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "6  replace  text.go:103",
+    "label": "6  edit  text.go:103",
     "description": "折り返し幅は表示幅で定義されているので、バイト数ではなく表示幅で比べる必要があるから。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "7  replace  parse.go:40",
+    "label": "7  edit  parse.go:40",
     "description": "区切りの数+1 が欄の数なので、最後の欄は空でも必ず1欄として数えるべきだから。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    }
   ],
   "status": [
@@ -3228,46 +3228,46 @@
   ],
   "tree": [
    {
-    "label": "1  select  text.go:37",
+    "label": "1  look  text.go:37",
     "description": "Truncate が幅ちょうどの文字列まで切り詰めてしまう原因の比較。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  select  text.go:103",
+    "label": "2  look  text.go:103",
     "description": "Wrap が日本語で早く折り返すのは単語幅をバイト数で測っているため。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "3  select  parse.go:39-41",
+    "label": "3  look  parse.go:39-41",
     "description": "末尾の空欄が落ちるのは、最後の欄を中身があるときだけ追加しているため。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "4  select  parse.go:40-42",
+    "label": "4  look  parse.go:40-42",
     "description": "最後の欄の追加条件を if ブロックごと置き換えるため、そのブロックだけを対象にする。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "5  replace  text.go:37",
+    "label": "5  edit  text.go:37",
     "description": "幅ちょうどの文字列は収まっているので、切り詰めずに返すべきだから。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "6  replace  text.go:103",
+    "label": "6  edit  text.go:103",
     "description": "折り返し幅は表示幅で定義されているので、バイト数ではなく表示幅で比べる必要があるから。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "7  replace  parse.go:40",
+    "label": "7  edit  parse.go:40",
     "description": "区切りの数+1 が欄の数なので、最後の欄は空でも必ず1欄として数えるべきだから。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    }
   ],
   "status": [
@@ -3657,46 +3657,46 @@
   ],
   "tree": [
    {
-    "label": "1  select  text.go:37",
+    "label": "1  look  text.go:37",
     "description": "Truncate が幅ちょうどの文字列まで切り詰めてしまう原因の比較。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  select  text.go:103",
+    "label": "2  look  text.go:103",
     "description": "Wrap が日本語で早く折り返すのは単語幅をバイト数で測っているため。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "3  select  parse.go:39-41",
+    "label": "3  look  parse.go:39-41",
     "description": "末尾の空欄が落ちるのは、最後の欄を中身があるときだけ追加しているため。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "4  select  parse.go:40-42",
+    "label": "4  look  parse.go:40-42",
     "description": "最後の欄の追加条件を if ブロックごと置き換えるため、そのブロックだけを対象にする。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "5  replace  text.go:37",
+    "label": "5  edit  text.go:37",
     "description": "幅ちょうどの文字列は収まっているので、切り詰めずに返すべきだから。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "6  replace  text.go:103",
+    "label": "6  edit  text.go:103",
     "description": "折り返し幅は表示幅で定義されているので、バイト数ではなく表示幅で比べる必要があるから。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "7  replace  parse.go:40",
+    "label": "7  edit  parse.go:40",
     "description": "区切りの数+1 が欄の数なので、最後の欄は空でも必ず1欄として数えるべきだから。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    }
   ],
   "status": [

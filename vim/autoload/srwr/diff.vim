@@ -20,8 +20,8 @@ export def Label(f: dict<any>): string
       '⚠ Changed after recording (' .. (gone ? 'no longer exists' : 'diff from current file') .. '): ' .. name,
       '⚠ 録画のあとで変更（' .. (gone ? '今は存在しない' : '今のファイルとの差分') .. '）：' .. name)
   endif
-  if f.kind ==# 'sub'
-    return lang.Pick('⚠ sub: ' .. name, '⚠ sub：' .. name)
+  if f.kind ==# 'replace'
+    return lang.Pick('⚠ replace: ' .. name, '⚠ replace：' .. name)
   endif
   const deleted = get(f, 'deleted', false)
   return lang.Pick(

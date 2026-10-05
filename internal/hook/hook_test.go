@@ -81,7 +81,7 @@ func (e *env) events() []tape.Event {
 func (e *env) selects() []string {
 	var out []string
 	for _, ev := range e.events() {
-		if ev.Type == tape.TypeSelect {
+		if ev.Type == tape.TypeLook {
 			out = append(out, ev.HookTool+" "+ev.File+":"+itoa(ev.StartLine)+"-"+itoa(ev.EndLine))
 		}
 	}
@@ -134,7 +134,7 @@ func TestEditRecordsAReplace(t *testing.T) {
 		map[string]any{"file_path": filepath.Join(e.root, "f.txt"), "old_string": "foo", "new_string": "bar", "replace_all": false},
 		map[string]any{"filePath": filepath.Join(e.root, "f.txt"), "oldString": "foo", "newString": "bar", "originalFile": "a\nfoo\nc\n", "replaceAll": false, "userModified": false})
 	evs := e.events()
-	if len(evs) != 2 || evs[0].Type != tape.TypeSnapshot || evs[1].Type != tape.TypeReplace {
+	if len(evs) != 2 || evs[0].Type != tape.TypeSnapshot || evs[1].Type != tape.TypeEdit {
 		t.Fatalf("events = %+v", evs)
 	}
 	r := evs[1]
@@ -235,7 +235,7 @@ func TestGrepThatListsOnlyFilesRecordsNothing(t *testing.T) {
 func TestOtherCallsAreLeftAlone(t *testing.T) {
 	e := newEnv(t)
 	e.write("f.txt", ten)
-	for _, tool := range []string{"Write", "MultiEdit", "NotebookEdit", "Glob", "WebFetch", "Task", "mcp__srwr__select"} {
+	for _, tool := range []string{"Write", "MultiEdit", "NotebookEdit", "Glob", "WebFetch", "Task", "mcp__srwr__look"} {
 		e.call(tool, map[string]any{"file_path": filepath.Join(e.root, "f.txt"), "content": "x"}, nil)
 	}
 	preJSON, err := json.Marshal(map[string]any{"hook_event_name": "PreToolUse", "cwd": e.root, "tool_name": "Read", "tool_input": map[string]any{"file_path": filepath.Join(e.root, "f.txt")}})

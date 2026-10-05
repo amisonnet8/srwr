@@ -26,7 +26,7 @@ func greet(name string) string {
 
 ## 1. 準備（1回だけ）
 
-プロジェクトで `srwr init` を実行する。Claude Code に srwr を登録し、Edit と Write を禁止して、すべての変更が `select` と `replace` を通るようにする。書くものは [cli.md](../reference/cli_ja.md#srwr-init) にある。
+プロジェクトで `srwr init` を実行する。Claude Code に srwr を登録し、Edit と Write を禁止して、すべての変更が `look` と `edit` を通るようにする。書くものは [cli.md](../reference/cli_ja.md#srwr-init) にある。
 
 ```console
 $ srwr init
@@ -37,7 +37,7 @@ $ srwr init
   作った   .claude/settings.json hook を登録し、Edit・Write などを禁止しました（厳格モード）
   作った   .gitignore            .srwr/key .srwr/lock .srwr/active .srwr/init-backup/
 
-準備できました。Claude Code を開き直すと、select / replace が使えます。
+準備できました。Claude Code を開き直すと、look / edit / replace / new が使えます。
 緩いモード（Edit・Write を禁止しない）にするときは、srwr init --lenient。
 ```
 
@@ -45,7 +45,7 @@ $ srwr init
 
 ## 2. AI に作業させる
 
-いつもどおりに頼む。たとえば「`greet` は名前が空だと `hello ` と出る。直して」。AI は `select` で見て、`replace` で変える。どちらにも理由がつき、すべての呼び出しが `.srwr/tapes/` のテープに残る。AI 側のやり取りは [select-replace.md](select-replace_ja.md)。
+いつもどおりに頼む。たとえば「`greet` は名前が空だと `hello ` と出る。直して」。AI は `look` で見て、`edit` で変える。どちらにも理由がつき、すべての呼び出しが `.srwr/tapes/` のテープに残る。AI 側のやり取りは [look-edit.md](look-edit_ja.md)。
 
 `srwr tapes` で、プロジェクトのテープの一覧が出る：
 
@@ -63,7 +63,7 @@ $ srwr tapes
 
 ## 4. テープに出ない変更がないか確かめる
 
-srwr が記録するのは、`select`・`replace` を通ったものと、hook が見たもの。ほかの方法（手で直した、シェルのコマンドで変えた）で変わったファイルは、テープに出ないことがある。`srwr tapes check` は、テープと `git status` を比べる。ここでは README を手で直した：
+srwr が記録するのは、`look`・`edit` を通ったものと、hook が見たもの。ほかの方法（手で直した、シェルのコマンドで変えた）で変わったファイルは、テープに出ないことがある。`srwr tapes check` は、テープと `git status` を比べる。ここでは README を手で直した：
 
 ```console
 $ srwr tapes check
@@ -86,7 +86,7 @@ $ srwr tapes new
 
 - 次の書き込みから新しいテープになる。30分、イベントがないときも、セッションは自然に終わる
 - 終わったセッションのテープは**圧縮**されて、`<id>.tape.jsonl.gz` になる。テープを読むものは、今までどおり開ける
-- 古いセッションで AI がもらった範囲トークンは使えなくなる。AI が作業の途中なら、`select` からやり直す
+- 古いセッションで AI がもらった範囲トークンは使えなくなる。AI が作業の途中なら、`look` からやり直す
 - エディタからは、新しいセッションを始められない。ここ（ターミナル）で行う
 
 AI がまた作業すると、新しいセッションの、新しいテープができる：

@@ -76,7 +76,7 @@ func writeInitReport(w io.Writer, r *setup.Result) {
 			_, _ = fmt.Fprintf(w, lang.Pick("What the files held before is kept in %s/.\n", "書き換える前の内容は %s/ に残しました。\n"), r.Backup)
 		}
 		if r.RegistrationChanged {
-			_, _ = fmt.Fprintln(w, lang.Pick("Ready. Reopen Claude Code and select / replace are available.", "準備できました。Claude Code を開き直すと、select / replace が使えます。"))
+			_, _ = fmt.Fprintln(w, lang.Pick("Ready. Reopen Claude Code and look / edit / replace / new are available.", "準備できました。Claude Code を開き直すと、look / edit / replace / new が使えます。"))
 		}
 		if r.Lenient {
 			_, _ = fmt.Fprintln(w, lang.Pick("In lenient mode, Edit is recorded as a replace (with no reason) and Write shows up as external.", "緩いモードでは、Edit は replace（理由なし）として記録され、Write は external として見えます。"))

@@ -155,10 +155,10 @@ export function activate(context: vscode.ExtensionContext, createServer: ServerF
       return;
     }
     const describe: Record<ShownKind, string> = {
-      select: pick("What the AI looked at", "AI が見た範囲"),
-      replace: pick("What the AI changed", "AI が変えた所"),
+      look: pick("What the AI looked at", "AI が見た範囲"),
+      edit: pick("What the AI changed", "AI が変えた所"),
       external: pick("Changes made outside srwr (and the diff after the recording)", "srwr の外での変更（と、録画のあとの差分）"),
-      failure: pick("Calls that failed (select, replace)", "失敗した呼び出し（select・replace）"),
+      failure: pick("Calls that failed (look, edit, replace, new)", "失敗した呼び出し（look・edit・replace・new）"),
     };
     const items: Array<vscode.QuickPickItem & { shown: ShownKind }> = ALL_KINDS.map((k) => ({ label: k, description: describe[k], picked: kinds.includes(k), shown: k }));
     const chosen = await vscode.window.showQuickPick(items, { canPickMany: true as const, placeHolder: pick("Frames to show", "表示するコマ") });

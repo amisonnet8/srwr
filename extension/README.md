@@ -27,12 +27,12 @@ go install github.com/amisonnet8/srwr/cmd/srwr@latest
 
 - Or take a prebuilt binary for Linux, macOS or Windows from [srwr on GitHub Releases](https://github.com/amisonnet8/srwr/releases)
 - Put `srwr` on your `PATH`, or tell the extension where it is with the setting [`srwr.path`](#-settings)
-- This version of the extension talks to a view server of `protocolVersion` **1**. If the two do not match, the extension asks you to update one of them
+- This version of the extension talks to a view server of `protocolVersion` **2**. If the two do not match, the extension asks you to update one of them
 - To have an AI record tapes in the first place, set up your project with `srwr init`. See the [srwr README](https://github.com/amisonnet8/srwr#-install) for the whole picture
 
 ## ✨ Features
 
-- 🎨 **A reason line above the code**: blue for a `select`, orange for a `replace`, in front of the range it is about
+- 🎨 **A reason line above the code**: blue for a `look`, orange for an `edit`, in front of the range it is about
 - 🔍 **Side-by-side diffs** for changes made outside srwr and after the recording, with only the changed lines painted
 - ⏮️ **Frame by frame**: *Back* and *Forward* in the bottom bar. No autoplay, so you read each reason
 - 📡 **Live view**: follow a tape while the AI is still writing it; step back and a *Back to LIVE (N new)* button counts what you missed
@@ -91,7 +91,7 @@ There are no settings for the look: the colors and the layout are fixed so that 
 | You see | Do this |
 |---|---|
 | *Cannot start srwr … Install srwr … or set its location in the setting "srwr.path"* | `srwr` is not on the `PATH`. Install it, or set `srwr.path` (the *Open Settings* button goes there) |
-| *srwr … and this extension do not match (the extension is protocolVersion 1)* | Update `srwr` (`go install …@latest`) or the extension, whichever is older |
+| *srwr … and this extension do not match (the extension is protocolVersion 2)* | Update `srwr` (`go install …@latest`) or the extension, whichever is older |
 | *Open a tape* lists nothing | Only tapes with at least one operation are listed, and only those of the folder you opened (`.srwr/tapes/`) |
 
 ## 🔗 Links

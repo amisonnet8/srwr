@@ -41,7 +41,7 @@ func open(t *testing.T, root string, c *clock) *Workspace {
 }
 
 func selectEvent(seq int) tape.Event {
-	return tape.Event{Type: tape.TypeSelect, Seq: seq, File: "a.go", StartLine: 1, EndLine: 1, Why: tape.Str("見る"), Source: tape.SourceMCP}
+	return tape.Event{Type: tape.TypeLook, Seq: seq, File: "a.go", StartLine: 1, EndLine: 1, Why: tape.Str("見る"), Source: tape.SourceMCP}
 }
 
 func readTape(t *testing.T, w *Workspace, id string) tape.Result {

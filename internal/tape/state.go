@@ -14,8 +14,8 @@ type State struct {
 	LastSeq int
 	// Files holds every file the tape has a snapshot of.
 	Files map[string]*File
-	// Replaces lists the replace events in order, for line number correction.
-	Replaces []Event
+	// Edits lists the edit, replace and new events in order, for line number correction.
+	Edits []Event
 }
 
 // NewState returns an empty state.
@@ -36,7 +36,7 @@ func (s *State) Apply(e Event) {
 	switch e.Type {
 	case TypeSnapshot:
 		s.Files[e.File] = &File{Text: deref(e.Text)}
-	case TypeReplace:
+	case TypeEdit, TypeReplace, TypeNew:
 		f := s.Files[e.File]
 		if f == nil {
 			f = &File{}
@@ -44,7 +44,7 @@ func (s *State) Apply(e Event) {
 		}
 		f.Deleted = false
 		f.Text = SpliceLines(f.Text, e.StartLine, e.EndLine, NewLines(e))
-		s.Replaces = append(s.Replaces, e)
+		s.Edits = append(s.Edits, e)
 	case TypeExternal:
 		switch {
 		case e.Deleted:

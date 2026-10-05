@@ -9,7 +9,7 @@
 | 表示サーバー | **表示サーバー**（view-server） | `srwr view-server`。エディタが起動する。人は直接使わない |
 | VSCode 拡張 | **srwr-view** | 拡張ID・表示名とも `srwr-view` |
 | Vim クライアント | **srwr-view.vim** | リポジトリの `vim/`。`srwr view` が埋め込みから起動する |
-| MCP のツール名 | `select`・`replace`・`sub`・`new` | この4つだけ |
+| MCP のツール名 | `look`・`edit`・`replace`・`new` | この4つだけ。テープのイベント・表示サーバーのコマの種類・画面の名前も同じ（`select`・`sub` は版 1 のテープの名前） |
 | 拡張のコマンド・設定 | 接頭辞 `srwr.`（例：`srwr.openTape`、`srwr.path`） | コマンドパレットの表記は「srwr: 〜」 |
 | Vim のコマンド・変数・ハイライト | コマンド `:Srwr…`（例：`:SrwrOpen`）、変数 `g:srwr_…`（snake_case）、ハイライト `Srwr…`（例：`SrwrWhyReplace`） | `docs/reference/vim.md` |
 
@@ -22,14 +22,14 @@
 | テープ | tape | 操作の記録。追記のみの JSONL。1セッション＝1本 |
 | セッション | session | テープ1本分の作業のまとまり。`.srwr/active` が今のセッションを指す |
 | 範囲トークン | selection token（フィールド名は `selection`・`from`） | `select` が返す `sel_…` の文字列 |
-| コマ | frame | 再生の1ステップ。`select`・`replace`・`external`・`final` |
+| コマ | frame | 再生の1ステップ。`look`・`edit`・`replace`・`new`・`external`・`final` |
 | コマの列 | frames / timeline | 表示サーバーが作り、エディタに渡すもの。UI との契約 |
 | 文書の状態 | frame state | あるコマの時点のファイルの内容（差分のコマなら変更前・変更後） |
 | 差分のコマ | diff frame | `external`・`final` のコマ。左右に並べた差分で見せる |
 | 外部変更 | external change（イベントは `external`） | srwr の外で起きたファイルの変更 |
-| 失敗 | failure（イベントは `failure`、コマも `failure`） | 失敗した `select`・`replace` の記録。コマにするのは、人が表示を ON にしたときだけ（赤） |
+| 失敗 | failure（イベントは `failure`、コマも `failure`） | 失敗した `look`・`edit`・`replace`・`new` の記録。コマにするのは、人が表示を ON にしたときだけ（赤） |
 | 最後の差分 | final diff（コマは `final`） | テープの最後の内容と、今のファイルとの差分 |
-| 理由 | why | `select`・`replace` に添える理由 |
+| 理由 | why | `look`・`edit`・`replace`・`new` に添える理由 |
 | 作業場 | workspace | srwr を使うディレクトリ（`.srwr/` を持つ） |
 | 厳格モード / 緩いモード | strict / lenient | Edit/Write を禁止するか（`docs/reference/cli.md`） |
 | 記録しないファイル | ignored file（エラーは `ignored_file`） | `.srwrignore` と既定の対象 |

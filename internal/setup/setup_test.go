@@ -99,9 +99,9 @@ const wantStrictSettings = `{
   ],
   "permissions": {
     "allow": [
-      "mcp__srwr__select",
+      "mcp__srwr__look",
+      "mcp__srwr__edit",
       "mcp__srwr__replace",
-      "mcp__srwr__sub",
       "mcp__srwr__new"
     ],
     "deny": [
@@ -291,5 +291,30 @@ func TestSrwrNotOnPath(t *testing.T) {
 	res, err := Init(Options{Root: root, Now: fixedNow, LookPath: func(string) (string, error) { return "", errors.New("no") }})
 	if err != nil || res.SrwrOnPath {
 		t.Errorf("SrwrOnPath = %v, err %v", res.SrwrOnPath, err)
+	}
+}
+
+// A workspace set up by srwr 0.1.4 allows select and sub, which are gone. Init takes those away and allows the new names;
+// the permissions of replace and new stay (they are still tools), and what the user has added stays too.
+func TestRetiredPermissionsAreTakenAway(t *testing.T) {
+	root := ws(t, true, map[string]string{
+		".claude/settings.json": `{"permissions":{"allow":["Read","mcp__srwr__select","mcp__srwr__replace","mcp__srwr__sub","mcp__srwr__new"],"deny":["Edit","Write","MultiEdit","NotebookEdit"]},"enabledMcpjsonServers":["srwr"],"hooks":{"PostToolUse":[{"matcher":"Read|Bash|Grep|Edit","hooks":[{"type":"command","command":"srwr hook"}]}]}}`,
+		".mcp.json":             `{"mcpServers":{"srwr":{"command":"srwr","args":["mcp"]}}}`,
+	})
+	run(t, root, false)
+	s := read(t, root, ".claude/settings.json")
+	for _, gone := range []string{"mcp__srwr__select", "mcp__srwr__sub"} {
+		if strings.Contains(s, gone) {
+			t.Errorf("%s is still allowed:\n%s", gone, s)
+		}
+	}
+	for _, want := range []string{`"Read"`, "mcp__srwr__look", "mcp__srwr__edit", "mcp__srwr__replace", "mcp__srwr__new"} {
+		if strings.Count(s, want) != 1 {
+			t.Errorf("%s must be there once:\n%s", want, s)
+		}
+	}
+	// And a second run has nothing more to do.
+	if res := run(t, root, false); res.Backup != "" {
+		t.Errorf("the second run wrote again: %+v", res)
 	}
 }

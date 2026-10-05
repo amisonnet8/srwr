@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <img alt="srwr view in Vim: the AI's select and replace, with the reason of each, stepping frame by frame" src="docs/images/demo-vim_dark.svg" width="900">
+  <img alt="srwr view in Vim: the AI's look and edit, with the reason of each, stepping frame by frame" src="docs/images/demo-vim_dark.svg" width="900">
   <br>
   <sub>The real <code>srwr view</code> in Vim, stepping through a session: a reason line, then the code it is about.</sub>
 </p>
@@ -59,7 +59,7 @@ To view in VSCode, install the extension **srwr-view** as well (it does not cont
 
 ## 🧭 How to use it
 
-1. **Set up your project** (once). This registers `srwr` for [Claude Code](https://claude.com/claude-code) and, by default, forbids its Edit and Write tools so that every change goes through `select` and `replace`:
+1. **Set up your project** (once). This registers `srwr` for [Claude Code](https://claude.com/claude-code) and, by default, forbids its Edit and Write tools so that every change goes through `look`, `edit`, `replace` and `new`:
 
    ```bash
    cd your-project
@@ -79,16 +79,16 @@ To view in VSCode, install the extension **srwr-view** as well (it does not cont
    Existing settings are kept, and running it again changes nothing. Details: [docs/reference/cli.md](docs/reference/cli.md).
    </details>
 
-2. **Let the AI work.** Every `select` and `replace` goes on a tape in `.srwr/tapes/`:
+2. **Let the AI work.** Every `look`, `edit`, `replace` and `new` goes on a tape in `.srwr/tapes/`:
 
    <details>
    <summary>What does a tape look like?</summary>
 
-   A tape is a JSONL file, one event per line. This is a `select` (the AI looks at lines 9 to 11) and the `replace` that follows:
+   A tape is a JSONL file, one event per line. This is a `look` (the AI looks at lines 9 to 11) and the `edit` that follows:
 
    ```json
-   {"v":1,"seq":2,"type":"select","file":"main.go","startLine":9,"endLine":11,"why":"greet is what main prints: check what it does when the name is empty","selection":"sel_041061E48KVH3K24RN324MN2","source":"mcp"}
-   {"v":1,"seq":3,"type":"replace","file":"main.go","from":"sel_041061E48KVH3K24RN324MN2","startLine":9,"endLine":11,"oldText":"…","newText":"…","why":"An empty name printed \"hello \" with nothing after it, so greet a stranger instead","source":"mcp"}
+   {"v":2,"seq":2,"type":"look","file":"main.go","startLine":9,"endLine":11,"why":"greet is what main prints: check what it does when the name is empty","selection":"sel_041061E48KVH3K24RN324MN2","source":"mcp"}
+   {"v":2,"seq":3,"type":"edit","file":"main.go","from":"sel_041061E48KVH3K24RN324MN2","startLine":9,"endLine":11,"oldText":"…","newText":"…","why":"An empty name printed \"hello \" with nothing after it, so greet a stranger instead","source":"mcp"}
    ```
 
    The format is in [docs/reference/tape.md](docs/reference/tape.md).
@@ -109,7 +109,7 @@ A whole round with every command, from `srwr init` to tidying up the tapes, is i
 <p align="center">
   <img alt="srwr-view in VSCode: an orange reason line above the replaced lines, the operations list on the left, the bottom bar" src="docs/images/vscode_dark.svg" width="900">
   <br>
-  <sub>srwr-view in VSCode. Blue is a <code>select</code>, orange is a <code>replace</code>, purple is a change from outside.</sub>
+  <sub>srwr-view in VSCode. Blue is a <code>look</code>, orange is an <code>edit</code>, purple is a change from outside.</sub>
 </p>
 
 You step with *Back* and *Forward*; there is no autoplay, because the point is to read each reason. Details: [VSCode](docs/reference/vscode.md) and [Vim](docs/reference/vim.md).

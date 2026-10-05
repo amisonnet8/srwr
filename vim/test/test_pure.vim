@@ -12,9 +12,9 @@ import autoload 'srwr/config.vim'
 
 # --- timeline ---
 const tl = timeline.New([
-  {index: 0, kind: 'select', file: 'a.go', before: 'a1', after: 'a1', range: {start: 1, end: 1}, why: 'w'},
-  {index: 1, kind: 'replace', file: 'b.go', before: 'b1', after: 'b2', range: {start: 1, end: 1}, why: v:null},
-  {index: 2, kind: 'replace', file: 'a.go', before: 'a1', after: 'a3', range: {start: 1, end: 2}, why: 'w'},
+  {index: 0, kind: 'look', file: 'a.go', before: 'a1', after: 'a1', range: {start: 1, end: 1}, why: 'w'},
+  {index: 1, kind: 'edit', file: 'b.go', before: 'b1', after: 'b2', range: {start: 1, end: 1}, why: v:null},
+  {index: 2, kind: 'edit', file: 'a.go', before: 'a1', after: 'a3', range: {start: 1, end: 2}, why: 'w'},
 ])
 t.Equal('a1', timeline.ContentAt(tl, 'a.go', 0), 'content after the first frame')
 t.Equal('a1', timeline.ContentAt(tl, 'a.go', 1), 'the file is as the last frame that touched it left it')
@@ -24,11 +24,11 @@ t.Equal('b2', timeline.ContentAt(tl, 'b.go', 2), 'content of b.go at the end')
 t.Equal(v:null, timeline.ContentAt(tl, 'c.go', 1), 'no frame touches the file')
 t.Equal('a1', timeline.ContentAt(tl, 'a.go', -1), 'before any frame')
 t.Equal('', timeline.Why(tl.frames[1]), 'a null why is empty')
-t.Equal('select', timeline.Tone({kind: 'select'}), 'tone select')
-for k in ['replace', 'external', 'final']
+t.Equal('select', timeline.Tone({kind: 'look'}), 'tone of a look')
+for k in ['edit', 'replace', 'new', 'external', 'final']
   t.Equal('replace', timeline.Tone({kind: k}), 'tone ' .. k)
 endfor
-t.True(timeline.IsDiff({kind: 'external'}) && timeline.IsDiff({kind: 'final'}) && !timeline.IsDiff({kind: 'replace'}), 'diff kinds')
+t.True(timeline.IsDiff({kind: 'external'}) && timeline.IsDiff({kind: 'final'}) && !timeline.IsDiff({kind: 'edit'}) && timeline.IsDiff({kind: 'replace'}), 'diff kinds')
 t.Equal('37', timeline.FormatRange({start: 37, end: 37}), 'one line')
 t.Equal('39-41', timeline.FormatRange({start: 39, end: 41}), 'many lines')
 t.Equal('12の前', timeline.FormatRange({start: 12, end: 11}), 'empty range')
@@ -65,10 +65,10 @@ t.Equal(['    ', '  1 '], paint.NumberLabels(2, 1, 1), 'labels: why row at the t
 t.Equal(5, strchars(paint.NumberLabels(1200, 1, 2)[2]), 'the width grows with the number of file lines')
 
 # --- the operation list ---
-t.Equal('●  5 replace text.go:37  幅ちょうどの', sidebar.Line({index: 4, kind: 'replace', file: 'src/text.go', range: {start: 37, end: 37}, why: '幅ちょうどの'}), 'row with why')
+t.Equal('●  5 edit    text.go:37  幅ちょうどの', sidebar.Line({index: 4, kind: 'edit', file: 'src/text.go', range: {start: 37, end: 37}, why: '幅ちょうどの'}), 'row with why')
 t.Equal('●  6 外部変更 stats.go:1-126', sidebar.Line({index: 5, kind: 'external', file: 'stats.go', range: {start: 1, end: 126}, why: v:null}), 'row without why')
 t.Equal('srwr_dot_external', sidebar.DotType('final'), 'final is purple')
-t.Equal('srwr_dot_select', sidebar.DotType('select'), 'select is blue')
+t.Equal('srwr_dot_select', sidebar.DotType('look'), 'look is blue')
 
 # --- the tape list ---
 t.Equal('2026-09-30 00:54', list.Time('2026-09-30T00:54:08.123+09:00'), 'time')

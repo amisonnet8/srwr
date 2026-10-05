@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { setJapanese } from "../src/lang";
 import { PROTOCOL_VERSION, resolveCommand } from "../src/server";
 import { Timeline, basename, changedLines, formatRange, splitLines, toFrame, MAX_LCS_CELLS } from "../src/timeline";
-import { goldenFrames, goldenNames, loadGolden } from "./helpers";
+import { goldenFrames, goldenKind, goldenNames, loadGolden } from "./helpers";
 
 // The Japanese text of "before 12" (english.test.ts looks at the English one).
 setJapanese(true);
@@ -53,8 +53,8 @@ test("changedLines: a rest that is too big counts as all changed", () => {
 });
 
 test("toFrame fills in what is missing and ignores the rest", () => {
-  const f = toFrame({ index: 3, kind: "select", file: "a.go", range: { start: 1, end: 2 }, why: null, seq: 9, jumpLabel: "x" });
-  assert.deepEqual(f, { index: 3, seq: 9, kind: "select", file: "a.go", range: { start: 1, end: 2 }, why: null, before: "", after: "" });
+  const f = toFrame({ index: 3, kind: "look", file: "a.go", range: { start: 1, end: 2 }, why: null, seq: 9, jumpLabel: "x" });
+  assert.deepEqual(f, { index: 3, seq: 9, kind: "look", file: "a.go", range: { start: 1, end: 2 }, why: null, before: "", after: "" });
   assert.equal(toFrame({ index: 0, kind: "final", file: "a", range: { start: 1, end: 0 }, why: null, deleted: true }).deleted, true);
 });
 
@@ -63,7 +63,7 @@ test("resolveCommand: setting, then SRWR_PATH, then PATH", () => {
   assert.equal(resolveCommand("srwr", { SRWR_PATH: "/dev/srwr" }), "/dev/srwr");
   assert.equal(resolveCommand("", { SRWR_PATH: " " }), "srwr");
   assert.equal(resolveCommand("srwr", {}), "srwr");
-  assert.equal(PROTOCOL_VERSION, 1);
+  assert.equal(PROTOCOL_VERSION, 2);
 });
 
 // The golden data holds the content of each file at i = -1, 0, 1 ... per frame. contentAt must give the same.
@@ -79,7 +79,7 @@ for (const name of goldenNames()) {
     g.frames.forEach((raw, i) => {
       const f = tl.frames[i];
       assert.equal(f.index, i);
-      assert.equal(f.kind, raw.kind);
+      assert.equal(f.kind, goldenKind(String(raw.kind)));
       assert.deepEqual(f.range, raw.range);
       assert.equal(f.why, raw.why ?? null);
       assert.equal(f.before, raw.before);

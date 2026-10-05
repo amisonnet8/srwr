@@ -15,9 +15,9 @@ const (
 	maxAmbiguous = 10 // content_ambiguous: where they are
 )
 
-// chooseRange decides the range a select stands for: the line numbers as given, or the place where Expect is found. With Expect and
+// chooseRange decides the range a look stands for: the line numbers as given, or the place where Expect is found. With Expect and
 // line numbers, the range must hold the lines of Expect. A failure is a *Error.
-func chooseRange(rel, text string, in SelectInput) (start, end int, cerr *Error) {
+func chooseRange(rel, text string, in LookInput) (start, end int, cerr *Error) {
 	lines := tape.Lines(text)
 	n := len(lines)
 
@@ -57,7 +57,7 @@ func chooseRange(rel, text string, in SelectInput) (start, end int, cerr *Error)
 	}
 	msg := fmt.Sprintf("lines %d to %d of %s are not the lines of expect.", start, end, rel)
 	if at := findLines(lines, want); len(want) > 0 && len(at) > 0 {
-		msg += " The same lines are at " + places(at, maxFoundAt) + ". Select again with those line numbers"
+		msg += " The same lines are at " + places(at, maxFoundAt) + ". Look again with those line numbers"
 	} else {
 		msg += " They are not in the file. Read the file again"
 	}

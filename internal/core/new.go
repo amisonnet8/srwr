@@ -66,7 +66,7 @@ func (c *Core) newIn(tx *session.Tx, rel string, in NewInput) (*NewResult, error
 		return nil, cerr
 	}
 	if t.exists {
-		return nil, newError(CodeFileExists, "%s already exists. Use select and replace to change it", rel)
+		return nil, newError(CodeFileExists, "%s already exists. Use look and edit to change it", rel)
 	}
 	// A file the tape knew and that is gone now is recorded as deleted before it is made again.
 	if err := Observe(tx, rel, "new", nil); err != nil {
@@ -79,7 +79,7 @@ func (c *Core) newIn(tx *session.Tx, rel string, in NewInput) (*NewResult, error
 
 	lines := tape.Lines(in.Content)
 	text := tape.SpliceLines("", 1, 0, lines)
-	// The file first, then the tape (see replaceIn).
+	// The file first, then the tape (see editIn).
 	if cerr := createFile(dest, text, rel); cerr != nil {
 		return nil, cerr
 	}
@@ -92,11 +92,11 @@ func (c *Core) newIn(tx *session.Tx, rel string, in NewInput) (*NewResult, error
 		TextHash:  token.Hash4(tape.RangeText(text, 1, end)),
 	}, tx.TapeID(), tx.Key())
 	err := tx.Append(tape.Event{
-		Type: tape.TypeReplace, Seq: tx.NextSeq(), File: rel,
+		Type: tape.TypeNew, Seq: tx.NextSeq(), File: rel,
 		StartLine: 1, EndLine: 0, OldText: "", NewText: strings.Join(lines, "\n"),
 		NewStartLine: 1, NewEndLine: end, Selection: &sel, Why: &in.Why,
 		FileShaBefore: "", FileShaAfter: tape.Sha(text),
-		Source: tape.SourceMCP, HookTool: toolNew,
+		Source: tape.SourceMCP,
 	})
 	if err != nil {
 		return nil, err
@@ -178,7 +178,7 @@ func createFile(dest, text, rel string) *Error {
 	}
 	if err := os.Link(tmp.Name(), dest); err != nil {
 		if errors.Is(err, fs.ErrExist) {
-			return newError(CodeFileExists, "%s already exists. Use select and replace to change it", rel)
+			return newError(CodeFileExists, "%s already exists. Use look and edit to change it", rel)
 		}
 		return internal(err)
 	}

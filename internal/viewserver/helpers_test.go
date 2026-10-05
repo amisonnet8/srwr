@@ -32,7 +32,7 @@ func req(id int, method string, params any) string {
 }
 
 func initReq(id int, options map[string]any) string {
-	return req(id, "initialize", map[string]any{"client": "vim", "protocolVersion": 1, "options": options})
+	return req(id, "initialize", map[string]any{"client": "vim", "protocolVersion": 2, "options": options})
 }
 
 // resultOf decodes the result of a response line, or fails if it is an error.

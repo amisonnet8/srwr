@@ -1,4 +1,4 @@
-# MCP tools (select, replace, sub, new)
+# MCP tools (look, edit, replace, new)
 
 *[日本語](mcp_ja.md) | **English***
 
@@ -8,20 +8,20 @@ The AI agent edits files with only **four tools** provided by the MCP server `sr
 
 | Tool | What it does |
 |---|---|
-| `select` | Declares the range being looked at. A selection token is returned |
-| `replace` | Replaces the range of a selection token with new text |
-| `sub` | Replaces a text with another in several files at once, when the number of places is what was expected |
+| `look` | Looks at a range. A selection token is returned |
+| `edit` | Changes the range of a selection token to new text |
+| `replace` | Replaces a text with another in several files at once, when the number of places is what was expected |
 | `new` | Creates a file that does not exist yet, with its content |
 
-There is no `replace` without `select`. So the tape always holds "look, then change" together. `sub` is for a change that is the same in many places: it asks for the number of places, so the check of what is changed is made by that number. Searching and reading are left to the Read and grep the AI already has (the hook records them; see `srwr hook` in [cli.md](cli.md)).
+There is no `edit` without `look`. So the tape always holds "look, then change" together. `replace` is for a change that is the same in many places: it asks for the number of places, so the check of what is changed is made by that number. Searching and reading are left to the Read and grep the AI already has (the hook records them; see `srwr hook` in [cli.md](cli.md)).
 
 All four require a `why` (the reason). It is the heart of what a person sees when replaying the [tape](tape.md).
 
 The descriptions of the tools and the error messages are in English, whatever the language of the screen, because they are for the AI to read.
 
-## select
+## look
 
-Declares the range being looked at, and returns a **selection token** for editing that range.
+Looks at a range, and returns a **selection token** for editing that range with `edit`.
 
 ```jsonc
 // input
@@ -36,7 +36,7 @@ Declares the range being looked at, and returns a **selection token** for editin
 | `startLine`, `endLine` | Line numbers, 1-based, both inclusive. Give both or neither (with neither, `expect` finds the range) |
 | `expect` | Optional. The lines the range must hold, joined with `\n`. See "Checking the content" below |
 | `why` | Why it looks here |
-| `selection` | The selection token. The AI passes it to `replace` as it is ([what the token is](../design/token.md)) |
+| `selection` | The selection token. The AI passes it to `edit` as it is ([what the token is](../design/token.md)) |
 | `startLine`, `endLine` in the output | The range that was selected (when `expect` found it, this is where) |
 | `lines` | The current content of the range. Always returned |
 
@@ -58,9 +58,9 @@ Declares the range being looked at, and returns a **selection token** for editin
 - `content_mismatch` says where the same lines are in the file (up to 5 places), which is usually the fix. `content_ambiguous` says where they are (up to 10 places): add line numbers, or more lines to `expect`
 - `expect` is not written to the tape
 
-## replace
+## edit
 
-Replaces the range with new text. An insertion is a replacement of an empty range, and a deletion is `newText` as an empty string.
+Changes the range to new text. An insertion is a change of an empty range, and a deletion is `newText` as an empty string.
 
 ```jsonc
 // input
@@ -72,10 +72,10 @@ Replaces the range with new text. An insertion is a replacement of an empty rang
 
 | Item | Meaning |
 |---|---|
-| `selection` | The token returned by `select` or by the previous `replace`. The file is decided from it (no `file` is needed) |
+| `selection` | The token returned by `look`, `edit` or `new`. The file is decided from it (no `file` is needed) |
 | `newText` | The text after the replacement. `""` is a deletion |
 | `why` | Why it changes it this way |
-| `selection` in the output | A new token for **the range after the replacement**. To go on fixing the same place, it can be used without calling `select` again |
+| `selection` in the output | A new token for **the range after the replacement**. To go on fixing the same place, it can be used without calling `look` again |
 | `lines` in the output | The content of the range after the replacement (`[]` for a deletion) |
 | `before`, `after` in the output | Up to 2 lines right before and right after that range (fewer near the start or the end of the file, `[]` if none). With them the result can be checked without reading the file again |
 
@@ -85,7 +85,7 @@ Replaces the range with new text. An insertion is a replacement of an empty rang
 
 Files that cannot be handled: files with line breaks other than LF (CRLF), and binary files. They give `unsupported_file`.
 
-## sub
+## replace
 
 Replaces a text with another in several files at once, like a simple sed, and records why. The text is searched for as it is (not a regular expression), from left to right in each file, and places do not overlap. **`count`, the number of places expected in all the files together, is required: if the number found is different, nothing is changed.**
 
@@ -105,13 +105,13 @@ Replaces a text with another in several files at once, like a simple sed, and re
 | `new` | The text to put in its place. `""` deletes it |
 | `count` | How many places you expect in all the files together. 1 or more |
 | `why` | Why it changes them |
-| `files` in the output | Only the files that changed. `hits` is the number of places in the file; `startLine` and `endLine` are the lines from the first place to the last, after the change; `selection` is a token for those lines (usable by `replace`); `lines` is their content |
+| `files` in the output | Only the files that changed. `hits` is the number of places in the file; `startLine` and `endLine` are the lines from the first place to the last, after the change; `selection` is a token for those lines (usable by `edit`); `lines` is their content |
 
 - If the number found is not `count`, the error is `count_mismatch`. Its message and `actual` say how many places each file has (`{"a.go": 3, "b.go": 1}`), and **no file is changed and nothing but the `failure` is written to the tape**
-- Every file is checked as `select` checks it (not recorded, CRLF, binary, outside the workspace). If one of them cannot be used, nothing is changed
-- A change that cannot be told in lines (it adds or removes the final line break of the file) is `invalid_input`: use `select` and `replace` for it
+- Every file is checked as `look` checks it (not recorded, CRLF, binary, outside the workspace). If one of them cannot be used, nothing is changed
+- A change that cannot be told in lines (it adds or removes the final line break of the file) is `invalid_input`: use `look` and `edit` for it
 - On the tape there is one `replace` for each file that changed, with the same `why` ([tape.md](tape.md#replace)). A viewer shows each as a diff of the file, with the `why` above it
-- A regular expression is not supported. Use `select` and `replace` when the places must be chosen one by one
+- A regular expression is not supported. Use `look` and `edit` when the places must be chosen one by one
 
 ## new
 
@@ -129,19 +129,19 @@ Creates a file that does not exist yet, with its content, and records why.
 | `file` | Path relative to the workspace. The file must not exist |
 | `content` | The content of the file. Line breaks are LF (a CR is `invalid_input`). `""` makes an empty file |
 | `why` | Why it creates the file |
-| `selection` in the output | A token for the whole content (usable by `replace`). `startLine` and `endLine` are its lines (`endLine` is 0 for an empty file). The content is not returned: the AI has just written it |
+| `selection` in the output | A token for the whole content (usable by `edit`). `startLine` and `endLine` are its lines (`endLine` is 0 for an empty file). The content is not returned: the AI has just written it |
 
-- If the file already exists, the error is `file_exists`, and nothing is changed. Use `select` and `replace` to change a file
+- If the file already exists, the error is `file_exists`, and nothing is changed. Use `look` and `edit` to change a file
 - Directories above the file are created when they are missing. A link in the way that leads out of the workspace, or to a place that is not recorded, is refused (`invalid_range`, `ignored_file`), and nothing is made
 - The file always ends with a line break, whether `content` does or not (`"a"` and `"a\n"` make the same file)
 - A file that is not recorded (`.env` and the like) cannot be made (`ignored_file`)
-- On the tape it is one `replace` with `tool` of `new` ([tape.md](tape.md#replace)). A viewer shows it as the whole file, painted like a `replace`, with the `why` above it
+- On the tape it is one `new` ([tape.md](tape.md#new)). A viewer shows it as the whole file, painted like an `edit`, with the `why` above it
 - Making a file with a shell command still works; it is then recorded as an [`external`](tape.md#external) with `created: true`, with no `why`
 
 ## why
 
-- **Required in all four** (`select`, `replace`, `sub` and `new`). Blank is not allowed either (`invalid_input`)
-- In `select` it is "why it looks here", in `replace` "why it changes it this way". Write the reason in one sentence, not a rephrasing of what is being done
+- **Required in all four** (`look`, `edit`, `replace` and `new`). Blank is not allowed either (`invalid_input`)
+- In `look` it is "why it looks here", in `edit` "why it changes it this way". Write the reason in one sentence, not a rephrasing of what is being done
 - Write it in **the same language as the conversation with the user** (the descriptions of the tools and the input schema ask for this). It is for people to read
 
 ## Errors
@@ -154,18 +154,18 @@ In the MCP response `isError` is `true`, and the body is the following JSON.
 
 | Code | Meaning | What the AI should do |
 |---|---|---|
-| `invalid_selection` | The form of the token is wrong, or it was altered. A token issued on another tape (another session) also gives this. So does a new session started after a gap of 30 minutes | Call `select` again |
-| `selection_stale` | An edit that overlaps the range was made after the token was issued | Call `select` again |
-| `selection_mismatch` | Even with the line numbers corrected, the content of the range differs from when `select` was called (it may have been changed outside srwr) | Check the content and call `select` again |
+| `invalid_selection` | The form of the token is wrong, or it was altered. A token issued on another tape (another session) also gives this. So does a new session started after a gap of 30 minutes | Call `look` again |
+| `selection_stale` | An edit that overlaps the range was made after the token was issued | Call `look` again |
+| `selection_mismatch` | Even with the line numbers corrected, the content of the range differs from when `look` was called (it may have been changed outside srwr) | Check the content and call `look` again |
 | `file_not_found` | The target file does not exist, or is not a regular file (a directory, for example) | — |
-| `invalid_range` | The line numbers are outside the file, or the path is outside the workspace | Check the number of lines and call `select` again |
-| `content_mismatch` | The range holds other lines than `expect` | Read where the message says the lines are, and call `select` again |
+| `invalid_range` | The line numbers are outside the file, or the path is outside the workspace | Check the number of lines and call `look` again |
+| `content_mismatch` | The range holds other lines than `expect` | Read where the message says the lines are, and call `look` again |
 | `content_not_found` | `expect` (given without line numbers) is not in the file | Check the content, or give line numbers |
 | `content_ambiguous` | `expect` (given without line numbers) is in the file in more than one place | Give line numbers, or more lines in `expect` |
-| `file_exists` | `new` was used on a file that already exists | Use `select` and `replace` on it |
-| `count_mismatch` | `sub` found a number of places other than `count` | Read how many each file has, and call `sub` again with the right `count` (or use `select`) |
-| `ignored_file` | `select`, `replace`, `sub` or `new` was used on a file that is not recorded | srwr cannot handle it. Ask the user |
-| `invalid_input` | A required input is missing, has the wrong type, or `why` is empty; `file` is empty or has a NUL; only one of `startLine` and `endLine` is given, or none of them and no `expect`; `selection` is blank; `newText` has a CR; for `sub`, `files`, `old` or `count` is missing or empty, a path is given twice, `old` or `new` has a CR; for `new`, `content` is missing or has a CR, or a directory above the file is a file | Fix the input |
+| `file_exists` | `new` was used on a file that already exists | Use `look` and `edit` on it |
+| `count_mismatch` | `replace` found a number of places other than `count` | Read how many each file has, and call `replace` again with the right `count` (or use `look`) |
+| `ignored_file` | `look`, `edit`, `replace` or `new` was used on a file that is not recorded | srwr cannot handle it. Ask the user |
+| `invalid_input` | A required input is missing, has the wrong type, or `why` is empty; `file` is empty or has a NUL; only one of `startLine` and `endLine` is given, or none of them and no `expect`; `selection` is blank; `newText` has a CR; for `replace`, `files`, `old` or `count` is missing or empty, a path is given twice, `old` or `new` has a CR; for `new`, `content` is missing or has a CR, or a directory above the file is a file | Fix the input |
 | `unsupported_file` | CRLF or binary | — |
 | `internal_error` | An I/O error and the like | — |
 
@@ -184,7 +184,7 @@ A failed call is also written to the tape as a [`failure`](tape.md#failure), so 
 
 ## The order of processing
 
-When srwr receives a `replace`, it works in this order.
+When srwr receives a `edit`, it works in this order.
 
 1. Decode and verify the token (a failure is `invalid_selection`)
 2. Find the file
@@ -193,7 +193,7 @@ When srwr receives a `replace`, it works in this order.
 5. Check the content (a mismatch gives `selection_mismatch`)
 6. **Write the real file first, then append to the tape**
 
-The file to detect is learned from the token, so decoding comes first. With a forged token, no external change is recorded. For `select`, the order is: the check of the path, the files that are not recorded and the kind of file (`invalid_range`, `ignored_file`, `file_not_found`, `unsupported_file`), then detection, then the check of the range (`invalid_range`), then the check of the content (`content_mismatch`, `content_not_found`, `content_ambiguous`), then recording.
+The file to detect is learned from the token, so decoding comes first. With a forged token, no external change is recorded. For `look`, the order is: the check of the path, the files that are not recorded and the kind of file (`invalid_range`, `ignored_file`, `file_not_found`, `unsupported_file`), then detection, then the check of the range (`invalid_range`), then the check of the content (`content_mismatch`, `content_not_found`, `content_ambiguous`), then recording.
 
 Even if the process dies in between, the next time srwr touches the files, the mismatch with the real file shows up as `external`.
 
@@ -202,11 +202,11 @@ Even if the process dies in between, the next time srwr touches the files, the m
 These are the mistakes seen when an AI used the tools. Each is an ordinary error with a code, and a failed call is written to the tape as a [`failure`](tape.md#failure).
 
 - **Give `file` as a path relative to the workspace.** An absolute path such as `/home/me/app/main.go` is `invalid_range`, and so is `../main.go`. Write `cmd/app/main.go`.
-- **An empty range is easy to place one line off.** `endLine = startLine - 1` means "just before line `startLine`", so `startLine: 13, endLine: 12` is between lines 12 and 13. Read the lines on both sides of the place first, and check the numbers before calling `select`.
-- **The line numbers of a new `select` are the numbers of the file now.** srwr corrects the token it has already issued when another edit moves the lines, but not the `startLine` and `endLine` of a new `select`. After other edits, read the file again, or check the returned `lines` (and, after a `replace`, `before` and `after`). Better: pass `expect` with the lines you mean, and a wrong number is refused instead of selecting the wrong place.
-- **Make a new file with `new`.** `select` on a file that does not exist gives `file_not_found`. A file made with a shell command is recorded too, as an [`external`](tape.md#external) with `created: true`, but without a `why`.
-- **To change the same place again, use the new token that `replace` returned.** The token you used is spent: using it again gives `selection_stale`.
-- **For the same change in many places, use `sub` with `count`**, not many `select` and `replace`. A wrong `count` is refused with the number each file has.
+- **An empty range is easy to place one line off.** `endLine = startLine - 1` means "just before line `startLine`", so `startLine: 13, endLine: 12` is between lines 12 and 13. Read the lines on both sides of the place first, and check the numbers before calling `look`.
+- **The line numbers of a new `look` are the numbers of the file now.** srwr corrects the token it has already issued when another edit moves the lines, but not the `startLine` and `endLine` of a new `look`. After other edits, read the file again, or check the returned `lines` (and, after a `edit`, `before` and `after`). Better: pass `expect` with the lines you mean, and a wrong number is refused instead of selecting the wrong place.
+- **Make a new file with `new`.** `look` on a file that does not exist gives `file_not_found`. A file made with a shell command is recorded too, as an [`external`](tape.md#external) with `created: true`, but without a `why`.
+- **To change the same place again, use the new token that `edit` returned.** The token you used is spent: using it again gives `selection_stale`.
+- **For the same change in many places, use `replace` with `count`**, not many `look` and `edit`. A wrong `count` is refused with the number each file has.
 - **Read the error.** `invalid_range` returns `lineCount` (the number of lines of the file), which is enough to correct the numbers.
 
 ## Related

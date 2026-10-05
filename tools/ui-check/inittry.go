@@ -17,7 +17,7 @@ import (
 )
 
 // init-try is the human check of R9: a workspace that already has settings of its own gets `srwr init`, Claude Code works in it
-// in the workspace init prepared (the strict mode: Edit is forbidden, so select and replace do the editing), and this command checks
+// in the workspace init prepared (the strict mode: Edit is forbidden, so look and edit do the editing), and this command checks
 // the files, the second run of init and the tape by itself. The person starts it and reads the marks on the page.
 
 const initTryTask = `# 作業
@@ -25,8 +25,8 @@ const initTryTask = `# 作業
 このディレクトリの Go のテストが2つ落ちています。原因を調べて直してください。
 
 1. まず、落ちているテストと、関係するファイルを、Read・Grep・Bash（cat、sed -n、grep -n）で調べる
-2. text.go の Truncate は、srwr の select と replace（MCP ツール）で直す。why は日本語で書く
-3. pad.go の PadLeft は、まず Edit で直そうとする。Edit が使えなければ、srwr の select と replace で直す
+2. text.go の Truncate は、srwr の look と edit（MCP ツール）で直す。why は日本語で書く
+3. pad.go の PadLeft は、まず Edit で直そうとする。Edit が使えなければ、srwr の look と edit で直す
 4. 最後に go test ./... を実行して、通ることを確かめる
 `
 
@@ -138,7 +138,7 @@ func initTryReport(workspace, init1, init2 string, init1Err error, before2 map[s
 	state := tape.NewState()
 	for _, e := range tape.Parse(b).Events {
 		state.Apply(e)
-		if e.Type != tape.TypeSelect && e.Type != tape.TypeReplace {
+		if e.Type != tape.TypeLook && e.Type != tape.TypeEdit {
 			continue
 		}
 		src := e.Source
@@ -150,9 +150,9 @@ func initTryReport(workspace, init1, init2 string, init1Err error, before2 map[s
 			whyless++
 		}
 	}
-	check(n["select/hook"] > 0, "AI がファイルを読んだ・探した記録（hook）がある：%d 件", n["select/hook"])
-	check(n["replace/hook"] == 0, "Edit は禁止されていて、Edit の記録はない：%d 件", n["replace/hook"])
-	check(n["select/mcp"] > 0 && n["replace/mcp"] > 0 && whyless == 0, "AI が srwr の select / replace で直した記録が、すべて理由つきである：select %d 件、replace %d 件", n["select/mcp"], n["replace/mcp"])
+	check(n["look/hook"] > 0, "AI がファイルを読んだ・探した記録（hook）がある：%d 件", n["look/hook"])
+	check(n["edit/hook"] == 0, "Edit は禁止されていて、Edit の記録はない：%d 件", n["edit/hook"])
+	check(n["look/mcp"] > 0 && n["edit/mcp"] > 0 && whyless == 0, "AI が srwr の look / edit で直した記録が、すべて理由つきである：look %d 件、edit %d 件", n["look/mcp"], n["edit/mcp"])
 	same = true
 	for name, f := range state.Files {
 		if !f.Deleted && fileText(workspace, name) != f.Text {

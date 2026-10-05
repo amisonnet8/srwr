@@ -45,10 +45,10 @@ func TestFramesOfATape(t *testing.T) {
 		ts             int64
 		hasFrom, isSel bool
 	}{
-		{0, "select", Range{2, 3}, nil, "1\n2\n3\n", "1\n2\n3\n", nil, ptr("見る"), 2, 1790650802000, false, true},
-		{1, "replace", Range{2, 2}, &Range{2, 3}, "1\n2\n3\n", "1\nX\n", ptr(0), ptr("変える"), 3, 1790650803000, true, true},
-		{2, "replace", Range{2, 1}, &Range{2, 2}, "1\nX\n", "1\n", ptr(1), ptr("消す"), 4, 1790650804000, true, true},
-		{3, "replace", Range{1, 1}, &Range{1, 1}, "1\n", "one\n", nil, nil, 5, 1790650805000, true, false},
+		{0, "look", Range{2, 3}, nil, "1\n2\n3\n", "1\n2\n3\n", nil, ptr("見る"), 2, 1790650802000, false, true},
+		{1, "edit", Range{2, 2}, &Range{2, 3}, "1\n2\n3\n", "1\nX\n", ptr(0), ptr("変える"), 3, 1790650803000, true, true},
+		{2, "edit", Range{2, 1}, &Range{2, 2}, "1\nX\n", "1\n", ptr(1), ptr("消す"), 4, 1790650804000, true, true},
+		{3, "edit", Range{1, 1}, &Range{1, 1}, "1\n", "one\n", nil, nil, 5, 1790650805000, true, false},
 	}
 	for _, tt := range tests {
 		g := f[tt.i]
@@ -222,7 +222,7 @@ func TestAppendFinals(t *testing.T) {
 	current := map[string]string{"same.go": "s\n", "changed.go": "c2\nmore\n", "deleted.go": "", "empty.go": ""}
 	read := func(rel string) (string, bool) { s, ok := current[rel]; return s, ok }
 
-	prev := []Frame{{Index: 0, Kind: KindSelect, Seq: 9, TS: 123}}
+	prev := []Frame{{Index: 0, Kind: KindLook, Seq: 9, TS: 123}}
 	got := AppendFinals(prev, state, files, read)
 	var names []string
 	for _, f := range got[1:] {
@@ -368,20 +368,20 @@ func TestFailureIsAFrameButNotAnOperation(t *testing.T) {
 	if len(f) != 3 || b.Ops() != 1 || !slices.Equal(b.Files(), []string{"a.go"}) {
 		t.Fatalf("frames = %+v, ops %d, files %v", f, b.Ops(), b.Files())
 	}
-	if x := f[0]; x.Kind != KindFailure || x.Index != 0 || x.File != "" || x.Range != (Range{9, 9}) || x.Tool != "select" || x.Code != "invalid_range" || x.Message != "m" || x.Why == nil || *x.Why != "w" || x.Before != "" || x.After != "" {
+	if x := f[0]; x.Kind != KindFailure || x.Index != 0 || x.File != "" || x.Range != (Range{9, 9}) || x.Tool != "look" || x.Code != "invalid_range" || x.Message != "m" || x.Why == nil || *x.Why != "w" || x.Before != "" || x.After != "" {
 		t.Errorf("first failure = %+v", x)
 	}
-	if x := f[1]; x.Kind != KindSelect || x.Index != 1 || x.Seq != 3 {
+	if x := f[1]; x.Kind != KindLook || x.Index != 1 || x.Seq != 3 {
 		t.Errorf("select = %+v", x)
 	}
-	if x := f[2]; x.Kind != KindFailure || x.File != "a.go" || x.Range != (Range{0, -1}) || x.Tool != "replace" || x.Why != nil {
+	if x := f[2]; x.Kind != KindFailure || x.File != "a.go" || x.Range != (Range{0, -1}) || x.Tool != "edit" || x.Why != nil {
 		t.Errorf("second failure = %+v", x)
 	}
 }
 
 func TestFilter(t *testing.T) {
 	frames := []Frame{
-		{Index: 0, Kind: KindSelect, File: "a"}, {Index: 1, Kind: KindFailure}, {Index: 2, Kind: KindReplace, File: "a"},
+		{Index: 0, Kind: KindLook, File: "a"}, {Index: 1, Kind: KindFailure}, {Index: 2, Kind: KindEdit, File: "a"},
 		{Index: 3, Kind: KindExternal, File: "b"}, {Index: 4, Kind: KindFailure}, {Index: 5, Kind: KindFinal, File: "b"},
 	}
 	shown, orig, hidden := Filter(frames, DefaultKinds())
@@ -396,18 +396,18 @@ func TestFilter(t *testing.T) {
 	if len(hidden) != 1 || hidden[KindFailure] != 2 {
 		t.Errorf("hidden = %v", hidden)
 	}
-	k, bad := NewKinds([]string{"replace", "failure"})
+	k, bad := NewKinds([]string{"edit", "failure"})
 	if bad != "" {
 		t.Fatal(bad)
 	}
 	_, orig, hidden = Filter(frames, k)
-	if !slices.Equal(orig, []int{1, 2, 4}) || hidden[KindSelect] != 1 || hidden[KindExternal] != 2 || len(hidden) != 2 { // final counts as external
-		t.Errorf("replace+failure: orig %v, hidden %v", orig, hidden)
+	if !slices.Equal(orig, []int{1, 2, 4}) || hidden[KindLook] != 1 || hidden[KindExternal] != 2 || len(hidden) != 2 { // final counts as external
+		t.Errorf("edit+failure: orig %v, hidden %v", orig, hidden)
 	}
 	if none, _, _ := Filter(frames, Kinds{}); len(none) != 0 {
 		t.Errorf("nothing asked for, %d shown", len(none))
 	}
-	if _, bad := NewKinds([]string{"select", "final"}); bad != "final" {
+	if _, bad := NewKinds([]string{"look", "final"}); bad != "final" {
 		t.Errorf("an unknown name = %q, want final", bad)
 	}
 }
@@ -422,10 +422,10 @@ func TestSubFrame(t *testing.T) {
 		t.Fatalf("frames = %+v", f)
 	}
 	x := f[0]
-	if x.Kind != KindSub || x.Hits != 2 || x.Why == nil || *x.Why != "名前を変える" || x.Before != "1\nfoo\n3\nfoo\n" || x.After != "1\nbar\n3\nbar\n" || x.Range != (Range{2, 4}) {
+	if x.Kind != KindReplace || x.Hits != 2 || x.Why == nil || *x.Why != "名前を変える" || x.Before != "1\nfoo\n3\nfoo\n" || x.After != "1\nbar\n3\nbar\n" || x.Range != (Range{2, 4}) {
 		t.Errorf("sub frame = %+v", x)
 	}
-	if b, _ := json.Marshal(x); !strings.Contains(string(b), `"kind":"sub"`) || !strings.Contains(string(b), `"hits":2`) {
+	if b, _ := json.Marshal(x); !strings.Contains(string(b), `"kind":"replace"`) || !strings.Contains(string(b), `"hits":2`) {
 		t.Errorf("json = %s", b)
 	}
 	// A replace of another kind has no hits.
@@ -433,7 +433,7 @@ func TestSubFrame(t *testing.T) {
 		`{"v":1,"seq":1,"ts":"2026-10-05T03:00:01.000Z","type":"snapshot","file":"a.go","text":"1\n"}`,
 		`{"v":1,"seq":2,"ts":"2026-10-05T03:00:02.000Z","type":"replace","file":"a.go","from":null,"startLine":1,"endLine":1,"oldText":"1","newText":"2","newStartLine":1,"newEndLine":1,"selection":null,"why":null,"source":"hook","tool":"Edit"}`,
 	)).Frames()[0]
-	if b, _ := json.Marshal(other); other.Kind != KindReplace || strings.Contains(string(b), "hits") {
+	if b, _ := json.Marshal(other); other.Kind != KindEdit || strings.Contains(string(b), "hits") {
 		t.Errorf("hook replace = %s", b)
 	}
 }
@@ -453,22 +453,22 @@ func TestNewFrame(t *testing.T) {
 	if b, _ := json.Marshal(x); !strings.Contains(string(b), `"kind":"new"`) || strings.Contains(string(b), "hits") {
 		t.Errorf("json = %s", b)
 	}
-	frames := []Frame{{Index: 0, Kind: KindNew, File: "a"}, {Index: 1, Kind: KindReplace, File: "a"}}
-	k, _ := NewKinds([]string{"select"})
-	if shown, _, hidden := Filter(frames, k); len(shown) != 0 || hidden[KindReplace] != 2 {
-		t.Errorf("select only: shown %v, hidden %v", shown, hidden)
+	frames := []Frame{{Index: 0, Kind: KindNew, File: "a"}, {Index: 1, Kind: KindEdit, File: "a"}}
+	k, _ := NewKinds([]string{"look"})
+	if shown, _, hidden := Filter(frames, k); len(shown) != 0 || hidden[KindEdit] != 2 {
+		t.Errorf("look only: shown %v, hidden %v", shown, hidden)
 	}
 }
 
-func TestFilterGroupsSubWithReplace(t *testing.T) {
-	frames := []Frame{{Index: 0, Kind: KindSelect, File: "a"}, {Index: 1, Kind: KindSub, File: "a"}, {Index: 2, Kind: KindReplace, File: "a"}}
-	k, _ := NewKinds([]string{"select"})
+func TestFilterGroupsReplaceAndNewWithEdit(t *testing.T) {
+	frames := []Frame{{Index: 0, Kind: KindLook, File: "a"}, {Index: 1, Kind: KindReplace, File: "a"}, {Index: 2, Kind: KindEdit, File: "a"}}
+	k, _ := NewKinds([]string{"look"})
 	shown, orig, hidden := Filter(frames, k)
-	if len(shown) != 1 || !slices.Equal(orig, []int{0}) || hidden[KindReplace] != 2 || len(hidden) != 1 {
-		t.Errorf("select only: orig %v, hidden %v", orig, hidden)
+	if len(shown) != 1 || !slices.Equal(orig, []int{0}) || hidden[KindEdit] != 2 || len(hidden) != 1 {
+		t.Errorf("look only: orig %v, hidden %v", orig, hidden)
 	}
-	k, _ = NewKinds([]string{"replace"})
+	k, _ = NewKinds([]string{"edit"})
 	if _, orig, _ = Filter(frames, k); !slices.Equal(orig, []int{1, 2}) {
-		t.Errorf("replace only: orig %v", orig)
+		t.Errorf("edit only: orig %v", orig)
 	}
 }

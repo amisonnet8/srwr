@@ -37,7 +37,7 @@ t.Equal('⚠ Changed after recording (diff from current file): stats.go', diff.L
 t.Equal('⚠ Changed after recording (no longer exists): stats.go', diff.Label({kind: 'final', file: 'stats.go', deleted: true}), 'final, gone')
 t.Equal('Started           Updated            Ops     Files  Tape', list.Header(), 'heading of the list')
 t.Equal('●  3 external stats.go:1-3', sidebar.Line({index: 2, kind: 'external', file: 'stats.go', range: {start: 1, end: 3}, why: v:null}), 'a kind in the list')
-t.Equal('●  1 select   a.go:1', sidebar.Line({index: 0, kind: 'select', file: 'a.go', range: {start: 1, end: 1}, why: v:null}), 'select is as wide as external')
+t.Equal('●  1 look     a.go:1', sidebar.Line({index: 0, kind: 'look', file: 'a.go', range: {start: 1, end: 1}, why: v:null}), 'look is as wide as external')
 
 # --- Japanese ---
 $SRWR_LANG = 'ja'

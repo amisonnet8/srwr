@@ -23,9 +23,9 @@ func TestIgnoredFileNeverReachesTheTape(t *testing.T) {
 	m := startClient(t, root)
 	m.initialize()
 	for _, f := range []string{".env", "deploy/prod.key", "notes.txt"} {
-		body, isErr := m.call("select", map[string]any{"file": f, "startLine": 1, "endLine": 1, "why": "見る"})
+		body, isErr := m.call("look", map[string]any{"file": f, "startLine": 1, "endLine": 1, "why": "見る"})
 		if !isErr || body["error"].(map[string]any)["code"] != "ignored_file" {
-			t.Errorf("select %s = %v (error %v), want ignored_file", f, body, isErr)
+			t.Errorf("look %s = %v (error %v), want ignored_file", f, body, isErr)
 		}
 	}
 	m.mustSelect("main.go", 1, 1) // a file that is not left out still works

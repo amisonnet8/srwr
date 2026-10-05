@@ -199,7 +199,7 @@ func TestLongWhyTapeIsMadeByTheRealMCP(t *testing.T) {
 			whys = append(whys, *e.Why)
 		}
 	}
-	if got := strings.Join(types, ","); got != "header,snapshot,select,replace" {
+	if got := strings.Join(types, ","); got != "header,snapshot,look,edit" {
 		t.Errorf("events = %s", got)
 	}
 	if len(whys) != 2 || whys[0] != longSelectWhy || whys[1] != longReplaceWhy {
@@ -335,7 +335,7 @@ func TestFailureTapeIsMadeByTheRealMCP(t *testing.T) {
 			codes = append(codes, e.Code)
 		}
 	}
-	if got := strings.Join(types, ","); got != "header,snapshot,select,failure,replace,failure" {
+	if got := strings.Join(types, ","); got != "header,snapshot,look,failure,edit,failure" {
 		t.Errorf("events = %s", got)
 	}
 	if got := strings.Join(codes, ","); got != "invalid_range,selection_stale" {

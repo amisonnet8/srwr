@@ -78,18 +78,18 @@ func (e *env) read(rel string) string {
 	return string(b)
 }
 
-func (e *env) sel(c *Core, rel string, start, end int) *SelectResult {
+func (e *env) sel(c *Core, rel string, start, end int) *LookResult {
 	e.t.Helper()
-	res, err := c.Select(SelectInput{File: rel, StartLine: start, EndLine: end, Why: "見る"})
+	res, err := c.Look(LookInput{File: rel, StartLine: start, EndLine: end, Why: "見る"})
 	if err != nil {
 		e.t.Fatalf("select %s %d..%d: %v", rel, start, end, err)
 	}
 	return res
 }
 
-func (e *env) rep(c *Core, token, newText string) *ReplaceResult {
+func (e *env) rep(c *Core, token, newText string) *EditResult {
 	e.t.Helper()
-	res, err := c.Replace(ReplaceInput{Selection: token, NewText: newText, Why: "変える"})
+	res, err := c.Edit(EditInput{Selection: token, NewText: newText, Why: "変える"})
 	if err != nil {
 		e.t.Fatalf("replace: %v", err)
 	}
@@ -152,7 +152,7 @@ func wantErr(t *testing.T, err *Error, code string) *Error {
 	return err
 }
 
-// The example of docs/examples/select-replace.md.
+// The example of docs/examples/look-edit.md.
 func TestSelectThenReplace(t *testing.T) {
 	e := newEnv(t)
 	e.write("cmd/main.go", "package main\n\nfunc main() {\n\trun()\n}\n")
@@ -168,7 +168,7 @@ func TestSelectThenReplace(t *testing.T) {
 	if got, want := e.read("cmd/main.go"), "package main\n\nfunc main() {\n\tsetup()\n\trun()\n}\n"; got != want {
 		t.Errorf("file = %q, want %q", got, want)
 	}
-	if got, want := e.kinds(), []string{"snapshot", "select", "replace"}; !slices.Equal(got, want) {
+	if got, want := e.kinds(), []string{"snapshot", "look", "edit"}; !slices.Equal(got, want) {
 		t.Errorf("tape = %v, want %v", got, want)
 	}
 
@@ -179,7 +179,7 @@ func TestSelectThenReplace(t *testing.T) {
 	}
 
 	// The same token again: the range has changed since.
-	_, err := e.c.Replace(ReplaceInput{Selection: s.Selection, NewText: "x", Why: "もう一度"})
+	_, err := e.c.Edit(EditInput{Selection: s.Selection, NewText: "x", Why: "もう一度"})
 	stale := wantErr(t, err, CodeSelectionStale)
 	if got, ok := stale.Actual.([]string); !ok || len(got) == 0 {
 		t.Errorf("selection_stale has no actual: %#v", stale.Actual)
@@ -188,7 +188,7 @@ func TestSelectThenReplace(t *testing.T) {
 
 	ev := e.events()
 	rep := ev[len(ev)-2] // the last is the failure of the stale token
-	if rep.Type != tape.TypeReplace || rep.Source != tape.SourceMCP || rep.FileShaBefore == rep.FileShaAfter {
+	if rep.Type != tape.TypeEdit || rep.Source != tape.SourceMCP || rep.FileShaBefore == rep.FileShaAfter {
 		t.Errorf("last event = %+v", rep)
 	}
 }
@@ -209,7 +209,7 @@ func TestTapeContentOfReplace(t *testing.T) {
 		t.Errorf("shas = %s %s", got.FileShaBefore, got.FileShaAfter)
 	}
 	// seq is the one the token carries.
-	if ev[len(ev)-2].Type != tape.TypeSelect || ev[len(ev)-2].Seq != 2 || got.Seq != 3 {
+	if ev[len(ev)-2].Type != tape.TypeLook || ev[len(ev)-2].Seq != 2 || got.Seq != 3 {
 		t.Errorf("seqs = %d %d", ev[len(ev)-2].Seq, got.Seq)
 	}
 }
@@ -281,7 +281,7 @@ func TestOverlapIsStale(t *testing.T) {
 	a := e.sel(e.c, "f.txt", 2, 4)
 	b := e.sel(e.c, "f.txt", 3, 3)
 	e.rep(e.c, b.Selection, "three")
-	_, err := e.c.Replace(ReplaceInput{Selection: a.Selection, NewText: "x", Why: "w"})
+	_, err := e.c.Edit(EditInput{Selection: a.Selection, NewText: "x", Why: "w"})
 	wantCode(t, err, CodeSelectionStale)
 	if got, want := e.read("f.txt"), "1\n2\nthree\n4\n5\n"; got != want {
 		t.Errorf("a refused replace changed the file: %q", got)
@@ -299,13 +299,13 @@ func TestExternalChangeBeforeSelect(t *testing.T) {
 	if want := []string{"zero", "one"}; !slices.Equal(s2.Lines, want) {
 		t.Errorf("lines = %q, want %q", s2.Lines, want)
 	}
-	if got, want := e.kinds(), []string{"snapshot", "select", "replace", "external", "select"}; !slices.Equal(got, want) {
+	if got, want := e.kinds(), []string{"snapshot", "look", "edit", "external", "look"}; !slices.Equal(got, want) {
 		t.Fatalf("tape = %v, want %v", got, want)
 	}
 	ev := e.events()
 	x := ev[4]
 	wantHunks := []tape.Hunk{{StartLine: 1, EndLine: 0, NewText: "zero", NewStartLine: 1, NewEndLine: 1}}
-	if x.Text != nil || !reflect.DeepEqual(x.Hunks, wantHunks) || x.DetectedBy != "select" || x.Author == nil || x.Author.Kind != "external" ||
+	if x.Text != nil || !reflect.DeepEqual(x.Hunks, wantHunks) || x.DetectedBy != "look" || x.Author == nil || x.Author.Kind != "external" ||
 		x.ExpectedSha != tape.Sha("one\n2\n3\n") || x.ActualSha != tape.Sha("zero\none\n2\n3\n") {
 		t.Errorf("external = %+v", x)
 	}
@@ -325,12 +325,12 @@ func TestExternalChangeBeforeReplace(t *testing.T) {
 
 	// A line is added above: the line numbers of the token are now wrong, and srwr cannot tell.
 	e.write("f.txt", "0\n1\n2\n3\n4\n")
-	_, err := e.c.Replace(ReplaceInput{Selection: s.Selection, NewText: "x", Why: "w"})
+	_, err := e.c.Edit(EditInput{Selection: s.Selection, NewText: "x", Why: "w"})
 	m := wantErr(t, err, CodeSelectionMismatch)
 	if got, ok := m.Actual.([]string); !ok || !slices.Equal(got, []string{"1", "2"}) {
 		t.Errorf("actual = %#v, want the lines now at 2..3", m.Actual)
 	}
-	if got, want := e.kinds(), []string{"snapshot", "select", "external", "failure"}; !slices.Equal(got, want) {
+	if got, want := e.kinds(), []string{"snapshot", "look", "external", "failure"}; !slices.Equal(got, want) {
 		t.Errorf("tape = %v, want %v", got, want)
 	}
 	if got := e.read("f.txt"); got != "0\n1\n2\n3\n4\n" {
@@ -340,7 +340,7 @@ func TestExternalChangeBeforeReplace(t *testing.T) {
 	// The same size of change in place: caught by the content, too.
 	s = e.sel(e.c, "f.txt", 2, 3)
 	e.write("f.txt", "0\nONE\nTWO\n3\n4\n")
-	_, err = e.c.Replace(ReplaceInput{Selection: s.Selection, NewText: "x", Why: "w"})
+	_, err = e.c.Edit(EditInput{Selection: s.Selection, NewText: "x", Why: "w"})
 	wantCode(t, err, CodeSelectionMismatch)
 }
 
@@ -365,16 +365,16 @@ func TestDeletedFile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err := e.c.Select(SelectInput{File: "f.txt", StartLine: 1, EndLine: 1, Why: "w"})
+	_, err := e.c.Look(LookInput{File: "f.txt", StartLine: 1, EndLine: 1, Why: "w"})
 	wantCode(t, err, CodeFileNotFound)
-	if got, want := e.kinds(), []string{"snapshot", "select", "external", "failure"}; !slices.Equal(got, want) {
+	if got, want := e.kinds(), []string{"snapshot", "look", "external", "failure"}; !slices.Equal(got, want) {
 		t.Fatalf("tape = %v, want %v", got, want)
 	}
 	if x := e.events()[3]; !x.Deleted || x.Text != nil {
 		t.Errorf("external = %+v, want a deletion", x)
 	}
 	// Asking again does not record the deletion twice.
-	_, err = e.c.Replace(ReplaceInput{Selection: s.Selection, NewText: "x", Why: "w"})
+	_, err = e.c.Edit(EditInput{Selection: s.Selection, NewText: "x", Why: "w"})
 	wantCode(t, err, CodeFileNotFound)
 	if got := len(e.kinds()); got != 5 { // the deletion is recorded once; each refused call is a failure
 		t.Errorf("tape has %d events, want 5", got)
@@ -382,9 +382,9 @@ func TestDeletedFile(t *testing.T) {
 
 	// The file comes back: a snapshot, and the old token no longer fits.
 	e.write("f.txt", "new 1\nnew 2\n")
-	_, err = e.c.Replace(ReplaceInput{Selection: s.Selection, NewText: "x", Why: "w"})
+	_, err = e.c.Edit(EditInput{Selection: s.Selection, NewText: "x", Why: "w"})
 	wantCode(t, err, CodeSelectionMismatch)
-	if got, want := e.kinds(), []string{"snapshot", "select", "external", "failure", "failure", "snapshot", "failure"}; !slices.Equal(got, want) {
+	if got, want := e.kinds(), []string{"snapshot", "look", "external", "failure", "failure", "snapshot", "failure"}; !slices.Equal(got, want) {
 		t.Errorf("tape = %v, want %v", got, want)
 	}
 	e.checkTape()
@@ -396,7 +396,7 @@ func TestFirstTouchIsASnapshot(t *testing.T) {
 	e.write("b.go", "b\n")
 	e.sel(e.c, "a.go", 1, 1)
 	e.sel(e.c, "b.go", 1, 1)
-	if got, want := e.kinds(), []string{"snapshot", "select", "snapshot", "select"}; !slices.Equal(got, want) {
+	if got, want := e.kinds(), []string{"snapshot", "look", "snapshot", "look"}; !slices.Equal(got, want) {
 		t.Errorf("tape = %v, want %v", got, want)
 	}
 	if s := e.events()[1]; s.FileHash != tape.FileHash("a.go") || s.Sha != tape.Sha("a\n") {
@@ -410,7 +410,7 @@ func TestTokenOfAnotherSession(t *testing.T) {
 	s := e.sel(e.c, "f.txt", 1, 1)
 
 	e.clock.Add(31 * time.Minute)
-	_, err := e.c.Replace(ReplaceInput{Selection: s.Selection, NewText: "x", Why: "w"})
+	_, err := e.c.Edit(EditInput{Selection: s.Selection, NewText: "x", Why: "w"})
 	wantCode(t, err, CodeInvalidSelection)
 	if got := e.read("f.txt"); got != "1\n2\n" {
 		t.Errorf("file = %q", got)
@@ -419,7 +419,7 @@ func TestTokenOfAnotherSession(t *testing.T) {
 	// In the new session everything starts again, with a snapshot of the file as it is.
 	s2 := e.sel(e.c, "f.txt", 1, 1)
 	e.rep(e.c, s2.Selection, "one")
-	if got, want := e.kinds(), []string{"failure", "snapshot", "select", "replace"}; !slices.Equal(got, want) { // the refused replace started the new tape
+	if got, want := e.kinds(), []string{"failure", "snapshot", "look", "edit"}; !slices.Equal(got, want) { // the refused replace started the new tape
 		t.Errorf("the new tape = %v, want %v", got, want)
 	}
 	e.checkTape()
@@ -452,7 +452,7 @@ func TestTokenOfAnotherWorkspaceOrKey(t *testing.T) {
 	b.write("f.txt", "1\n")
 	s := a.sel(a.c, "f.txt", 1, 1)
 	b.sel(b.c, "f.txt", 1, 1)
-	_, err := b.c.Replace(ReplaceInput{Selection: s.Selection, NewText: "x", Why: "w"})
+	_, err := b.c.Edit(EditInput{Selection: s.Selection, NewText: "x", Why: "w"})
 	wantCode(t, err, CodeInvalidSelection)
 }
 
@@ -470,7 +470,7 @@ func TestInvalidSelection(t *testing.T) {
 			continue
 		}
 		t.Run(name, func(t *testing.T) {
-			_, err := e.c.Replace(ReplaceInput{Selection: tok, NewText: "x", Why: "w"})
+			_, err := e.c.Edit(EditInput{Selection: tok, NewText: "x", Why: "w"})
 			wantCode(t, err, CodeInvalidSelection)
 		})
 	}
@@ -492,32 +492,32 @@ func TestSelectErrors(t *testing.T) {
 
 	tests := []struct {
 		name string
-		in   SelectInput
+		in   LookInput
 		code string
 	}{
-		{"start 0", SelectInput{File: "f.txt", StartLine: 0, EndLine: 1, Why: "w"}, CodeInvalidRange},
-		{"start past the end+1", SelectInput{File: "f.txt", StartLine: 5, EndLine: 5, Why: "w"}, CodeInvalidRange},
-		{"end past the end", SelectInput{File: "f.txt", StartLine: 1, EndLine: 4, Why: "w"}, CodeInvalidRange},
-		{"end before start-1", SelectInput{File: "f.txt", StartLine: 3, EndLine: 1, Why: "w"}, CodeInvalidRange},
-		{"negative", SelectInput{File: "f.txt", StartLine: -1, EndLine: 1, Why: "w"}, CodeInvalidRange},
-		{"parent directory", SelectInput{File: "../f.txt", StartLine: 1, EndLine: 1, Why: "w"}, CodeInvalidRange},
-		{"hidden parent", SelectInput{File: "dir/../../f.txt", StartLine: 1, EndLine: 1, Why: "w"}, CodeInvalidRange},
-		{"absolute", SelectInput{File: filepath.Join(e.root, "f.txt"), StartLine: 1, EndLine: 1, Why: "w"}, CodeInvalidRange},
-		{"the directory itself", SelectInput{File: ".", StartLine: 1, EndLine: 1, Why: "w"}, CodeInvalidRange},
-		{"drive", SelectInput{File: "C:/x", StartLine: 1, EndLine: 1, Why: "w"}, CodeInvalidRange},
-		{"missing", SelectInput{File: "nope.txt", StartLine: 1, EndLine: 1, Why: "w"}, CodeFileNotFound},
-		{"a directory", SelectInput{File: "dir", StartLine: 1, EndLine: 1, Why: "w"}, CodeFileNotFound},
-		{"CRLF", SelectInput{File: "crlf.txt", StartLine: 1, EndLine: 1, Why: "w"}, CodeUnsupportedFile},
-		{"NUL", SelectInput{File: "nul.bin", StartLine: 1, EndLine: 1, Why: "w"}, CodeUnsupportedFile},
-		{"not UTF-8", SelectInput{File: "latin1.txt", StartLine: 1, EndLine: 1, Why: "w"}, CodeUnsupportedFile},
-		{"a lone CR", SelectInput{File: "lone-cr.txt", StartLine: 1, EndLine: 1, Why: "w"}, CodeUnsupportedFile},
-		{"empty why", SelectInput{File: "f.txt", StartLine: 1, EndLine: 1, Why: ""}, CodeInvalidInput},
-		{"blank why", SelectInput{File: "f.txt", StartLine: 1, EndLine: 1, Why: " \t\n"}, CodeInvalidInput},
-		{"empty file", SelectInput{File: "", StartLine: 1, EndLine: 1, Why: "w"}, CodeInvalidInput},
+		{"start 0", LookInput{File: "f.txt", StartLine: 0, EndLine: 1, Why: "w"}, CodeInvalidRange},
+		{"start past the end+1", LookInput{File: "f.txt", StartLine: 5, EndLine: 5, Why: "w"}, CodeInvalidRange},
+		{"end past the end", LookInput{File: "f.txt", StartLine: 1, EndLine: 4, Why: "w"}, CodeInvalidRange},
+		{"end before start-1", LookInput{File: "f.txt", StartLine: 3, EndLine: 1, Why: "w"}, CodeInvalidRange},
+		{"negative", LookInput{File: "f.txt", StartLine: -1, EndLine: 1, Why: "w"}, CodeInvalidRange},
+		{"parent directory", LookInput{File: "../f.txt", StartLine: 1, EndLine: 1, Why: "w"}, CodeInvalidRange},
+		{"hidden parent", LookInput{File: "dir/../../f.txt", StartLine: 1, EndLine: 1, Why: "w"}, CodeInvalidRange},
+		{"absolute", LookInput{File: filepath.Join(e.root, "f.txt"), StartLine: 1, EndLine: 1, Why: "w"}, CodeInvalidRange},
+		{"the directory itself", LookInput{File: ".", StartLine: 1, EndLine: 1, Why: "w"}, CodeInvalidRange},
+		{"drive", LookInput{File: "C:/x", StartLine: 1, EndLine: 1, Why: "w"}, CodeInvalidRange},
+		{"missing", LookInput{File: "nope.txt", StartLine: 1, EndLine: 1, Why: "w"}, CodeFileNotFound},
+		{"a directory", LookInput{File: "dir", StartLine: 1, EndLine: 1, Why: "w"}, CodeFileNotFound},
+		{"CRLF", LookInput{File: "crlf.txt", StartLine: 1, EndLine: 1, Why: "w"}, CodeUnsupportedFile},
+		{"NUL", LookInput{File: "nul.bin", StartLine: 1, EndLine: 1, Why: "w"}, CodeUnsupportedFile},
+		{"not UTF-8", LookInput{File: "latin1.txt", StartLine: 1, EndLine: 1, Why: "w"}, CodeUnsupportedFile},
+		{"a lone CR", LookInput{File: "lone-cr.txt", StartLine: 1, EndLine: 1, Why: "w"}, CodeUnsupportedFile},
+		{"empty why", LookInput{File: "f.txt", StartLine: 1, EndLine: 1, Why: ""}, CodeInvalidInput},
+		{"blank why", LookInput{File: "f.txt", StartLine: 1, EndLine: 1, Why: " \t\n"}, CodeInvalidInput},
+		{"empty file", LookInput{File: "", StartLine: 1, EndLine: 1, Why: "w"}, CodeInvalidInput},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := e.c.Select(tt.in)
+			res, err := e.c.Look(tt.in)
 			wantCode(t, err, tt.code)
 			if res != nil {
 				t.Errorf("result = %+v with an error", res)
@@ -526,7 +526,7 @@ func TestSelectErrors(t *testing.T) {
 	}
 
 	// invalid_range tells how many lines the file has.
-	_, err := e.c.Select(SelectInput{File: "f.txt", StartLine: 9, EndLine: 9, Why: "w"})
+	_, err := e.c.Look(LookInput{File: "f.txt", StartLine: 9, EndLine: 9, Why: "w"})
 	if got, ok := err.Actual.(map[string]int); !ok || got["lineCount"] != 3 {
 		t.Errorf("actual = %#v, want lineCount 3", err.Actual)
 	}
@@ -552,16 +552,16 @@ func TestReplaceInputErrors(t *testing.T) {
 	s := e.sel(e.c, "f.txt", 1, 1)
 	tests := []struct {
 		name string
-		in   ReplaceInput
+		in   EditInput
 		code string
 	}{
-		{"empty selection", ReplaceInput{Selection: "", NewText: "x", Why: "w"}, CodeInvalidInput},
-		{"blank why", ReplaceInput{Selection: s.Selection, NewText: "x", Why: "  "}, CodeInvalidInput},
-		{"CR in newText", ReplaceInput{Selection: s.Selection, NewText: "x\r\ny", Why: "w"}, CodeInvalidInput},
+		{"empty selection", EditInput{Selection: "", NewText: "x", Why: "w"}, CodeInvalidInput},
+		{"blank why", EditInput{Selection: s.Selection, NewText: "x", Why: "  "}, CodeInvalidInput},
+		{"CR in newText", EditInput{Selection: s.Selection, NewText: "x\r\ny", Why: "w"}, CodeInvalidInput},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := e.c.Replace(tt.in)
+			_, err := e.c.Edit(tt.in)
 			wantCode(t, err, tt.code)
 		})
 	}
@@ -590,7 +590,7 @@ func TestSymlinkOutsideTheWorkspace(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, rel := range []string{"link.txt", "linkdir/secret.txt", "linkdir", "up"} {
-		_, err := e.c.Select(SelectInput{File: rel, StartLine: 1, EndLine: 1, Why: "w"})
+		_, err := e.c.Look(LookInput{File: rel, StartLine: 1, EndLine: 1, Why: "w"})
 		wantCode(t, err, CodeInvalidRange)
 	}
 
@@ -662,7 +662,7 @@ func TestRecoversFromAnUnfinishedTape(t *testing.T) {
 	if s2.Lines[0] != "one" {
 		t.Errorf("lines = %q", s2.Lines)
 	}
-	_, err := e.c.Replace(ReplaceInput{Selection: s.Selection, NewText: "x", Why: "w"})
+	_, err := e.c.Edit(EditInput{Selection: s.Selection, NewText: "x", Why: "w"})
 	wantCode(t, err, CodeSelectionMismatch)
 }
 
@@ -795,12 +795,12 @@ func TestConcurrentClients(t *testing.T) {
 			c := e.core()
 			file := fmt.Sprintf("f%d.txt", i)
 			for r := 1; r <= rounds; r++ {
-				s, err := c.Select(SelectInput{File: file, StartLine: 1, EndLine: 1, Why: "w"})
+				s, err := c.Look(LookInput{File: file, StartLine: 1, EndLine: 1, Why: "w"})
 				if err != nil {
 					t.Errorf("client %d: select: %v", i, err)
 					return
 				}
-				if _, err := c.Replace(ReplaceInput{Selection: s.Selection, NewText: fmt.Sprint(r), Why: "w"}); err != nil {
+				if _, err := c.Edit(EditInput{Selection: s.Selection, NewText: fmt.Sprint(r), Why: "w"}); err != nil {
 					t.Errorf("client %d: replace: %v", i, err)
 					return
 				}
@@ -843,7 +843,7 @@ func TestExternalChangeIsWrittenAsHunks(t *testing.T) {
 	if x.Type != tape.TypeExternal || x.Text != nil || len(x.Hunks) != 2 {
 		t.Fatalf("external = %+v, want two hunks and no text", x)
 	}
-	if got, want := e.kinds(), []string{"snapshot", "select", "external", "select"}; !slices.Equal(got, want) {
+	if got, want := e.kinds(), []string{"snapshot", "look", "external", "look"}; !slices.Equal(got, want) {
 		t.Errorf("tape = %v, want %v", got, want)
 	}
 	if got := tape.Build(e.events()).Files["f.txt"].Text; got != changed {

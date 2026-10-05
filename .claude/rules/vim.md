@@ -47,7 +47,7 @@
 
 ## 表示する種類（R15）
 
-- select・replace・external・failure を ON/OFF できる（`docs/reference/vim.md` 6c）。絞るのは表示サーバー（`kinds`）。キーは srwr のバッファの中だけ：`ts`・`tr`・`te`・`tf`。`:SrwrToggle {種類}`。`ui.vim` の `kinds` が覚える（保存しない）
+- look・edit・external・failure を ON/OFF できる（`docs/reference/vim.md` 6c）。絞るのは表示サーバー（`kinds`）。キーは srwr のバッファの中だけ：`tl`・`te`・`tx`・`tf`（版 0.1.4 までは `ts`・`tr`・`te`・`tf`）。ハイライトグループの名前（`SrwrSelect`・`SrwrReplace` など）は色の種類の名前で、変えない。`:SrwrToggle {種類}`。`ui.vim` の `kinds` が覚える（保存しない）
 - 切り替えは `ui.Toggle`。開いているテープは `tape/open` をやり直して `replay.Open(…, at)` で、`seq` が一番近いコマ（`timeline.NearestBySeq`）から始める。ライブは `Live()` をやり直す。キーは `replay.SetOnToggle` で `ui.vim` につなぐ（`replay.vim` が `ui.vim` を import しないため）
 - 隠している数はステータス行の右端（`%=`）に出す（`timeline.HiddenText`）。`live/hidden` の通知は `replay.SetHidden`
 - failure のコマは再生のバッファに説明を書き（`timeline.FailureLines`）、1行目を `srwr_why_failure`（赤）で塗る。バッファの名前は `srwr://<テープ>/failure<index>`

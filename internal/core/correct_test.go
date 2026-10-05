@@ -10,7 +10,7 @@ import (
 // edit makes a replace event that put newLines lines in place of start..end.
 func edit(seq int, file string, start, end, newLines int) tape.Event {
 	return tape.Event{
-		Type: tape.TypeReplace, Seq: seq, File: file, StartLine: start, EndLine: end,
+		Type: tape.TypeEdit, Seq: seq, File: file, StartLine: start, EndLine: end,
 		NewStartLine: start, NewEndLine: start + newLines - 1, NewText: join(newLines),
 	}
 }

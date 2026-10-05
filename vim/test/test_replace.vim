@@ -1,5 +1,5 @@
 vim9script
-# A sub frame (a replace of several places of a file): two windows like a diff, and the why in a band above both.
+# A replace frame (the replace tool: several places of a file): two windows like a diff, and the why in a band above both.
 import './helpers.vim' as t
 t.Setup()
 import autoload 'srwr/replay.vim'
@@ -21,10 +21,10 @@ execute 'cd ' .. fnameescape(dir)
 writefile(['func a() {', '  foo(1)', '  x', '  foo(2)', '}'], 'a.go')
 writefile(['foo(3)'], 'b.go')
 
-# A real tape: srwr mcp makes it, with the sub tool.
+# A real tape: srwr mcp makes it, with the replace tool.
 const calls = [
   '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","clientInfo":{"name":"test"}}}',
-  '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"sub","arguments":{"files":["a.go","b.go"],"old":"foo(","new":"bar(","count":3,"why":"名前を変える"}}}',
+  '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"replace","arguments":{"files":["a.go","b.go"],"old":"foo(","new":"bar(","count":3,"why":"名前を変える"}}}',
 ]
 const answer = system(shellescape(g:srwr_path) .. ' mcp', join(calls, "\n") .. "\n")
 t.True(answer =~# 'hits\\":2', 'sub answered: ' .. answer)
@@ -37,7 +37,7 @@ const s = replay.Session()
 
 # One frame for each file that changed.
 t.Equal(2, len(s.tl.frames), 'two frames')
-t.Equal('sub', s.tl.frames[0].kind, 'the kind')
+t.Equal('replace', s.tl.frames[0].kind, 'the kind')
 t.Equal(2, s.tl.frames[0].hits, 'hits')
 
 replay.Jump(0)
@@ -56,14 +56,14 @@ t.Equal([3, 5], Painted(s.diffBuf, 'srwr_replace'), 'changed lines on the right,
 t.Equal(false, getwinvar(s.win, '&number'), 'standard numbers are off: the band would make them wrong')
 t.Equal(range(1, 6), Painted(s.diffBuf, 'srwr_num'), 'own numbers are drawn on every row of the right')
 t.Equal(range(1, 6), Painted(s.buf, 'srwr_num'), 'and of the left')
-t.Equal('前  ⚠ sub：a.go', getwinvar(s.win, '&statusline'), 'left heading')
+t.Equal('前  ⚠ replace：a.go', getwinvar(s.win, '&statusline'), 'left heading')
 t.True(getwinvar(s.diffWin, '&statusline') =~# '^後  srwr  1/2  ', 'right status line')
 
 # The list: the file and the number of places.
-t.Equal('sub', sidebar.Line(s.tl.frames[0])[5 : 7], 'kind in the list')
+t.Equal('replace', sidebar.Line(s.tl.frames[0])[5 : 11], 'kind in the list')
 t.True(sidebar.Line(s.tl.frames[0]) =~# 'a\.go (2か所)', 'places in the list: ' .. sidebar.Line(s.tl.frames[0]))
 t.True(sidebar.Line(s.tl.frames[1]) =~# 'b\.go (1か所)', 'one place: ' .. sidebar.Line(s.tl.frames[1]))
-t.Equal('srwr_dot_replace', sidebar.DotType('sub'), 'orange dot')
+t.Equal('srwr_dot_replace', sidebar.DotType('replace'), 'orange dot')
 
 # The next frame is another file; going back to a normal frame is not needed here, the windows stay.
 replay.Jump(1)

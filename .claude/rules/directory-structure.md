@@ -22,7 +22,7 @@
 │   ├── tape/               ← テープの読み書き（イベントの型、追記、読み込み、テープから作る状態、閉じたテープの圧縮と、生・`.gz` の両方を開く入口 `store.go`）（R1）
 │   ├── token/              ← 範囲トークン（R1）
 │   ├── jsonrpc/            ← 改行区切りの JSON-RPC（mcp と viewserver が共有）（R2）
-│   ├── core/               ← select / replace の本体、行番号補正、external の検知（R2）
+│   ├── core/               ← look / edit / replace / new の本体、行番号補正、external の検知（R2）
 │   ├── session/            ← 今のセッションの決定・ロック（flock）・テープの読み足し・鍵（R2）
 │   ├── tools/              ← MCP のツール定義（説明文・入力スキーマ）（R2）
 │   ├── mcp/                ← MCP サーバー（R2）
@@ -59,7 +59,7 @@
 │   ├── ui-check/           ← UI の確認の自動化：`run`（qsoku ui-check）・`live`・`accept`・`open`、自動の検証の項目の表（checks.go）、長い理由のテープ（maketape.go）、確認ページ（page.go）（R4〜R6）
 │   └── vim-oldest.sh       ← 最も古い Vim（9.0.0784）をビルドして `vim-test` を動かす（R5）
 ├── docs/images/            ← README の画像（バナーは手書き、デモ・VSCode の絵は `qsoku readme-media` で作る。コミットする）
-├── docs/                   ← 外部向けの文書（正本）。英語が `名前.md`、日本語版が `名前_ja.md`。reference/・design/・examples/（`select-replace.md`・`workflow.md`（init から片付けまで一回りする例。`internal/docs` の `TestWorkflowExample` が、コマンドの出力を本物と照合する）・`protocol-session.md`・`hook.md`。`internal/docs` が本物と照合する。`internal/docs/testdata/demo-en/`（英語・UTC のテープ）と `demo/`（日本語・古い `+09:00` のテープ）が protocol-session の題材）
+├── docs/                   ← 外部向けの文書（正本）。英語が `名前.md`、日本語版が `名前_ja.md`。reference/・design/・examples/（`look-edit.md`・`workflow.md`（init から片付けまで一回りする例。`internal/docs` の `TestWorkflowExample` が、コマンドの出力を本物と照合する）・`protocol-session.md`・`hook.md`。`internal/docs` が本物と照合する。`internal/docs/testdata/demo-en/`（英語・UTC のテープ）と `demo/`（日本語・古い `+09:00` のテープ）が protocol-session の題材）
 ├── dev/                    ← 開発のうちうち。roadmap.md、publish.md（公開の手順）、review/<段階>/（UIゲートの資料。終わった段階は `<段階>.zip`）
 ├── .vscode/launch.json     ← 拡張を F5 で起動するためだけに置く（R4）
 ├── .devcontainer/          ← 開発環境（devcontainer.json、postCreate.sh）
@@ -73,7 +73,7 @@
 ### Go
 - **`cmd/srwr/main.go` は薄く**：引数を `internal/cli` に渡して終了コードを返すだけ
 - **テープの形式に関わるもの**（イベントの型、JSON のフィールド、追記の決まり）は `internal/tape` に集める。ほかのパッケージがテープの JSON を直接組み立てない
-- **`select` / `replace` の意味**（範囲の検証、行番号補正、内容の照合、external の検知）は `internal/core`。MCP にも hook にも依存しない
+- **`look` / `edit` / `replace` / `new` の意味**（範囲の検証、行番号補正、内容の照合、external の検知）は `internal/core`。MCP にも hook にも依存しない
 - **見せ方の元になる計算**（コマの列、各コマの文書の状態、差分のコマ、最後の差分）は `internal/timeline`。テープを読むだけで、書かない
 - **入口ごとの変換**（MCP、表示サーバー、hook の入力、コマンドライン）は、それぞれ `internal/mcp`・`internal/viewserver`・`internal/hook`・`internal/cli`。改行区切りの JSON-RPC の読み書きは `internal/jsonrpc` に1つだけ置く
 - **セッションとロック**は `internal/session`。テープに書く入口（`mcp`・`hook`）は、すべてここを通る

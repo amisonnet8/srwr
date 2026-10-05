@@ -25,12 +25,12 @@ func TestNewCreatesTheFile(t *testing.T) {
 	if res.Selection == "" || res.StartLine != 1 || res.EndLine != 3 {
 		t.Errorf("result = %+v", res)
 	}
-	rs := e.replaces()
+	rs := e.eventsOf(tape.TypeNew)
 	if len(rs) != 1 {
 		t.Fatalf("%d replaces", len(rs))
 	}
 	r := rs[0]
-	if r.HookTool != "new" || r.Source != tape.SourceMCP || r.From != nil || r.Why == nil || *r.Why != "start the config package" ||
+	if r.Source != tape.SourceMCP || r.From != nil || r.Why == nil || *r.Why != "start the config package" ||
 		r.StartLine != 1 || r.EndLine != 0 || r.OldText != "" || r.NewStartLine != 1 || r.NewEndLine != 3 || r.FileShaBefore != "" {
 		t.Errorf("replace = %+v", r)
 	}
@@ -63,7 +63,7 @@ func TestNewRefusesAnExistingFile(t *testing.T) {
 	e.write("a.go", "old\n")
 	_, err := e.newFile("a.go", "new\n")
 	wantCode(t, err, CodeFileExists)
-	if e.read("a.go") != "old\n" || len(e.replaces()) != 0 {
+	if e.read("a.go") != "old\n" || len(e.eventsOf(tape.TypeNew)) != 0 {
 		t.Error("the file was changed")
 	}
 	f := e.failures()
@@ -154,7 +154,7 @@ func TestNewAgainAfterTheFileWasDeleted(t *testing.T) {
 	if _, err := e.newFile("a.txt", "two\n"); err != nil {
 		t.Fatal(err)
 	}
-	if got := strings.Join(e.kinds(), ","); !strings.Contains(got, "replace,external,replace") {
+	if got := strings.Join(e.kinds(), ","); !strings.Contains(got, "new,external,new") {
 		t.Errorf("kinds = %s", got)
 	}
 	if e.read("a.txt") != "two\n" {

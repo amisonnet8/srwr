@@ -13,13 +13,13 @@ func TestDemoScenarioIsConsistent(t *testing.T) {
 	lines := strings.Split(strings.TrimSuffix(demoSource, "\n"), "\n")
 	for i, s := range demoSteps {
 		switch s.kind {
-		case "select":
+		case "look":
 			if s.start < 1 || s.end < s.start || s.end > len(lines) {
 				t.Errorf("step %d selects %d-%d of %d lines", i, s.start, s.end, len(lines))
 			}
-		case "replace":
-			if i == 0 || demoSteps[i-1].kind != "select" || s.newText == "" {
-				t.Errorf("step %d must replace what the select before it declared", i)
+		case "edit":
+			if i == 0 || demoSteps[i-1].kind != "look" || s.newText == "" {
+				t.Errorf("step %d must replace what the look before it declared", i)
 			}
 			prev := demoSteps[i-1]
 			lines = splice(lines, prev.start, prev.end, strings.Split(s.newText, "\n"))
@@ -59,7 +59,7 @@ func TestVSCodeFrame(t *testing.T) {
 				t.Errorf("%s %d: not an image", theme, current)
 			}
 			wantBanner := "#0b61a4"
-			if demoSteps[current].kind == "replace" {
+			if demoSteps[current].kind == "edit" {
 				wantBanner = "#b45f06"
 			}
 			if !strings.Contains(svg, `fill="`+wantBanner+`"/>`) {

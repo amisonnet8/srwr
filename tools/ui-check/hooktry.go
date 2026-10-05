@@ -27,7 +27,7 @@ const hookTryTask = `# 作業
 このディレクトリの Go のテストが2つ落ちています。原因を調べて直してください。
 
 1. まず、落ちているテストと、関係するファイルを、Read・Grep・Bash（cat、sed -n、grep -n）で調べる
-2. text.go の Truncate は、srwr の select と replace（MCP ツール）で直す。why は日本語で書く
+2. text.go の Truncate は、srwr の look と edit（MCP ツール）で直す。why は日本語で書く
 3. pad.go の PadLeft は、Edit で直す
 4. 最後に go test ./... を実行して、通ることを確かめる
 `
@@ -36,7 +36,7 @@ const hookTryTask = `# 作業
 // command line: Claude Code ignores the permissions of the settings of a workspace that is not trusted yet (this one is new
 // every time), but not the ones on the command line.
 var hookTryAllow = []string{
-	"mcp__srwr__select", "mcp__srwr__replace", "Read", "Edit", "Grep",
+	"mcp__srwr__look", "mcp__srwr__edit", "Read", "Edit", "Grep",
 	"Bash(cat:*)", "Bash(nl:*)", "Bash(head:*)", "Bash(tail:*)", "Bash(sed:*)", "Bash(grep:*)", "Bash(go test:*)", "Bash(ls:*)",
 }
 
@@ -168,13 +168,13 @@ func hookTryReport(workspace string) (lines []string, tapeID string, ok bool) {
 	badRanges := 0
 	for _, e := range events {
 		state.Apply(e)
-		if e.Type == tape.TypeReplace && e.Source == tape.SourceHook {
+		if e.Type == tape.TypeEdit && e.Source == tape.SourceHook {
 			// The lines the replace says it wrote must be, in the file as it was then, the lines it wrote.
 			if tape.RangeText(state.Files[e.File].Text, e.NewStartLine, e.NewEndLine) != e.NewText {
 				badRanges++
 			}
 		}
-		if e.Type != tape.TypeSelect && e.Type != tape.TypeReplace {
+		if e.Type != tape.TypeLook && e.Type != tape.TypeEdit {
 			continue
 		}
 		src := e.Source
@@ -196,9 +196,9 @@ func hookTryReport(workspace string) (lines []string, tapeID string, ok bool) {
 	}
 	id := strings.TrimSuffix(filepath.Base(files[0]), tape.FileSuffix)
 	check(true, "記録（テープ）が1本できた：%s", id)
-	check(n["select/hook"] > 0, "AI がファイルを読んだ・探した記録：%d 件（Read %d、Bash %d、Grep %d）", n["select/hook"], tools["Read"], tools["Bash"], tools["Grep"])
-	check(n["replace/hook"] > 0, "AI が Edit（いつもの編集）で直した記録：%d 件", n["replace/hook"])
-	check(n["select/mcp"] > 0 && n["replace/mcp"] > 0, "AI が srwr の select / replace で直した記録：select %d 件、replace %d 件", n["select/mcp"], n["replace/mcp"])
+	check(n["look/hook"] > 0, "AI がファイルを読んだ・探した記録：%d 件（Read %d、Bash %d、Grep %d）", n["look/hook"], tools["Read"], tools["Bash"], tools["Grep"])
+	check(n["edit/hook"] > 0, "AI が Edit（いつもの編集）で直した記録：%d 件", n["edit/hook"])
+	check(n["look/mcp"] > 0 && n["edit/mcp"] > 0, "AI が srwr の look / edit で直した記録：look %d 件、edit %d 件", n["look/mcp"], n["edit/mcp"])
 	same := true
 	var differs []string
 	for name, f := range state.Files {
@@ -306,9 +306,9 @@ func hookTryRows(workspace string) []hookTryRow {
 			continue
 		}
 		r := hookTryRow{Seq: e.Seq, Kind: e.Type, Where: e.File}
-		if e.Type == tape.TypeSelect || e.Type == tape.TypeReplace {
+		if e.Type == tape.TypeLook || e.Type == tape.TypeEdit {
 			r.Where = fmt.Sprintf("%s:%d-%d", e.File, e.StartLine, e.EndLine)
-			r.By = "srwr（select / replace）"
+			r.By = "srwr（look / edit）"
 			if e.Source == tape.SourceHook {
 				r.By = "AI の道具 " + e.HookTool
 			}

@@ -1,13 +1,13 @@
 // What the editor shows for a frame: the why row, the range and the line numbers. Replay and live both use this.
-// select is blue, and what changes a file is orange. The why row is a dark color with white bold text, the range a light one.
+// look is blue, and what changes a file is orange. The why row is a dark color with white bold text, the range a light one.
 import * as vscode from "vscode";
 import { LineRange, Tone } from "./timeline";
 
 // The colors live here and nowhere else. The why row looks the same in both themes; only the range follows the theme.
-const WHY_BG: Record<Tone, string> = { select: "#0b61a4", replace: "#b45f06", failure: "#d50000" };
+const WHY_BG: Record<Tone, string> = { look: "#0b61a4", edit: "#b45f06", failure: "#d50000" };
 const RANGE_BG: Record<Tone, { dark: string; light: string }> = {
-  select: { dark: "#1d3a5c", light: "#cfe3fb" },
-  replace: { dark: "#583c27", light: "#fde3c8" },
+  look: { dark: "#1d3a5c", light: "#cfe3fb" },
+  edit: { dark: "#583c27", light: "#fde3c8" },
   failure: { dark: "#4a2326", light: "#f9d6d6" }, // not painted today: a failure frame has only its why row
 };
 
@@ -25,7 +25,7 @@ export class Presenter implements vscode.Disposable {
   private readonly painted = new Set<vscode.TextEditor>();
 
   constructor() {
-    const make = <T>(f: (t: Tone) => T): Record<Tone, T> => ({ select: f("select"), replace: f("replace"), failure: f("failure") });
+    const make = <T>(f: (t: Tone) => T): Record<Tone, T> => ({ look: f("look"), edit: f("edit"), failure: f("failure") });
     this.range = make((t) =>
       vscode.window.createTextEditorDecorationType({
         isWholeLine: true,

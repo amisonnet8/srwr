@@ -86,7 +86,7 @@ func TestInitThenTheRegisteredCommandsWork(t *testing.T) {
 		t.Fatalf("settings.json = %s", read(t, root, ".claude/settings.json"))
 	}
 	entry := settings.Hooks.PostToolUse[0]
-	if !slices.Contains(settings.Permissions.Allow, "mcp__srwr__select") || !slices.Contains(settings.Permissions.Deny, "Edit") {
+	if !slices.Contains(settings.Permissions.Allow, "mcp__srwr__look") || !slices.Contains(settings.Permissions.Deny, "Edit") {
 		t.Errorf("permissions = %+v", settings.Permissions)
 	}
 	payload, _ := json.Marshal(map[string]any{
@@ -110,7 +110,7 @@ func TestInitThenTheRegisteredCommandsWork(t *testing.T) {
 	for _, e := range readTape(t, files[0])[1:] {
 		got = append(got, e.Type+"/"+e.Source)
 	}
-	if want := []string{tape.TypeSnapshot + "/", tape.TypeSelect + "/mcp", tape.TypeSelect + "/hook"}; !slices.Equal(got, want) {
+	if want := []string{tape.TypeSnapshot + "/", tape.TypeLook + "/mcp", tape.TypeLook + "/hook"}; !slices.Equal(got, want) {
 		t.Errorf("tape = %v, want %v", got, want)
 	}
 }

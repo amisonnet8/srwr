@@ -27,17 +27,17 @@ const (
 // copied over the fixed workspace. bin is the srwr binary; the work happens in a temporary directory.
 func makeLongWhyTape(bin, extra string) error {
 	return makeTape(bin, extra, longWhyTape, func(c *mcpClient) error {
-		sel, err := c.tool("select", map[string]any{"file": "a.go", "startLine": 3, "endLine": 3, "why": longSelectWhy})
+		sel, err := c.tool("look", map[string]any{"file": "a.go", "startLine": 3, "endLine": 3, "why": longSelectWhy})
 		if err != nil {
 			return err
 		}
 		token, _ := sel["selection"].(string)
-		_, err = c.tool("replace", map[string]any{"selection": token, "newText": mainReplacement, "why": longReplaceWhy})
+		_, err = c.tool("edit", map[string]any{"selection": token, "newText": mainReplacement, "why": longReplaceWhy})
 		return err
 	})
 }
 
-// failureTape is the tape of a select and a replace that went well and two calls that failed (an absolute path, and a token that
+// failureTape is the tape of a look and an edit that went well and two calls that failed (an absolute path, and a token that
 // went stale), made by the real `srwr mcp`. Shown with failure off it has 2 frames; with failure on, 4.
 const failureTape = "20260101-0001-with-failure"
 
@@ -47,20 +47,20 @@ const mainReplacement = "func main() {\n\tprintln(\"hi\")\n}"
 // the two can share one workspace.
 func makeFailureTape(bin, extra string) error {
 	return makeTape(bin, extra, failureTape, func(c *mcpClient) error {
-		sel, err := c.tool("select", map[string]any{"file": "a.go", "startLine": 3, "endLine": 3, "why": "main を確かめる"})
+		sel, err := c.tool("look", map[string]any{"file": "a.go", "startLine": 3, "endLine": 3, "why": "main を確かめる"})
 		if err != nil {
 			return err
 		}
 		// A path that is absolute: the AI is told to give a relative one, and the tape keeps a failure.
-		if _, err := c.tool("select", map[string]any{"file": "/work/a.go", "startLine": 3, "endLine": 3, "why": "もう一度、main を確かめる"}); err == nil {
-			return fmt.Errorf("a select with an absolute path did not fail")
+		if _, err := c.tool("look", map[string]any{"file": "/work/a.go", "startLine": 3, "endLine": 3, "why": "もう一度、main を確かめる"}); err == nil {
+			return fmt.Errorf("a look with an absolute path did not fail")
 		}
 		token, _ := sel["selection"].(string)
-		if _, err := c.tool("replace", map[string]any{"selection": token, "newText": mainReplacement, "why": "メッセージを出す"}); err != nil {
+		if _, err := c.tool("edit", map[string]any{"selection": token, "newText": mainReplacement, "why": "メッセージを出す"}); err != nil {
 			return err
 		}
 		// The same token again: an edit overlapped its range, so it is stale.
-		if _, err := c.tool("replace", map[string]any{"selection": token, "newText": mainReplacement, "why": "もう一度、メッセージを出す"}); err == nil {
+		if _, err := c.tool("edit", map[string]any{"selection": token, "newText": mainReplacement, "why": "もう一度、メッセージを出す"}); err == nil {
 			return fmt.Errorf("a replace with a stale token did not fail")
 		}
 		return nil

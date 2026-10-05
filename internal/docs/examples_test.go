@@ -54,10 +54,10 @@ func normalize(s string) string {
 	return versionRe.ReplaceAllString(s, `"$1":"VERSION"`)
 }
 
-// TestSelectReplaceExample runs the exchange in docs/examples/select-replace.md against the real
+// TestSelectReplaceExample runs the exchange in docs/examples/look-edit.md against the real
 // server, in one workspace, and checks that every response is the one the document shows.
 func TestSelectReplaceExample(t *testing.T) {
-	eachVersion(t, "select-replace", checkSelectReplaceExample)
+	eachVersion(t, "look-edit", checkSelectReplaceExample)
 }
 
 // eachVersion runs a check on the English document and on its Japanese version (name_ja.md). Both must show what the real
@@ -155,7 +155,7 @@ func checkSelectReplaceExample(t *testing.T, path string) {
 
 // TestProtocolSessionExample runs the exchanges in docs/examples/protocol-session.md against the real
 // display server. Each block is a connection of its own, on the workspace in testdata/demo, which
-// is the tape that the exchange in select-replace.md leaves (made by the real core, run with a fixed clock).
+// is the tape that the exchange in look-edit.md leaves (made by the real core, run with a fixed clock).
 func TestProtocolSessionExample(t *testing.T) {
 	eachVersion(t, "protocol-session", checkProtocolSessionExample)
 }

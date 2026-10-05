@@ -1,15 +1,15 @@
 package timeline
 
-// Kinds is the set of kinds of frames a client wants: select, replace, external and failure. The frames of the final diff
-// (final) follow external, and those of sub and new follow replace.
+// Kinds is the set of kinds of frames a client wants: look, edit, external and failure. The frames of the final diff
+// (final) follow external, and those of replace and new follow edit.
 type Kinds map[string]bool
 
 // AllKinds are the names a client may ask for.
-var AllKinds = []string{KindSelect, KindReplace, KindExternal, KindFailure}
+var AllKinds = []string{KindLook, KindEdit, KindExternal, KindFailure}
 
 // DefaultKinds is what a client gets when it does not say: everything but failure.
 func DefaultKinds() Kinds {
-	return Kinds{KindSelect: true, KindReplace: true, KindExternal: true}
+	return Kinds{KindLook: true, KindEdit: true, KindExternal: true}
 }
 
 // NewKinds makes a Kinds from names, and reports the first name that is not one of AllKinds.
@@ -28,13 +28,13 @@ func NewKinds(names []string) (Kinds, string) {
 	return k, ""
 }
 
-// group is the kind a person turns on and off for a kind of frame: final goes with external, sub and new with replace.
+// group is the kind a person turns on and off for a kind of frame: final goes with external, replace and new with edit.
 func group(kind string) string {
 	switch kind {
 	case KindFinal:
 		return KindExternal
-	case KindSub, KindNew:
-		return KindReplace
+	case KindReplace, KindNew:
+		return KindEdit
 	}
 	return kind
 }

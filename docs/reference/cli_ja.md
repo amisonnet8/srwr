@@ -8,7 +8,7 @@
 
 | コマンド | 使う人 | 役割 |
 |---|---|---|
-| `srwr mcp` | AI（MCP クライアント） | MCP サーバー（stdio）。[`select` / `replace` / `sub` / `new`](mcp_ja.md) を提供する |
+| `srwr mcp` | AI（MCP クライアント） | MCP サーバー（stdio）。[`look` / `edit` / `replace` / `new`](mcp_ja.md) を提供する |
 | `srwr hook` | Claude Code の hook | Read・Bash・Grep・Edit を、`srwr mcp` と同じ[テープ](tape_ja.md)に記録する |
 | `srwr view-server` | エディタ（VSCode 拡張・Vim スクリプト） | 表示サーバー。人は直接使わない（[protocol.md](protocol_ja.md)） |
 | `srwr view [テープ]` | 人 | Vim で再生する（[vim.md](vim_ja.md)） |
@@ -54,7 +54,7 @@ srwr を使うディレクトリを**作業場**と呼ぶ。srwr は作業場の
 
 ## srwr mcp
 
-AI に使わせる MCP サーバー。AI エージェント（MCP クライアント）が起動する。作業場は `--root <作業場>`（省略時はカレントディレクトリ）。ツールは `select`・`replace`・`sub`・`new` の4つ（[mcp.md](mcp_ja.md)）。同じ作業場で複数起動してもよい。同じセッション（同じテープ）に書き、片方が発行した範囲トークンをもう片方で使える（[tape.md](tape_ja.md)）。
+AI に使わせる MCP サーバー。AI エージェント（MCP クライアント）が起動する。作業場は `--root <作業場>`（省略時はカレントディレクトリ）。ツールは `look`・`edit`・`replace`・`new` の4つ（[mcp.md](mcp_ja.md)）。同じ作業場で複数起動してもよい。同じセッション（同じテープ）に書き、片方が発行した範囲トークンをもう片方で使える（[tape.md](tape_ja.md)）。
 
 ## srwr hook
 
@@ -81,18 +81,18 @@ Claude Code の hook から呼ばれ、AI が持つ既存のツールの操作�
 
 | Claude Code の操作 | テープへの記録 |
 |---|---|
-| Read | `select`（`offset`・`limit` なしは全体） |
-| Bash の読み取り（`cat`・`nl`・`head`・`tail`・`sed -n 'A,Bp'`・`grep -n`） | `select` |
-| Grep（内容モード） | `select`（連続する行は1つにまとめる） |
-| Edit | `replace`（範囲は置換位置を含む行全体。`replace_all` は一致ごとに1件） |
+| Read | `look`（`offset`・`limit` なしは全体） |
+| Bash の読み取り（`cat`・`nl`・`head`・`tail`・`sed -n 'A,Bp'`・`grep -n`） | `look` |
+| Grep（内容モード） | `look`（連続する行は1つにまとめる） |
+| Edit | `edit`（範囲は置換位置を含む行全体。`replace_all` は一致ごとに1件） |
 | Write・MultiEdit・NotebookEdit | 記録しない（次に srwr が触れたとき、`external` として見える） |
 
 - Bash のあとは（読み取りでなくても）、テープが内容を持つ全ファイルを読み直し、違えば `external`（`detectedBy` は `hook`）を記録する
 - Bash のあと、git の作業ツリーでは、**新しいファイル**（git が未追跡か、インデックスに追加したばかり（`git add -N` を含む）と数え、無視せず、`.srwrignore` にもないもの）を、`created: true` の `external` として記録する。作ったものがテープに出る。CRLF のファイル、バイナリ、256 KiB を超えるファイルは対象外。1回のコマンドで記録する新しいファイルは 50 まで。超えた分は記録せず、hook が知らせる。git の作業ツリーの外では、新しいファイルは見つけられない
-- Edit は、編集前の内容（テープが持つもの。無ければ `tool_response.originalFile`）に `old_string` → `new_string` を当てて、今のファイルと一致すれば `replace`。一致しなければ（ほかの変更も混ざっているなど）`external` として記録する
-- 一度の呼び出しで記録する `select` は100件まで（広い範囲の検索で、テープが膨らまないように）
+- Edit は、編集前の内容（テープが持つもの。無ければ `tool_response.originalFile`）に `old_string` → `new_string` を当てて、今のファイルと一致すれば `edit`。一致しなければ（ほかの変更も混ざっているなど）`external` として記録する
+- 一度の呼び出しで記録する `look` は100件まで（広い範囲の検索で、テープが膨らまないように）
 - パイプは先頭のコマンドだけを見る。`$( )`・書き込みのリダイレクト・`sed -i`・`tail -f`・`-n` なしの `grep` は記録しない
-- hook が記録したコマは、`why` が `null` で表示される（`why` の行が出ない）。範囲トークンは持たない（`selection`・`from` は `null`）。`srwr mcp` が先に発行したトークンは、hook の `replace` のあとも、行番号が補正されて使える
+- hook が記録したコマは、`why` が `null` で表示される（`why` の行が出ない）。範囲トークンは持たない（`selection`・`from` は `null`）。`srwr mcp` が先に発行したトークンは、hook の `edit` のあとも、行番号が補正されて使える
 
 ## srwr view-server
 
@@ -120,10 +120,10 @@ srwr init [--lenient] [--root <作業場>]
 |---|---|
 | `.srwr/` | ディレクトリと鍵を作る |
 | `.mcp.json` | `srwr mcp` を登録する（既存のサーバーは残して追記。すでに `srwr` があれば触らない） |
-| `.claude/settings.json` | hook の登録、Claude Code が聞かずに使えるようにする設定（`enabledMcpjsonServers` と、`select`・`replace`・`sub`・`new` の許可）、厳格モードなら Edit/Write の禁止（既存の内容は残して追記） |
+| `.claude/settings.json` | hook の登録、Claude Code が聞かずに使えるようにする設定（`enabledMcpjsonServers` と、`look`・`edit`・`replace`・`new` の許可）、厳格モードなら Edit/Write の禁止（既存の内容は残して追記） |
 | `.gitignore` | `.srwr/key`・`.srwr/lock`・`.srwr/active`・`.srwr/init-backup/` を足す（git の管理下の場合）。テープ（`.srwr/tapes/`）は共有できるよう無視しない |
 
-- **srwr を新しいツール（`sub`・`new`）のある版に入れ替えたら、作業場ごとに `srwr init` をもう一度実行する。** 新しいツールの許可を `permissions.allow` に足す。しないと、Claude Code が毎回確認を出すか、ツールを使わない
+- **srwr を新しいツールのある版に入れ替えたら、作業場ごとに `srwr init` をもう一度実行する。** 新しい名前の許可を `permissions.allow` に足し、なくなったツール（`select`・`sub`。`look`・`replace` になった）の許可を外す。しないと、Claude Code が毎回確認を出すか、ツールを使わない
 - 既存のファイルを壊さない。キーの順や、ほかの設定・サーバー・hook はそのまま残す。書式は2字下げの JSON に整える
 - 書き換える前の内容は `.srwr/init-backup/<日時>/` に残す（変えるファイルがあるときだけ）
 - JSON として読めないファイルがあるとき（またはオブジェクト・配列の形が違うとき）は、何も書き換えずに終了コード 1 で止まる
@@ -140,7 +140,7 @@ srwr init [--lenient] [--root <作業場>]
   作った   .claude/settings.json hook を登録し、Edit・Write などを禁止しました（厳格モード）
   作った   .gitignore            .srwr/key .srwr/lock .srwr/active .srwr/init-backup/
 
-準備できました。Claude Code を開き直すと、select / replace が使えます。
+準備できました。Claude Code を開き直すと、look / edit / replace / new が使えます。
 緩いモード（Edit・Write を禁止しない）にするときは、srwr init --lenient。
 ```
 
@@ -148,8 +148,8 @@ srwr init [--lenient] [--root <作業場>]
 
 | モード | 内容 |
 |---|---|
-| **厳格モード**（既定） | Claude Code の Edit・Write・MultiEdit・NotebookEdit を禁止する。AI がファイルを変える手段は `select` / `replace` だけになり、テープには必ず `why` が残る |
-| **緩いモード**（`srwr init --lenient`） | Edit・Write を禁止しない。hook が Edit を `replace`（`why` は `null`）として記録する。Write は記録せず、`external` として見える |
+| **厳格モード**（既定） | Claude Code の Edit・Write・MultiEdit・NotebookEdit を禁止する。AI がファイルを変える手段は `look` / `edit` だけになり、テープには必ず `why` が残る |
+| **緩いモード**（`srwr init --lenient`） | Edit・Write を禁止しない。hook が Edit を `edit`（`why` は `null`）として記録する。Write は記録せず、`external` として見える |
 
 - 厳格 ⇄ 緩いは、`srwr init` と `srwr init --lenient` で切り替えられる。緩いモードにすると、`permissions.deny` から上の4つ（`Edit`・`Write`・`MultiEdit`・`NotebookEdit`）を外す。それ以外の禁止は残す（利用者が自分で足した `Edit` の禁止も、同じ名前なので外れる）
 - 厳格モードでも塞げないものがある。Bash 経由の編集（`sed -i`、リダイレクトなど）は、`external` として検知して見せる
@@ -172,7 +172,7 @@ srwr tapes [new | prune (--keep N | --older-than 30d) | path <テープID> | che
 
 ### srwr tapes check
 
-srwr が記録するのは、`select`・`replace`・hook が見たファイルだけ。AI がほかの方法（たとえばシェルのコマンド）で変えたファイルは、テープに出ないことがある。`check` は、テープと `git status` を比べて、それを知らせる。
+srwr が記録するのは、`look`・`edit`・hook が見たファイルだけ。AI がほかの方法（たとえばシェルのコマンド）で変えたファイルは、テープに出ないことがある。`check` は、テープと `git status` を比べて、それを知らせる。
 
 - テープのどれかのイベントがそのファイルについてのものなら、そのファイルは**テープにある**
 - 変わったのにテープにないファイルは**警告**。変わったファイルのうち[設定で記録しない](#記録しないファイル)ものは、別に数えて、警告にしない。`.srwr/` の中は除く
@@ -209,7 +209,7 @@ srwr が記録するのは、`select`・`replace`・hook が見たファイル�
 
 | 場面 | 振る舞い |
 |---|---|
-| `select` / `replace` | `ignored_file` エラー。テープには何も書かない |
+| `look` / `edit` | `ignored_file` エラー。テープには何も書かない |
 | hook（Read・Bash・Grep・Edit） | 記録しない。`external` の検知の対象にもしない |
 | 緩いモードで AI が Edit した | 記録しない |
 
@@ -218,8 +218,8 @@ srwr が記録するのは、`select`・`replace`・hook が見たファイル�
 - **既定の対象は、`.srwrignore` の `!` でも戻せない。** `!` が打ち消せるのは、`.srwrignore` 自身の指定だけ。ディレクトリが対象なら、その中のファイルも対象で、`!` で戻せない
 - **大文字・小文字は区別しない。** macOS・Windows では `.ENV` で `.env` が開けるため、どの OS でも同じ判定にする
 - **シンボリックリンクは、リンクの名前とリンク先の両方を調べる。** `notes.txt` が `.env` へのリンクなら、記録しない
-- **`.srwrignore` は、作業場の直下のものだけを、呼ばれるたびに読む。** 書き足すとすぐ効く。すでにテープにあるファイルを書き足した場合も、以後は `select`・`replace` が `ignored_file` になり、`external` の検知も飛ばす
-- **`.srwrignore` が読めないとき（権限がない、ディレクトリになっている）は、何も記録しない。** `select`・`replace` は `internal_error`、hook は標準エラー出力に一言だけ出す
+- **`.srwrignore` は、作業場の直下のものだけを、呼ばれるたびに読む。** 書き足すとすぐ効く。すでにテープにあるファイルを書き足した場合も、以後は `look`・`edit` が `ignored_file` になり、`external` の検知も飛ばす
+- **`.srwrignore` が読めないとき（権限がない、ディレクトリになっている）は、何も記録しない。** `look`・`edit` は `internal_error`、hook は標準エラー出力に一言だけ出す
 
 ### テープを共有する前に
 

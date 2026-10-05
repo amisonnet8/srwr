@@ -53,7 +53,7 @@ func TestPrepareHookTryRegistersMCPAndTheHook(t *testing.T) {
 	if len(h) != 1 || h[0].Matcher != "Read|Bash|Grep|Edit" || len(h[0].Hooks) != 1 || h[0].Hooks[0].Type != "command" || h[0].Hooks[0].Command != "/opt/srwr hook" {
 		t.Errorf("hooks = %+v", h)
 	}
-	if !strings.Contains(strings.Join(settings.Permissions.Allow, " "), "mcp__srwr__select") {
+	if !strings.Contains(strings.Join(settings.Permissions.Allow, " "), "mcp__srwr__look") {
 		t.Errorf("srwr tools are not allowed: %v", settings.Permissions.Allow)
 	}
 	for _, f := range []string{"TASK.md", "text.go", "pad.go", "text_test.go", "go.mod"} {
@@ -140,11 +140,11 @@ func TestHookTryReport(t *testing.T) {
 	if lines, _, ok := hookTryReport(root); ok || !strings.Contains(strings.Join(lines, "\n"), "× AI が Edit（いつもの編集）で直した記録") {
 		t.Errorf("only a read: %v %v", lines, ok)
 	}
-	sel, cerr := c.Select(core.SelectInput{File: "f.go", StartLine: 2, EndLine: 2, Why: "見る"})
+	sel, cerr := c.Look(core.LookInput{File: "f.go", StartLine: 2, EndLine: 2, Why: "見る"})
 	if cerr != nil {
 		t.Fatal(cerr)
 	}
-	if _, cerr := c.Replace(core.ReplaceInput{Selection: sel.Selection, NewText: "B", Why: "直す"}); cerr != nil {
+	if _, cerr := c.Edit(core.EditInput{Selection: sel.Selection, NewText: "B", Why: "直す"}); cerr != nil {
 		t.Fatal(cerr)
 	}
 	if err := os.WriteFile(file, []byte("a\nB\nC\n"), 0o600); err != nil {
@@ -155,7 +155,7 @@ func TestHookTryReport(t *testing.T) {
 	if !ok || id == "" {
 		t.Errorf("everything is recorded, yet: %v %v", lines, ok)
 	}
-	for _, want := range []string{"Edit の記録の行番号が、直した行を指している（合わないもの 0 件）", "最後のファイルの内容が実際のファイルと同じになる", "AI がファイルを読んだ・探した記録：1 件（Read 1", "AI が Edit（いつもの編集）で直した記録：1 件", "select 1 件、replace 1 件"} {
+	for _, want := range []string{"Edit の記録の行番号が、直した行を指している（合わないもの 0 件）", "最後のファイルの内容が実際のファイルと同じになる", "AI がファイルを読んだ・探した記録：1 件（Read 1", "AI が Edit（いつもの編集）で直した記録：1 件", "look 1 件、edit 1 件"} {
 		if !strings.Contains(strings.Join(lines, "\n"), want) {
 			t.Errorf("the report lacks %q:\n%s", want, strings.Join(lines, "\n"))
 		}
@@ -202,7 +202,7 @@ func TestHookTryReportFindsAnEditWithWrongLines(t *testing.T) {
 		{Type: tape.TypeHeader, Session: "x", StartedAt: "2026-10-03T00:00:00.000+09:00", Author: &tape.Author{Kind: "ai", Name: "claude"}},
 		{Type: tape.TypeSnapshot, Seq: 1, TS: "2026-10-03T00:00:00.000+09:00", File: "f.go", FileHash: tape.FileHash("f.go"), Text: &text, Sha: tape.Sha(text)},
 		// the line written is line 2, but the event says 3
-		{Type: tape.TypeReplace, Seq: 2, TS: "2026-10-03T00:00:00.000+09:00", File: "f.go", StartLine: 2, EndLine: 2, OldText: "b", NewText: "B", NewStartLine: 3, NewEndLine: 3, Source: tape.SourceHook, HookTool: "Edit"},
+		{Type: tape.TypeEdit, Seq: 2, TS: "2026-10-03T00:00:00.000+09:00", File: "f.go", StartLine: 2, EndLine: 2, OldText: "b", NewText: "B", NewStartLine: 3, NewEndLine: 3, Source: tape.SourceHook, HookTool: "Edit"},
 	} {
 		line, err := tape.Marshal(e)
 		if err != nil {
@@ -225,7 +225,7 @@ func TestHookTryReportFindsAnEditWithWrongLines(t *testing.T) {
 
 func TestRenderHookTryPage(t *testing.T) {
 	ok := []string{"○ 記録（テープ）が1本できた：x", "○ AI が Edit（いつもの編集）で直した記録：1 件"}
-	rows := []hookTryRow{{1, "snapshot", "", "f.go", ""}, {2, "select", "AI の道具 Read", "f.go:1-3", ""}, {3, "replace", "srwr（select / replace）", "f.go:2-2", "直す <理由>"}}
+	rows := []hookTryRow{{1, "snapshot", "", "f.go", ""}, {2, "look", "AI の道具 Read", "f.go:1-3", ""}, {3, "edit", "srwr（look / edit）", "f.go:2-2", "直す <理由>"}}
 	good := renderHookTryPage(ok, rows, "done <b>", nil)
 	for _, want := range []string{"全部 ○ でした", "「OK」", "AI の道具 Read", "f.go:1-3", "直す &lt;理由&gt;", "done &lt;b&gt;"} {
 		if !strings.Contains(good, want) {
@@ -278,7 +278,7 @@ func TestClaudeBinaryIsFoundInTheVSCodeExtension(t *testing.T) {
 func TestClaudeArgsAllowTheToolsOnTheCommandLine(t *testing.T) {
 	args := claudeArgs()
 	joined := strings.Join(args, " ")
-	for _, want := range []string{"-p Do what TASK.md says", "--mcp-config .mcp.json", "mcp__srwr__select", "mcp__srwr__replace", "Edit", "Bash(go test:*)"} {
+	for _, want := range []string{"-p Do what TASK.md says", "--mcp-config .mcp.json", "mcp__srwr__look", "mcp__srwr__edit", "Edit", "Bash(go test:*)"} {
 		if !strings.Contains(joined, want) {
 			t.Errorf("the arguments lack %q: %v", want, args)
 		}

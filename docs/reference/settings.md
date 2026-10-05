@@ -48,8 +48,8 @@ The colors are defined as Vim highlight groups and can be overridden in your `vi
 
 | Group | Used for |
 |---|---|
-| `SrwrWhySelect`, `SrwrWhyReplace` | The reason line of a select / replace |
-| `SrwrSelect`, `SrwrReplace` | The range of a select / replace, the before (left) and after (right) of a diff |
+| `SrwrWhySelect`, `SrwrWhyReplace` | The reason line of a look / edit (replace, new) |
+| `SrwrSelect`, `SrwrReplace` | The range of a look / edit (replace, new), the before (left) and after (right) of a diff |
 | `SrwrCurrent` | The current frame in the operation list |
 | `SrwrDotSelect`, `SrwrDotReplace`, `SrwrDotExternal` | The dots in the operation list (blue, orange, purple) |
 | `SrwrDim` | Buttons that cannot be used (Back, Forward) |
@@ -90,7 +90,7 @@ What `srwr init` ([cli.md](cli.md)) writes into `.claude/settings.json` (strict 
   "hooks": { "PostToolUse": [ { "matcher": "Read|Bash|Grep|Edit", "hooks": [ { "type": "command", "command": "srwr hook" } ] } ] },
   "enabledMcpjsonServers": ["srwr"],
   "permissions": {
-    "allow": ["mcp__srwr__select", "mcp__srwr__replace", "mcp__srwr__sub", "mcp__srwr__new"],
+    "allow": ["mcp__srwr__look", "mcp__srwr__edit", "mcp__srwr__replace", "mcp__srwr__new"],
     "deny": ["Edit", "Write", "MultiEdit", "NotebookEdit"]
   }
 }

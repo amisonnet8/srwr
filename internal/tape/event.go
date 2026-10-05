@@ -9,20 +9,23 @@ import "encoding/json"
 const (
 	TypeHeader   = "header"
 	TypeSnapshot = "snapshot"
-	TypeSelect   = "select"
+	TypeLook     = "look"
+	TypeEdit     = "edit"
 	TypeReplace  = "replace"
+	TypeNew      = "new"
 	TypeExternal = "external"
 	TypeFailure  = "failure"
 )
 
-// Sources of a select or replace.
+// Sources of a look or an edit.
 const (
 	SourceMCP  = "mcp"
 	SourceHook = "hook"
 )
 
-// Version is the tape format version written in every event ("v").
-const Version = 1
+// Version is the tape format version written in every event ("v"). Version 1 had select and replace (sub and new were a replace
+// with a tool); Parse reads it as look, edit, replace and new.
+const Version = 2
 
 // Author says who made a change.
 type Author struct {
@@ -40,8 +43,9 @@ type ToolInfo struct {
 //
 //	header:   Session, StartedAt, Author, VCS, Tool
 //	snapshot: Seq, TS, File, FileHash, Text (never nil), Sha
-//	select:   Seq, TS, File, StartLine, EndLine, Why, Selection, Source, HookTool
-//	replace:  Seq, TS, File, From, StartLine, EndLine, OldText, NewText, NewStartLine, NewEndLine,
+//	look:     Seq, TS, File, StartLine, EndLine, Why, Selection, Source, HookTool
+//	edit, replace, new:
+//	          Seq, TS, File, From, StartLine, EndLine, OldText, NewText, NewStartLine, NewEndLine,
 //	          Selection, Why, FileShaBefore, FileShaAfter, Source, HookTool, Hits
 //	failure:  Seq, TS, Failure
 //	external: Seq, TS, File, Author, DetectedBy, ExpectedSha, ActualSha, Hunks or Text (both nil when unknown), Created, Deleted
@@ -77,23 +81,23 @@ type Event struct {
 	// external: the lines that changed, against the content the tape held before. nil when Text is written.
 	Hunks []Hunk
 
-	// select and replace
+	// look, edit, replace and new
 	StartLine int
 	EndLine   int
 	Why       *string
 	Selection *string
 	From      *string
 	Source    string // "" is read as "mcp"
-	HookTool  string // the original tool name of a hook select, such as "Read"
+	HookTool  string // the original tool name of a hook event, such as "Read" or "Edit"
 
-	// replace
+	// edit, replace and new
 	OldText       string
 	NewText       string
 	NewStartLine  int
 	NewEndLine    int
 	FileShaBefore string
 	FileShaAfter  string
-	Hits          int // a replace made by sub: how many places it changed in the file (0 is a replace of any other kind)
+	Hits          int // replace only: how many places it changed in the file
 
 	// external
 	DetectedBy  string
@@ -103,7 +107,7 @@ type Event struct {
 	Created     bool // a new file: the tape held nothing of it, and Hunks (or Text) is the whole file
 }
 
-// FailureInfo is what a failure event holds: a select or replace that gave the AI an error. A value that is not there is nil
+// FailureInfo is what a failure event holds: a look, edit, replace or new that gave the AI an error. A value that is not there is nil
 // (null on the tape). File is nil when it is not known or is left out, since the real path of an absolute path is not written.
 type FailureInfo struct {
 	Tool      string
@@ -115,6 +119,9 @@ type FailureInfo struct {
 	Code      string
 	Message   string
 }
+
+// Changes reports whether the event of this type changes a file: edit, replace and new.
+func Changes(typ string) bool { return typ == TypeEdit || typ == TypeReplace || typ == TypeNew }
 
 // Str returns a pointer to s, for the nullable fields.
 func Str(s string) *string { return &s }

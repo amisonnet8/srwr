@@ -92,11 +92,11 @@ func (w *workflowRun) ai(start time.Time, calls func(c *core.Core)) {
 
 func (w *workflowRun) edit(c *core.Core, file string, start, end int, text, whyEN, whyJA string) {
 	w.t.Helper()
-	sel, cerr := c.Select(core.SelectInput{File: file, StartLine: start, EndLine: end, Why: w.why("Look at "+file, file+" を見る")})
+	sel, cerr := c.Look(core.LookInput{File: file, StartLine: start, EndLine: end, Why: w.why("Look at "+file, file+" を見る")})
 	if cerr != nil {
 		w.t.Fatal(cerr)
 	}
-	if _, cerr := c.Replace(core.ReplaceInput{Selection: sel.Selection, NewText: text, Why: w.why(whyEN, whyJA)}); cerr != nil {
+	if _, cerr := c.Edit(core.EditInput{Selection: sel.Selection, NewText: text, Why: w.why(whyEN, whyJA)}); cerr != nil {
 		w.t.Fatal(cerr)
 	}
 }

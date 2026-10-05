@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <img alt="Vim での srwr view：AI の select と replace を、それぞれの理由とともにコマ送りで見る" src="docs/images/demo-vim_dark.svg" width="900">
+  <img alt="Vim での srwr view：AI の look と edit を、それぞれの理由とともにコマ送りで見る" src="docs/images/demo-vim_dark.svg" width="900">
   <br>
   <sub>本物の <code>srwr view</code>（Vim）が、あるセッションをコマ送りで再生しているところ。理由の行と、その理由が指すコードが並びます。</sub>
 </p>
@@ -59,7 +59,7 @@ VSCode で見るなら、拡張 **srwr-view** も入れます（拡張は `srwr`
 
 ## 🧭 使い方
 
-1. **プロジェクトを準備する**（最初に 1 回）。[Claude Code](https://claude.com/claude-code) に `srwr` を登録し、既定では Edit・Write の道具を禁止して、すべての変更が `select` と `replace` を通るようにします。
+1. **プロジェクトを準備する**（最初に 1 回）。[Claude Code](https://claude.com/claude-code) に `srwr` を登録し、既定では Edit・Write の道具を禁止して、すべての変更が `look`・`edit`・`replace`・`new` を通るようにします。
 
    ```bash
    cd your-project
@@ -79,16 +79,16 @@ VSCode で見るなら、拡張 **srwr-view** も入れます（拡張は `srwr`
    既存の設定は残り、2 回目は何も変えません。詳しくは [docs/reference/cli_ja.md](docs/reference/cli_ja.md)。
    </details>
 
-2. **AI に作業させる。** `select` と `replace` はすべて、`.srwr/tapes/` のテープに載ります。
+2. **AI に作業させる。** `look`・`edit`・`replace`・`new` はすべて、`.srwr/tapes/` のテープに載ります。
 
    <details>
    <summary>テープはどんな形？</summary>
 
-   テープは JSONL のファイルで、1 行が 1 つの出来事です。次は、AI が 9〜11 行目を見た `select` と、そのあとの `replace` です。
+   テープは JSONL のファイルで、1 行が 1 つの出来事です。次は、AI が 9〜11 行目を見た `look` と、そのあとの `edit` です。
 
    ```json
-   {"v":1,"seq":2,"type":"select","file":"main.go","startLine":9,"endLine":11,"why":"greet is what main prints: check what it does when the name is empty","selection":"sel_041061E48KVH3K24RN324MN2","source":"mcp"}
-   {"v":1,"seq":3,"type":"replace","file":"main.go","from":"sel_041061E48KVH3K24RN324MN2","startLine":9,"endLine":11,"oldText":"…","newText":"…","why":"An empty name printed \"hello \" with nothing after it, so greet a stranger instead","source":"mcp"}
+   {"v":2,"seq":2,"type":"look","file":"main.go","startLine":9,"endLine":11,"why":"greet is what main prints: check what it does when the name is empty","selection":"sel_041061E48KVH3K24RN324MN2","source":"mcp"}
+   {"v":2,"seq":3,"type":"edit","file":"main.go","from":"sel_041061E48KVH3K24RN324MN2","startLine":9,"endLine":11,"oldText":"…","newText":"…","why":"An empty name printed \"hello \" with nothing after it, so greet a stranger instead","source":"mcp"}
    ```
 
    形式は [docs/reference/tape_ja.md](docs/reference/tape_ja.md) にあります。
@@ -109,7 +109,7 @@ VSCode で見るなら、拡張 **srwr-view** も入れます（拡張は `srwr`
 <p align="center">
   <img alt="VSCode の srwr-view：置き換えた行の上に橙の理由の行、左に操作一覧、下にバー" src="docs/images/vscode_dark.svg" width="900">
   <br>
-  <sub>VSCode の srwr-view。青が <code>select</code>、橙が <code>replace</code>、紫が外からの変更です。</sub>
+  <sub>VSCode の srwr-view。青が <code>look</code>、橙が <code>edit</code>、紫が外からの変更です。</sub>
 </p>
 
 進むのは「戻る」「進む」だけで、自動再生はありません。理由を 1 つずつ読むことが目的だからです。詳しくは [VSCode](docs/reference/vscode_ja.md) と [Vim](docs/reference/vim_ja.md)。

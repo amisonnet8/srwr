@@ -56,7 +56,7 @@ func Run(stdin io.Reader, c *core.Core) (notes []string, err error) {
 		return nil, nil
 	}
 	req, notes := request(in, c.WS.Root())
-	if len(req.Selects) == 0 && req.Edit == nil && !req.ObserveAll {
+	if len(req.Looks) == 0 && req.Edit == nil && !req.ObserveAll {
 		return notes, nil
 	}
 	more, err := c.Hook(req)
@@ -89,7 +89,7 @@ func request(in input, root string) (req core.HookRequest, notes []string) {
 			}
 			r = core.HookRange{Mode: core.RangeLines, A: a, B: b}
 		}
-		req.Selects = []core.HookSelect{{File: f, Range: r, Tool: "Read"}}
+		req.Looks = []core.HookLook{{File: f, Range: r, Tool: "Read"}}
 	case "Edit":
 		var t struct {
 			File       string `json:"file_path"`
@@ -126,9 +126,9 @@ func request(in input, root string) (req core.HookRequest, notes []string) {
 				return req, []string{r.File + " is outside the workspace, so it is not recorded"}
 			}
 			if !r.Numbers {
-				req.Selects = []core.HookSelect{{File: f, Range: r.Range, Tool: "Bash"}}
+				req.Looks = []core.HookLook{{File: f, Range: r.Range, Tool: "Bash"}}
 			} else {
-				req.Selects, notes = grepSelects(numberedLines(responseText(in.Response), f), "Bash", func(p string) (string, bool) { return p, true })
+				req.Looks, notes = grepSelects(numberedLines(responseText(in.Response), f), "Bash", func(p string) (string, bool) { return p, true })
 			}
 		}
 	case "Grep":
@@ -149,14 +149,14 @@ func request(in input, root string) (req core.HookRequest, notes []string) {
 				single = p
 			}
 		}
-		req.Selects, notes = grepSelects(numberedLines(responseText(in.Response), single), "Grep", rel)
+		req.Looks, notes = grepSelects(numberedLines(responseText(in.Response), single), "Grep", rel)
 	}
 	return req, notes
 }
 
 // grepSelects makes a select of each run of numbered lines, by file.
-func grepSelects(byFile map[string][]int, tool string, rel func(string) (string, bool)) ([]core.HookSelect, []string) {
-	var out []core.HookSelect
+func grepSelects(byFile map[string][]int, tool string, rel func(string) (string, bool)) ([]core.HookLook, []string) {
+	var out []core.HookLook
 	var notes []string
 	names := make([]string, 0, len(byFile))
 	for n := range byFile {
@@ -173,7 +173,7 @@ func grepSelects(byFile map[string][]int, tool string, rel func(string) (string,
 			if len(out) >= maxSelects {
 				return out, append(notes, fmt.Sprintf("at most %d are recorded at a time; the rest are not recorded", maxSelects))
 			}
-			out = append(out, core.HookSelect{File: f, Range: core.HookRange{Mode: core.RangeLines, A: r[0], B: r[1]}, Tool: tool})
+			out = append(out, core.HookLook{File: f, Range: core.HookRange{Mode: core.RangeLines, A: r[0], B: r[1]}, Tool: tool})
 		}
 	}
 	return out, notes

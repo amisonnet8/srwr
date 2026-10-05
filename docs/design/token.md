@@ -2,9 +2,9 @@
 
 *[日本語](token_ja.md) | **English***
 
-**Readers**: people who develop srwr. This document is not meant to be read alone. You come here by a link from [mcp.md](../reference/mcp.md) (the `sel_…` that `select` returns) and [tape.md](../reference/tape.md) (`from`, `selection`) when you want the details.
+**Readers**: people who develop srwr. This document is not meant to be read alone. You come here by a link from [mcp.md](../reference/mcp.md) (the `sel_…` that `look` returns) and [tape.md](../reference/tape.md) (`from`, `selection`) when you want the details.
 
-The **selection token** is a string that `select` returns and `replace` receives. It seals "which file, which lines, with which content were being looked at" in a single string, so the AI can edit by passing it on as it is.
+The **selection token** is a string that `look` returns and `edit` receives. It seals "which file, which lines, with which content were being looked at" in a single string, so the AI can edit by passing it on as it is.
 
 ```
 sel_0410R3GZE4KV11C6325D32S7
@@ -19,7 +19,7 @@ The binary inside (concatenated from the top):
 | Field | Size | Content |
 |---|---|---|
 | version | 1 byte | Version of the format (`1`) |
-| seq | variable-length integer | The sequence number, on the tape, of the event (`select` or `replace`) that issued the token |
+| seq | variable-length integer | The sequence number, on the tape, of the event (`look` or `edit`) that issued the token |
 | startLine | variable-length integer | First line |
 | endLine | variable-length integer | Last line (`startLine - 1` for an empty range) |
 | fileHash | 4 bytes | The first 4 bytes of the SHA-256 of the file's path relative to the workspace |
@@ -38,11 +38,11 @@ The binary inside (concatenated from the top):
 
 ## Verification and correcting line numbers
 
-When srwr receives a `replace`, it works in this order (the whole order is in [mcp.md](../reference/mcp.md)).
+When srwr receives a `edit`, it works in this order (the whole order is in [mcp.md](../reference/mcp.md)).
 
 1. **Decode and verify the HMAC**: if it fails, `invalid_selection`
 2. **Find the file**: look the target file up in the "path → fileHash" table built from the `snapshot`s of the tape
-3. **Correct the line numbers**: follow, in order, the `replace` events made on the same file after the `seq` of the token. Let the range of the token be `[a, b]` and the (uncorrected) range of that edit be `[s, e]` (`e = s - 1` for an empty range)
+3. **Correct the line numbers**: follow, in order, the `edit` events made on the same file after the `seq` of the token. Let the range of the token be `[a, b]` and the (uncorrected) range of that edit be `[s, e]` (`e = s - 1` for an empty range)
    - `e < a`: the edit is above the range. Shift `a` and `b` by "the number of lines after the replacement − the number of lines before it"
    - `s > b`: the edit is below the range. Do nothing
    - Otherwise: the edit overlaps the range (this includes an insertion of an empty range that falls inside the range). It cannot be corrected, so `selection_stale`
@@ -55,7 +55,7 @@ An `external` (a change outside srwr) is not an edit that srwr can follow, so it
 
 ## Where it is valid
 
-A token is valid only within the tape (session) that issued it. The `seq` in the token is a sequence number on the tape, and on another tape the same number points to another operation. When the session changes, the AI calls `select` again.
+A token is valid only within the tape (session) that issued it. The `seq` in the token is a sequence number on the tape, and on another tape the same number points to another operation. When the session changes, the AI calls `look` again.
 
 ## Reasons for the choices
 
@@ -66,6 +66,6 @@ A token is valid only within the tape (session) that issued it. The `seq` in the
 | **Variable-length integer** | Line numbers and seq are often small, so a few bytes are enough and the token is short |
 | **HMAC** | Even if the AI decodes the token and rewrites the line numbers on its own, it is detected. Both issuing and verifying are done inside srwr, so a heavy scheme such as JWT is not needed |
 | The `sel_` prefix | A Stripe-style ID notation. It shows at a glance what kind of string it is, and taking another kind of ID by mistake is noticed at once |
-| A human-readable form (`main.go:12-14@9f2c`) was not adopted | It is handy for reading the tape, but it tempts the AI to rewrite the line-number part and use it, which defeats the aim of "pass the return value of `select` as it is". For people, the decoded values are written alongside on the tape |
+| A human-readable form (`main.go:12-14@9f2c`) was not adopted | It is handy for reading the tape, but it tempts the AI to rewrite the line-number part and use it, which defeats the aim of "pass the return value of `look` as it is". For people, the decoded values are written alongside on the tape |
 
 The length of the HMAC (3 bytes) is a trade-off between the rate of catching copying mistakes and the number of characters. Whether to review it is not decided ([limitations.md](limitations.md)).

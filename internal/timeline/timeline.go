@@ -11,12 +11,12 @@ import (
 
 // Kinds of frames.
 const (
-	KindSelect   = tape.TypeSelect
-	KindReplace  = tape.TypeReplace
+	KindLook     = tape.TypeLook
+	KindEdit     = tape.TypeEdit
+	KindReplace  = tape.TypeReplace // the replace tool: several places of a file, shown as a diff with its reason
+	KindNew      = tape.TypeNew     // the new tool: the whole file, shown like an edit
 	KindExternal = tape.TypeExternal
 	KindFinal    = "final"
-	KindSub      = "sub" // a replace made by the sub tool: shown as a diff, with its reason
-	KindNew      = "new" // a replace made by the new tool: the whole file, shown like a replace
 	KindFailure  = "failure"
 )
 
@@ -42,7 +42,7 @@ type Frame struct {
 	From      *string `json:"from"`
 	Parent    *int    `json:"parent"`
 	Deleted   bool    `json:"deleted,omitempty"`
-	Hits      int     `json:"hits,omitempty"` // sub frames only: how many places it changed in the file
+	Hits      int     `json:"hits,omitempty"` // replace frames only: how many places it changed in the file
 
 	// failure frames only: the tool that failed, the error code, and the message (the real path is left out of the tape).
 	Tool    string `json:"tool,omitempty"`
@@ -87,7 +87,7 @@ func (b *Builder) Frames() []Frame { return b.frames }
 // tape only has a snapshot of is not among them.
 func (b *Builder) Files() []string { return b.files }
 
-// Ops returns how many select, replace and external events there were.
+// Ops returns how many look, edit, replace, new and external events there were.
 func (b *Builder) Ops() int { return b.ops }
 
 // State returns what the tape says of its files after the last event.
@@ -123,7 +123,7 @@ func (b *Builder) Add(e tape.Event) bool {
 		// A failure is a frame, but not an operation: it has no file to open, so it is not counted in Ops or Files.
 		b.frames = append(b.frames, failureFrame(len(b.frames), e, b.timestamp(e)))
 		return true
-	case tape.TypeSelect, tape.TypeReplace, tape.TypeExternal:
+	case tape.TypeLook, tape.TypeEdit, tape.TypeReplace, tape.TypeNew, tape.TypeExternal:
 	default:
 		return false
 	}
@@ -131,12 +131,12 @@ func (b *Builder) Add(e tape.Event) bool {
 	before := b.text(e.File)
 	f := Frame{Index: len(b.frames), Kind: e.Type, Seq: e.Seq, TS: b.timestamp(e), File: e.File, Before: before}
 	switch e.Type {
-	case tape.TypeSelect:
+	case tape.TypeLook:
 		f.Range = Range{Start: e.StartLine, End: e.EndLine}
 		f.After = before
 		f.Why, f.Selection = cloneString(e.Why), cloneString(e.Selection)
 		b.state.Apply(e)
-	case tape.TypeReplace:
+	case tape.TypeEdit, tape.TypeReplace, tape.TypeNew:
 		f.OldRange = &Range{Start: e.StartLine, End: e.EndLine}
 		f.Range = Range{Start: e.NewStartLine, End: e.NewEndLine}
 		if e.NewStartLine == 0 && e.NewEndLine == 0 { // a tape without the new range
@@ -145,12 +145,7 @@ func (b *Builder) Add(e tape.Event) bool {
 		f.Why, f.Selection = cloneString(e.Why), cloneString(e.Selection)
 		b.state.Apply(e)
 		f.After = b.text(e.File)
-		switch e.HookTool {
-		case "sub":
-			f.Kind, f.Hits = KindSub, e.Hits
-		case "new":
-			f.Kind = KindNew
-		}
+		f.Hits = e.Hits
 	case tape.TypeExternal:
 		b.state.Apply(e)
 		switch {

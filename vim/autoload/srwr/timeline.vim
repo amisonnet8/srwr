@@ -16,9 +16,9 @@ export def Len(tl: dict<any>): number
   return len(tl.frames)
 enddef
 
-# IsDiff tells the frames shown as two windows, before and after: external and final, and sub (a replace of several places of a file).
+# IsDiff tells the frames shown as two windows, before and after: external and final, and replace (the replace tool: several places of a file).
 export def IsDiff(frame: dict<any>): bool
-  return frame.kind ==# 'external' || frame.kind ==# 'final' || frame.kind ==# 'sub'
+  return frame.kind ==# 'external' || frame.kind ==# 'final' || frame.kind ==# 'replace'
 enddef
 
 # ContentAt is the content of file after frame i. A file no frame has touched yet is as it was
@@ -54,9 +54,9 @@ export def FormatRange(r: dict<any>): string
   return r.start == r.end ? string(r.start) : r.start .. '-' .. r.end
 enddef
 
-# Tone is the color of a frame: select is blue, everything that changes a file is orange, a failure is red.
+# Tone is the color of a frame (the names are those of the highlight groups): look is blue, everything that changes a file is orange, a failure is red.
 export def Tone(f: dict<any>): string
-  return f.kind ==# 'select' ? 'select' : f.kind ==# 'failure' ? 'failure' : 'replace'
+  return f.kind ==# 'look' ? 'select' : f.kind ==# 'failure' ? 'failure' : 'replace'
 enddef
 
 # NearestBySeq is the index of the frame whose seq is nearest to seq (the earlier one on a tie), or -1 when there is no frame.
@@ -74,7 +74,7 @@ enddef
 # HiddenText says what the server left out: "hidden: failure (2)", or '' when nothing.
 export def HiddenText(hidden: dict<any>): string
   var parts: list<string> = []
-  for kind in ['select', 'replace', 'external', 'failure']
+  for kind in ['look', 'edit', 'external', 'failure']
     if get(hidden, kind, 0) > 0
       add(parts, kind .. ' (' .. hidden[kind] .. ')')
     endif
@@ -86,7 +86,7 @@ enddef
 export def FailureLines(f: dict<any>): list<string>
   const tool = get(f, 'tool', '')
   const why = Why(f)
-  const range = tool ==# 'select' ? lang.Pick('lines ' .. FormatRange(f.range), FormatRange(f.range) .. ' 行') : '-'
+  const range = tool ==# 'look' ? lang.Pick('lines ' .. FormatRange(f.range), FormatRange(f.range) .. ' 行') : '-'
   return [
     lang.Pick('✖ ' .. tool .. ' failed  (' .. get(f, 'code', '') .. ')', '✖ ' .. tool .. ' が失敗しました  (' .. get(f, 'code', '') .. ')'),
     get(f, 'message', ''),

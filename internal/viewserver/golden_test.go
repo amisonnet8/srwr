@@ -195,9 +195,20 @@ func checkGolden(t *testing.T, g golden) {
 	}
 }
 
+// goldenKind is the kind the golden data (written for version 1, which said select and replace) has now: look and edit.
+func goldenKind(kind string) string {
+	switch kind {
+	case "select":
+		return "look"
+	case "replace":
+		return "edit"
+	}
+	return kind
+}
+
 func sameFrame(a, b goldenFrame) bool {
 	// Not compared: jumpLabel, which the protocol no longer has.
-	return a.Index == b.Index && a.Kind == b.Kind && a.Seq == b.Seq && a.TS == b.TS && a.File == b.File && a.Range == b.Range &&
+	return a.Index == b.Index && a.Kind == goldenKind(b.Kind) && a.Seq == b.Seq && a.TS == b.TS && a.File == b.File && a.Range == b.Range &&
 		eqPtr(a.OldRange, b.OldRange) && eqPtr(a.Why, b.Why) && eqPtr(a.Selection, b.Selection) && eqPtr(a.From, b.From) &&
 		eqPtr(a.Parent, b.Parent) && a.Deleted == b.Deleted && eqPtr(a.Before, b.Before) && eqPtr(a.After, b.After)
 }

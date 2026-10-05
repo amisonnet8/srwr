@@ -79,7 +79,7 @@ func TestHookAndMCPWriteOneTape(t *testing.T) {
 	var got []string
 	for _, e := range events[1:] {
 		switch e.Type {
-		case tape.TypeSelect, tape.TypeReplace:
+		case tape.TypeLook, tape.TypeEdit:
 			src := e.Source
 			if src == "" {
 				src = "mcp"
@@ -90,9 +90,9 @@ func TestHookAndMCPWriteOneTape(t *testing.T) {
 		}
 	}
 	want := []string{
-		"snapshot", "select/mcp/:5-7",
-		"select/hook/Read:1-4", "select/hook/Bash:6-6", "select/hook/Grep:5-5",
-		"replace/hook/Edit:3-3", "replace/mcp/:8-10",
+		"snapshot", "look/mcp/:5-7",
+		"look/hook/Read:1-4", "look/hook/Bash:6-6", "look/hook/Grep:5-5",
+		"edit/hook/Edit:3-3", "edit/mcp/:8-10",
 	}
 	if !slices.Equal(got, want) {
 		t.Errorf("tape:\n got %v\nwant %v", got, want)
@@ -138,7 +138,7 @@ func TestHookProcessesAndMCPWriteTogether(t *testing.T) {
 	checkSeqs(t, events)
 	n := map[string]int{}
 	for _, e := range events[1:] {
-		if e.Type == tape.TypeSelect {
+		if e.Type == tape.TypeLook {
 			n[e.Source]++
 		}
 	}
@@ -163,7 +163,7 @@ func TestViewServerShowsWhatHookWrote(t *testing.T) {
 	}
 
 	v := startViewer(t, root)
-	v.request("initialize", `{"client":"vim","protocolVersion":1}`)
+	v.request("initialize", `{"client":"vim","protocolVersion":2}`)
 	var list struct {
 		Result struct{ Tapes []struct{ TapeID string } }
 	}
@@ -185,10 +185,10 @@ func TestViewServerShowsWhatHookWrote(t *testing.T) {
 		t.Fatalf("tape/open: %s %v", line, err)
 	}
 	sel, rep := opened.Result.Frames[0], opened.Result.Frames[1]
-	if sel.Kind != "select" || sel.Why != nil || sel.Range.Start != 1 || sel.Range.End != 5 {
+	if sel.Kind != "look" || sel.Why != nil || sel.Range.Start != 1 || sel.Range.End != 5 {
 		t.Errorf("select frame = %+v", sel)
 	}
-	if rep.Kind != "replace" || rep.Why != nil || rep.Range.Start != 4 || rep.Range.End != 5 || !strings.Contains(rep.After, "setup()") {
+	if rep.Kind != "edit" || rep.Why != nil || rep.Range.Start != 4 || rep.Range.End != 5 || !strings.Contains(rep.After, "setup()") {
 		t.Errorf("replace frame = %+v", rep)
 	}
 }

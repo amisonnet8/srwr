@@ -42,6 +42,12 @@ func parseLine(line []byte) (Event, bool) {
 		return Event{}, false
 	}
 	typ, _ := getString(m, "type")
+	// Version 1 had select and replace only. A replace of version 1 is an edit, unless its tool says it was made by sub or new.
+	v, _ := getInt(m, "v")
+	oldTool, _ := getString(m, "tool")
+	if v < 2 {
+		typ = fromVersion1(typ, oldTool)
+	}
 	e := Event{Type: typ}
 	e.TS, _ = getString(m, "ts")
 
@@ -63,7 +69,10 @@ func parseLine(line []byte) (Event, bool) {
 	}
 	if typ == TypeFailure {
 		f := &FailureInfo{File: getNullableString(m, "file"), Selection: getNullableString(m, "selection"), Why: getNullableString(m, "why")}
-		f.Tool, _ = getString(m, "tool")
+		f.Tool = oldTool
+		if v < 2 {
+			f.Tool = toolFromVersion1(oldTool)
+		}
 		f.Code, _ = getString(m, "code")
 		f.Message, _ = getString(m, "message")
 		if has(m, "startLine") {
@@ -89,15 +98,18 @@ func parseLine(line []byte) (Event, bool) {
 		e.Text = &text
 		e.FileHash, _ = getString(m, "fileHash")
 		e.Sha, _ = getString(m, "sha")
-	case TypeSelect, TypeReplace:
+	case TypeLook, TypeEdit, TypeReplace, TypeNew:
 		if !getRange(m, &e) {
 			return Event{}, false
 		}
 		e.Why = getNullableString(m, "why")
 		e.Selection = getNullableString(m, "selection")
 		e.Source, _ = getString(m, "source")
-		e.HookTool, _ = getString(m, "tool")
-		if typ == TypeReplace {
+		e.HookTool = oldTool
+		if v < 2 && (typ == TypeReplace || typ == TypeNew) {
+			e.HookTool = "" // the tool of version 1 said which kind it was
+		}
+		if Changes(typ) {
 			if e.NewText, ok = getString(m, "newText"); !ok {
 				return Event{}, false
 			}
@@ -128,6 +140,36 @@ func parseLine(line []byte) (Event, bool) {
 		return Event{}, false
 	}
 	return e, true
+}
+
+// fromVersion1 is the type a version 1 event has now.
+func fromVersion1(typ, tool string) string {
+	switch typ {
+	case "select":
+		return TypeLook
+	case "replace":
+		switch tool {
+		case "sub":
+			return TypeReplace
+		case "new":
+			return TypeNew
+		}
+		return TypeEdit
+	}
+	return typ
+}
+
+// toolFromVersion1 is the name a version 1 failure gave the tool that failed.
+func toolFromVersion1(tool string) string {
+	switch tool {
+	case "select":
+		return TypeLook
+	case "replace":
+		return TypeEdit
+	case "sub":
+		return TypeReplace
+	}
+	return tool
 }
 
 func getRange(m map[string]json.RawMessage, e *Event) bool {

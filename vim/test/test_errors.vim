@@ -49,7 +49,7 @@ g:srwr_path = StandIn("read l; echo '{\"jsonrpc\":\"2.0\",\"id\":1,\"error\":{\"
 messages clear
 ui.Open('x')
 t.WaitFor((): bool => Messages() =~# 'バージョンが合っていません', 'the mismatch notice')
-t.True(Messages() =~# 'protocolVersion 1', 'it names the protocol version')
+t.True(Messages() =~# 'protocolVersion 2', 'it names the protocol version')
 EndServer()
 
 # --- the server ends while a request waits ---

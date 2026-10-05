@@ -8,7 +8,7 @@
 
 | Command | Used by | Role |
 |---|---|---|
-| `srwr mcp` | The AI (an MCP client) | The MCP server (stdio). Provides [`select` / `replace` / `sub` / `new`](mcp.md) |
+| `srwr mcp` | The AI (an MCP client) | The MCP server (stdio). Provides [`look` / `edit` / `replace` / `new`](mcp.md) |
 | `srwr hook` | The hook of Claude Code | Records Read, Bash, Grep and Edit on the same [tape](tape.md) as `srwr mcp` |
 | `srwr view-server` | The editors (the VSCode extension, the Vim script) | The view server. People do not use it directly ([protocol.md](protocol.md)) |
 | `srwr view [tape]` | People | Replays in Vim ([vim.md](vim.md)) |
@@ -54,7 +54,7 @@ The directory where srwr is used is called the **workspace**. srwr makes the fol
 
 ## srwr mcp
 
-The MCP server the AI uses. It is started by the AI agent (the MCP client). The workspace is `--root <workspace>` (the current directory if omitted). There are four tools, `select`, `replace`, `sub` and `new` ([mcp.md](mcp.md)). Several may be started in the same workspace. They write to the same session (the same tape), and a selection token issued by one can be used by another ([tape.md](tape.md)).
+The MCP server the AI uses. It is started by the AI agent (the MCP client). The workspace is `--root <workspace>` (the current directory if omitted). There are four tools, `look`, `edit`, `replace` and `new` ([mcp.md](mcp.md)). Several may be started in the same workspace. They write to the same session (the same tape), and a selection token issued by one can be used by another ([tape.md](tape.md)).
 
 ## srwr hook
 
@@ -81,18 +81,18 @@ Called from a hook of Claude Code, it records the operations of the tools the AI
 
 | Operation of Claude Code | Recorded on the tape as |
 |---|---|
-| Read | `select` (the whole file when there is no `offset` or `limit`) |
-| A reading Bash command (`cat`, `nl`, `head`, `tail`, `sed -n 'A,Bp'`, `grep -n`) | `select` |
-| Grep (content mode) | `select` (consecutive lines are put together into one) |
-| Edit | `replace` (the range is the whole lines that contain the replaced place; with `replace_all`, one per match) |
+| Read | `look` (the whole file when there is no `offset` or `limit`) |
+| A reading Bash command (`cat`, `nl`, `head`, `tail`, `sed -n 'A,Bp'`, `grep -n`) | `look` |
+| Grep (content mode) | `look` (consecutive lines are put together into one) |
+| Edit | `edit` (the range is the whole lines that contain the replaced place; with `replace_all`, one per match) |
 | Write, MultiEdit, NotebookEdit | Not recorded (the next time srwr touches the file, it shows up as `external`) |
 
 - After a Bash command (even one that does not read), every file whose content the tape holds is read again, and a difference is recorded as `external` (`detectedBy` is `hook`)
 - After a Bash command, in a git work tree, a **new file** (one that git lists as untracked or as newly added to the index, including `git add -N`, that git does not ignore, and that is not in `.srwrignore`) is recorded as an `external` with `created: true`, so the tape shows what was made. A file with CRLF, a binary file, and a file over 256 KiB are left out. At most 50 new files are recorded per command; the rest are not, and the hook says so. Outside a git work tree new files are not found
-- For an Edit, `old_string` → `new_string` is applied to the content before the edit (what the tape holds; if there is none, `tool_response.originalFile`), and if the result equals the current file it is a `replace`. If it does not (other changes are mixed in, for example), it is recorded as `external`
-- A single call records at most 100 `select`s (so that a search over a wide range does not swell the tape)
+- For an Edit, `old_string` → `new_string` is applied to the content before the edit (what the tape holds; if there is none, `tool_response.originalFile`), and if the result equals the current file it is a `edit`. If it does not (other changes are mixed in, for example), it is recorded as `external`
+- A single call records at most 100 `look`s (so that a search over a wide range does not swell the tape)
 - For a pipe, only the first command is looked at. `$( )`, redirects that write, `sed -i`, `tail -f` and `grep` without `-n` are not recorded
-- A frame recorded by the hook is shown with a `why` of `null` (no `why` line). It has no selection token (`selection` and `from` are `null`). A token issued earlier by `srwr mcp` can still be used after a `replace` by the hook; its line numbers are corrected
+- A frame recorded by the hook is shown with a `why` of `null` (no `why` line). It has no selection token (`selection` and `from` are `null`). A token issued earlier by `srwr mcp` can still be used after a `edit` by the hook; its line numbers are corrected
 
 ## srwr view-server
 
@@ -120,10 +120,10 @@ Sets up the workspace for srwr. It gives the same result however many times it r
 |---|---|
 | `.srwr/` | Makes the directory and the key |
 | `.mcp.json` | Registers `srwr mcp` (existing servers are kept and this is added; if `srwr` is already there, it is left alone) |
-| `.claude/settings.json` | Registers the hook, the setting that lets Claude Code use the tools without asking (`enabledMcpjsonServers`, and the permission of `select`, `replace`, `sub` and `new`), and in strict mode the ban on Edit/Write (existing content is kept and this is added) |
+| `.claude/settings.json` | Registers the hook, the setting that lets Claude Code use the tools without asking (`enabledMcpjsonServers`, and the permission of `look`, `edit`, `replace` and `new`), and in strict mode the ban on Edit/Write (existing content is kept and this is added) |
 | `.gitignore` | Adds `.srwr/key`, `.srwr/lock`, `.srwr/active` and `.srwr/init-backup/` (when under git). Tapes (`.srwr/tapes/`) are not ignored, so that they can be shared |
 
-- **After srwr is updated to a version with a new tool (`sub`, `new`), run `srwr init` again** in each workspace: it adds the permission of the new tools to `permissions.allow`. Without it, Claude Code asks every time, or does not use them
+- **After srwr is updated to a version with new tools, run `srwr init` again** in each workspace: it adds the permission of the new names to `permissions.allow`, and takes away the permissions of the tools that are gone (`select` and `sub`, which became `look` and `replace`). Without it, Claude Code asks every time, or does not use them
 - It does not break existing files. The order of keys and the other settings, servers and hooks are kept as they are. The format is tidied to JSON with a 2-space indent
 - What a file held before the rewrite is kept in `.srwr/init-backup/<date and time>/` (only when there is a file to change)
 - If a file cannot be read as JSON (or the shape of an object or array is wrong), nothing is rewritten and it stops with exit code 1
@@ -140,7 +140,7 @@ Workspace: /home/me/project
   created    .claude/settings.json registered the hook; forbade Edit, Write, etc. (strict mode)
   created    .gitignore            .srwr/key .srwr/lock .srwr/active .srwr/init-backup/
 
-Ready. Reopen Claude Code and select / replace are available.
+Ready. Reopen Claude Code and look / edit / replace / new are available.
 For lenient mode (Edit and Write stay allowed), run: srwr init --lenient.
 ```
 
@@ -148,8 +148,8 @@ For lenient mode (Edit and Write stay allowed), run: srwr init --lenient.
 
 | Mode | Content |
 |---|---|
-| **Strict mode** (the default) | Forbids Edit, Write, MultiEdit and NotebookEdit of Claude Code. The only way for the AI to change a file is `select` / `replace`, so the tape always holds a `why` |
-| **Lenient mode** (`srwr init --lenient`) | Does not forbid Edit and Write. The hook records an Edit as a `replace` (with a `why` of `null`). A Write is not recorded and shows up as `external` |
+| **Strict mode** (the default) | Forbids Edit, Write, MultiEdit and NotebookEdit of Claude Code. The only way for the AI to change a file is `look` / `edit`, so the tape always holds a `why` |
+| **Lenient mode** (`srwr init --lenient`) | Does not forbid Edit and Write. The hook records an Edit as a `edit` (with a `why` of `null`). A Write is not recorded and shows up as `external` |
 
 - Strict ⇄ lenient is switched with `srwr init` and `srwr init --lenient`. Lenient mode removes the four above (`Edit`, `Write`, `MultiEdit`, `NotebookEdit`) from `permissions.deny`. Other bans are left (a ban on `Edit` the user added by themselves has the same name, so it is removed too)
 - Even strict mode cannot shut out everything. Editing through Bash (`sed -i`, redirects and so on) is detected and shown as `external`
@@ -172,7 +172,7 @@ There is no automatic cleanup. Deleting is done explicitly by the user.
 
 ### srwr tapes check
 
-srwr records only the files that `select`, `replace` and the hook saw. A file the AI changed some other way (for example, written by a shell command) may not be on the tape. `check` compares the tape with `git status` and tells you.
+srwr records only the files that `look`, `edit` and the hook saw. A file the AI changed some other way (for example, written by a shell command) may not be on the tape. `check` compares the tape with `git status` and tells you.
 
 - A file is **on the tape** if any event of the tape is about it
 - A changed file that is not on the tape is a **warning**. A changed file that [is not recorded by the settings](#files-that-are-not-recorded) is counted apart and is not a warning. Anything inside `.srwr/` is left out
@@ -209,7 +209,7 @@ A tape holds the whole text of files, and to share, the tape itself is handed ov
 
 | Situation | Behavior |
 |---|---|
-| `select` / `replace` | An `ignored_file` error. Nothing is written on the tape |
+| `look` / `edit` | An `ignored_file` error. Nothing is written on the tape |
 | The hook (Read, Bash, Grep, Edit) | Not recorded. Not subject to the detection of `external` either |
 | The AI edited with Edit in lenient mode | Not recorded |
 
@@ -218,8 +218,8 @@ Details:
 - **The default targets cannot be brought back with `!` in `.srwrignore`.** `!` can cancel only what `.srwrignore` itself specifies. If a directory is a target, the files in it are targets too and cannot be brought back with `!`
 - **Case is not distinguished.** On macOS and Windows `.ENV` opens `.env`, so the judgment is the same on every OS
 - **For a symbolic link, both the name of the link and its target are checked.** If `notes.txt` is a link to `.env`, it is not recorded
-- **`.srwrignore` is read every time it is needed, and only the one directly under the workspace.** An addition takes effect at once. If you add a file that is already on the tape, from then on `select` and `replace` give `ignored_file` and the detection of `external` skips it
-- **If `.srwrignore` cannot be read (no permission, or it is a directory), nothing is recorded.** `select` and `replace` give `internal_error`, and the hook prints one line to standard error
+- **`.srwrignore` is read every time it is needed, and only the one directly under the workspace.** An addition takes effect at once. If you add a file that is already on the tape, from then on `look` and `edit` give `ignored_file` and the detection of `external` skips it
+- **If `.srwrignore` cannot be read (no permission, or it is a directory), nothing is recorded.** `look` and `edit` give `internal_error`, and the hook prints one line to standard error
 
 ### Before sharing a tape
 

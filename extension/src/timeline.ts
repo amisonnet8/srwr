@@ -3,12 +3,12 @@
 
 import { pick } from "./lang";
 
-export type FrameKind = "select" | "replace" | "sub" | "new" | "external" | "final" | "failure";
+export type FrameKind = "look" | "edit" | "replace" | "new" | "external" | "final" | "failure";
 
 // The kinds a person can turn on and off (final follows external), and what the server was told is hidden: kind -> how many.
-export type ShownKind = "select" | "replace" | "external" | "failure";
-export const ALL_KINDS: ShownKind[] = ["select", "replace", "external", "failure"];
-export const DEFAULT_KINDS: ShownKind[] = ["select", "replace", "external"];
+export type ShownKind = "look" | "edit" | "external" | "failure";
+export const ALL_KINDS: ShownKind[] = ["look", "edit", "external", "failure"];
+export const DEFAULT_KINDS: ShownKind[] = ["look", "edit", "external"];
 export type Hidden = Record<string, number>;
 
 export interface LineRange {
@@ -27,27 +27,27 @@ export interface Frame {
   before: string;
   after: string;
   deleted?: boolean;
-  hits?: number; // sub frames only: how many places it changed in the file
+  hits?: number; // replace frames only: how many places it changed in the file
   // failure frames only
   tool?: string;
   code?: string;
   message?: string;
 }
 
-// select is blue, everything that changes a file is orange, a failure is red.
-export type Tone = "select" | "replace" | "failure";
+// look is blue, everything that changes a file is orange, a failure is red.
+export type Tone = "look" | "edit" | "failure";
 
 export function isDiff(f: Frame): boolean {
   return f.kind === "external" || f.kind === "final";
 }
 
-// A sub frame is a replace shown as a diff: left and right, with its why in a band above both.
-export function isSub(f: Frame): boolean {
-  return f.kind === "sub";
+// A replace frame (the replace tool) is shown as a diff: left and right, with its why in a band above both.
+export function isReplace(f: Frame): boolean {
+  return f.kind === "replace";
 }
 
 export function toneOf(f: Frame): Tone {
-  return f.kind === "select" ? "select" : f.kind === "failure" ? "failure" : "replace";
+  return f.kind === "look" ? "look" : f.kind === "failure" ? "failure" : "edit";
 }
 
 export function basename(file: string): string {
@@ -76,7 +76,7 @@ export function toFrame(raw: Record<string, unknown>): Frame {
     before: typeof f.before === "string" ? f.before : "",
     after: typeof f.after === "string" ? f.after : "",
     ...(f.deleted ? { deleted: true } : {}),
-    ...(f.kind === "sub" ? { hits: typeof f.hits === "number" ? f.hits : 0 } : {}),
+    ...(f.kind === "replace" ? { hits: typeof f.hits === "number" ? f.hits : 0 } : {}),
     ...(f.kind === "failure" ? { tool: f.tool ?? "", code: f.code ?? "", message: f.message ?? "" } : {}),
   };
 }

@@ -201,9 +201,9 @@ def RenderFailure(f: dict<any>)
   win_execute(s.win, 'call winrestview({topline: 1, lnum: 1, col: 1, leftcol: 0})')
 enddef
 
-# SubBand is the band of a sub frame: its why wrapped to the width of the right-hand window and centered in it, and at
+# ReplaceBand is the band of a sub frame: its why wrapped to the width of the right-hand window and centered in it, and at
 # least one row. The right-hand window is half of this one when it is not there yet.
-def SubBand(f: dict<any>): list<string>
+def ReplaceBand(f: dict<any>): list<string>
   const width = diff.Active(s) ? WinWidth(s.diffWin) : (WinWidth(s.win) - 1) / 2
   const room = max([width - 4, 20])
   const rows = BannerRows(f, room)
@@ -213,7 +213,7 @@ enddef
 def ShowDiff(f: dict<any>)
   paint.Clear(s.buf)
   s.file = ''
-  diff.Enter(s, f, f.before, f.after, f.kind ==# 'sub' ? SubBand(f) : [])
+  diff.Enter(s, f, f.before, f.after, f.kind ==# 'replace' ? ReplaceBand(f) : [])
   MapKeys(s.win)
   MapKeys(s.diffWin)
 enddef
@@ -353,7 +353,7 @@ def MapKeys(win: number)
       [']]', 'StepForward()'], ['<Right>', 'StepForward()'],
       ['[[', 'StepBack()'], ['<Left>', 'StepBack()'],
       ['q', 'Close()'],
-      ['ts', "Toggle('select')"], ['tr', "Toggle('replace')"], ['te', "Toggle('external')"], ['tf', "Toggle('failure')"]]
+      ['tl', "Toggle('look')"], ['te', "Toggle('edit')"], ['tx', "Toggle('external')"], ['tf', "Toggle('failure')"]]
     win_execute(win, 'nnoremap <buffer><silent><nowait> ' .. lhs .. ' <ScriptCmd>' .. fn .. '<CR>')
   endfor
   if s.live

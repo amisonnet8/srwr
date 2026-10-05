@@ -16,8 +16,8 @@ def Warn(msg: string)
 enddef
 
 # The kinds of frames that are shown. Not saved: a new start of Vim is the default (srwr has no settings for the look).
-const ALL_KINDS = ['select', 'replace', 'external', 'failure']
-var kinds: list<string> = ['select', 'replace', 'external']
+const ALL_KINDS = ['look', 'edit', 'external', 'failure']
+var kinds: list<string> = ['look', 'edit', 'external']
 
 export def Kinds(): list<string>
   return copy(kinds)

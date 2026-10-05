@@ -81,16 +81,16 @@
   ],
   "tree": [
    {
-    "label": "1  select  a.go:3",
+    "label": "1  look  a.go:3",
     "description": "これは折り返しの確認のための、とても長い理由です。幅を超えると何行かに分かれ、2行目からは字下げされて、全文が読めるはずです。さらに続けて、三行目にも届くようにします。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  replace  a.go:3-5",
+    "label": "2  edit  a.go:3-5",
     "description": "置き換えの理由も長くします。橙の理由の行が、幅を超えたときに何行かに分かれ、2行目からは字下げされ、全文が読めて、範囲がその直下に見えることを確かめるための文です。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    }
   ],
   "status": [
@@ -229,16 +229,16 @@
   ],
   "tree": [
    {
-    "label": "1  select  a.go:3",
+    "label": "1  look  a.go:3",
     "description": "これは折り返しの確認のための、とても長い理由です。幅を超えると何行かに分かれ、2行目からは字下げされて、全文が読めるはずです。さらに続けて、三行目にも届くようにします。",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  replace  a.go:3-5",
+    "label": "2  edit  a.go:3-5",
     "description": "置き換えの理由も長くします。橙の理由の行が、幅を超えたときに何行かに分かれ、2行目からは字下げされ、全文が読めて、範囲がその直下に見えることを確かめるための文です。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    }
   ],
   "status": [

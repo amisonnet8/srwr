@@ -48,18 +48,18 @@ func vscodeFrame(theme string, current int) string {
 	// The file as it is at that frame: the replaces before it, and this one.
 	for i := 0; i <= current; i++ {
 		s := demoSteps[i]
-		if s.kind == "replace" {
+		if s.kind == "edit" {
 			lines = splice(lines, demoSteps[i-1].start, demoSteps[i-1].end, strings.Split(s.newText, "\n"))
 		}
 	}
 	start, end := step.start, step.end
-	if step.kind == "replace" {
+	if step.kind == "edit" {
 		prev := demoSteps[current-1]
 		start, end = prev.start, prev.start+len(strings.Split(step.newText, "\n"))-1
 	}
-	whyBg, rangeBg, tone := "#0b61a4", p.selectRange, "select"
-	if step.kind == "replace" {
-		whyBg, rangeBg, tone = "#b45f06", p.replaceRange, "replace"
+	whyBg, rangeBg, tone := "#0b61a4", p.selectRange, "look"
+	if step.kind == "edit" {
+		whyBg, rangeBg, tone = "#b45f06", p.replaceRange, "edit"
 	}
 	why := wrapWhy("◆ "+step.why, whyWrap)
 
@@ -78,14 +78,14 @@ func vscodeFrame(theme string, current int) string {
 	f(`<text x="%d" y="20" fill="%s" font-family="%s" font-size="11">SRWR</text>`, sideX+14, p.side2, ui)
 	f(`<rect x="%d" y="30" width="%d" height="22" fill="%s"/>`, sideX, edX-sideX, p.sideHead)
 	f(`<text x="%d" y="45" fill="%s" font-family="%s" font-size="11" font-weight="bold">Operations</text>`, sideX+14, p.side2, ui)
-	kinds := []string{"select", "replace", "select", "replace", "final"}
+	kinds := []string{"look", "edit", "look", "edit", "final"}
 	files := []string{"main.go:9-11", "main.go:9-14", "main.go:5-7", "main.go:5-8", "main.go"}
 	for i, k := range kinds {
 		y := 52 + i*22
 		if i == current {
 			f(`<rect x="%d" y="%d" width="%d" height="22" fill="%s"/>`, sideX, y, edX-sideX, p.current)
 		}
-		dot := map[string]string{"select": p.selectDot, "replace": p.replaceDot, "final": p.finalDot}[k]
+		dot := map[string]string{"look": p.selectDot, "edit": p.replaceDot, "final": p.finalDot}[k]
 		f(`<circle cx="%d" cy="%d" r="4.5" fill="%s"/>`, sideX+16, y+11, dot)
 		label := fmt.Sprintf("%d  %s  %s", i+1, k, files[i])
 		f(`<text x="%d" y="%d" fill="%s" font-family="%s" font-size="12" xml:space="preserve">%s</text>`, sideX+30, y+15, p.text, ui, html.EscapeString(label))

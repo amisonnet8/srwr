@@ -12,36 +12,36 @@ import (
 // maxFailureMessage is where the message of a failure on the tape is cut.
 const maxFailureMessage = 300
 
-// failedCall is a select or replace that gave the client an error, as far as the tape wants to know it.
+// failedCall is a look, edit, replace or new that gave the client an error, as far as the tape wants to know it.
 type failedCall struct {
-	tool      string   // toolSelect, toolReplace, toolSub or toolNew
-	file      string   // select: the path as given; "" when there is none
-	files     []string // sub: the paths as given
+	tool      string   // toolLook, toolEdit, toolReplace or toolNew
+	file      string   // look and new: the path as given; "" when there is none
+	files     []string // replace: the paths as given
 	startLine *int
 	endLine   *int
-	selection *string // replace: the token as given
+	selection *string // edit: the token as given
 	why       *string
 	err       *Error
 }
 
 // Tools a failure is about.
 const (
-	toolSelect  = "select"
+	toolLook    = "look"
+	toolEdit    = "edit"
 	toolReplace = "replace"
-	toolSub     = "sub"
 	toolNew     = "new"
 )
 
 // recordFailure writes a failure event for a call that failed (docs/reference/tape.md). It never changes the answer the client
 // gets: a failure to write is dropped. What goes on the tape leaves out the real path of an absolute path, of a path outside
-// the workspace and of a file that is not recorded, and never has the new text of a replace.
+// the workspace and of a file that is not recorded, and never has the new text of an edit.
 func (c *Core) recordFailure(f failedCall) {
 	_ = c.WS.Do(func(tx *session.Tx) error {
 		return tx.Append(tape.Event{Type: tape.TypeFailure, Seq: tx.NextSeq(), Failure: f.info(tx)})
 	})
 }
 
-// RecordInputFailure records a call that was turned away before it reached select or replace: a required input is missing, or a
+// RecordInputFailure records a call that was turned away before it reached look, edit, replace or new: a required input is missing, or a
 // value has the wrong type. Nothing of the input but the error is known.
 func (c *Core) RecordInputFailure(tool, code, message string) {
 	c.recordFailure(failedCall{tool: tool, err: &Error{Code: code, Message: message}})
@@ -54,7 +54,7 @@ func (f failedCall) info(tx *session.Tx) *tape.FailureInfo {
 	}
 	var file string
 	given := f.file
-	if f.tool == toolSub {
+	if f.tool == toolReplace {
 		// The file is told only when there is one, since a failure about several files is about none of them.
 		if len(f.files) == 1 {
 			given = f.files[0]
@@ -66,7 +66,7 @@ func (f failedCall) info(tx *session.Tx) *tape.FailureInfo {
 		}
 	}
 	switch f.tool {
-	case toolSelect, toolSub, toolNew:
+	case toolLook, toolReplace, toolNew:
 		if given != "" {
 			rel, perr := cleanPath(given)
 			switch {
@@ -80,7 +80,7 @@ func (f failedCall) info(tx *session.Tx) *tape.FailureInfo {
 				}
 			}
 		}
-	case toolReplace:
+	case toolEdit:
 		if f.selection != nil {
 			if tok, err := token.Decode(*f.selection, tx.TapeID(), tx.Key()); err == nil {
 				file, _ = findFile(tx.State(), tok.FileHash)

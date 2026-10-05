@@ -55,12 +55,12 @@ func TestInitialize(t *testing.T) {
 	root := workspace(t, nil, nil)
 	srv := &Server{Root: root, Version: "v-test"}
 	got := exchange(t, srv, initReq(1, map[string]any{}))
-	if want := `{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":1,"serverVersion":"v-test"}}`; got[0] != want {
+	if want := `{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":2,"serverVersion":"v-test"}}`; got[0] != want {
 		t.Errorf("got %s\nwant %s", got[0], want)
 	}
 
 	t.Run("a different protocol version", func(t *testing.T) {
-		got := exchange(t, srv, req(1, "initialize", map[string]any{"client": "vim", "protocolVersion": 2}))
+		got := exchange(t, srv, req(1, "initialize", map[string]any{"client": "vim", "protocolVersion": 3}))
 		if rpc, code := errorOf(t, got[0]); rpc != -32000 || code != "protocol_mismatch" {
 			t.Errorf("got %s", got[0])
 		}
@@ -213,8 +213,8 @@ func TestTapeOpen(t *testing.T) {
 	t.Run("without text", func(t *testing.T) {
 		got := exchange(t, srv, initReq(1, nil), req(2, "tape/open", map[string]any{"tapeId": "20261001-1000-aaaa"}))
 		want := `{"jsonrpc":"2.0","id":2,"result":{"frames":[` +
-			`{"index":0,"kind":"select","seq":2,"ts":1790841601000,"file":"a.go","range":{"start":2,"end":2},"why":"見る","selection":"sel_A","from":null,"parent":null},` +
-			`{"index":1,"kind":"replace","seq":3,"ts":1790841602000,"file":"a.go","range":{"start":2,"end":2},"oldRange":{"start":2,"end":2},"why":"変える","selection":"sel_B","from":"sel_A","parent":0}` +
+			`{"index":0,"kind":"look","seq":2,"ts":1790841601000,"file":"a.go","range":{"start":2,"end":2},"why":"見る","selection":"sel_A","from":null,"parent":null},` +
+			`{"index":1,"kind":"edit","seq":3,"ts":1790841602000,"file":"a.go","range":{"start":2,"end":2},"oldRange":{"start":2,"end":2},"why":"変える","selection":"sel_B","from":"sel_A","parent":0}` +
 			`],"tapeId":"20261001-1000-aaaa"}}`
 		if got[1] != want {
 			t.Errorf("got  %s\nwant %s", got[1], want)

@@ -12,7 +12,7 @@ def Lines(name: string): list<string>
 enddef
 
 def IsFrame(line: string): bool
-  return index(['select', 'replace', 'external'], json_decode(line).type) >= 0
+  return index(['select', 'replace', 'look', 'edit', 'external'], json_decode(line).type) >= 0
 enddef
 
 # The lines up to and including the n-th frame.

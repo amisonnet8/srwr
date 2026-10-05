@@ -43,7 +43,7 @@ func TestSelectTurnsIgnoredFilesAway(t *testing.T) {
 	e.write("deep/token.txt", secret)
 	e.write("fine.txt", "ok\n")
 	for _, rel := range []string{".env", ".ENV", "sub/.env.local", ".srwr/notes", "k/server.PEM", "private/a.txt", "deep/token.txt"} {
-		_, err := e.c.Select(SelectInput{File: rel, StartLine: 1, EndLine: 1, Why: "w"})
+		_, err := e.c.Look(LookInput{File: rel, StartLine: 1, EndLine: 1, Why: "w"})
 		wantCode(t, err, CodeIgnoredFile)
 	}
 	e.noSecretOnTape(".env", "private", "token.txt", "server.PEM")
@@ -58,7 +58,7 @@ func TestSelectTurnsIgnoredFilesAway(t *testing.T) {
 
 func TestSelectOfAMissingIgnoredFileIsIgnoredNotMissing(t *testing.T) {
 	e := newEnv(t)
-	_, err := e.c.Select(SelectInput{File: ".env", StartLine: 1, EndLine: 1, Why: "w"})
+	_, err := e.c.Look(LookInput{File: ".env", StartLine: 1, EndLine: 1, Why: "w"})
 	wantCode(t, err, CodeIgnoredFile)
 }
 
@@ -71,7 +71,7 @@ func TestSelectThroughALinkToAnIgnoredFile(t *testing.T) {
 	if err := os.Symlink(".env", filepath.Join(e.root, "notes.txt")); err != nil {
 		t.Fatal(err)
 	}
-	_, err := e.c.Select(SelectInput{File: "notes.txt", StartLine: 1, EndLine: 1, Why: "w"})
+	_, err := e.c.Look(LookInput{File: "notes.txt", StartLine: 1, EndLine: 1, Why: "w"})
 	wantCode(t, err, CodeIgnoredFile)
 	e.noSecretOnTape("notes.txt")
 }
@@ -83,9 +83,9 @@ func TestUnreadableSrwrignoreRecordsNothing(t *testing.T) {
 	if err := os.Mkdir(filepath.Join(e.root, ".srwrignore"), 0o750); err != nil {
 		t.Fatal(err)
 	}
-	_, err := e.c.Select(SelectInput{File: "a.txt", StartLine: 1, EndLine: 1, Why: "w"})
+	_, err := e.c.Look(LookInput{File: "a.txt", StartLine: 1, EndLine: 1, Why: "w"})
 	wantCode(t, err, CodeInternalError)
-	notes, herr := e.c.Hook(HookRequest{Selects: []HookSelect{{File: "a.txt", Range: HookRange{Mode: RangeAll}, Tool: "Read"}}})
+	notes, herr := e.c.Hook(HookRequest{Looks: []HookLook{{File: "a.txt", Range: HookRange{Mode: RangeAll}, Tool: "Read"}}})
 	if herr != nil || len(notes) != 1 {
 		t.Fatalf("hook: notes=%v err=%v, want one note and no error", notes, herr)
 	}
@@ -103,12 +103,12 @@ func TestReplaceTurnsAwayAFileThatIsIgnoredNow(t *testing.T) {
 	e.write("a.txt", "one\ntwo\n")
 	s := e.sel(e.c, "a.txt", 1, 1)
 	e.write(".srwrignore", "a.txt\n")
-	_, err := e.c.Replace(ReplaceInput{Selection: s.Selection, NewText: "ONE", Why: "w"})
+	_, err := e.c.Edit(EditInput{Selection: s.Selection, NewText: "ONE", Why: "w"})
 	wantCode(t, err, CodeIgnoredFile)
 	if got := e.read("a.txt"); got != "one\ntwo\n" {
 		t.Errorf("the file was written: %q", got)
 	}
-	if got := e.kinds(); !slices.Equal(got, []string{tape.TypeSnapshot, tape.TypeSelect, tape.TypeFailure}) {
+	if got := e.kinds(); !slices.Equal(got, []string{tape.TypeSnapshot, tape.TypeLook, tape.TypeFailure}) {
 		t.Errorf("kinds = %v, want what was there before and the failure", got)
 	}
 }
@@ -122,7 +122,7 @@ func TestHookLeavesIgnoredFilesOut(t *testing.T) {
 	all := HookRange{Mode: RangeAll}
 	notes := e.hook(HookRequest{
 		ObserveAll: true,
-		Selects: []HookSelect{
+		Looks: []HookLook{
 			{File: ".env", Range: all, Tool: "Read"},
 			{File: "keys/id_rsa", Range: HookRange{Mode: RangeLines, A: 1, B: 1}, Tool: "Bash"},
 			{File: ".env", Range: HookRange{Mode: RangeLines, A: 1, B: 1}, Tool: "Grep"},
@@ -133,7 +133,7 @@ func TestHookLeavesIgnoredFilesOut(t *testing.T) {
 		t.Errorf("notes = %v, want one for each of the four", notes)
 	}
 	e.noSecretOnTape(".env", "id_rsa")
-	e.hook(HookRequest{Selects: []HookSelect{{File: "a.txt", Range: all, Tool: "Read"}}})
+	e.hook(HookRequest{Looks: []HookLook{{File: "a.txt", Range: all, Tool: "Read"}}})
 	e.noSecretOnTape(".env", "id_rsa")
 }
 

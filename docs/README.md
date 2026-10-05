@@ -23,7 +23,7 @@ srwr lets an AI agent edit files with just two commands, `select` and `replace`,
 ## Reading order
 
 1. [reference/cli.md](reference/cli.md) — the whole picture and installation, then [examples/workflow.md](examples/workflow.md) — a whole round with every command, from `srwr init` to tidying up
-2. [reference/mcp.md](reference/mcp.md), then [examples/select-replace.md](examples/select-replace.md) — what the AI does
+2. [reference/mcp.md](reference/mcp.md), then [examples/look-edit.md](examples/look-edit.md) — what the AI does
 3. [reference/tape.md](reference/tape.md) — what is recorded
 4. [reference/vscode.md](reference/vscode.md) or [reference/vim.md](reference/vim.md) — how to view it
 

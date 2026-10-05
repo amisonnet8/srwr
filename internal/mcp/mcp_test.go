@@ -96,7 +96,7 @@ func TestClientNameIsTheAuthorOfTheTape(t *testing.T) {
 	}
 	serve(t, root,
 		`{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","clientInfo":{"name":"claude-code"}}}`,
-		toolCall(2, "select", `{"file":"f.txt","startLine":1,"endLine":1,"why":"w"}`))
+		toolCall(2, "look", `{"file":"f.txt","startLine":1,"endLine":1,"why":"w"}`))
 	matches, _ := filepath.Glob(filepath.Join(root, ".srwr", "tapes", "*.tape.jsonl"))
 	if len(matches) != 1 {
 		t.Fatalf("tapes = %v", matches)
@@ -114,13 +114,13 @@ func TestPingNotificationsAndUnknowns(t *testing.T) {
 		`{"jsonrpc":"2.0","method":"notifications/initialized"}`,
 		`{"jsonrpc":"2.0","method":"notifications/progress","params":{"progress":1}}`,
 		`{"jsonrpc":"2.0","id":2,"method":"resources/list"}`,
-		`{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"edit","arguments":{}}}`,
+		`{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"delete","arguments":{}}}`,
 		`{"jsonrpc":"2.0","id":4,"method":"tools/call","params":"x"}`,
 	)
 	want := []string{
 		`{"jsonrpc":"2.0","id":1,"result":{}}`,
 		`{"jsonrpc":"2.0","id":2,"error":{"code":-32601,"message":"method not found: resources/list"}}`,
-		`{"jsonrpc":"2.0","id":3,"error":{"code":-32602,"message":"unknown tool: edit"}}`,
+		`{"jsonrpc":"2.0","id":3,"error":{"code":-32602,"message":"unknown tool: delete"}}`,
 	}
 	if len(got) != 4 {
 		t.Fatalf("got %d lines: %q", len(got), got)
@@ -153,7 +153,7 @@ func TestToolsList(t *testing.T) {
 	if err := json.Unmarshal([]byte(got[0]), &r); err != nil {
 		t.Fatal(err)
 	}
-	if len(r.Result.Tools) != 4 || r.Result.Tools[0].Name != "select" || r.Result.Tools[1].Name != "replace" || r.Result.Tools[2].Name != "sub" || r.Result.Tools[3].Name != "new" {
+	if len(r.Result.Tools) != 4 || r.Result.Tools[0].Name != "look" || r.Result.Tools[1].Name != "edit" || r.Result.Tools[2].Name != "replace" || r.Result.Tools[3].Name != "new" {
 		t.Fatalf("tools = %+v", r.Result.Tools)
 	}
 	for _, tool := range r.Result.Tools {
@@ -210,11 +210,11 @@ func TestSelectAndReplace(t *testing.T) {
 		return body(t, strings.TrimSpace(out.String()))
 	}
 
-	sel, isErr := call(1, "select", `{"file":"a.go","startLine":2,"endLine":3,"why":"見る"}`)
+	sel, isErr := call(1, "look", `{"file":"a.go","startLine":2,"endLine":3,"why":"見る"}`)
 	if isErr || sel["ok"] != true || len(sel["lines"].([]any)) != 2 {
 		t.Fatalf("select = %v %v", sel, isErr)
 	}
-	rep, isErr := call(2, "replace", `{"selection":"`+sel["selection"].(string)+`","newText":"a < b && c > d","why":"変える"}`)
+	rep, isErr := call(2, "edit", `{"selection":"`+sel["selection"].(string)+`","newText":"a < b && c > d","why":"変える"}`)
 	if isErr || rep["ok"] != true || rep["startLine"] != float64(2) || rep["endLine"] != float64(2) {
 		t.Fatalf("replace = %v %v", rep, isErr)
 	}
@@ -223,7 +223,7 @@ func TestSelectAndReplace(t *testing.T) {
 	}
 
 	// A select with only expect finds its own range, and says where.
-	found, isErr := call(4, "select", `{"file":"a.go","expect":"a < b && c > d","why":"探す"}`)
+	found, isErr := call(4, "look", `{"file":"a.go","expect":"a < b && c > d","why":"探す"}`)
 	if isErr || found["startLine"] != float64(2) || found["endLine"] != float64(2) {
 		t.Errorf("select by expect = %v %v", found, isErr)
 	}
@@ -239,7 +239,7 @@ func TestSelectAndReplace(t *testing.T) {
 	}
 
 	// An empty range gives [] and not null.
-	empty, _ := call(3, "select", `{"file":"a.go","startLine":3,"endLine":2,"why":"w"}`)
+	empty, _ := call(3, "look", `{"file":"a.go","startLine":3,"endLine":2,"why":"w"}`)
 	if l, ok := empty["lines"].([]any); !ok || len(l) != 0 {
 		t.Errorf("lines of an empty range = %#v, want []", empty["lines"])
 	}
@@ -252,7 +252,7 @@ func TestSub(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	got := serve(t, root, toolCall(1, "sub", `{"files":["a.go","b.go"],"old":"foo","new":"bar & <baz>","count":3,"why":"名前を変える"}`))
+	got := serve(t, root, toolCall(1, "replace", `{"files":["a.go","b.go"],"old":"foo","new":"bar & <baz>","count":3,"why":"名前を変える"}`))
 	m, isErr := body(t, got[0])
 	files, _ := m["files"].([]any)
 	if isErr || m["ok"] != true || m["count"] != float64(3) || len(files) != 2 {
@@ -299,33 +299,33 @@ func TestToolErrors(t *testing.T) {
 		name, tool, args, code string
 		actual                 any
 	}{
-		{"range", "select", `{"file":"a.go","startLine":9,"endLine":9,"why":"w"}`, "invalid_range", map[string]any{"lineCount": float64(2)}},
-		{"missing file", "select", `{"file":"no.go","startLine":1,"endLine":1,"why":"w"}`, "file_not_found", nil},
-		{"missing why", "select", `{"file":"a.go","startLine":1,"endLine":1}`, "invalid_input", nil},
-		{"blank why", "select", `{"file":"a.go","startLine":1,"endLine":1,"why":"  "}`, "invalid_input", nil},
-		{"missing file argument", "select", `{"startLine":1,"endLine":1,"why":"w"}`, "invalid_input", nil},
-		{"line as a string", "select", `{"file":"a.go","startLine":"1","endLine":1,"why":"w"}`, "invalid_input", nil},
-		{"line as a fraction", "select", `{"file":"a.go","startLine":1.5,"endLine":2,"why":"w"}`, "invalid_input", nil},
-		{"file as a number", "select", `{"file":3,"startLine":1,"endLine":1,"why":"w"}`, "invalid_input", nil},
-		{"only startLine", "select", `{"file":"a.go","startLine":1,"why":"w"}`, "invalid_input", nil},
-		{"only endLine", "select", `{"file":"a.go","endLine":1,"why":"w"}`, "invalid_input", nil},
-		{"no lines and no expect", "select", `{"file":"a.go","why":"w"}`, "invalid_input", nil},
-		{"expect as a number", "select", `{"file":"a.go","expect":1,"why":"w"}`, "invalid_input", nil},
-		{"expect that is not in the file", "select", `{"file":"a.go","expect":"zzz","why":"w"}`, "content_not_found", nil},
-		{"expect that is in the file, in other lines", "select", `{"file":"a.go","startLine":1,"endLine":1,"expect":"2","why":"w"}`, "content_mismatch", []string{"1"}},
-		{"no arguments", "select", `null`, "invalid_input", nil},
-		{"arguments of the wrong shape", "select", `[1]`, "invalid_input", nil},
-		{"replace without newText", "replace", `{"selection":"sel_x","why":"w"}`, "invalid_input", nil},
-		{"replace with a bad token", "replace", `{"selection":"sel_x","newText":"","why":"w"}`, "invalid_selection", nil},
-		{"replace with newText as a number", "replace", `{"selection":"sel_x","newText":1,"why":"w"}`, "invalid_input", nil},
-		{"sub without count", "sub", `{"files":["a.go"],"old":"1","new":"x","why":"w"}`, "invalid_input", nil},
-		{"sub with files as a string", "sub", `{"files":"a.go","old":"1","new":"x","count":1,"why":"w"}`, "invalid_input", nil},
-		{"sub with count as a string", "sub", `{"files":["a.go"],"old":"1","new":"x","count":"1","why":"w"}`, "invalid_input", nil},
-		{"sub with no files", "sub", `{"files":[],"old":"1","new":"x","count":1,"why":"w"}`, "invalid_input", nil},
+		{"range", "look", `{"file":"a.go","startLine":9,"endLine":9,"why":"w"}`, "invalid_range", map[string]any{"lineCount": float64(2)}},
+		{"missing file", "look", `{"file":"no.go","startLine":1,"endLine":1,"why":"w"}`, "file_not_found", nil},
+		{"missing why", "look", `{"file":"a.go","startLine":1,"endLine":1}`, "invalid_input", nil},
+		{"blank why", "look", `{"file":"a.go","startLine":1,"endLine":1,"why":"  "}`, "invalid_input", nil},
+		{"missing file argument", "look", `{"startLine":1,"endLine":1,"why":"w"}`, "invalid_input", nil},
+		{"line as a string", "look", `{"file":"a.go","startLine":"1","endLine":1,"why":"w"}`, "invalid_input", nil},
+		{"line as a fraction", "look", `{"file":"a.go","startLine":1.5,"endLine":2,"why":"w"}`, "invalid_input", nil},
+		{"file as a number", "look", `{"file":3,"startLine":1,"endLine":1,"why":"w"}`, "invalid_input", nil},
+		{"only startLine", "look", `{"file":"a.go","startLine":1,"why":"w"}`, "invalid_input", nil},
+		{"only endLine", "look", `{"file":"a.go","endLine":1,"why":"w"}`, "invalid_input", nil},
+		{"no lines and no expect", "look", `{"file":"a.go","why":"w"}`, "invalid_input", nil},
+		{"expect as a number", "look", `{"file":"a.go","expect":1,"why":"w"}`, "invalid_input", nil},
+		{"expect that is not in the file", "look", `{"file":"a.go","expect":"zzz","why":"w"}`, "content_not_found", nil},
+		{"expect that is in the file, in other lines", "look", `{"file":"a.go","startLine":1,"endLine":1,"expect":"2","why":"w"}`, "content_mismatch", []string{"1"}},
+		{"no arguments", "look", `null`, "invalid_input", nil},
+		{"arguments of the wrong shape", "look", `[1]`, "invalid_input", nil},
+		{"replace without newText", "edit", `{"selection":"sel_x","why":"w"}`, "invalid_input", nil},
+		{"replace with a bad token", "edit", `{"selection":"sel_x","newText":"","why":"w"}`, "invalid_selection", nil},
+		{"replace with newText as a number", "edit", `{"selection":"sel_x","newText":1,"why":"w"}`, "invalid_input", nil},
+		{"sub without count", "replace", `{"files":["a.go"],"old":"1","new":"x","why":"w"}`, "invalid_input", nil},
+		{"sub with files as a string", "replace", `{"files":"a.go","old":"1","new":"x","count":1,"why":"w"}`, "invalid_input", nil},
+		{"sub with count as a string", "replace", `{"files":["a.go"],"old":"1","new":"x","count":"1","why":"w"}`, "invalid_input", nil},
+		{"sub with no files", "replace", `{"files":[],"old":"1","new":"x","count":1,"why":"w"}`, "invalid_input", nil},
 		{"new without content", "new", `{"file":"n.go","why":"w"}`, "invalid_input", nil},
 		{"new with content as a number", "new", `{"file":"n.go","content":1,"why":"w"}`, "invalid_input", nil},
 		{"new on an existing file", "new", `{"file":"a.go","content":"x","why":"w"}`, "file_exists", nil},
-		{"sub with the wrong count", "sub", `{"files":["a.go"],"old":"1","new":"x","count":2,"why":"w"}`, "count_mismatch", map[string]any{"a.go": float64(1)}},
+		{"sub with the wrong count", "replace", `{"files":["a.go"],"old":"1","new":"x","count":2,"why":"w"}`, "count_mismatch", map[string]any{"a.go": float64(1)}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -359,10 +359,10 @@ func TestFailedCallsAreOnTheTape(t *testing.T) {
 	}
 	abs := filepath.Join(root, "a.go")
 	serve(t, root,
-		toolCall(1, "select", `{"file":"a.go","startLine":1,"endLine":1}`),                      // no why
-		toolCall(2, "select", `{"file":`+mustJSON(abs)+`,"startLine":1,"endLine":1,"why":"w"}`), // absolute
-		toolCall(3, "replace", `{"selection":"sel_x","newText":"SECRET NEW TEXT","why":"w"}`),   // bad token
-		toolCall(4, "select", `{"file":"a.go","startLine":"1","endLine":1,"why":"w"}`),          // a line as a string
+		toolCall(1, "look", `{"file":"a.go","startLine":1,"endLine":1}`),                      // no why
+		toolCall(2, "look", `{"file":`+mustJSON(abs)+`,"startLine":1,"endLine":1,"why":"w"}`), // absolute
+		toolCall(3, "edit", `{"selection":"sel_x","newText":"SECRET NEW TEXT","why":"w"}`),    // bad token
+		toolCall(4, "look", `{"file":"a.go","startLine":"1","endLine":1,"why":"w"}`),          // a line as a string
 	)
 	files, _ := filepath.Glob(filepath.Join(root, ".srwr", "tapes", "*.jsonl"))
 	if len(files) != 1 {
@@ -384,7 +384,7 @@ func TestFailedCallsAreOnTheTape(t *testing.T) {
 	if want := "invalid_input invalid_range invalid_selection invalid_input"; strings.Join(codes, " ") != want {
 		t.Errorf("codes = %v, want %s", codes, want)
 	}
-	if want := "select select replace select"; strings.Join(tools, " ") != want {
+	if want := "look look edit look"; strings.Join(tools, " ") != want {
 		t.Errorf("tools = %v, want %s", tools, want)
 	}
 	if strings.Contains(string(b), root) || strings.Contains(string(b), "SECRET NEW TEXT") {

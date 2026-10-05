@@ -7,19 +7,21 @@ import (
 	"github.com/amisonnet8/srwr/internal/tape"
 )
 
-func (e *env) sub(files []string, old, repl string, count int) (*SubResult, *Error) {
-	return e.c.Sub(SubInput{Files: files, Old: old, New: repl, Count: count, Why: "rename the helper"})
+func (e *env) sub(files []string, old, repl string, count int) (*ReplaceResult, *Error) {
+	return e.c.Replace(ReplaceInput{Files: files, Old: old, New: repl, Count: count, Why: "rename the helper"})
 }
 
-func (e *env) replaces() []tape.Event {
+func (e *env) eventsOf(typ string) []tape.Event {
 	var got []tape.Event
 	for _, ev := range e.events() {
-		if ev.Type == tape.TypeReplace {
+		if ev.Type == typ {
 			got = append(got, ev)
 		}
 	}
 	return got
 }
+
+func (e *env) replaces() []tape.Event { return e.eventsOf(tape.TypeReplace) }
 
 func TestSubChangesEveryPlaceInEveryFile(t *testing.T) {
 	e := newEnv(t)
@@ -47,7 +49,7 @@ func TestSubChangesEveryPlaceInEveryFile(t *testing.T) {
 		t.Fatalf("%d replaces", len(rs))
 	}
 	for i, r := range rs {
-		if r.HookTool != "sub" || r.Source != tape.SourceMCP || r.Why == nil || *r.Why != "rename the helper" || r.From != nil {
+		if r.Source != tape.SourceMCP || r.Why == nil || *r.Why != "rename the helper" || r.From != nil {
 			t.Errorf("replace %d = %+v", i, r)
 		}
 	}
@@ -70,7 +72,7 @@ func TestSubChangesNothingWhenTheCountIsWrong(t *testing.T) {
 		t.Error("something was changed")
 	}
 	f := e.failures()
-	if len(f) != 1 || f[0].Tool != "sub" || f[0].Code != CodeCountMismatch || f[0].File != nil || f[0].Why == nil {
+	if len(f) != 1 || f[0].Tool != "replace" || f[0].Code != CodeCountMismatch || f[0].File != nil || f[0].Why == nil {
 		t.Errorf("failures = %+v", f)
 	}
 	e.noSecretOnTape("bar")
@@ -135,7 +137,7 @@ func TestSubTwoPlacesOnOneLineAndOverlaps(t *testing.T) {
 func TestSubInputIsChecked(t *testing.T) {
 	e := newEnv(t)
 	e.write("a.txt", "foo\n")
-	for name, in := range map[string]SubInput{
+	for name, in := range map[string]ReplaceInput{
 		"no files":     {Old: "foo", New: "x", Count: 1, Why: "w"},
 		"empty old":    {Files: []string{"a.txt"}, New: "x", Count: 1, Why: "w"},
 		"zero count":   {Files: []string{"a.txt"}, Old: "foo", New: "x", Why: "w"},
@@ -145,7 +147,7 @@ func TestSubInputIsChecked(t *testing.T) {
 		"empty file":   {Files: []string{""}, Old: "foo", New: "x", Count: 1, Why: "w"},
 		"no final \\n": {Files: []string{"a.txt"}, Old: "foo\n", New: "foo", Count: 1, Why: "w"},
 	} {
-		_, err := e.c.Sub(in)
+		_, err := e.c.Replace(in)
 		wantCode(t, err, CodeInvalidInput)
 		if name != "" && e.read("a.txt") != "foo\n" {
 			t.Errorf("%s: the file was changed", name)

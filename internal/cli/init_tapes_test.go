@@ -45,7 +45,7 @@ func TestInitOutputs(t *testing.T) {
   作った   .claude/settings.json hook を登録し、Edit・Write などを禁止しました（厳格モード）
   作った   .gitignore            .srwr/key .srwr/lock .srwr/active .srwr/init-backup/
 
-準備できました。Claude Code を開き直すと、select / replace が使えます。
+準備できました。Claude Code を開き直すと、look / edit / replace / new が使えます。
 緩いモード（Edit・Write を禁止しない）にするときは、srwr init --lenient。
 `
 	root := gitDir(t)
@@ -89,7 +89,7 @@ func TestInitOutputs(t *testing.T) {
   作った   .gitignore            .srwr/key .srwr/lock .srwr/active .srwr/init-backup/
 
 書き換える前の内容は .srwr/init-backup/20261003-171204/ に残しました。
-準備できました。Claude Code を開き直すと、select / replace が使えます。
+準備できました。Claude Code を開き直すと、look / edit / replace / new が使えます。
 `
 	if code, out, _ := initOut(t, existing); code != 0 || out != wantExisting {
 		t.Errorf("existing: code %d\n%s", code, out)
@@ -121,7 +121,7 @@ func makeTape(t *testing.T, root string, at time.Time, file string) {
 		t.Fatal(err)
 	}
 	c := &core.Core{WS: ws}
-	if _, cerr := c.Select(core.SelectInput{File: file, StartLine: 1, EndLine: 1, Why: "見る"}); cerr != nil {
+	if _, cerr := c.Look(core.LookInput{File: file, StartLine: 1, EndLine: 1, Why: "見る"}); cerr != nil {
 		t.Fatal(cerr)
 	}
 }
@@ -187,7 +187,7 @@ func TestTapesNewEndsTheSession(t *testing.T) {
 		t.Fatal(err)
 	}
 	c := &core.Core{WS: ws}
-	first, cerr := c.Select(core.SelectInput{File: "a.txt", StartLine: 1, EndLine: 1, Why: "見る"})
+	first, cerr := c.Look(core.LookInput{File: "a.txt", StartLine: 1, EndLine: 1, Why: "見る"})
 	if cerr != nil {
 		t.Fatal(cerr)
 	}
@@ -199,13 +199,13 @@ func TestTapesNewEndsTheSession(t *testing.T) {
 	// The next write is a new tape, and the token of the old one stops working.
 	ws2, _ := session.Open(root, session.Options{})
 	c2 := &core.Core{WS: ws2}
-	if _, cerr := c2.Select(core.SelectInput{File: "a.txt", StartLine: 1, EndLine: 1, Why: "見る"}); cerr != nil {
+	if _, cerr := c2.Look(core.LookInput{File: "a.txt", StartLine: 1, EndLine: 1, Why: "見る"}); cerr != nil {
 		t.Fatal(cerr)
 	}
 	if id2, _ := ws2.Current(); id2 == id || id2 == "" {
 		t.Errorf("still on tape %q (was %q)", id2, id)
 	}
-	_, rerr := c2.Replace(core.ReplaceInput{Selection: first.Selection, NewText: "x", Why: "w"})
+	_, rerr := c2.Edit(core.EditInput{Selection: first.Selection, NewText: "x", Why: "w"})
 	if rerr == nil || rerr.Code != core.CodeInvalidSelection {
 		t.Errorf("old token: %v", rerr)
 	}

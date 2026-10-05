@@ -76,8 +76,13 @@ func TestFixturesMatchExpected(t *testing.T) {
 					kinds = append(kinds, e.Type)
 				}
 			}
-			if !slices.Equal(kinds, want.Kinds) {
-				t.Errorf("kinds = %v, want %v", kinds, want.Kinds)
+			// The expected files are the golden data of version 1, which says select and replace.
+			var wantKinds []string
+			for _, k := range want.Kinds {
+				wantKinds = append(wantKinds, fromVersion1(k, ""))
+			}
+			if !slices.Equal(kinds, wantKinds) {
+				t.Errorf("kinds = %v, want %v", kinds, wantKinds)
 			}
 		})
 	}
@@ -113,11 +118,11 @@ func TestRealTapesReplayConsistently(t *testing.T) {
 					if got := FileHash(e.File); got != e.FileHash {
 						t.Errorf("seq %d: FileHash(%s) = %s, want %s", e.Seq, e.File, got, e.FileHash)
 					}
-				case TypeSelect:
+				case TypeLook:
 					if e.Selection != nil && st.Files[e.File] == nil {
 						t.Errorf("seq %d: select of %s before any snapshot", e.Seq, e.File)
 					}
-				case TypeReplace:
+				case TypeEdit:
 					if got := Sha(before); got != e.FileShaBefore {
 						t.Errorf("seq %d: sha before = %s, want %s", e.Seq, got, e.FileShaBefore)
 					}
@@ -133,7 +138,7 @@ func TestRealTapesReplayConsistently(t *testing.T) {
 					}
 				}
 				st.Apply(e)
-				if e.Type == TypeReplace {
+				if e.Type == TypeEdit {
 					after := st.Files[e.File].Text
 					if got := Sha(after); got != e.FileShaAfter {
 						t.Errorf("seq %d: sha after = %s, want %s", e.Seq, got, e.FileShaAfter)
@@ -173,7 +178,7 @@ func TestParseLeniency(t *testing.T) {
 		{"last line without newline is held back", snap + `{"v":1,"seq":2,"type":"select"`, []string{"snapshot"}, 0, len(snap)},
 		{"only a partial line", `{"v":1,"seq":1`, nil, 0, 0},
 		{"empty", "", nil, 0, 0},
-		{"unknown fields are ignored", `{"v":1,"seq":2,"type":"select","file":"a.go","startLine":1,"endLine":1,"extra":{"a":1}}` + "\n", []string{"select"}, 0, -1},
+		{"unknown fields are ignored", `{"v":1,"seq":2,"type":"select","file":"a.go","startLine":1,"endLine":1,"extra":{"a":1}}` + "\n", []string{"look"}, 0, -1},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -250,10 +255,10 @@ func TestMarshalRoundTrip(t *testing.T) {
 		{Type: TypeHeader, Session: "c3d4", StartedAt: "2026-10-03T11:20:00.000Z", Author: &Author{Kind: "ai", Name: "claude"}, VCS: json.RawMessage(`{"type":"git","head":"` + strings.Repeat("0123456789", 4) + `","dirty":true}`), Tool: &ToolInfo{Name: "srwr", Version: "(devel)"}},
 		{Type: TypeHeader, Session: "e5f6", StartedAt: "2026-10-03T11:20:00.000Z", Author: &Author{Kind: "ai", Name: "claude"}, VCS: json.RawMessage(`{"type":"git","head":null,"dirty":false}`), Tool: &ToolInfo{Name: "srwr", Version: "(devel)"}},
 		{Type: TypeSnapshot, Seq: 1, TS: "t", File: "a.go", FileHash: FileHash("a.go"), Text: Str("x <b> & y\n"), Sha: Sha("x <b> & y\n")},
-		{Type: TypeSelect, Seq: 2, TS: "t", File: "a.go", StartLine: 1, EndLine: 1, Why: Str("見る"), Selection: Str("sel_1"), Source: SourceMCP},
-		{Type: TypeSelect, Seq: 3, TS: "t", File: "a.go", StartLine: 1, EndLine: 1, Source: SourceHook, HookTool: "Grep"},
-		{Type: TypeReplace, Seq: 4, TS: "t", File: "a.go", From: Str("sel_1"), StartLine: 1, EndLine: 1, OldText: "o", NewText: "n\"\n", NewStartLine: 1, NewEndLine: 2, Selection: Str("sel_2"), Why: Str("w"), FileShaBefore: "b", FileShaAfter: "a", Source: SourceMCP},
-		{Type: TypeExternal, Seq: 5, TS: "t", File: "a.go", Author: &Author{Kind: "external"}, DetectedBy: "select", ExpectedSha: "e", ActualSha: "a", Text: Str("changed")},
+		{Type: TypeLook, Seq: 2, TS: "t", File: "a.go", StartLine: 1, EndLine: 1, Why: Str("見る"), Selection: Str("sel_1"), Source: SourceMCP},
+		{Type: TypeLook, Seq: 3, TS: "t", File: "a.go", StartLine: 1, EndLine: 1, Source: SourceHook, HookTool: "Grep"},
+		{Type: TypeEdit, Seq: 4, TS: "t", File: "a.go", From: Str("sel_1"), StartLine: 1, EndLine: 1, OldText: "o", NewText: "n\"\n", NewStartLine: 1, NewEndLine: 2, Selection: Str("sel_2"), Why: Str("w"), FileShaBefore: "b", FileShaAfter: "a", Source: SourceMCP},
+		{Type: TypeExternal, Seq: 5, TS: "t", File: "a.go", Author: &Author{Kind: "external"}, DetectedBy: "look", ExpectedSha: "e", ActualSha: "a", Text: Str("changed")},
 		{Type: TypeExternal, Seq: 6, TS: "t", File: "a.go", Author: &Author{Kind: "external"}, DetectedBy: "hook", ExpectedSha: "e", ActualSha: "a", Deleted: true},
 	}
 	var all []byte
@@ -265,7 +270,7 @@ func TestMarshalRoundTrip(t *testing.T) {
 		if !bytes.HasSuffix(line, []byte("}\n")) || bytes.Count(line, []byte("\n")) != 1 {
 			t.Errorf("not exactly one line: %q", line)
 		}
-		if !bytes.HasPrefix(line, []byte(`{"v":1,`)) {
+		if !bytes.HasPrefix(line, []byte(`{"v":2,`)) {
 			t.Errorf("v must come first: %q", line)
 		}
 		all = append(all, line...)
@@ -291,15 +296,15 @@ func TestMarshalRoundTrip(t *testing.T) {
 }
 
 func TestMarshalWritesNull(t *testing.T) {
-	line, err := Marshal(Event{Type: TypeSelect, Seq: 1, TS: "t", File: "a.go", StartLine: 1, EndLine: 1})
+	line, err := Marshal(Event{Type: TypeLook, Seq: 1, TS: "t", File: "a.go", StartLine: 1, EndLine: 1})
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := `{"v":1,"seq":1,"ts":"t","type":"select","file":"a.go","startLine":1,"endLine":1,"why":null,"selection":null}` + "\n"
+	want := `{"v":2,"seq":1,"ts":"t","type":"look","file":"a.go","startLine":1,"endLine":1,"why":null,"selection":null}` + "\n"
 	if string(line) != want {
 		t.Errorf("got %s want %s", line, want)
 	}
-	line, _ = Marshal(Event{Type: TypeReplace, Seq: 1, TS: "t", File: "a.go", StartLine: 1, EndLine: 0, NewText: "x", NewStartLine: 1, NewEndLine: 1})
+	line, _ = Marshal(Event{Type: TypeEdit, Seq: 1, TS: "t", File: "a.go", StartLine: 1, EndLine: 0, NewText: "x", NewStartLine: 1, NewEndLine: 1})
 	if !strings.Contains(string(line), `"from":null`) || !strings.Contains(string(line), `"selection":null`) || !strings.Contains(string(line), `"why":null`) {
 		t.Errorf("missing nulls: %s", line)
 	}
@@ -320,7 +325,7 @@ func TestMarshalErrors(t *testing.T) {
 func TestAppend(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "x.tape.jsonl")
 	for i := 1; i <= 3; i++ {
-		if err := Append(path, Event{Type: TypeSelect, Seq: i, TS: "t", File: "a.go", StartLine: 1, EndLine: 1}); err != nil {
+		if err := Append(path, Event{Type: TypeLook, Seq: i, TS: "t", File: "a.go", StartLine: 1, EndLine: 1}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -376,8 +381,8 @@ func TestStateExternal(t *testing.T) {
 func TestStateCollectsReplaces(t *testing.T) {
 	res := readTape(t, filepath.Join(fixtures, "basic.tape.jsonl"))
 	st := Build(res.Events)
-	if len(st.Replaces) != 5 || st.LastSeq != 13 {
-		t.Errorf("Replaces = %d, LastSeq = %d; want 5 and 13", len(st.Replaces), st.LastSeq)
+	if len(st.Edits) != 5 || st.LastSeq != 13 {
+		t.Errorf("Edits = %d, LastSeq = %d; want 5 and 13", len(st.Edits), st.LastSeq)
 	}
 }
 
@@ -436,13 +441,13 @@ func TestCreatedExternalRoundTrips(t *testing.T) {
 
 func TestFailureRoundTrips(t *testing.T) {
 	two, nine := 3, 9
-	f := &FailureInfo{Tool: "select", StartLine: &two, EndLine: &nine, Why: Str("why"), Code: "invalid_range", Message: "m"}
+	f := &FailureInfo{Tool: "look", StartLine: &two, EndLine: &nine, Why: Str("why"), Code: "invalid_range", Message: "m"}
 	e := Event{Type: TypeFailure, Seq: 7, TS: "2026-10-04T00:00:00.000Z", Failure: f}
 	line, err := Marshal(e)
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := `{"v":1,"seq":7,"ts":"2026-10-04T00:00:00.000Z","type":"failure","tool":"select","file":null,"startLine":3,"endLine":9,"selection":null,"why":"why","code":"invalid_range","message":"m"}` + "\n"
+	want := `{"v":2,"seq":7,"ts":"2026-10-04T00:00:00.000Z","type":"failure","tool":"look","file":null,"startLine":3,"endLine":9,"selection":null,"why":"why","code":"invalid_range","message":"m"}` + "\n"
 	if string(line) != want {
 		t.Errorf("line = %s, want %s", line, want)
 	}
@@ -451,7 +456,7 @@ func TestFailureRoundTrips(t *testing.T) {
 		t.Errorf("parsed %+v (ok %v)", got, ok)
 	}
 	// A replace has a token and no range, and a file when it is known.
-	r := &FailureInfo{Tool: "replace", File: Str("a.go"), Selection: Str("sel_x"), Code: "selection_stale", Message: "m"}
+	r := &FailureInfo{Tool: "edit", File: Str("a.go"), Selection: Str("sel_x"), Code: "selection_stale", Message: "m"}
 	line, _ = Marshal(Event{Type: TypeFailure, Seq: 8, Failure: r})
 	if got, ok := parseLine(line); !ok || !reflect.DeepEqual(got.Failure, r) || !strings.Contains(string(line), `"startLine":null`) {
 		t.Errorf("replace: %+v %s", got.Failure, line)
@@ -460,5 +465,42 @@ func TestFailureRoundTrips(t *testing.T) {
 	s := Build([]Event{{Type: TypeSnapshot, Seq: 1, File: "a.go", Text: Str("x\n")}, {Type: TypeFailure, Seq: 2, Failure: r}})
 	if s.Files["a.go"].Text != "x\n" || s.LastSeq != 2 {
 		t.Errorf("state = %+v", s)
+	}
+}
+
+// A tape of version 1 says select and replace; sub and new were a replace with a tool. Parse reads them as look, edit, replace and new,
+// by the "v" of each line, so that a tape that went on with version 2 is read right too.
+func TestParseVersion1(t *testing.T) {
+	rng := `"file":"a.go","startLine":1,"endLine":1,`
+	repl := `"newText":"x","oldText":"o","newStartLine":1,"newEndLine":1,"hits":2`
+	in := `{"v":1,"seq":1,"type":"select",` + rng + `"why":"w","selection":"s"}` + "\n" +
+		`{"v":1,"seq":2,"type":"replace",` + rng + repl + `}` + "\n" +
+		`{"v":1,"seq":3,"type":"replace",` + rng + repl + `,"tool":"sub"}` + "\n" +
+		`{"v":1,"seq":4,"type":"replace",` + rng + repl + `,"tool":"new"}` + "\n" +
+		`{"v":1,"seq":5,"type":"replace",` + rng + repl + `,"source":"hook","tool":"Edit"}` + "\n" +
+		`{"v":2,"seq":6,"type":"replace",` + rng + repl + `}` + "\n" +
+		`{"v":2,"seq":7,"type":"look",` + rng + `"source":"hook","tool":"Read"}` + "\n" +
+		`{"v":1,"seq":8,"type":"failure","tool":"sub","code":"count_mismatch","message":"m"}` + "\n" +
+		`{"v":1,"seq":9,"type":"failure","tool":"replace","code":"selection_stale","message":"m"}` + "\n" +
+		`{"v":2,"seq":10,"type":"failure","tool":"replace","code":"count_mismatch","message":"m"}` + "\n" +
+		`{"seq":11,"type":"select",` + rng + `"why":"w","selection":"s"}` + "\n"
+	res := Parse([]byte(in))
+	if res.Skipped != 0 || len(res.Events) != 11 {
+		t.Fatalf("events = %d, skipped = %d", len(res.Events), res.Skipped)
+	}
+	want := []struct{ typ, hookTool, tool string }{
+		{TypeLook, "", ""}, {TypeEdit, "", ""}, {TypeReplace, "", ""}, {TypeNew, "", ""}, {TypeEdit, "Edit", ""},
+		{TypeReplace, "", ""}, {TypeLook, "Read", ""},
+		{TypeFailure, "", TypeReplace}, {TypeFailure, "", TypeEdit}, {TypeFailure, "", TypeReplace}, {TypeLook, "", ""},
+	}
+	for i, w := range want {
+		e := res.Events[i]
+		tool := ""
+		if e.Failure != nil {
+			tool = e.Failure.Tool
+		}
+		if e.Type != w.typ || e.HookTool != w.hookTool || tool != w.tool {
+			t.Errorf("event %d = %s (hook tool %q, failed tool %q), want %s (%q, %q)", i+1, e.Type, e.HookTool, tool, w.typ, w.hookTool, w.tool)
+		}
 	}
 }

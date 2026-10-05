@@ -31,11 +31,11 @@
 
 ## 書き方の決まり
 
-- すべてのイベントに `"v":1`（形式のバージョン）
+- すべてのイベントに `"v":2`（形式のバージョン）。**バージョン 1 のテープも読める**（下の「バージョン 1 のテープ」）
 - 追記のみ。既存の行を書き換えたり消したりしない
 - `seq` はテープ内で1から始まる連番で、欠番がない（`header` は持たない）
 - `ts` は RFC 3339 の **UTC** で、ミリ秒まで、末尾は `Z`（`2026-09-29T02:20:04.123Z`）。古い版が書いたテープには `+09:00` のようなオフセット（そのときの機械の時間帯）が付いている。同じ瞬間として読み、古い行を書き換えることはしない
-- 値のないフィールド（`why`・`selection`・`from` など）は、省略せず `null`。例外は、任意の `source`・`tool`（空なら書かない）、`hits`（`sub` が書いた `replace` のときだけ書く）と `deleted`（真のときだけ書く）
+- 値のないフィールド（`why`・`selection`・`from` など）は、省略せず `null`。例外は、任意の `source`・`tool`（空なら書かない）、`hits`（`replace` のときだけ書く）と `deleted`（真のときだけ書く）
 - 1イベント1行。改行で終わっていない最後の行は、書き込み途中として扱う
 - 読む側は、知らないフィールドを無視する
 - **v1 までは、テープの形式を互換なしで変えることがある。** ある版が書いたテープを別の版が読めることは、約束しない。v1 からは、フィールドは足せるが、既存の意味は変えない
@@ -47,7 +47,7 @@
 テープ先頭に1行。
 
 ```json
-{"v":1,"type":"header","session":"a1b2","startedAt":"2026-09-29T02:20:00.000Z","author":{"kind":"ai","name":"claude"}}
+{"v":2,"type":"header","session":"a1b2","startedAt":"2026-09-29T02:20:00.000Z","author":{"kind":"ai","name":"claude"}}
 ```
 
 そのほか、`vcs` と `tool`（`{"name":"srwr","version":"…"}`）を持つ。
@@ -65,71 +65,97 @@
 
 ### snapshot
 
-ファイルの**全文**。そのセッションでそのファイルに初めて触れたときと、`external` で消えたファイルが戻ったときに記録する。それ以後は、変わった行だけを持つ `replace` と `external` で追う。再生は、最後の `snapshot` から、それらを順に適用して作る。
+ファイルの**全文**。そのセッションでそのファイルに初めて触れたときと、`external` で消えたファイルが戻ったときに記録する。それ以後は、変わった行だけを持つ `edit`・`replace`・`new` と `external` で追う。再生は、最後の `snapshot` から、それらを順に適用して作る。
 
 ```json
-{"v":1,"seq":1,"ts":"…","type":"snapshot","file":"cmd/app/main.go","fileHash":"a3f09c21","text":"package main\n…","sha":"sha256:…"}
+{"v":2,"seq":1,"ts":"…","type":"snapshot","file":"cmd/app/main.go","fileHash":"a3f09c21","text":"package main\n…","sha":"sha256:…"}
 ```
 
-### select
+### look
 
 ```json
-{"v":1,"seq":2,"ts":"…","type":"select","file":"cmd/app/main.go","startLine":12,"endLine":14,"why":"main関数に修正が必要か確認中","selection":"sel_0410R3GZE4KV11C6325D32S7","source":"mcp"}
+{"v":2,"seq":2,"ts":"…","type":"look","file":"cmd/app/main.go","startLine":12,"endLine":14,"why":"main関数に修正が必要か確認中","selection":"sel_0410R3GZE4KV11C6325D32S7","source":"mcp"}
 ```
 
-hook が記録した `select`（Read など）は、`why` が `null`。`source`（`mcp` または `hook`）と、hook のときの元のツール名 `tool`（`Read`・`Bash`・`Grep`・`Edit`）を持つ。範囲トークンは持たず、`selection` も `null`。`source` のない古いテープは `mcp` として読む。
+hook が記録した `look`（Read など）は、`why` が `null`。`source`（`mcp` または `hook`）と、hook のときの元のツール名 `tool`（`Read`・`Bash`・`Grep`）を持つ。範囲トークンは持たず、`selection` も `null`。`source` のない古いテープは `mcp` として読む。
 
-### replace
+### edit
 
 ```json
-{"v":1,"seq":3,"ts":"…","type":"replace","file":"cmd/app/main.go","from":"sel_0410R3GZE4KV11C6325D32S7","startLine":12,"endLine":14,"oldText":"…","newText":"…","newStartLine":12,"newEndLine":15,"selection":"sel_041GR3RZE4KV0BBH2S177Q36","why":"シグナル処理の初期化が漏れていたので追加","fileShaBefore":"sha256:…","fileShaAfter":"sha256:…","source":"mcp"}
+{"v":2,"seq":3,"ts":"…","type":"edit","file":"cmd/app/main.go","from":"sel_0410R3GZE4KV11C6325D32S7","startLine":12,"endLine":14,"oldText":"…","newText":"…","newStartLine":12,"newEndLine":15,"selection":"sel_041GR3RZE4KV0BBH2S177Q36","why":"シグナル処理の初期化が漏れていたので追加","fileShaBefore":"sha256:…","fileShaAfter":"sha256:…","source":"mcp"}
 ```
 
-- `from` は入力された範囲トークン、`selection` は返したトークン。`from` → `selection` をたどると、どの `select` からどの `replace` が生まれたかの**系譜**が分かる
+- `from` は入力された範囲トークン、`selection` は返したトークン。`from` → `selection` をたどると、どの `look` からどの `edit` が生まれたかの**系譜**が分かる
 - `startLine`・`endLine` は、補正後の実際の範囲
 - `oldText`・`newText` は、範囲の行を `\n` でつないだもの（末尾の改行は含まない）。削除は `newEndLine = newStartLine - 1` で、`newText` は空。空行1つは `newEndLine = newStartLine` で `newText` も空なので、行の数は `newStartLine`・`newEndLine` から読む
 - 範囲トークンの中の `seq` は、そのトークンを発行したイベントの `seq`
-- hook が記録した `replace`（Edit）は、`from`・`selection`・`why` が `null` で、`source` が `hook`、`tool` が `Edit`。範囲は置換位置を含む行全体
-- `sub`（[mcp.md](mcp_ja.md#sub)）が書いた `replace` は、`source` が `mcp`、`tool` が `sub`、`from` が `null` で、ファイルの中で変えた場所の数 `hits` を持つ。変わったファイルごとに**1つ**で、`why` は同じ。範囲は、最初の場所から最後の場所までの行全体（間の行も `oldText` に入る）。`selection` は、変えたあとの範囲のトークン
-- `new`（[mcp.md](mcp_ja.md#new)）が書いた `replace` は、`source` が `mcp`、`tool` が `new`、`from` が `null`、`fileShaBefore` が `""`（ファイルがなかった）。空のファイルへの挿入の形：`startLine` が 1、`endLine` が 0、`oldText` は空、`newText` は内容の行（`newStartLine` が 1、`newEndLine` が行数。空のファイルは 0）。テープが消えたものとして持っていたファイルは、このイベントのあとは「ある」に戻る
+- hook が記録した `edit`（Edit）は、`from`・`selection`・`why` が `null` で、`source` が `hook`、`tool` が `Edit`。範囲は置換位置を含む行全体
+
+### replace
+
+`replace` ツール（[mcp.md](mcp_ja.md#replace)）が書くイベント。フィールドは `edit` と同じで、次の点が決まっている。
+
+- `source` が `mcp`、`from` が `null`。ファイルの中で変えた場所の数 `hits` を持つ
+- 変わったファイルごとに**1つ**で、`why` は同じ。範囲は、最初の場所から最後の場所までの行全体（間の行も `oldText` に入る）。`selection` は、変えたあとの範囲のトークン
+
+### new
+
+`new` ツール（[mcp.md](mcp_ja.md#new)）が書くイベント。フィールドは `edit` と同じで、次の点が決まっている。
+
+- `source` が `mcp`、`from` が `null`、`fileShaBefore` が `""`（ファイルがなかった）
+- 空のファイルへの挿入の形：`startLine` が 1、`endLine` が 0、`oldText` は空、`newText` は内容の行（`newStartLine` が 1、`newEndLine` が行数。空のファイルは 0）。テープが消えたものとして持っていたファイルは、このイベントのあとは「ある」に戻る
 
 ### external
 
 srwr の外でファイルが変わったことを検知したとき。`snapshot` は続けない。何が変わったかは、この行が持つ。
 
 ```json
-{"v":1,"seq":4,"ts":"…","type":"external","file":"cmd/app/main.go","author":{"kind":"external"},"detectedBy":"select","expectedSha":"sha256:…","actualSha":"sha256:…","hunks":[{"startLine":3,"endLine":3,"newText":"b","newStartLine":3,"newEndLine":3},{"startLine":40,"endLine":41,"newText":"x\ny","newStartLine":40,"newEndLine":41}]}
+{"v":2,"seq":4,"ts":"…","type":"external","file":"cmd/app/main.go","author":{"kind":"external"},"detectedBy":"look","expectedSha":"sha256:…","actualSha":"sha256:…","hunks":[{"startLine":3,"endLine":3,"newText":"b","newStartLine":3,"newEndLine":3},{"startLine":40,"endLine":41,"newText":"x\ny","newStartLine":40,"newEndLine":41}]}
 ```
 
-- `hunks`：**変わった行**。テープが直前に持っていた内容（`expectedSha` のハッシュの内容）に対するもの。箇所は上から順で、重ならない。`startLine`・`endLine` は変更前の行、`newText` は変更後の行（`\n` でつなぐ）、`newStartLine`・`newEndLine` はその行番号で、`replace` と同じ。挿入は `endLine = startLine - 1`、削除は `newText` が空で `newEndLine = newStartLine - 1`。変更前の内容に当てると、変更後の内容（`actualSha` のハッシュ）になる。差分のコマ（左右に並べた diff）として再生する
+- `hunks`：**変わった行**。テープが直前に持っていた内容（`expectedSha` のハッシュの内容）に対するもの。箇所は上から順で、重ならない。`startLine`・`endLine` は変更前の行、`newText` は変更後の行（`\n` でつなぐ）、`newStartLine`・`newEndLine` はその行番号で、`edit` と同じ。挿入は `endLine = startLine - 1`、削除は `newText` が空で `newEndLine = newStartLine - 1`。変更前の内容に当てると、変更後の内容（`actualSha` のハッシュ）になる。差分のコマ（左右に並べた diff）として再生する
 - `text`：**変更後のファイル全文**。行で表せない変更（ファイル末尾の改行だけが変わった）や、比べるには大きすぎる変更のとき、`hunks` の代わりに書く。ファイルが消えていたときは `null`、`actualSha` は空文字列で、`deleted: true` が付く
 - `created`：ファイルが**新しい**とき（テープがその内容を持たず、シェルのコマンドが作った）に `true` で書く。`expectedSha` は空文字列で、`hunks`（または `text`）がファイル全体を持つので、左が空の差分のコマとして再生する。見つけるのは hook だけ（[cli_ja.md](cli_ja.md) の `srwr hook`）
-- `detectedBy`：検知のきっかけ（`select`・`replace`・`sub`・`new`・`hook`）
+- `detectedBy`：検知のきっかけ（`look`・`edit`・`replace`・`new`・`hook`。バージョン 1 のテープでは `select`・`sub`）
 - `author.kind` は `external` 固定（誰が変えたかは srwr には分からない）
 - 古い形式の `external` も読める：全文の `text` を持ち直後に `snapshot` が続くもの、`text` のないもの（そのときは、直後の `snapshot` を変更後の内容として見せる）
 
 **検知できる範囲**：`external` になるのは、**テープがすでに内容（`snapshot`）を持つファイル**が、あとで食い違ったときだけ。そのセッションで初めて触れるファイルは、そのときの内容が最初の `snapshot` になる。一度も触れないファイルの変更は見えない（ただし、Bash の後に git の作業ツリーにある**新しい**ファイルは、`created` つきの `external` として記録する）。
 
-`external` より前に発行した範囲トークンで `replace` したときも、ふつうに追う（行番号を補正するのは、srwr 自身の編集だけ）。外部変更が、範囲の中身も、範囲より上の行数も変えていなければ、そのトークンは使える。変えていれば、内容の照合で `selection_mismatch` になる。外部変更の中身から、行のずれを推定することはしない。
+`external` より前に発行した範囲トークンで `edit` したときも、ふつうに追う（行番号を補正するのは、srwr 自身の編集だけ）。外部変更が、範囲の中身も、範囲より上の行数も変えていなければ、そのトークンは使える。変えていれば、内容の照合で `selection_mismatch` になる。外部変更の中身から、行のずれを推定することはしない。
 
 ### failure
 
-`select`・`replace`・`sub`・`new` が失敗したとき（AI がエラーを受け取ったとき）に記録する。AI がどんなミスをするかを知るためのもの。ビューワーは、頼まれたときだけコマとして出す（赤。[vscode_ja.md](vscode_ja.md)）。ふだんは出さない。
+`look`・`edit`・`replace`・`new` が失敗したとき（AI がエラーを受け取ったとき）に記録する。AI がどんなミスをするかを知るためのもの。ビューワーは、頼まれたときだけコマとして出す（赤。[vscode_ja.md](vscode_ja.md)）。ふだんは出さない。
 
 ```json
-{"v":1,"seq":7,"ts":"…","type":"failure","tool":"select","file":null,"startLine":3,"endLine":9,"selection":null,"why":"main 関数を確認する","code":"invalid_range","message":"The path is absolute. Give a path relative to the workspace"}
-{"v":1,"seq":9,"ts":"…","type":"failure","tool":"replace","file":"cmd/app/main.go","startLine":null,"endLine":null,"selection":"sel_0410R3GZE4KV11C6325D32S7","why":"…","code":"selection_stale","message":"an edit overlapped the range after the select. Call select again"}
+{"v":2,"seq":7,"ts":"…","type":"failure","tool":"look","file":null,"startLine":3,"endLine":9,"selection":null,"why":"main 関数を確認する","code":"invalid_range","message":"The path is absolute. Give a path relative to the workspace"}
+{"v":2,"seq":9,"ts":"…","type":"failure","tool":"edit","file":"cmd/app/main.go","startLine":null,"endLine":null,"selection":"sel_0410R3GZE4KV11C6325D32S7","why":"…","code":"selection_stale","message":"an edit overlapped the range after the look. Call look again"}
 ```
 
-- `tool`：`select`・`replace`・`sub`・`new`。`code` と `message` は、AI が受け取ったエラー（[mcp_ja.md](mcp_ja.md)）
-- `file`：作業場の中のパス。分からないときと、伏せるときは `null`（`sub` は、ファイルを1つだけ渡したときだけそのファイル。`new` は渡したファイル）。`startLine`・`endLine` は `select` のとき、`selection`（渡されたトークン）は `replace` のとき。`why` は AI が書いたもの。値がないものは `null`
+- `tool`：`look`・`edit`・`replace`・`new`。`code` と `message` は、AI が受け取ったエラー（[mcp_ja.md](mcp_ja.md)）
+- `file`：作業場の中のパス。分からないときと、伏せるときは `null`（`replace` は、ファイルを1つだけ渡したときだけそのファイル。`new` は渡したファイル）。`startLine`・`endLine` は `look` のとき、`selection`（渡されたトークン）は `edit` のとき。`why` は AI が書いたもの。値がないものは `null`
 - **実際のパスは伏せる**：絶対パス、作業場の外を指すパス、記録しないファイルのとき、`file` は `null` で、`message` はパスを含まない文にする（`The path is absolute. Give a path relative to the workspace`、`The path points outside the workspace`、`The file is not recorded`）
-- `replace` の `newText`、`sub` の `old` と `new`、`new` の `content` は書かない。`message` は 300 文字で切る
+- `edit` の `newText`、`replace` の `old` と `new`、`new` の `content`、`look` の `expect` は書かない。`message` は 300 文字で切る
 - srwr の編集に届く前に見つかる失敗（必須の入力がない、値の型が違う）も記録する。`file` は `null`
+
+## バージョン 1 のテープ
+
+srwr 0.1.4 までが書いたテープは `"v":1` で、そのまま読める。変わったのは、イベントの名前（ツールの名前が変わったため）。
+
+| バージョン 1 | 読み替え |
+|---|---|
+| `select` | `look` |
+| `replace` | `edit` |
+| `tool` が `sub` の `replace` | `replace`（`tool` は外す） |
+| `tool` が `new` の `replace` | `new`（`tool` は外す） |
+| `failure` の `tool`：`select`・`replace`・`sub` | `look`・`edit`・`replace` |
+
+版は1行ごとに読むので、更新のあとに版 2 で書き続けたテープも正しく読める。古いテープの行は書き換えない。
 
 ## 範囲トークン
 
-`select` が返す `sel_…` の文字列。`from`・`selection` に入る。AI はそのまま渡すだけで、中身を知らなくてよい。
+`look`・`edit`・`new` が返す `sel_…` の文字列。`from`・`selection` に入る。AI はそのまま渡すだけで、中身を知らなくてよい。
 
 - **テープの中でだけ有効**。別のテープ（別のセッション）で発行されたものは、`invalid_selection` になる。セッションが替わる（30分空く、など）と、前のセッションのトークンは使えない
 - 形式と検証の詳細は、開発者向けの [token.md](../design/token_ja.md)

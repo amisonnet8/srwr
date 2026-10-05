@@ -9,8 +9,8 @@ import (
 	"github.com/amisonnet8/srwr/internal/token"
 )
 
-// SubInput is the input of sub: replace every place that holds Old in Files with New, when there are exactly Count of them.
-type SubInput struct {
+// ReplaceInput is the input of sub: replace every place that holds Old in Files with New, when there are exactly Count of them.
+type ReplaceInput struct {
 	Files []string
 	Old   string
 	New   string
@@ -18,8 +18,8 @@ type SubInput struct {
 	Why   string
 }
 
-// SubFile is what sub did to one file: how many places, and the range and token of the lines it changed (the first place to the last).
-type SubFile struct {
+// ReplaceFile is what sub did to one file: how many places, and the range and token of the lines it changed (the first place to the last).
+type ReplaceFile struct {
 	File      string
 	Hits      int
 	StartLine int
@@ -28,23 +28,23 @@ type SubFile struct {
 	Lines     []string
 }
 
-// SubResult is what sub returns: the number of places and, for each file that had any, what changed.
-type SubResult struct {
+// ReplaceResult is what sub returns: the number of places and, for each file that had any, what changed.
+type ReplaceResult struct {
 	Count int
-	Files []SubFile
+	Files []ReplaceFile
 }
 
-// Sub replaces a text in several files. It changes nothing unless the number of places is Count. A failure is also written to
+// Replace replaces a text in several files. It changes nothing unless the number of places is Count. A failure is also written to
 // the tape (without the texts).
-func (c *Core) Sub(in SubInput) (*SubResult, *Error) {
-	res, cerr := c.doSub(in)
+func (c *Core) Replace(in ReplaceInput) (*ReplaceResult, *Error) {
+	res, cerr := c.doReplace(in)
 	if cerr != nil {
-		c.recordFailure(failedCall{tool: toolSub, files: in.Files, why: &in.Why, err: cerr})
+		c.recordFailure(failedCall{tool: toolReplace, files: in.Files, why: &in.Why, err: cerr})
 	}
 	return res, cerr
 }
 
-func (c *Core) doSub(in SubInput) (*SubResult, *Error) {
+func (c *Core) doReplace(in ReplaceInput) (*ReplaceResult, *Error) {
 	if err := checkWhy(in.Why); err != nil {
 		return nil, err
 	}
@@ -71,10 +71,10 @@ func (c *Core) doSub(in SubInput) (*SubResult, *Error) {
 		seen[rel] = true
 		rels[i] = rel
 	}
-	var res *SubResult
+	var res *ReplaceResult
 	cerr := c.run(func(tx *session.Tx) error {
 		var err error
-		res, err = c.subIn(tx, rels, in)
+		res, err = c.replaceIn(tx, rels, in)
 		return err
 	})
 	if cerr != nil {
@@ -83,8 +83,8 @@ func (c *Core) doSub(in SubInput) (*SubResult, *Error) {
 	return res, nil
 }
 
-// subPlan is the change to one file, worked out before anything is written.
-type subPlan struct {
+// replacePlan is the change to one file, worked out before anything is written.
+type replacePlan struct {
 	rel      string
 	t        target
 	hits     int
@@ -94,18 +94,18 @@ type subPlan struct {
 	newText  string
 }
 
-func (c *Core) subIn(tx *session.Tx, rels []string, in SubInput) (*SubResult, error) {
-	plans := make([]subPlan, len(rels))
+func (c *Core) replaceIn(tx *session.Tx, rels []string, in ReplaceInput) (*ReplaceResult, error) {
+	plans := make([]replacePlan, len(rels))
 	total := 0
 	for i, rel := range rels {
 		t, cerr := c.readTarget(rel)
 		if cerr != nil {
 			return nil, cerr
 		}
-		if err := c.observeTarget(tx, rel, "sub", t); err != nil {
+		if err := c.observeTarget(tx, rel, "replace", t); err != nil {
 			return nil, err
 		}
-		plans[i] = subPlan{rel: rel, t: t, hits: strings.Count(t.text, in.Old)}
+		plans[i] = replacePlan{rel: rel, t: t, hits: strings.Count(t.text, in.Old)}
 		total += plans[i].hits
 	}
 	if total != in.Count {
@@ -130,12 +130,12 @@ func (c *Core) subIn(tx *session.Tx, rels []string, in SubInput) (*SubResult, er
 		}
 	}
 
-	res := &SubResult{Count: total}
+	res := &ReplaceResult{Count: total}
 	for _, p := range plans {
 		if p.hits == 0 {
 			continue
 		}
-		// The file first, then the tape (see replaceIn).
+		// The file first, then the tape (see editIn).
 		if err := writeFile(p.t.real, p.newText); err != nil {
 			return nil, err
 		}
@@ -152,12 +152,12 @@ func (c *Core) subIn(tx *session.Tx, rels []string, in SubInput) (*SubResult, er
 			StartLine: p.a, EndLine: p.b, OldText: p.oldText, NewText: strings.Join(p.newLines, "\n"),
 			NewStartLine: p.a, NewEndLine: newEnd, Selection: &sel, Why: &in.Why,
 			FileShaBefore: tape.Sha(p.t.text), FileShaAfter: tape.Sha(p.newText),
-			Source: tape.SourceMCP, HookTool: toolSub, Hits: p.hits,
+			Source: tape.SourceMCP, Hits: p.hits,
 		})
 		if err != nil {
 			return nil, err
 		}
-		res.Files = append(res.Files, SubFile{
+		res.Files = append(res.Files, ReplaceFile{
 			File: p.rel, Hits: p.hits, StartLine: p.a, EndLine: newEnd, Selection: sel,
 			Lines: rangeLines(p.newText, p.a, newEnd),
 		})
@@ -167,7 +167,7 @@ func (c *Core) subIn(tx *session.Tx, rels []string, in SubInput) (*SubResult, er
 
 // plan works out the lines that change: from the line of the first place to the line of the last, with every place in between
 // replaced. It fails when the change cannot be told in lines (for example a line break added at the end of the file).
-func (p *subPlan) plan(in SubInput) *Error {
+func (p *replacePlan) plan(in ReplaceInput) *Error {
 	text := p.t.text
 	first := strings.Index(text, in.Old)
 	last := first
@@ -186,7 +186,7 @@ func (p *subPlan) plan(in SubInput) *Error {
 	p.oldText = tape.RangeText(text, p.a, p.b)
 	p.newText = tape.SpliceLines(text, p.a, p.b, p.newLines)
 	if p.newText != strings.ReplaceAll(text, in.Old, in.New) {
-		return newError(CodeInvalidInput, "the change to %s cannot be written as lines (it adds or removes the final line break of the file). Use select and replace for it", p.rel)
+		return newError(CodeInvalidInput, "the change to %s cannot be written as lines (it adds or removes the final line break of the file). Use look and edit for it", p.rel)
 	}
 	return nil
 }

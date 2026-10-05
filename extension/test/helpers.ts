@@ -33,8 +33,15 @@ export function loadGolden(name: string): Golden {
   return JSON.parse(fs.readFileSync(path.join(goldenDir, `${name}.json`), "utf8")) as Golden;
 }
 
+// The golden data was written for the tape of version 1, which said select and replace for what are look and edit now.
+const GOLDEN_KINDS: Record<string, string> = { select: "look", replace: "edit", sub: "replace" };
+
+export function goldenKind(kind: string): string {
+  return GOLDEN_KINDS[kind] ?? kind;
+}
+
 export function goldenFrames(g: Golden): Frame[] {
-  return g.frames.map(toFrame);
+  return g.frames.map((f) => toFrame({ ...f, kind: goldenKind(f.kind as string) }));
 }
 
 // Copies the fixed workspace (three tapes and the real files) to a new temporary directory.

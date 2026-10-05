@@ -43,7 +43,7 @@ async function openTape(server: FakeServer, id: string) {
 
 const colorsOf = (tab: { decorations: Array<{ opts: Record<string, unknown> }> }): unknown[] => tab.decorations.map((d) => d.opts.backgroundColor ?? "numbers");
 
-test("a select frame: why row in blue above the range in light blue, file's own line numbers", async () => {
+test("a look frame: why row in blue above the range in light blue, file's own line numbers", async () => {
   const a = await openTape(serverWithTapes(), WHY);
   const s = a.screen();
   assert.equal(s.tabs.length, 1);
@@ -72,7 +72,7 @@ test("a select frame: why row in blue above the range in light blue, file's own 
   assert.equal(tab.reveal, 38);
 });
 
-test("a replace frame is orange", async () => {
+test("an edit frame is orange", async () => {
   const a = await openTape(serverWithTapes(), WHY);
   await a.run("srwr.goto", 4);
   const tab = a.screen().tabs[0];
@@ -126,7 +126,7 @@ test("the list: numbered from 1, kinds, dots and a click goes to the frame", asy
   const a = await openTape(serverWithTapes(), EXT);
   const tree = a.screen().tree;
   assert.equal(tree.length, 11);
-  assert.deepEqual(tree[0], { label: "1  select  entry.go:29", description: "秒からミリ秒への倍率が間違っていて 1.5s が 150ms になっているため", color: "charts.blue", kind: "select" });
+  assert.deepEqual(tree[0], { label: "1  look  entry.go:29", description: "秒からミリ秒への倍率が間違っていて 1.5s が 150ms になっているため", color: "charts.blue", kind: "look" });
   assert.deepEqual([tree[3].color, tree[5].color, tree[9].color], ["charts.orange", "charts.purple", "charts.purple"]);
   assert.equal(tree[5].label, "6  外部変更  stats.go:1-126");
   assert.equal(tree[5].description, "srwr の外でファイルが変わった");
@@ -311,7 +311,7 @@ test("the line numbers are as wide as the file's last line number, not the docum
   const s = new FakeServer();
   const text = "x\n".repeat(98);
   const why = "a".repeat(150); // two rows at width 100
-  s.frames.set("t", [{ index: 0, kind: "select", file: "a.txt", range: { start: 1, end: 1 }, why, before: text, after: text }]);
+  s.frames.set("t", [{ index: 0, kind: "look", file: "a.txt", range: { start: 1, end: 1 }, why, before: text, after: text }]);
   s.tapes.push({ tapeId: "t", startedAt: "", ops: 1, files: ["a.txt"] });
   const a = await openTape(s, "t");
   const numbers = a.screen().tabs[0].decorations.find((d) => "before" in d.opts)!;
@@ -320,26 +320,26 @@ test("the line numbers are as wide as the file's last line number, not the docum
   assert.equal(numbers.ranges[2].before, nbsp + "1" + nbsp.repeat(2));
 });
 
-// A sub frame: a diff of the file with its why in a band above both sides (blue on the left, orange on the right).
-function serverWithSub(): FakeServer {
+// A replace frame: a diff of the file with its why in a band above both sides (blue on the left, orange on the right).
+function serverWithReplace(): FakeServer {
   const s = new FakeServer();
   const id = "20261005-1030-sub";
   const before = "1\nfoo(1)\n3\nfoo(2)\n5\n";
   const after = "1\nbar(1)\n3\nbar(2)\n5\n";
   const frames = [
-    { index: 0, kind: "sub" as const, seq: 2, file: "a.go", range: { start: 2, end: 4 }, why: "名前を変える", before, after, hits: 2 },
+    { index: 0, kind: "replace" as const, seq: 2, file: "a.go", range: { start: 2, end: 4 }, why: "名前を変える", before, after, hits: 2 },
   ];
   s.frames.set(id, frames);
   s.tapes.push({ tapeId: id, startedAt: "2026-10-05T10:30:00+09:00", ops: 1, files: ["a.go"] });
   return s;
 }
 
-test("a sub frame: left and right, the why in a band above both, the changed lines painted below it", async () => {
-  const a = await openTape(serverWithSub(), "20261005-1030-sub");
+test("a replace frame: left and right, the why in a band above both, the changed lines painted below it", async () => {
+  const a = await openTape(serverWithReplace(), "20261005-1030-sub");
   const s = a.screen();
   assert.equal(s.tabs.length, 2);
   const [left, right] = s.tabs;
-  assert.ok(left.uri.includes("前 ⚠ sub: a.go?diff=0&side=before"), left.uri);
+  assert.ok(left.uri.includes("前 ⚠ replace: a.go?diff=0&side=before"), left.uri);
   assert.ok(right.uri.includes("後 a.go?diff=0&side=after"), right.uri);
   assert.equal(left.text, "\n1\nfoo(1)\n3\nfoo(2)\n5\n", "the left has an empty row where the why is on the right");
   assert.equal(right.text, "◆ 名前を変える\n1\nbar(1)\n3\nbar(2)\n5\n");
@@ -356,10 +356,10 @@ test("a sub frame: left and right, the why in a band above both, the changed lin
   assert.equal(left.options.lineNumbers, 0, "the file's own numbers are drawn, since the band moves the lines");
 });
 
-test("a sub frame is listed with its file and the number of places, in orange", async () => {
-  const a = await openTape(serverWithSub(), "20261005-1030-sub");
+test("a replace frame is listed with its file and the number of places, in orange", async () => {
+  const a = await openTape(serverWithReplace(), "20261005-1030-sub");
   const row = a.screen().tree[0];
-  assert.match(String(row.label), /^1  sub  a\.go \(2か所\)$/);
+  assert.match(String(row.label), /^1  replace  a\.go \(2か所\)$/);
   assert.equal(row.description, "名前を変える");
   assert.equal(row.color, "charts.orange");
 });

@@ -5,7 +5,7 @@ import { Nav } from "./controls";
 import { BANNER_PREFIX, insertBanner, wrapWhy } from "./lines";
 import { OpsSource } from "./sidebar";
 import { Presenter } from "./present";
-import { basename, changedLines, formatRange, Frame, Hidden, isDiff, isSub, Timeline, splitLines, toneOf } from "./timeline";
+import { basename, changedLines, formatRange, Frame, Hidden, isDiff, isReplace, Timeline, splitLines, toneOf } from "./timeline";
 
 export const REPLAY_SCHEME = "srwr-replay";
 
@@ -126,7 +126,7 @@ export class ReplaySession implements OpsSource, Nav, vscode.Disposable {
       }
       const text = m[2] === "before" ? f.before : f.after;
       // A sub frame has its why in a band above the text, on the right; on the left there are empty rows, so the lines line up.
-      const band = isSub(f) ? subBand(f) : [];
+      const band = isReplace(f) ? subBand(f) : [];
       return band.length > 0 ? insertBanner(text, 1, m[2] === "before" ? band.map(() => "") : band) : text;
     }
     const fm = /(?:^|&)failure=(\d+)/.exec(uri.query);
@@ -162,7 +162,7 @@ export class ReplaySession implements OpsSource, Nav, vscode.Disposable {
 
   private async render(i: number, g: number): Promise<void> {
     const f = this.timeline.frames[i];
-    if (isDiff(f) || isSub(f)) {
+    if (isDiff(f) || isReplace(f)) {
       this.banner = undefined;
       await this.showDiff(f, g);
       if (g === this.gen) {
@@ -223,12 +223,12 @@ export class ReplaySession implements OpsSource, Nav, vscode.Disposable {
     if (g !== this.gen) {
       return;
     }
-    const band = isSub(f) ? subBand(f).length : 0;
+    const band = isReplace(f) ? subBand(f).length : 0;
     const changed = changedLines(splitLines(f.before), splitLines(f.after));
     const below = (lines: number[]): number[] => lines.map((n) => n + band);
     this.presenter.clear();
-    this.presenter.paintLines(leftEditor, "select", below(changed.before), band);
-    this.presenter.paintLines(rightEditor, "replace", below(changed.after), band);
+    this.presenter.paintLines(leftEditor, "look", below(changed.before), band);
+    this.presenter.paintLines(rightEditor, "edit", below(changed.after), band);
     // The first changed line goes about 30% from the top. A side with no changed line (only added or only removed)
     // follows the other side.
     const first = (changed.before[0] ?? changed.after[0] ?? 1) + band;
@@ -318,8 +318,8 @@ export function subBand(f: Frame): string[] {
 // The heading of a diff frame (the left tab).
 export function diffTitle(f: Frame): string {
   const name = basename(f.file);
-  if (f.kind === "sub") {
-    return `⚠ sub: ${name}`;
+  if (f.kind === "replace") {
+    return `⚠ replace: ${name}`;
   }
   if (f.kind === "final") {
     return pick(
@@ -346,7 +346,7 @@ export function failureText(f: Frame): string[] {
   const known: Array<[string, string]> = [
     ["why", f.why ?? pick("(none)", "(なし)")],
     ["tool", tool],
-    ["range", tool === "select" ? pick(`lines ${formatRange(f.range)}`, `${formatRange(f.range)} 行`) : "-"],
+    ["range", tool === "look" ? pick(`lines ${formatRange(f.range)}`, `${formatRange(f.range)} 行`) : "-"],
     ["file", f.file !== "" ? f.file : "(not shown)"],
   ];
   for (const [k, v] of known) {

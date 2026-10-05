@@ -152,11 +152,11 @@ func feedLive(workspace, fixture string, wait func(), every time.Duration, log i
 	return nil
 }
 
-// firstOperation is the index of the first select, replace or external line.
+// firstOperation is the index of the first look, edit or external line (the fixed tapes are version 1 and say select and replace).
 func firstOperation(lines []string) int {
 	for i, l := range lines {
 		var e struct{ Type string }
-		if json.Unmarshal([]byte(l), &e) == nil && (e.Type == "select" || e.Type == "replace" || e.Type == "external") {
+		if json.Unmarshal([]byte(l), &e) == nil && (e.Type == "select" || e.Type == "replace" || e.Type == "look" || e.Type == "edit" || e.Type == "new" || e.Type == "external") {
 			return i
 		}
 	}

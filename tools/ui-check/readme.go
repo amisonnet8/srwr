@@ -30,20 +30,20 @@ func greet(name string) string {
 // demoAfter is the file after the recording: a person added a line, which the last frame (final) shows.
 const demoAfter = demoSource + "\n// TODO: read the name from the command line\n"
 
-// demoStep is one call of the AI: a select (newText is empty) or a replace of the range the last select declared.
+// demoStep is one call of the AI: a look (newText is empty) or an edit of the range the last select declared.
 type demoStep struct {
-	kind       string // select | replace
+	kind       string // look | edit
 	start, end int
 	newText    string
 	why        string
 }
 
 var demoSteps = []demoStep{
-	{kind: "select", start: 9, end: 11, why: "greet is what main prints: check what it does when the name is empty"},
-	{kind: "replace", newText: "func greet(name string) string {\n\tif name == \"\" {\n\t\treturn \"hello, stranger\"\n\t}\n\treturn \"hello, \" + name\n}",
+	{kind: "look", start: 9, end: 11, why: "greet is what main prints: check what it does when the name is empty"},
+	{kind: "edit", newText: "func greet(name string) string {\n\tif name == \"\" {\n\t\treturn \"hello, stranger\"\n\t}\n\treturn \"hello, \" + name\n}",
 		why: "An empty name printed \"hello \" with nothing after it, so greet a stranger instead"},
-	{kind: "select", start: 5, end: 7, why: "main tries only one name: look at the call before adding the empty case"},
-	{kind: "replace", newText: "func main() {\n\tfmt.Println(greet(\"world\"))\n\tfmt.Println(greet(\"\"))\n}",
+	{kind: "look", start: 5, end: 7, why: "main tries only one name: look at the call before adding the empty case"},
+	{kind: "edit", newText: "func main() {\n\tfmt.Println(greet(\"world\"))\n\tfmt.Println(greet(\"\"))\n}",
 		why: "Print both greetings, so the empty-name case shows up when the program runs"},
 }
 
@@ -82,7 +82,7 @@ func makeDemoWorkspace(bin string) (string, error) {
 	for _, s := range demoSteps {
 		args := map[string]any{"why": s.why}
 		name := s.kind
-		if s.kind == "select" {
+		if s.kind == "look" {
 			args["file"], args["startLine"], args["endLine"] = "main.go", s.start, s.end
 		} else {
 			args["selection"], args["newText"] = token, s.newText
@@ -124,7 +124,7 @@ func vimDemo(root, bin, work, theme string) (string, error) {
 	for i, g := range got.Grids {
 		grids[i] = g.WithoutTopRows(1) // the tab line of the Vim started for the picture
 	}
-	return uicheck.AnimatedSVG("srwr view in Vim: the AI's select and replace, with the reason of each, step by step", grids, demoHolds)
+	return uicheck.AnimatedSVG("srwr view in Vim: the AI's look and edit, with the reason of each, step by step", grids, demoHolds)
 }
 
 // runReadme makes the pictures under docs/images/ and extension/media/readme/ and the page to look at them.

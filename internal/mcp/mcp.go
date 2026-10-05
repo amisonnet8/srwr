@@ -48,7 +48,7 @@ func (s *Server) Handle(req jsonrpc.Request) (any, *jsonrpc.Error) {
 	return nil, &jsonrpc.Error{Code: jsonrpc.MethodNotFound, Message: "method not found: " + req.Method}
 }
 
-// The order of the fields is the order they are written in, and docs/examples/select-replace.md shows it.
+// The order of the fields is the order they are written in, and docs/examples/look-edit.md shows it.
 type initializeResult struct {
 	Capabilities    map[string]any `json:"capabilities"`
 	ProtocolVersion string         `json:"protocolVersion"`
@@ -96,7 +96,7 @@ type toolResult struct {
 	IsError bool          `json:"isError"`
 }
 
-// textContent has text before type, as docs/examples/select-replace.md shows.
+// textContent has text before type, as docs/examples/look-edit.md shows.
 type textContent struct {
 	Text string `json:"text"`
 	Type string `json:"type"`
@@ -111,19 +111,19 @@ func (s *Server) call(params json.RawMessage) (any, *jsonrpc.Error) {
 		return nil, &jsonrpc.Error{Code: jsonrpc.InvalidParams, Message: "invalid params: " + err.Error()}
 	}
 	switch p.Name {
-	case tools.Select:
-		return s.callSelect(p.Arguments), nil
+	case tools.Look:
+		return s.callLook(p.Arguments), nil
+	case tools.Edit:
+		return s.callEdit(p.Arguments), nil
 	case tools.Replace:
 		return s.callReplace(p.Arguments), nil
-	case tools.Sub:
-		return s.callSub(p.Arguments), nil
 	case tools.New:
 		return s.callNew(p.Arguments), nil
 	}
 	return nil, &jsonrpc.Error{Code: jsonrpc.InvalidParams, Message: "unknown tool: " + p.Name}
 }
 
-type selectArgs struct {
+type lookArgs struct {
 	File      *string `json:"file"`
 	StartLine *int    `json:"startLine"`
 	EndLine   *int    `json:"endLine"`
@@ -131,7 +131,7 @@ type selectArgs struct {
 	Why       *string `json:"why"`
 }
 
-type selectOK struct {
+type lookOK struct {
 	OK        bool     `json:"ok"`
 	Selection string   `json:"selection"`
 	StartLine int      `json:"startLine"`
@@ -139,47 +139,47 @@ type selectOK struct {
 	Lines     []string `json:"lines"`
 }
 
-func (s *Server) callSelect(raw json.RawMessage) toolResult {
-	var a selectArgs
+func (s *Server) callLook(raw json.RawMessage) toolResult {
+	var a lookArgs
 	if err := decodeArgs(raw, &a); err != nil {
-		s.Core.RecordInputFailure(tools.Select, err.Code, err.Message)
+		s.Core.RecordInputFailure(tools.Look, err.Code, err.Message)
 		return failure(*err)
 	}
 	if missing := firstMissing(map[string]bool{"file": a.File == nil, "why": a.Why == nil}, "file", "why"); missing != "" {
-		return s.rejectSelect("missing required input: " + missing)
+		return s.rejectLook("missing required input: " + missing)
 	}
 	// The line numbers go together; with none of them, expect says where the range is.
 	switch {
 	case (a.StartLine == nil) != (a.EndLine == nil):
-		return s.rejectSelect("give both startLine and endLine, or neither")
+		return s.rejectLook("give both startLine and endLine, or neither")
 	case a.StartLine == nil && a.Expect == nil:
-		return s.rejectSelect("missing required input: startLine and endLine (or expect, to find the range by its content)")
+		return s.rejectLook("missing required input: startLine and endLine (or expect, to find the range by its content)")
 	}
-	in := core.SelectInput{File: *a.File, Why: *a.Why, Expect: a.Expect, Locate: a.StartLine == nil}
+	in := core.LookInput{File: *a.File, Why: *a.Why, Expect: a.Expect, Locate: a.StartLine == nil}
 	if !in.Locate {
 		in.StartLine, in.EndLine = *a.StartLine, *a.EndLine
 	}
-	res, cerr := s.Core.Select(in)
+	res, cerr := s.Core.Look(in)
 	if cerr != nil {
 		return failure(*cerr)
 	}
-	return success(selectOK{OK: true, Selection: res.Selection, StartLine: res.StartLine, EndLine: res.EndLine, Lines: res.Lines})
+	return success(lookOK{OK: true, Selection: res.Selection, StartLine: res.StartLine, EndLine: res.EndLine, Lines: res.Lines})
 }
 
-// rejectSelect turns a select away for its input, and records that on the tape.
-func (s *Server) rejectSelect(message string) toolResult {
+// rejectLook turns a look away for its input, and records that on the tape.
+func (s *Server) rejectLook(message string) toolResult {
 	e := core.Error{Code: core.CodeInvalidInput, Message: message}
-	s.Core.RecordInputFailure(tools.Select, e.Code, e.Message)
+	s.Core.RecordInputFailure(tools.Look, e.Code, e.Message)
 	return failure(e)
 }
 
-type replaceArgs struct {
+type editArgs struct {
 	Selection *string `json:"selection"`
 	NewText   *string `json:"newText"`
 	Why       *string `json:"why"`
 }
 
-type replaceOK struct {
+type editOK struct {
 	OK        bool     `json:"ok"`
 	Selection string   `json:"selection"`
 	StartLine int      `json:"startLine"`
@@ -189,27 +189,27 @@ type replaceOK struct {
 	After     []string `json:"after"`
 }
 
-func (s *Server) callReplace(raw json.RawMessage) toolResult {
-	var a replaceArgs
+func (s *Server) callEdit(raw json.RawMessage) toolResult {
+	var a editArgs
 	if err := decodeArgs(raw, &a); err != nil {
-		s.Core.RecordInputFailure(tools.Replace, err.Code, err.Message)
+		s.Core.RecordInputFailure(tools.Edit, err.Code, err.Message)
 		return failure(*err)
 	}
 	if missing := firstMissing(map[string]bool{"selection": a.Selection == nil, "newText": a.NewText == nil, "why": a.Why == nil},
 		"selection", "newText", "why"); missing != "" {
 		e := core.Error{Code: core.CodeInvalidInput, Message: "missing required input: " + missing}
-		s.Core.RecordInputFailure(tools.Replace, e.Code, e.Message)
+		s.Core.RecordInputFailure(tools.Edit, e.Code, e.Message)
 		return failure(e)
 	}
-	res, cerr := s.Core.Replace(core.ReplaceInput{Selection: *a.Selection, NewText: *a.NewText, Why: *a.Why})
+	res, cerr := s.Core.Edit(core.EditInput{Selection: *a.Selection, NewText: *a.NewText, Why: *a.Why})
 	if cerr != nil {
 		return failure(*cerr)
 	}
-	return success(replaceOK{OK: true, Selection: res.Selection, StartLine: res.StartLine, EndLine: res.EndLine,
+	return success(editOK{OK: true, Selection: res.Selection, StartLine: res.StartLine, EndLine: res.EndLine,
 		Lines: res.Lines, Before: res.Before, After: res.After})
 }
 
-type subArgs struct {
+type replaceArgs struct {
 	Files *[]string `json:"files"`
 	Old   *string   `json:"old"`
 	New   *string   `json:"new"`
@@ -217,13 +217,13 @@ type subArgs struct {
 	Why   *string   `json:"why"`
 }
 
-type subOK struct {
-	OK    bool        `json:"ok"`
-	Count int         `json:"count"`
-	Files []subFileOK `json:"files"`
+type replaceOK struct {
+	OK    bool            `json:"ok"`
+	Count int             `json:"count"`
+	Files []replaceFileOK `json:"files"`
 }
 
-type subFileOK struct {
+type replaceFileOK struct {
 	File      string   `json:"file"`
 	Hits      int      `json:"hits"`
 	StartLine int      `json:"startLine"`
@@ -232,25 +232,25 @@ type subFileOK struct {
 	Lines     []string `json:"lines"`
 }
 
-func (s *Server) callSub(raw json.RawMessage) toolResult {
-	var a subArgs
+func (s *Server) callReplace(raw json.RawMessage) toolResult {
+	var a replaceArgs
 	if err := decodeArgs(raw, &a); err != nil {
-		s.Core.RecordInputFailure(tools.Sub, err.Code, err.Message)
+		s.Core.RecordInputFailure(tools.Replace, err.Code, err.Message)
 		return failure(*err)
 	}
 	if missing := firstMissing(map[string]bool{"files": a.Files == nil, "old": a.Old == nil, "new": a.New == nil, "count": a.Count == nil, "why": a.Why == nil},
 		"files", "old", "new", "count", "why"); missing != "" {
 		e := core.Error{Code: core.CodeInvalidInput, Message: "missing required input: " + missing}
-		s.Core.RecordInputFailure(tools.Sub, e.Code, e.Message)
+		s.Core.RecordInputFailure(tools.Replace, e.Code, e.Message)
 		return failure(e)
 	}
-	res, cerr := s.Core.Sub(core.SubInput{Files: *a.Files, Old: *a.Old, New: *a.New, Count: *a.Count, Why: *a.Why})
+	res, cerr := s.Core.Replace(core.ReplaceInput{Files: *a.Files, Old: *a.Old, New: *a.New, Count: *a.Count, Why: *a.Why})
 	if cerr != nil {
 		return failure(*cerr)
 	}
-	out := subOK{OK: true, Count: res.Count, Files: []subFileOK{}}
+	out := replaceOK{OK: true, Count: res.Count, Files: []replaceFileOK{}}
 	for _, f := range res.Files {
-		out.Files = append(out.Files, subFileOK{File: f.File, Hits: f.Hits, StartLine: f.StartLine, EndLine: f.EndLine, Selection: f.Selection, Lines: f.Lines})
+		out.Files = append(out.Files, replaceFileOK{File: f.File, Hits: f.Hits, StartLine: f.StartLine, EndLine: f.EndLine, Selection: f.Selection, Lines: f.Lines})
 	}
 	return success(out)
 }

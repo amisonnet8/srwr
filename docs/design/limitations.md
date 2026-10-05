@@ -9,7 +9,7 @@
 - **A change to a file that was never touched cannot be seen.** Only a file whose content the tape already holds can become `external` (holding a base for every file would make the tape big). The exception is a new file made by a Bash command: in a git work tree it is found and recorded (`created`)
 - **After an external change that alters the range or the number of lines above it, the selection tokens issued before it cannot be used.** The content check gives `selection_mismatch`. srwr does not estimate the shift of lines from the content of the external change
 - Files with line breaks other than LF (CRLF) and binary files cannot be handled (`unsupported_file`)
-- The ban on Edit/Write and the hook depend on the settings of Claude Code. With other agents, `select` / `replace` themselves can still be used, because they are MCP
+- The ban on Edit/Write and the hook depend on the settings of Claude Code. With other agents, `look` / `edit` / `replace` / `new` themselves can still be used, because they are MCP
 - **Diffs in VSCode**: there are no blank lines to align the lines, and the left and right sides do not scroll together (because the standard diff screen is not used)
 - **Line numbers in VSCode**: on a frame with a reason line, the real file's own numbers appear at the left edge of the text, not in the gutter
 - **Wrapping width of the reason**: VSCode uses a fixed display width of 100; Vim uses the width of the window
@@ -19,9 +19,9 @@
 Things not yet decided. When one is decided, it is written in the proper document and removed from here.
 
 - How to show it in lenient mode when the AI creates a new file
-- How to show it when there are many frames of the investigation (the hook records at most 100 `select`s for one call, so a single call does not fill the tape)
+- How to show it when there are many frames of the investigation (the hook records at most 100 `look`s for one call, so a single call does not fill the tape)
 - The length of the HMAC of the selection token (3 bytes; a trade-off between the rate of catching copying mistakes and the number of characters)
-- Reconsidering that `select` always returns `lines` (a trade-off with token consumption)
+- Reconsidering that `look` always returns `lines` (a trade-off with token consumption)
 
 ## 3. Candidates to add
 

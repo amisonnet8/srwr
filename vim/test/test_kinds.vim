@@ -9,12 +9,12 @@ import autoload 'srwr/timeline.vim'
 import autoload 'srwr/ui.vim'
 
 # --- pure ---
-const fail1 = {index: 1, seq: 3, kind: 'failure', file: '', range: {start: 9, end: 9}, why: 'abs', before: '', after: '', tool: 'select', code: 'invalid_range', message: 'The path is absolute. Give a path relative to the workspace'}
-const fail2 = {index: 3, seq: 5, kind: 'failure', file: 'a.go', range: {start: 0, end: -1}, why: v:null, before: '', after: '', tool: 'replace', code: 'selection_stale', message: 'stale'}
+const fail1 = {index: 1, seq: 3, kind: 'failure', file: '', range: {start: 9, end: 9}, why: 'abs', before: '', after: '', tool: 'look', code: 'invalid_range', message: 'The path is absolute. Give a path relative to the workspace'}
+const fail2 = {index: 3, seq: 5, kind: 'failure', file: 'a.go', range: {start: 0, end: -1}, why: v:null, before: '', after: '', tool: 'edit', code: 'selection_stale', message: 'stale'}
 const frames = [
-  {index: 0, seq: 2, kind: 'select', file: 'a.go', range: {start: 2, end: 2}, why: 'look', before: "1\n2\n3\n", after: "1\n2\n3\n"},
+  {index: 0, seq: 2, kind: 'look', file: 'a.go', range: {start: 2, end: 2}, why: 'look', before: "1\n2\n3\n", after: "1\n2\n3\n"},
   fail1,
-  {index: 2, seq: 4, kind: 'replace', file: 'a.go', range: {start: 2, end: 2}, why: 'change', before: "1\n2\n3\n", after: "1\nTWO\n3\n"},
+  {index: 2, seq: 4, kind: 'edit', file: 'a.go', range: {start: 2, end: 2}, why: 'change', before: "1\n2\n3\n", after: "1\nTWO\n3\n"},
   fail2,
 ]
 const tl = timeline.New(frames)
@@ -26,11 +26,11 @@ t.Equal(2, timeline.NearestBySeq(tl, 4), 'nearest by seq')
 t.Equal(3, timeline.NearestBySeq(tl, 100), 'nearest by seq, past the end')
 t.Equal(0, timeline.NearestBySeq(tl, 1), 'nearest by seq, before the start')
 t.Equal(-1, timeline.NearestBySeq(timeline.New(), 4), 'no frames')
-t.Equal(0, timeline.NearestBySeq(timeline.New([{index: 0, seq: 2, kind: 'select'}, {index: 1, seq: 4, kind: 'select'}]), 3), 'a tie goes to the earlier frame')
+t.Equal(0, timeline.NearestBySeq(timeline.New([{index: 0, seq: 2, kind: 'look'}, {index: 1, seq: 4, kind: 'look'}]), 3), 'a tie goes to the earlier frame')
 t.Equal('', timeline.HiddenText({}), 'nothing hidden')
-t.Equal('隠している: select (1), failure (2)', timeline.HiddenText({failure: 2, select: 1}), 'hidden, in the order of the kinds')
-t.Equal(['✖ select が失敗しました  (invalid_range)', fail1.message, '', 'why    abs', 'tool   select', 'range  9 行', 'file   (not shown)'], timeline.FailureLines(fail1), 'a select failure')
-t.Equal(['✖ replace が失敗しました  (selection_stale)', 'stale', '', 'why    (なし)', 'tool   replace', 'range  -', 'file   a.go'], timeline.FailureLines(fail2), 'a replace failure')
+t.Equal('隠している: look (1), failure (2)', timeline.HiddenText({failure: 2, look: 1}), 'hidden, in the order of the kinds')
+t.Equal(['✖ look が失敗しました  (invalid_range)', fail1.message, '', 'why    abs', 'tool   look', 'range  9 行', 'file   (not shown)'], timeline.FailureLines(fail1), 'a look failure')
+t.Equal(['✖ edit が失敗しました  (selection_stale)', 'stale', '', 'why    (なし)', 'tool   edit', 'range  -', 'file   a.go'], timeline.FailureLines(fail2), 'an edit failure')
 t.Equal('●  2 失敗     invalid_range  abs', sidebar.Line(fail1, ), 'a failure row: the code in the place of file:range')
 t.Equal('srwr_dot_failure', sidebar.DotType('failure'), 'a red dot')
 const plain = join(mapnew(replay.StatusParts(1, 4, false, 'failure: select', 100, '', 'hidden: failure (2)'), (_, p) => p[0]), '')
@@ -77,13 +77,13 @@ enddef
 
 ui.Open('20261004-1530-kinds')
 t.WaitFor((): bool => replay.Active(), 'the tape to open')
-t.Equal(['select', 'replace'], Kinds(), 'failure is left out at the start')
+t.Equal(['look', 'edit'], Kinds(), 'failure is left out at the start')
 t.Equal({failure: 2}, replay.Session().hidden, 'and the server says how many')
 t.True(getwinvar(replay.Session().win, '&statusline') =~# '隠している: failure (2)', 'the status line says what is left out')
-t.Equal(['select', 'replace', 'external'], ui.Kinds(), 'the default kinds')
+t.Equal(['look', 'edit', 'external'], ui.Kinds(), 'the default kinds')
 
-# ts, tr, te and tf are local to srwr's buffers
-for key in ['ts', 'tr', 'te', 'tf']
+# tl, te, tx and tf are local to srwr's buffers
+for key in ['tl', 'te', 'tx', 'tf']
   for w in [replay.Session().win, replay.Session().sidebar]
     t.Equal(1, win_execute(w, 'echo maparg(' .. string(key) .. ', "n", 0, 1).buffer')->trim()->str2nr(), key .. ' is local in window ' .. w)
   endfor
@@ -94,28 +94,28 @@ replay.Goto(1)
 win_gotoid(replay.Session().win)
 execute 'normal tf'
 t.WaitFor((): bool => replay.Active() && len(replay.Session().tl.frames) == 4, 'the tape to open again with failure')
-t.Equal(['select', 'failure', 'replace', 'failure'], Kinds(), 'failure is in, in the order recorded')
+t.Equal(['look', 'failure', 'edit', 'failure'], Kinds(), 'failure is in, in the order recorded')
 t.Equal(2, replay.Session().index, 'the replace (seq 4) is still the frame on the screen')
 t.Equal({}, replay.Session().hidden, 'nothing is left out now')
-t.Equal(['select', 'replace', 'external', 'failure'], ui.Kinds(), 'the kinds, in order')
+t.Equal(['look', 'edit', 'external', 'failure'], ui.Kinds(), 'the kinds, in order')
 replay.Goto(3)
-t.True(getbufline(replay.Session().buf, 1, 1)[0] =~# '✖ replace', 'the second failure')
+t.True(getbufline(replay.Session().buf, 1, 1)[0] =~# '✖ edit', 'the second failure')
 replay.Goto(1)
 t.Equal('invalid_range', get(replay.Session().tl.frames[1], 'code', ''), 'the first failure')
 
-# Turn select and failure off: only the replace is left.
-ui.Toggle('select')
-t.WaitFor((): bool => replay.Active() && len(replay.Session().tl.frames) == 3, 'the tape to open again without select')
+# Turn look and failure off: only the replace is left.
+ui.Toggle('look')
+t.WaitFor((): bool => replay.Active() && len(replay.Session().tl.frames) == 3, 'the tape to open again without look')
 ui.Toggle('failure')
 t.WaitFor((): bool => replay.Active() && len(replay.Session().tl.frames) == 1, 'the tape to open again with the replace only')
-t.Equal(['replace'], Kinds(), 'replace only')
+t.Equal(['edit'], Kinds(), 'edit only')
 t.Equal(0, replay.Session().index, 'the replace is on the screen')
-t.Equal({select: 1, failure: 2}, replay.Session().hidden, 'what is left out')
+t.Equal({look: 1, failure: 2}, replay.Session().hidden, 'what is left out')
 t.Equal(1, len(getbufline(sidebar.Buf(), 1, '$')), 'the list has one row')
-t.True(getbufline(sidebar.Buf(), 1)[0] =~# '^● *1 replace', 'numbered 1 again: ' .. getbufline(sidebar.Buf(), 1)[0])
+t.True(getbufline(sidebar.Buf(), 1)[0] =~# '^● *1 edit', 'numbered 1 again: ' .. getbufline(sidebar.Buf(), 1)[0])
 
 # Nothing shown.
-ui.Toggle('replace')
+ui.Toggle('edit')
 t.WaitFor((): bool => replay.Active() && len(replay.Session().tl.frames) == 0, 'the tape to open again with nothing')
 t.Equal(['表示するコマがありません'], getbufline(replay.Session().buf, 1, '$'), 'it says there is nothing to show')
 
@@ -124,7 +124,7 @@ const before = ui.Kinds()
 ui.Toggle('final')
 t.Equal(before, ui.Kinds(), 'an unknown kind')
 replay.Close()
-ui.Toggle('select')
-ui.Toggle('replace')
-t.Equal(['select', 'replace', 'external'], ui.Kinds(), 'without a tape open the kinds are only remembered')
+ui.Toggle('look')
+ui.Toggle('edit')
+t.Equal(['look', 'edit', 'external'], ui.Kinds(), 'without a tape open the kinds are only remembered')
 t.Finish()

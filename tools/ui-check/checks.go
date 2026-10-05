@@ -33,8 +33,8 @@ func vimTest(file string) testRef     { return testRef{"vim", file} }
 var checks = []check{
 	{"起動と一覧", "項目の文言・並び・件数", []testRef{
 		nodeTest("tapes/list: the three fixed tapes"), nodeTest("quick pick: placeholder and items"), nodeTest("the list: numbered from 1"), vimTest("test_list.vim")}},
-	{"select・replace の表示", "理由の行の位置・範囲・色の値", []testRef{
-		nodeTest("a select frame: why row in blue"), nodeTest("a replace frame is orange"), vimTest("test_view.vim"), vimTest("test_hl.vim")}},
+	{"look・edit の表示", "理由の行の位置・範囲・色の値", []testRef{
+		nodeTest("a look frame: why row in blue"), nodeTest("an edit frame is orange"), vimTest("test_view.vim"), vimTest("test_hl.vim")}},
 	{"行番号", "自前の番号の値・標準に戻る", []testRef{
 		nodeTest("a normal frame after a diff frame stated"), nodeTest("the line numbers are as wide as"), vimTest("test_pure.vim")}},
 	{"理由なしのコマ", "理由の行が無い", []testRef{nodeTest("a frame without why"), vimTest("test_view.vim")}},

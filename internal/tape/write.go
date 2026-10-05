@@ -30,13 +30,13 @@ func Marshal(e Event) ([]byte, error) {
 			return nil, fmt.Errorf("snapshot of %s has no text", e.File)
 		}
 		fs = []field{{"seq", e.Seq}, {"ts", e.TS}, {"type", e.Type}, {"file", e.File}, {"fileHash", e.FileHash}, {"text", e.Text}, {"sha", e.Sha}}
-	case TypeSelect:
+	case TypeLook:
 		fs = []field{
 			{"seq", e.Seq}, {"ts", e.TS}, {"type", e.Type}, {"file", e.File},
 			{"startLine", e.StartLine}, {"endLine", e.EndLine}, {"why", e.Why}, {"selection", e.Selection},
 		}
 		fs = appendSource(fs, e)
-	case TypeReplace:
+	case TypeEdit, TypeReplace, TypeNew:
 		fs = []field{
 			{"seq", e.Seq}, {"ts", e.TS}, {"type", e.Type}, {"file", e.File}, {"from", e.From},
 			{"startLine", e.StartLine}, {"endLine", e.EndLine}, {"oldText", e.OldText}, {"newText", e.NewText},

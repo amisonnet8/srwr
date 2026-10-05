@@ -75,16 +75,16 @@
   ],
   "tree": [
    {
-    "label": "1  select  a.go:3",
+    "label": "1  look  a.go:3",
     "description": "main を確かめる",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  replace  a.go:3-5",
+    "label": "2  edit  a.go:3-5",
     "description": "メッセージを出す",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    }
   ],
   "status": [
@@ -193,16 +193,16 @@
   ],
   "tree": [
    {
-    "label": "1  select  a.go:3",
+    "label": "1  look  a.go:3",
     "description": "main を確かめる",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  replace  a.go:3-5",
+    "label": "2  edit  a.go:3-5",
     "description": "メッセージを出す",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    }
   ],
   "status": [
@@ -303,10 +303,10 @@
   ],
   "tree": [
    {
-    "label": "1  select  a.go:3",
+    "label": "1  look  a.go:3",
     "description": "main を確かめる",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
     "label": "2  failure  invalid_range",
@@ -315,10 +315,10 @@
     "kind": "failure"
    },
    {
-    "label": "3  replace  a.go:3-5",
+    "label": "3  edit  a.go:3-5",
     "description": "メッセージを出す",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
     "label": "4  failure  selection_stale",
@@ -354,9 +354,9 @@
   "label": "f2",
   "tabs": [
    {
-    "uri": "srwr-replay:/20260101-0001-with-failure/failure1/failure: select (invalid_range)?failure=1",
+    "uri": "srwr-replay:/20260101-0001-with-failure/failure1/failure: look (invalid_range)?failure=1",
     "column": 1,
-    "text": "✖ select failed (invalid_range)\nThe path is absolute. Give a path relative to the workspace\n\nwhy    もう一度、main を確かめる\ntool   select\nrange  lines 3\nfile   (not shown)\n",
+    "text": "✖ look failed (invalid_range)\nThe path is absolute. Give a path relative to the workspace\n\nwhy    もう一度、main を確かめる\ntool   look\nrange  lines 3\nfile   (not shown)\n",
     "options": {
      "lineNumbers": 1
     },
@@ -380,10 +380,10 @@
   ],
   "tree": [
    {
-    "label": "1  select  a.go:3",
+    "label": "1  look  a.go:3",
     "description": "main を確かめる",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
     "label": "2  failure  invalid_range",
@@ -392,10 +392,10 @@
     "kind": "failure"
    },
    {
-    "label": "3  replace  a.go:3-5",
+    "label": "3  edit  a.go:3-5",
     "description": "メッセージを出す",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
     "label": "4  failure  selection_stale",
@@ -509,10 +509,10 @@
   ],
   "tree": [
    {
-    "label": "1  select  a.go:3",
+    "label": "1  look  a.go:3",
     "description": "main を確かめる",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
     "label": "2  failure  invalid_range",
@@ -521,10 +521,10 @@
     "kind": "failure"
    },
    {
-    "label": "3  replace  a.go:3-5",
+    "label": "3  edit  a.go:3-5",
     "description": "メッセージを出す",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
     "label": "4  failure  selection_stale",
@@ -559,9 +559,9 @@
   "label": "f4",
   "tabs": [
    {
-    "uri": "srwr-replay:/20260101-0001-with-failure/failure3/failure: replace (selection_stale)?failure=3",
+    "uri": "srwr-replay:/20260101-0001-with-failure/failure3/failure: edit (selection_stale)?failure=3",
     "column": 1,
-    "text": "✖ replace failed (selection_stale)\nan edit overlapped the range after the select. Call select again\n\nwhy    もう一度、メッセージを出す\ntool   replace\nrange  -\nfile   a.go\n",
+    "text": "✖ edit failed (selection_stale)\nan edit overlapped the range after the look. Call look again\n\nwhy    もう一度、メッセージを出す\ntool   edit\nrange  -\nfile   a.go\n",
     "options": {
      "lineNumbers": 1
     },
@@ -585,10 +585,10 @@
   ],
   "tree": [
    {
-    "label": "1  select  a.go:3",
+    "label": "1  look  a.go:3",
     "description": "main を確かめる",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
     "label": "2  failure  invalid_range",
@@ -597,10 +597,10 @@
     "kind": "failure"
    },
    {
-    "label": "3  replace  a.go:3-5",
+    "label": "3  edit  a.go:3-5",
     "description": "メッセージを出す",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
     "label": "4  failure  selection_stale",

@@ -40,7 +40,7 @@ type target struct {
 // readTarget finds the file rel and reads it. A file that does not exist is not an error here:
 // the caller records the deletion first.
 //
-// This is the one place every entrance goes through (select, replace, hook, the look for external changes), so it is where
+// This is the one place every entrance goes through (look, edit, replace, new, hook, the look for external changes), so it is where
 // the files that are never recorded are turned away, whether they exist or not and whether they are named directly or
 // through a symbolic link.
 func (c *Core) readTarget(rel string) (target, *Error) {

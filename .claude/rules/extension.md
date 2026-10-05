@@ -2,7 +2,7 @@
 
 ## UI は確定している
 
-- **見た目と振る舞いは確定している**（`docs/reference/vscode.md`と、基準 `extension/test/baseline/`）。色（select は青 `#0b61a4`、replace は橙 `#b45f06`、差分のコマの丸は紫）、理由の行、差分（左右2つのエディタ、前＝青・後＝橙で変わった行だけ）、コマ送りだけ、平らな操作一覧、下のバー（戻る・進む・位置）、ライブ（録画と同じ画面、「LIVE に戻る（新着 N）」）を、勝手に変えない
+- **見た目と振る舞いは確定している**（`docs/reference/vscode.md`と、基準 `extension/test/baseline/`）。色（look は青 `#0b61a4`、edit は橙 `#b45f06`、差分のコマの丸は紫）、理由の行、差分（左右2つのエディタ、前＝青・後＝橙で変わった行だけ）、コマ送りだけ、平らな操作一覧、下のバー（戻る・進む・位置）、ライブ（録画と同じ画面、「LIVE に戻る（新着 N）」）を、勝手に変えない
 - **足さない。** 自動再生、ジャンプラベル、削除・挿入の線、親子の一覧、見た目の設定、実ファイルを開く機能は、評価者がやめると決めた
 - 細かい値（色・文言・位置）は `docs/reference/vscode.md` と、今の実装・基準に合わせる
 - 新しい画面が要るときだけ、UIゲート（`.claude/rules/working-with-human.md` 4章）
@@ -27,7 +27,7 @@
 
 ## 表示する種類（R15）
 
-- select・replace・external・failure を ON/OFF できる（`docs/reference/vscode.md` 8）。**絞るのは表示サーバー**（`tape/open`・`live/start` の `kinds`）。拡張は、渡されたコマを描くだけ。切り替えは、選んだ種類でテープを開き直し、`seq` が一番近いコマへ移る（`nearestBySeq`）。ライブは開き直して最新を追う
+- look・edit・external・failure を ON/OFF できる（`docs/reference/vscode.md` 8）。**絞るのは表示サーバー**（`tape/open`・`live/start` の `kinds`）。拡張は、渡されたコマを描くだけ。切り替えは、選んだ種類でテープを開き直し、`seq` が一番近いコマへ移る（`nearestBySeq`）。ライブは開き直して最新を追う
 - 選んだ内容は保存しない（設定を足さない）。`extension.ts` の変数 `kinds` が覚える
 - failure のコマは開くファイルがない（`file` が `""`）。`Timeline.contentAt` は failure のコマを「ファイルに触れたコマ」とみなさない。失敗の画面は仮想ドキュメント（`failure=<index>`）で、1行目を赤（`#d50000`）で塗る
 - 一覧の下の文言（`Hiding: …`、`No frames to show`）は `TreeView.message`

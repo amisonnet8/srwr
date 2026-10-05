@@ -4,7 +4,7 @@ import { ChildProcessWithoutNullStreams, spawn } from "node:child_process";
 import { pick } from "./lang";
 import { Frame, Hidden, ShownKind, toFrame } from "./timeline";
 
-export const PROTOCOL_VERSION = 1;
+export const PROTOCOL_VERSION = 2;
 
 export interface TapeInfo {
   tapeId: string;

@@ -30,64 +30,64 @@
   ],
   "tree": [
    {
-    "label": "1  select  TASK.md:1-8",
+    "label": "1  look  TASK.md:1-8",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  select  go.mod:1-3",
+    "label": "2  look  go.mod:1-3",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "3  select  period.go:1-64",
+    "label": "3  look  period.go:1-64",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "4  select  ledger.go:1-65",
+    "label": "4  look  ledger.go:1-65",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "5  select  report.go:1-72",
+    "label": "5  look  report.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "6  select  report_test.go:1-72",
+    "label": "6  look  report_test.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "7  select  timesheet_test.go:1-198",
+    "label": "7  look  timesheet_test.go:1-198",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "8  replace  period.go:30",
+    "label": "8  edit  period.go:30",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "9  replace  ledger.go:40",
+    "label": "9  edit  ledger.go:40",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "10  replace  report.go:15",
+    "label": "10  edit  report.go:15",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
     "label": "11  録画後  TASK.md:1の前",
@@ -174,64 +174,64 @@
   ],
   "tree": [
    {
-    "label": "1  select  TASK.md:1-8",
+    "label": "1  look  TASK.md:1-8",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  select  go.mod:1-3",
+    "label": "2  look  go.mod:1-3",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "3  select  period.go:1-64",
+    "label": "3  look  period.go:1-64",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "4  select  ledger.go:1-65",
+    "label": "4  look  ledger.go:1-65",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "5  select  report.go:1-72",
+    "label": "5  look  report.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "6  select  report_test.go:1-72",
+    "label": "6  look  report_test.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "7  select  timesheet_test.go:1-198",
+    "label": "7  look  timesheet_test.go:1-198",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "8  replace  period.go:30",
+    "label": "8  edit  period.go:30",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "9  replace  ledger.go:40",
+    "label": "9  edit  ledger.go:40",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "10  replace  report.go:15",
+    "label": "10  edit  report.go:15",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
     "label": "11  録画後  TASK.md:1の前",
@@ -317,64 +317,64 @@
   ],
   "tree": [
    {
-    "label": "1  select  TASK.md:1-8",
+    "label": "1  look  TASK.md:1-8",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  select  go.mod:1-3",
+    "label": "2  look  go.mod:1-3",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "3  select  period.go:1-64",
+    "label": "3  look  period.go:1-64",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "4  select  ledger.go:1-65",
+    "label": "4  look  ledger.go:1-65",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "5  select  report.go:1-72",
+    "label": "5  look  report.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "6  select  report_test.go:1-72",
+    "label": "6  look  report_test.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "7  select  timesheet_test.go:1-198",
+    "label": "7  look  timesheet_test.go:1-198",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "8  replace  period.go:30",
+    "label": "8  edit  period.go:30",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "9  replace  ledger.go:40",
+    "label": "9  edit  ledger.go:40",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "10  replace  report.go:15",
+    "label": "10  edit  report.go:15",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
     "label": "11  録画後  TASK.md:1の前",
@@ -460,64 +460,64 @@
   ],
   "tree": [
    {
-    "label": "1  select  TASK.md:1-8",
+    "label": "1  look  TASK.md:1-8",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  select  go.mod:1-3",
+    "label": "2  look  go.mod:1-3",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "3  select  period.go:1-64",
+    "label": "3  look  period.go:1-64",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "4  select  ledger.go:1-65",
+    "label": "4  look  ledger.go:1-65",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "5  select  report.go:1-72",
+    "label": "5  look  report.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "6  select  report_test.go:1-72",
+    "label": "6  look  report_test.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "7  select  timesheet_test.go:1-198",
+    "label": "7  look  timesheet_test.go:1-198",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "8  replace  period.go:30",
+    "label": "8  edit  period.go:30",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "9  replace  ledger.go:40",
+    "label": "9  edit  ledger.go:40",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "10  replace  report.go:15",
+    "label": "10  edit  report.go:15",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
     "label": "11  録画後  TASK.md:1の前",
@@ -603,64 +603,64 @@
   ],
   "tree": [
    {
-    "label": "1  select  TASK.md:1-8",
+    "label": "1  look  TASK.md:1-8",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  select  go.mod:1-3",
+    "label": "2  look  go.mod:1-3",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "3  select  period.go:1-64",
+    "label": "3  look  period.go:1-64",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "4  select  ledger.go:1-65",
+    "label": "4  look  ledger.go:1-65",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "5  select  report.go:1-72",
+    "label": "5  look  report.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "6  select  report_test.go:1-72",
+    "label": "6  look  report_test.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "7  select  timesheet_test.go:1-198",
+    "label": "7  look  timesheet_test.go:1-198",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "8  replace  period.go:30",
+    "label": "8  edit  period.go:30",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "9  replace  ledger.go:40",
+    "label": "9  edit  ledger.go:40",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "10  replace  report.go:15",
+    "label": "10  edit  report.go:15",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
     "label": "11  録画後  TASK.md:1の前",
@@ -746,64 +746,64 @@
   ],
   "tree": [
    {
-    "label": "1  select  TASK.md:1-8",
+    "label": "1  look  TASK.md:1-8",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  select  go.mod:1-3",
+    "label": "2  look  go.mod:1-3",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "3  select  period.go:1-64",
+    "label": "3  look  period.go:1-64",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "4  select  ledger.go:1-65",
+    "label": "4  look  ledger.go:1-65",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "5  select  report.go:1-72",
+    "label": "5  look  report.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "6  select  report_test.go:1-72",
+    "label": "6  look  report_test.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "7  select  timesheet_test.go:1-198",
+    "label": "7  look  timesheet_test.go:1-198",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "8  replace  period.go:30",
+    "label": "8  edit  period.go:30",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "9  replace  ledger.go:40",
+    "label": "9  edit  ledger.go:40",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "10  replace  report.go:15",
+    "label": "10  edit  report.go:15",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
     "label": "11  録画後  TASK.md:1の前",
@@ -889,64 +889,64 @@
   ],
   "tree": [
    {
-    "label": "1  select  TASK.md:1-8",
+    "label": "1  look  TASK.md:1-8",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  select  go.mod:1-3",
+    "label": "2  look  go.mod:1-3",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "3  select  period.go:1-64",
+    "label": "3  look  period.go:1-64",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "4  select  ledger.go:1-65",
+    "label": "4  look  ledger.go:1-65",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "5  select  report.go:1-72",
+    "label": "5  look  report.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "6  select  report_test.go:1-72",
+    "label": "6  look  report_test.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "7  select  timesheet_test.go:1-198",
+    "label": "7  look  timesheet_test.go:1-198",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "8  replace  period.go:30",
+    "label": "8  edit  period.go:30",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "9  replace  ledger.go:40",
+    "label": "9  edit  ledger.go:40",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "10  replace  report.go:15",
+    "label": "10  edit  report.go:15",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
     "label": "11  録画後  TASK.md:1の前",
@@ -1032,64 +1032,64 @@
   ],
   "tree": [
    {
-    "label": "1  select  TASK.md:1-8",
+    "label": "1  look  TASK.md:1-8",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  select  go.mod:1-3",
+    "label": "2  look  go.mod:1-3",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "3  select  period.go:1-64",
+    "label": "3  look  period.go:1-64",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "4  select  ledger.go:1-65",
+    "label": "4  look  ledger.go:1-65",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "5  select  report.go:1-72",
+    "label": "5  look  report.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "6  select  report_test.go:1-72",
+    "label": "6  look  report_test.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "7  select  timesheet_test.go:1-198",
+    "label": "7  look  timesheet_test.go:1-198",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "8  replace  period.go:30",
+    "label": "8  edit  period.go:30",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "9  replace  ledger.go:40",
+    "label": "9  edit  ledger.go:40",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "10  replace  report.go:15",
+    "label": "10  edit  report.go:15",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
     "label": "11  録画後  TASK.md:1の前",
@@ -1175,64 +1175,64 @@
   ],
   "tree": [
    {
-    "label": "1  select  TASK.md:1-8",
+    "label": "1  look  TASK.md:1-8",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  select  go.mod:1-3",
+    "label": "2  look  go.mod:1-3",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "3  select  period.go:1-64",
+    "label": "3  look  period.go:1-64",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "4  select  ledger.go:1-65",
+    "label": "4  look  ledger.go:1-65",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "5  select  report.go:1-72",
+    "label": "5  look  report.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "6  select  report_test.go:1-72",
+    "label": "6  look  report_test.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "7  select  timesheet_test.go:1-198",
+    "label": "7  look  timesheet_test.go:1-198",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "8  replace  period.go:30",
+    "label": "8  edit  period.go:30",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "9  replace  ledger.go:40",
+    "label": "9  edit  ledger.go:40",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "10  replace  report.go:15",
+    "label": "10  edit  report.go:15",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
     "label": "11  録画後  TASK.md:1の前",
@@ -1318,64 +1318,64 @@
   ],
   "tree": [
    {
-    "label": "1  select  TASK.md:1-8",
+    "label": "1  look  TASK.md:1-8",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  select  go.mod:1-3",
+    "label": "2  look  go.mod:1-3",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "3  select  period.go:1-64",
+    "label": "3  look  period.go:1-64",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "4  select  ledger.go:1-65",
+    "label": "4  look  ledger.go:1-65",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "5  select  report.go:1-72",
+    "label": "5  look  report.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "6  select  report_test.go:1-72",
+    "label": "6  look  report_test.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "7  select  timesheet_test.go:1-198",
+    "label": "7  look  timesheet_test.go:1-198",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "8  replace  period.go:30",
+    "label": "8  edit  period.go:30",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "9  replace  ledger.go:40",
+    "label": "9  edit  ledger.go:40",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "10  replace  report.go:15",
+    "label": "10  edit  report.go:15",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
     "label": "11  録画後  TASK.md:1の前",
@@ -1492,64 +1492,64 @@
   ],
   "tree": [
    {
-    "label": "1  select  TASK.md:1-8",
+    "label": "1  look  TASK.md:1-8",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  select  go.mod:1-3",
+    "label": "2  look  go.mod:1-3",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "3  select  period.go:1-64",
+    "label": "3  look  period.go:1-64",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "4  select  ledger.go:1-65",
+    "label": "4  look  ledger.go:1-65",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "5  select  report.go:1-72",
+    "label": "5  look  report.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "6  select  report_test.go:1-72",
+    "label": "6  look  report_test.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "7  select  timesheet_test.go:1-198",
+    "label": "7  look  timesheet_test.go:1-198",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "8  replace  period.go:30",
+    "label": "8  edit  period.go:30",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "9  replace  ledger.go:40",
+    "label": "9  edit  ledger.go:40",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "10  replace  report.go:15",
+    "label": "10  edit  report.go:15",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
     "label": "11  録画後  TASK.md:1の前",
@@ -1660,64 +1660,64 @@
   ],
   "tree": [
    {
-    "label": "1  select  TASK.md:1-8",
+    "label": "1  look  TASK.md:1-8",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  select  go.mod:1-3",
+    "label": "2  look  go.mod:1-3",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "3  select  period.go:1-64",
+    "label": "3  look  period.go:1-64",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "4  select  ledger.go:1-65",
+    "label": "4  look  ledger.go:1-65",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "5  select  report.go:1-72",
+    "label": "5  look  report.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "6  select  report_test.go:1-72",
+    "label": "6  look  report_test.go:1-72",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "7  select  timesheet_test.go:1-198",
+    "label": "7  look  timesheet_test.go:1-198",
     "description": "",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "8  replace  period.go:30",
+    "label": "8  edit  period.go:30",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "9  replace  ledger.go:40",
+    "label": "9  edit  ledger.go:40",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "10  replace  report.go:15",
+    "label": "10  edit  report.go:15",
     "description": "",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
     "label": "11  録画後  TASK.md:1の前",

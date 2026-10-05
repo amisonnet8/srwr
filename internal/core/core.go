@@ -1,4 +1,4 @@
-// Package core is what select and replace mean: checking a range, correcting line numbers,
+// Package core is what look, edit, replace and new mean: checking a range, correcting line numbers,
 // matching content, noticing changes made outside srwr, and writing the file and the tape.
 // It knows nothing of MCP; srwr mcp and srwr hook both come in through here.
 package core
@@ -17,8 +17,8 @@ type Core struct {
 	WS *session.Workspace
 }
 
-// SelectInput is the input of select.
-type SelectInput struct {
+// LookInput is the input of look.
+type LookInput struct {
 	File      string
 	StartLine int
 	EndLine   int
@@ -30,26 +30,26 @@ type SelectInput struct {
 	Locate bool
 }
 
-// SelectResult is what select returns: a token for the range and the lines in it.
-type SelectResult struct {
+// LookResult is what look returns: a token for the range and the lines in it.
+type LookResult struct {
 	Selection string
 	StartLine int
 	EndLine   int
 	Lines     []string
 }
 
-// ReplaceInput is the input of replace.
-type ReplaceInput struct {
+// EditInput is the input of edit.
+type EditInput struct {
 	Selection string
 	NewText   string
 	Why       string
 }
 
-// contextLines is how many lines before and after the new range replace returns.
+// contextLines is how many lines before and after the new range edit returns.
 const contextLines = 2
 
-// ReplaceResult is what replace returns: a token for the new range, where it is, what it holds now, and the lines around it.
-type ReplaceResult struct {
+// EditResult is what edit returns: a token for the new range, where it is, what it holds now, and the lines around it.
+type EditResult struct {
 	Selection string
 	StartLine int
 	EndLine   int
@@ -78,11 +78,11 @@ func (c *Core) run(fn func(tx *session.Tx) error) *Error {
 	return nil
 }
 
-// Select declares the range a client is looking at and returns a token to edit it with. A failure is also written to the tape.
-func (c *Core) Select(in SelectInput) (*SelectResult, *Error) {
-	res, cerr := c.doSelect(in)
+// Look declares the range a client is looking at and returns a token to edit it with. A failure is also written to the tape.
+func (c *Core) Look(in LookInput) (*LookResult, *Error) {
+	res, cerr := c.doLook(in)
 	if cerr != nil {
-		f := failedCall{tool: toolSelect, file: in.File, why: &in.Why, err: cerr}
+		f := failedCall{tool: toolLook, file: in.File, why: &in.Why, err: cerr}
 		if !in.Locate {
 			f.startLine, f.endLine = &in.StartLine, &in.EndLine
 		}
@@ -91,7 +91,7 @@ func (c *Core) Select(in SelectInput) (*SelectResult, *Error) {
 	return res, cerr
 }
 
-func (c *Core) doSelect(in SelectInput) (*SelectResult, *Error) {
+func (c *Core) doLook(in LookInput) (*LookResult, *Error) {
 	if err := checkWhy(in.Why); err != nil {
 		return nil, err
 	}
@@ -99,10 +99,10 @@ func (c *Core) doSelect(in SelectInput) (*SelectResult, *Error) {
 	if cerr != nil {
 		return nil, cerr
 	}
-	var res *SelectResult
+	var res *LookResult
 	cerr = c.run(func(tx *session.Tx) error {
 		var err error
-		res, err = c.selectIn(tx, rel, in)
+		res, err = c.lookIn(tx, rel, in)
 		return err
 	})
 	if cerr != nil {
@@ -111,12 +111,12 @@ func (c *Core) doSelect(in SelectInput) (*SelectResult, *Error) {
 	return res, nil
 }
 
-func (c *Core) selectIn(tx *session.Tx, rel string, in SelectInput) (*SelectResult, error) {
+func (c *Core) lookIn(tx *session.Tx, rel string, in LookInput) (*LookResult, error) {
 	t, cerr := c.readTarget(rel)
 	if cerr != nil {
 		return nil, cerr
 	}
-	if err := c.observeTarget(tx, rel, "select", t); err != nil {
+	if err := c.observeTarget(tx, rel, "look", t); err != nil {
 		return nil, err
 	}
 
@@ -134,25 +134,25 @@ func (c *Core) selectIn(tx *session.Tx, rel string, in SelectInput) (*SelectResu
 	}, tx.TapeID(), tx.Key())
 
 	err := tx.Append(tape.Event{
-		Type: tape.TypeSelect, Seq: tx.NextSeq(), File: rel, StartLine: start, EndLine: end,
+		Type: tape.TypeLook, Seq: tx.NextSeq(), File: rel, StartLine: start, EndLine: end,
 		Why: &in.Why, Selection: &sel, Source: tape.SourceMCP,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &SelectResult{Selection: sel, StartLine: start, EndLine: end, Lines: rangeLines(t.text, start, end)}, nil
+	return &LookResult{Selection: sel, StartLine: start, EndLine: end, Lines: rangeLines(t.text, start, end)}, nil
 }
 
-// Replace puts new text in the range a token stands for. A failure is also written to the tape (without the new text).
-func (c *Core) Replace(in ReplaceInput) (*ReplaceResult, *Error) {
-	res, cerr := c.doReplace(in)
+// Edit puts new text in the range a token stands for. A failure is also written to the tape (without the new text).
+func (c *Core) Edit(in EditInput) (*EditResult, *Error) {
+	res, cerr := c.doEdit(in)
 	if cerr != nil {
-		c.recordFailure(failedCall{tool: toolReplace, selection: &in.Selection, why: &in.Why, err: cerr})
+		c.recordFailure(failedCall{tool: toolEdit, selection: &in.Selection, why: &in.Why, err: cerr})
 	}
 	return res, cerr
 }
 
-func (c *Core) doReplace(in ReplaceInput) (*ReplaceResult, *Error) {
+func (c *Core) doEdit(in EditInput) (*EditResult, *Error) {
 	if strings.TrimSpace(in.Selection) == "" {
 		return nil, newError(CodeInvalidInput, "selection is empty")
 	}
@@ -162,10 +162,10 @@ func (c *Core) doReplace(in ReplaceInput) (*ReplaceResult, *Error) {
 	if strings.ContainsRune(in.NewText, '\r') {
 		return nil, newError(CodeInvalidInput, "newText must not contain CR (line breaks are LF only)")
 	}
-	var res *ReplaceResult
+	var res *EditResult
 	cerr := c.run(func(tx *session.Tx) error {
 		var err error
-		res, err = c.replaceIn(tx, in)
+		res, err = c.editIn(tx, in)
 		return err
 	})
 	if cerr != nil {
@@ -174,28 +174,28 @@ func (c *Core) doReplace(in ReplaceInput) (*ReplaceResult, *Error) {
 	return res, nil
 }
 
-func (c *Core) replaceIn(tx *session.Tx, in ReplaceInput) (*ReplaceResult, error) {
+func (c *Core) editIn(tx *session.Tx, in EditInput) (*EditResult, error) {
 	tok, err := token.Decode(in.Selection, tx.TapeID(), tx.Key())
 	if err != nil {
-		return nil, newError(CodeInvalidSelection, "the selection token is not valid: it was altered, or issued in another session. Call select again")
+		return nil, newError(CodeInvalidSelection, "the selection token is not valid: it was altered, or issued in another session. Call look again")
 	}
 	rel, ok := findFile(tx.State(), tok.FileHash)
 	if !ok {
-		return nil, newError(CodeInvalidSelection, "the file of the selection token is not on the tape. Call select again")
+		return nil, newError(CodeInvalidSelection, "the file of the selection token is not on the tape. Call look again")
 	}
 	t, cerr := c.readTarget(rel)
 	if cerr != nil {
 		return nil, cerr
 	}
-	if err := c.observeTarget(tx, rel, "replace", t); err != nil {
+	if err := c.observeTarget(tx, rel, "edit", t); err != nil {
 		return nil, err
 	}
 
-	a, b, ok := Correct(tx.State().Replaces, rel, int(tok.Seq), int(tok.StartLine), int(tok.EndLine)) //nolint:gosec // line numbers and seq are far below the int range
+	a, b, ok := Correct(tx.State().Edits, rel, int(tok.Seq), int(tok.StartLine), int(tok.EndLine)) //nolint:gosec // line numbers and seq are far below the int range
 	if !ok {
 		return nil, &Error{
 			Code:    CodeSelectionStale,
-			Message: "an edit overlapped the range after the select. Call select again",
+			Message: "an edit overlapped the range after the look. Call look again",
 			Actual:  rangeLines(t.text, a, b),
 		}
 	}
@@ -204,7 +204,7 @@ func (c *Core) replaceIn(tx *session.Tx, in ReplaceInput) (*ReplaceResult, error
 	if a < 1 || b > n || b < a-1 || token.Hash4(oldText) != tok.TextHash {
 		return nil, &Error{
 			Code:    CodeSelectionMismatch,
-			Message: "even with the line numbers corrected, the range differs from what select returned (it may have been changed outside srwr). Check the content and call select again",
+			Message: "even with the line numbers corrected, the range differs from what look returned (it may have been changed outside srwr). Check the content and call look again",
 			Actual:  rangeLines(t.text, a, b),
 		}
 	}
@@ -226,7 +226,7 @@ func (c *Core) replaceIn(tx *session.Tx, in ReplaceInput) (*ReplaceResult, error
 		TextHash:  token.Hash4(tape.RangeText(newText, a, newEnd)),
 	}, tx.TapeID(), tx.Key())
 	err = tx.Append(tape.Event{
-		Type: tape.TypeReplace, Seq: tx.NextSeq(), File: rel, From: &in.Selection,
+		Type: tape.TypeEdit, Seq: tx.NextSeq(), File: rel, From: &in.Selection,
 		StartLine: a, EndLine: b, OldText: oldText, NewText: strings.Join(newLines, "\n"),
 		NewStartLine: a, NewEndLine: newEnd, Selection: &sel, Why: &in.Why,
 		FileShaBefore: tape.Sha(t.text), FileShaAfter: tape.Sha(newText), Source: tape.SourceMCP,
@@ -234,7 +234,7 @@ func (c *Core) replaceIn(tx *session.Tx, in ReplaceInput) (*ReplaceResult, error
 	if err != nil {
 		return nil, err
 	}
-	return &ReplaceResult{
+	return &EditResult{
 		Selection: sel, StartLine: a, EndLine: newEnd,
 		Lines:  rangeLines(newText, a, newEnd),
 		Before: rangeLines(newText, a-contextLines, a-1),

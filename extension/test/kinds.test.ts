@@ -20,10 +20,10 @@ function allFrames(): Frame[] {
     index: i, seq, kind, file: "a.go", range: { start: 2, end: 2 }, why: "reason", before: text, after: text, ...extra,
   });
   return [
-    f(0, 2, "select"),
-    f(1, 3, "failure", { file: "", range: { start: 9, end: 9 }, before: "", after: "", tool: "select", code: "invalid_range", message: "The path is absolute. Give a path relative to the workspace" }),
-    f(2, 4, "replace", { after: "one\nTWO\nthree\n" }),
-    f(3, 5, "failure", { range: { start: 0, end: -1 }, before: "", after: "", tool: "replace", code: "selection_stale", message: "stale", why: null }),
+    f(0, 2, "look"),
+    f(1, 3, "failure", { file: "", range: { start: 9, end: 9 }, before: "", after: "", tool: "look", code: "invalid_range", message: "The path is absolute. Give a path relative to the workspace" }),
+    f(2, 4, "edit", { after: "one\nTWO\nthree\n" }),
+    f(3, 5, "failure", { range: { start: 0, end: -1 }, before: "", after: "", tool: "edit", code: "selection_stale", message: "stale", why: null }),
     f(4, 6, "external", { file: "b.go", range: { start: 1, end: 1 }, why: null, before: "x\n", after: "y\n" }),
   ];
 }
@@ -71,14 +71,14 @@ test("a tape is opened with the default kinds: failure is left out, and the list
   const s = server();
   s.hiddenOf.set(TAPE, {});
   await open(s);
-  assert.deepEqual(s.openKinds[0], ["select", "replace", "external"]);
+  assert.deepEqual(s.openKinds[0], ["look", "edit", "external"]);
   assert.equal(treeLabels().length, 3);
   assert.equal(message(), "隠している：failure (2)");
 });
 
 test("hiddenMessage", () => {
   assert.equal(hiddenMessage({}, 3), "");
-  assert.equal(hiddenMessage({ failure: 2, select: 1 }, 3), "隠している：failure (2)、select (1)");
+  assert.equal(hiddenMessage({ failure: 2, look: 1 }, 3), "隠している：failure (2)、look (1)");
   assert.equal(hiddenMessage({ failure: 2 }, 0), "表示するコマがありません · 隠している：failure (2)");
   assert.equal(hiddenMessage({}, 0), "表示するコマがありません");
 });
@@ -86,21 +86,21 @@ test("hiddenMessage", () => {
 test("the funnel button: the chosen kinds open the tape again, at the frame nearest to the one on the screen", async () => {
   const s = server();
   const a = await open(s);
-  await a.run("srwr.goto", 1); // replace (seq 4) among select, replace, external
-  state.pickQuickPick = (items) => items.filter((i) => i.shown === "replace" || i.shown === "failure");
+  await a.run("srwr.goto", 1); // edit (seq 4) among look, edit, external
+  state.pickQuickPick = (items) => items.filter((i) => i.shown === "edit" || i.shown === "failure");
   await a.run("srwr.chooseKinds");
-  assert.deepEqual(s.openKinds.at(-1), ["replace", "failure"]);
+  assert.deepEqual(s.openKinds.at(-1), ["edit", "failure"]);
   assert.equal(state.quickPick?.placeHolder, "表示するコマ");
-  assert.deepEqual(state.quickPick?.items.map((i) => i.label), ["select", "replace", "external", "failure"]);
+  assert.deepEqual(state.quickPick?.items.map((i) => i.label), ["look", "edit", "external", "failure"]);
   // The frames are now failure, replace, failure; the replace (seq 4) is still on the screen.
   assert.equal(treeLabels().length, 3);
   assert.equal(a.api && a.screen().status.find((x) => /\d+\/\d+/.test(x.text))?.text, "2/3");
-  assert.equal(message(), "隠している：select (1)、external (1)");
+  assert.equal(message(), "隠している：look (1)、external (1)");
   // The choice is kept for the next tape that is opened.
   state.pickQuickPick = (items) => items.find((i) => i.tape?.tapeId === TAPE);
   await a.run("srwr.closeTape");
   await a.run("srwr.openTape");
-  assert.deepEqual(s.openKinds.at(-1), ["replace", "failure"]);
+  assert.deepEqual(s.openKinds.at(-1), ["edit", "failure"]);
 });
 
 test("the funnel button does nothing when no tape is open, and cancelling changes nothing", async () => {
@@ -123,9 +123,9 @@ test("a failure frame: a document that explains it, the first row in red, no fil
   const scr = a.screen();
   assert.equal(scr.tabs.length, 1);
   const tab = scr.tabs[0];
-  assert.ok(tab.uri.includes("failure=1") && tab.uri.includes("失敗: select (invalid_range)"), tab.uri);
+  assert.ok(tab.uri.includes("failure=1") && tab.uri.includes("失敗: look (invalid_range)"), tab.uri);
   const rows = tab.text.split("\n");
-  assert.equal(rows[0], "✖ select が失敗しました (invalid_range)");
+  assert.equal(rows[0], "✖ look が失敗しました (invalid_range)");
   assert.equal(rows[1], "The path is absolute. Give a path relative to the workspace");
   assert.ok(rows.some((r) => r === "why    reason"));
   assert.ok(rows.some((r) => r === "range  9 行"));
@@ -145,7 +145,7 @@ test("a failure frame: a document that explains it, the first row in red, no fil
 
 test("failureText in English", () => {
   const f = allFrames()[1];
-  assert.deepEqual(failureText(f).slice(0, 2), ["✖ select が失敗しました (invalid_range)", f.message]);
+  assert.deepEqual(failureText(f).slice(0, 2), ["✖ look が失敗しました (invalid_range)", f.message]);
 });
 
 test("stepping skips nothing but the kinds that are off: the numbers are those of what is shown", async () => {
@@ -180,14 +180,14 @@ test("live: the kinds are asked for, hidden counts follow, and the funnel button
   app = start(s);
   await app.run("srwr.liveStart");
   await until("the live view", () => s.watching);
-  assert.deepEqual(s.openKinds[0], ["select", "replace", "external"]);
+  assert.deepEqual(s.openKinds[0], ["look", "edit", "external"]);
   assert.equal(message(), "隠している：failure (2)");
   s.emitHidden(TAPE, { failure: 3 });
   await until("the new count", () => message() === "隠している：failure (3)");
   state.pickQuickPick = (items) => items;
   await app.run("srwr.chooseKinds");
   await until("restarted", () => s.calls.filter((c) => c === "liveStart").length === 2);
-  assert.deepEqual(s.openKinds.at(-1), ["select", "replace", "external", "failure"]);
+  assert.deepEqual(s.openKinds.at(-1), ["look", "edit", "external", "failure"]);
   assert.ok(s.calls.includes("liveStop"));
   assert.equal(treeLabels().length, 5);
 });

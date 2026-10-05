@@ -31,11 +31,11 @@ When a session ends, its tape is **compressed with gzip** and renamed `<id>.tape
 
 ## Rules of writing
 
-- Every event has `"v":1` (the version of the format)
+- Every event has `"v":2` (the version of the format). **Version 1 tapes are still read** (see "Tapes of version 1" below)
 - Append only. Existing lines are never rewritten or deleted
 - `seq` is a sequence number that starts at 1 within the tape and has no gaps (the `header` has none)
 - `ts` is RFC 3339 **in UTC**, with milliseconds and a trailing `Z` (`2026-09-29T02:20:04.123Z`). Tapes written by older versions have an offset such as `+09:00` (the time zone of the machine then); they are read as the same moments, and an old line is never rewritten
-- A field with no value (`why`, `selection`, `from` and so on) is written as `null`, not left out. The exceptions are the optional fields `source` and `tool` (left out when empty), `hits` (written only for a `replace` made by `sub`) and `deleted` (written only when true)
+- A field with no value (`why`, `selection`, `from` and so on) is written as `null`, not left out. The exceptions are the optional fields `source` and `tool` (left out when empty), `hits` (written only for a `replace`) and `deleted` (written only when true)
 - One event per line. A last line that does not end with a line break is treated as being in the middle of being written
 - A reader ignores fields it does not know
 - **Until v1, the tape format may change without compatibility.** A tape written by one version is not promised to be read by another. From v1 on, fields may be added, but the meaning of an existing one is not changed
@@ -47,7 +47,7 @@ When a session ends, its tape is **compressed with gzip** and renamed `<id>.tape
 One line at the top of the tape.
 
 ```json
-{"v":1,"type":"header","session":"a1b2","startedAt":"2026-09-29T02:20:00.000Z","author":{"kind":"ai","name":"claude"}}
+{"v":2,"type":"header","session":"a1b2","startedAt":"2026-09-29T02:20:00.000Z","author":{"kind":"ai","name":"claude"}}
 ```
 
 It also has `vcs` and `tool` (`{"name":"srwr","version":"…"}`).
@@ -65,71 +65,97 @@ It also has `vcs` and `tool` (`{"name":"srwr","version":"…"}`).
 
 ### snapshot
 
-The **whole text** of a file. It is recorded when the file is first touched in the session, and when a file that an `external` removed comes back. After that the file is followed by `replace` and `external` events only, which hold just the changed lines. Replay is built by applying them in order from the last `snapshot`.
+The **whole text** of a file. It is recorded when the file is first touched in the session, and when a file that an `external` removed comes back. After that the file is followed by `edit`, `replace`, `new` and `external` events only, which hold just the changed lines. Replay is built by applying them in order from the last `snapshot`.
 
 ```json
-{"v":1,"seq":1,"ts":"…","type":"snapshot","file":"cmd/app/main.go","fileHash":"a3f09c21","text":"package main\n…","sha":"sha256:…"}
+{"v":2,"seq":1,"ts":"…","type":"snapshot","file":"cmd/app/main.go","fileHash":"a3f09c21","text":"package main\n…","sha":"sha256:…"}
 ```
 
-### select
+### look
 
 ```json
-{"v":1,"seq":2,"ts":"…","type":"select","file":"cmd/app/main.go","startLine":12,"endLine":14,"why":"Checking whether the main function needs a fix","selection":"sel_0410R3GZE4KV11C6325D32S7","source":"mcp"}
+{"v":2,"seq":2,"ts":"…","type":"look","file":"cmd/app/main.go","startLine":12,"endLine":14,"why":"Checking whether the main function needs a fix","selection":"sel_0410R3GZE4KV11C6325D32S7","source":"mcp"}
 ```
 
-A `select` recorded by the hook (Read and the like) has a `why` of `null`. It has `source` (`mcp` or `hook`), and for the hook the name of the original tool, `tool` (`Read`, `Bash`, `Grep`, `Edit`). It has no selection token, and `selection` is `null` too. An old tape without `source` is read as `mcp`.
+A `look` recorded by the hook (Read and the like) has a `why` of `null`. It has `source` (`mcp` or `hook`), and for the hook the name of the original tool, `tool` (`Read`, `Bash`, `Grep`). It has no selection token, and `selection` is `null` too. An old tape without `source` is read as `mcp`.
 
-### replace
+### edit
 
 ```json
-{"v":1,"seq":3,"ts":"…","type":"replace","file":"cmd/app/main.go","from":"sel_0410R3GZE4KV11C6325D32S7","startLine":12,"endLine":14,"oldText":"…","newText":"…","newStartLine":12,"newEndLine":15,"selection":"sel_041GR3RZE4KV0BBH2S177Q36","why":"Added the missing initialization of signal handling","fileShaBefore":"sha256:…","fileShaAfter":"sha256:…","source":"mcp"}
+{"v":2,"seq":3,"ts":"…","type":"edit","file":"cmd/app/main.go","from":"sel_0410R3GZE4KV11C6325D32S7","startLine":12,"endLine":14,"oldText":"…","newText":"…","newStartLine":12,"newEndLine":15,"selection":"sel_041GR3RZE4KV0BBH2S177Q36","why":"Added the missing initialization of signal handling","fileShaBefore":"sha256:…","fileShaAfter":"sha256:…","source":"mcp"}
 ```
 
-- `from` is the selection token that was given, and `selection` is the one returned. Following `from` → `selection` shows the **lineage**: which `select` a `replace` came from
+- `from` is the selection token that was given, and `selection` is the one returned. Following `from` → `selection` shows the **lineage**: which `look` an `edit` came from
 - `startLine` and `endLine` are the real range after correction
 - `oldText` and `newText` are the lines of the range joined with `\n` (without a trailing line break). A deletion has `newEndLine = newStartLine - 1` and an empty `newText`. One empty line has `newEndLine = newStartLine` and an empty `newText` too, so the number of lines is read from `newStartLine` and `newEndLine`
 - The `seq` inside a selection token is the `seq` of the event that issued the token
-- A `replace` recorded by the hook (Edit) has `from`, `selection` and `why` of `null`, `source` of `hook` and `tool` of `Edit`. The range is the whole lines that contain the replaced place
-- A `replace` made by `sub` ([mcp.md](mcp.md#sub)) has `source` of `mcp`, `tool` of `sub`, `from` of `null`, and `hits`, the number of places it changed in the file. There is **one for each file** that changed, with the same `why`. The range is the whole lines from the first place to the last (so `oldText` holds the lines in between too), and `selection` is the token of the range after the change
-- A `replace` made by `new` ([mcp.md](mcp.md#new)) has `source` of `mcp`, `tool` of `new`, `from` of `null` and `fileShaBefore` of `""` (there was no file). It is an insertion into an empty file: `startLine` 1, `endLine` 0, `oldText` empty, and `newText` the content as lines (`newStartLine` 1, `newEndLine` the number of lines; 0 for an empty file). If the tape held the file as deleted, it is there again after this event
+- An `edit` recorded by the hook (Edit) has `from`, `selection` and `why` of `null`, `source` of `hook` and `tool` of `Edit`. The range is the whole lines that contain the replaced place
+
+### replace
+
+An event of the `replace` tool ([mcp.md](mcp.md#replace)). It has the same fields as an `edit`, and:
+
+- `source` of `mcp`, `from` of `null`, and `hits`, the number of places it changed in the file
+- **One for each file** that changed, with the same `why`. The range is the whole lines from the first place to the last (so `oldText` holds the lines in between too), and `selection` is the token of the range after the change
+
+### new
+
+An event of the `new` tool ([mcp.md](mcp.md#new)). It has the same fields as an `edit`, and:
+
+- `source` of `mcp`, `from` of `null` and `fileShaBefore` of `""` (there was no file)
+- It is an insertion into an empty file: `startLine` 1, `endLine` 0, `oldText` empty, and `newText` the content as lines (`newStartLine` 1, `newEndLine` the number of lines; 0 for an empty file). If the tape held the file as deleted, it is there again after this event
 
 ### external
 
 Recorded when a change to a file made outside srwr is detected. No `snapshot` follows it: the event itself holds what changed.
 
 ```json
-{"v":1,"seq":4,"ts":"…","type":"external","file":"cmd/app/main.go","author":{"kind":"external"},"detectedBy":"select","expectedSha":"sha256:…","actualSha":"sha256:…","hunks":[{"startLine":3,"endLine":3,"newText":"b","newStartLine":3,"newEndLine":3},{"startLine":40,"endLine":41,"newText":"x\ny","newStartLine":40,"newEndLine":41}]}
+{"v":2,"seq":4,"ts":"…","type":"external","file":"cmd/app/main.go","author":{"kind":"external"},"detectedBy":"look","expectedSha":"sha256:…","actualSha":"sha256:…","hunks":[{"startLine":3,"endLine":3,"newText":"b","newStartLine":3,"newEndLine":3},{"startLine":40,"endLine":41,"newText":"x\ny","newStartLine":40,"newEndLine":41}]}
 ```
 
-- `hunks`: **the lines that changed**, against the content the tape held before (the one `expectedSha` is the hash of). The places come from top to bottom and do not overlap. `startLine` and `endLine` are the lines before, `newText` the lines after (joined with `\n`), and `newStartLine` and `newEndLine` their numbers, as in `replace`. An insertion has `endLine = startLine - 1`; a deletion has an empty `newText` and `newEndLine = newStartLine - 1`. Applying them to the content before gives the content after, which `actualSha` is the hash of. It is replayed as a diff frame (a side-by-side diff)
+- `hunks`: **the lines that changed**, against the content the tape held before (the one `expectedSha` is the hash of). The places come from top to bottom and do not overlap. `startLine` and `endLine` are the lines before, `newText` the lines after (joined with `\n`), and `newStartLine` and `newEndLine` their numbers, as in `edit`. An insertion has `endLine = startLine - 1`; a deletion has an empty `newText` and `newEndLine = newStartLine - 1`. Applying them to the content before gives the content after, which `actualSha` is the hash of. It is replayed as a diff frame (a side-by-side diff)
 - `text`: **the whole text of the file after the change**, written instead of `hunks` when the change cannot be told as lines (only the line break at the end of the file changed) or is too big to compare. When the file was gone it is `null`, `actualSha` is an empty string, and `deleted: true` is added
 - `created`: written (as `true`) when the file is **new**: the tape held no content of it, and a shell command made it. `expectedSha` is an empty string and `hunks` (or `text`) holds the whole file, so it is replayed as a diff frame with an empty left side. Only the hook finds these (see `srwr hook` in [cli.md](cli.md))
-- `detectedBy`: what led to the detection (`select`, `replace`, `sub`, `new`, `hook`)
+- `detectedBy`: what led to the detection (`look`, `edit`, `replace`, `new`, `hook`; `select` and `sub` in tapes of version 1)
 - `author.kind` is always `external` (srwr cannot know who changed it)
 - An `external` of the old forms can be read too: one with the whole `text` and a `snapshot` after it, and one without `text` (then the `snapshot` right after it is shown as the content after the change)
 
 **What can be detected**: an `external` happens only when a file for which **the tape already holds the content (a `snapshot`)** later differs. A file first touched in the session has its content at that time as its first `snapshot`. A change to a file that is never touched cannot be seen, except that after a Bash command a **new** file in a git work tree is recorded as an `external` with `created`.
 
-If a `replace` is made with a selection token issued before an `external`, the token is followed in the usual way (line numbers are corrected only for the edits srwr made itself). If the external change did not change the range or the number of lines above it, the token still works. If it did, the content check gives `selection_mismatch`. srwr does not estimate the shift of lines from the content of the external change.
+If an `edit` is made with a selection token issued before an `external`, the token is followed in the usual way (line numbers are corrected only for the edits srwr made itself). If the external change did not change the range or the number of lines above it, the token still works. If it did, the content check gives `selection_mismatch`. srwr does not estimate the shift of lines from the content of the external change.
 
 ### failure
 
-Recorded when a `select`, a `replace`, a `sub` or a `new` fails (the AI gets an error). It is for finding out what mistakes the AI makes. A viewer shows it as a frame only when it is asked to (red; see [vscode.md](vscode.md)); by default it is left out.
+Recorded when a `look`, an `edit`, a `replace` or a `new` fails (the AI gets an error). It is for finding out what mistakes the AI makes. A viewer shows it as a frame only when it is asked to (red; see [vscode.md](vscode.md)); by default it is left out.
 
 ```json
-{"v":1,"seq":7,"ts":"…","type":"failure","tool":"select","file":null,"startLine":3,"endLine":9,"selection":null,"why":"Checking the main function","code":"invalid_range","message":"The path is absolute. Give a path relative to the workspace"}
-{"v":1,"seq":9,"ts":"…","type":"failure","tool":"replace","file":"cmd/app/main.go","startLine":null,"endLine":null,"selection":"sel_0410R3GZE4KV11C6325D32S7","why":"…","code":"selection_stale","message":"an edit overlapped the range after the select. Call select again"}
+{"v":2,"seq":7,"ts":"…","type":"failure","tool":"look","file":null,"startLine":3,"endLine":9,"selection":null,"why":"Checking the main function","code":"invalid_range","message":"The path is absolute. Give a path relative to the workspace"}
+{"v":2,"seq":9,"ts":"…","type":"failure","tool":"edit","file":"cmd/app/main.go","startLine":null,"endLine":null,"selection":"sel_0410R3GZE4KV11C6325D32S7","why":"…","code":"selection_stale","message":"an edit overlapped the range after the look. Call look again"}
 ```
 
-- `tool`: `select`, `replace`, `sub` or `new`. `code` and `message` are the error the AI got ([mcp.md](mcp.md))
-- `file`: the path in the workspace, or `null` when it is not known or is left out (for a `sub` it is the file only when one file was given; for a `new` it is the file given). `startLine` and `endLine` are for a `select`, and `selection` (the token that was given) for a `replace`; `why` is what the AI wrote. A value that is not there is `null`
+- `tool`: `look`, `edit`, `replace` or `new`. `code` and `message` are the error the AI got ([mcp.md](mcp.md))
+- `file`: the path in the workspace, or `null` when it is not known or is left out (for a `replace` it is the file only when one file was given; for a `new` it is the file given). `startLine` and `endLine` are for a `look`, and `selection` (the token that was given) for an `edit`; `why` is what the AI wrote. A value that is not there is `null`
 - **The real path is left out** when it is an absolute path, a path outside the workspace, or a file that is not recorded: `file` is `null`, and `message` is a sentence without the path (`The path is absolute. Give a path relative to the workspace`, `The path points outside the workspace`, `The file is not recorded`)
-- `newText` of a `replace`, `old` and `new` of a `sub`, and `content` of a `new`, are not written. `message` is cut at 300 characters
+- `newText` of an `edit`, `old` and `new` of a `replace`, `content` of a `new` and `expect` of a `look` are not written. `message` is cut at 300 characters
 - A failure that is found before the call reaches srwr's editing (a required input is missing, a value has the wrong type) is recorded too, with `file` `null`
+
+## Tapes of version 1
+
+Tapes written by srwr 0.1.4 and before have `"v":1`, and are read as they are. What changed is the names of the events (the names of the tools changed):
+
+| Version 1 | Read as |
+|---|---|
+| `select` | `look` |
+| `replace` | `edit` |
+| `replace` with `tool` of `sub` | `replace` (the `tool` is dropped) |
+| `replace` with `tool` of `new` | `new` (the `tool` is dropped) |
+| `tool` of a `failure`: `select`, `replace`, `sub` | `look`, `edit`, `replace` |
+
+The version is read from each line, so a tape that went on with version 2 after an update is read right. The lines of an old tape are never rewritten.
 
 ## The selection token
 
-The `sel_…` string that `select` returns. It goes into `from` and `selection`. The AI only passes it on and need not know what is inside.
+The `sel_…` string that `look`, `edit` and `new` return. It goes into `from` and `selection`. The AI only passes it on and need not know what is inside.
 
 - **Valid only within the tape.** One issued on another tape (another session) gives `invalid_selection`. When the session changes (after a gap of 30 minutes, for example), the tokens of the previous session cannot be used
 - The format and the verification are described in [token.md](../design/token.md), for developers

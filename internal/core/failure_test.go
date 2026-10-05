@@ -34,37 +34,37 @@ func TestFailureIsRecordedForEachCode(t *testing.T) {
 		file string // "" is null
 	}{
 		{"empty file", func() *Error {
-			_, err := e.c.Select(SelectInput{File: "", StartLine: 1, EndLine: 1, Why: "w"})
+			_, err := e.c.Look(LookInput{File: "", StartLine: 1, EndLine: 1, Why: "w"})
 			return err
-		}, CodeInvalidInput, "select", ""},
+		}, CodeInvalidInput, "look", ""},
 		{"blank why", func() *Error {
-			_, err := e.c.Select(SelectInput{File: "f.txt", StartLine: 1, EndLine: 1, Why: " "})
+			_, err := e.c.Look(LookInput{File: "f.txt", StartLine: 1, EndLine: 1, Why: " "})
 			return err
-		}, CodeInvalidInput, "select", "f.txt"},
+		}, CodeInvalidInput, "look", "f.txt"},
 		{"range", func() *Error {
-			_, err := e.c.Select(SelectInput{File: "f.txt", StartLine: 9, EndLine: 9, Why: "w"})
+			_, err := e.c.Look(LookInput{File: "f.txt", StartLine: 9, EndLine: 9, Why: "w"})
 			return err
-		}, CodeInvalidRange, "select", "f.txt"},
+		}, CodeInvalidRange, "look", "f.txt"},
 		{"missing", func() *Error {
-			_, err := e.c.Select(SelectInput{File: "nope.txt", StartLine: 1, EndLine: 1, Why: "w"})
+			_, err := e.c.Look(LookInput{File: "nope.txt", StartLine: 1, EndLine: 1, Why: "w"})
 			return err
-		}, CodeFileNotFound, "select", "nope.txt"},
+		}, CodeFileNotFound, "look", "nope.txt"},
 		{"crlf", func() *Error {
-			_, err := e.c.Select(SelectInput{File: "crlf.txt", StartLine: 1, EndLine: 1, Why: "w"})
+			_, err := e.c.Look(LookInput{File: "crlf.txt", StartLine: 1, EndLine: 1, Why: "w"})
 			return err
-		}, CodeUnsupportedFile, "select", "crlf.txt"},
+		}, CodeUnsupportedFile, "look", "crlf.txt"},
 		{"ignored", func() *Error {
-			_, err := e.c.Select(SelectInput{File: ".env", StartLine: 1, EndLine: 1, Why: "w"})
+			_, err := e.c.Look(LookInput{File: ".env", StartLine: 1, EndLine: 1, Why: "w"})
 			return err
-		}, CodeIgnoredFile, "select", ""},
+		}, CodeIgnoredFile, "look", ""},
 		{"stale", func() *Error {
-			_, err := e.c.Replace(ReplaceInput{Selection: s.Selection, NewText: "NEW TEXT", Why: "w"})
+			_, err := e.c.Edit(EditInput{Selection: s.Selection, NewText: "NEW TEXT", Why: "w"})
 			return err
-		}, CodeSelectionStale, "replace", "f.txt"},
+		}, CodeSelectionStale, "edit", "f.txt"},
 		{"garbage token", func() *Error {
-			_, err := e.c.Replace(ReplaceInput{Selection: "sel_nonsense", NewText: "x", Why: "w"})
+			_, err := e.c.Edit(EditInput{Selection: "sel_nonsense", NewText: "x", Why: "w"})
 			return err
-		}, CodeInvalidSelection, "replace", ""},
+		}, CodeInvalidSelection, "edit", ""},
 	}
 	for _, c := range calls {
 		before := len(e.failures())
@@ -96,7 +96,7 @@ func TestFailureLeavesOutTheRealPath(t *testing.T) {
 		"outside":   {"../someone-else/f.txt", "The path points outside the workspace"},
 		"hidden up": {"a/../../someone-else/f.txt", "The path points outside the workspace"},
 	} {
-		_, err := e.c.Select(SelectInput{File: tc.file, StartLine: 1, EndLine: 1, Why: "w"})
+		_, err := e.c.Look(LookInput{File: tc.file, StartLine: 1, EndLine: 1, Why: "w"})
 		wantCode(t, err, CodeInvalidRange)
 		f := e.failures()[len(e.failures())-1]
 		if f.File != nil || f.Message != tc.want {
@@ -104,7 +104,7 @@ func TestFailureLeavesOutTheRealPath(t *testing.T) {
 		}
 	}
 	// What the client is told is not changed: it still names the path.
-	_, err := e.c.Select(SelectInput{File: home, StartLine: 1, EndLine: 1, Why: "w"})
+	_, err := e.c.Look(LookInput{File: home, StartLine: 1, EndLine: 1, Why: "w"})
 	if err == nil || !strings.Contains(err.Message, "secret-home") {
 		t.Errorf("the error to the client = %+v", err)
 	}
@@ -113,7 +113,7 @@ func TestFailureLeavesOutTheRealPath(t *testing.T) {
 
 func TestFailureStartsATapeAndKeepsTheSeqsInOrder(t *testing.T) {
 	e := newEnv(t)
-	_, err := e.c.Select(SelectInput{File: "nope.txt", StartLine: 1, EndLine: 1, Why: "w"})
+	_, err := e.c.Look(LookInput{File: "nope.txt", StartLine: 1, EndLine: 1, Why: "w"})
 	wantCode(t, err, CodeFileNotFound)
 	e.write("a.txt", "x\n")
 	e.sel(e.c, "a.txt", 1, 1)
@@ -135,16 +135,16 @@ func TestSuccessfulCallsRecordNoFailure(t *testing.T) {
 
 func TestInputFailureIsRecordedWithoutAFile(t *testing.T) {
 	e := newEnv(t)
-	e.c.RecordInputFailure("select", CodeInvalidInput, "missing required input: why")
+	e.c.RecordInputFailure("look", CodeInvalidInput, "missing required input: why")
 	got := e.failures()
-	if len(got) != 1 || got[0].Tool != "select" || got[0].File != nil || got[0].Code != CodeInvalidInput || got[0].Message != "missing required input: why" {
+	if len(got) != 1 || got[0].Tool != "look" || got[0].File != nil || got[0].Code != CodeInvalidInput || got[0].Message != "missing required input: why" {
 		t.Errorf("failures = %+v", got)
 	}
 }
 
 func TestFailureMessageIsCut(t *testing.T) {
 	e := newEnv(t)
-	e.c.RecordInputFailure("select", CodeInvalidInput, strings.Repeat("あ", 1000))
+	e.c.RecordInputFailure("look", CodeInvalidInput, strings.Repeat("あ", 1000))
 	if m := e.failures()[0].Message; len([]rune(m)) != maxFailureMessage {
 		t.Errorf("message has %d characters", len([]rune(m)))
 	}

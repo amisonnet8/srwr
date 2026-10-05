@@ -38,11 +38,11 @@ func TestHookSelectRanges(t *testing.T) {
 	} {
 		e := newEnv(t)
 		e.write("f.txt", text)
-		e.hook(HookRequest{Selects: []HookSelect{{File: "f.txt", Range: tc.r, Tool: "Read"}}})
+		e.hook(HookRequest{Looks: []HookLook{{File: "f.txt", Range: tc.r, Tool: "Read"}}})
 		evs := e.events()
 		var sel tape.Event
 		for _, ev := range evs {
-			if ev.Type == tape.TypeSelect {
+			if ev.Type == tape.TypeLook {
 				sel = ev
 			}
 		}
@@ -52,7 +52,7 @@ func TestHookSelectRanges(t *testing.T) {
 		if sel.Source != tape.SourceHook || sel.HookTool != "Read" || sel.Why != nil || sel.Selection != nil {
 			t.Errorf("%s: a hook select has source hook, the tool, no why and no token: %+v", name, sel)
 		}
-		if got := e.kinds(); !reflect.DeepEqual(got, []string{"snapshot", "select"}) {
+		if got := e.kinds(); !reflect.DeepEqual(got, []string{"snapshot", "look"}) {
 			t.Errorf("%s: kinds = %v", name, got)
 		}
 	}
@@ -63,13 +63,13 @@ func TestHookSelectNotesWhatItLeavesOut(t *testing.T) {
 	e.write("empty.txt", "")
 	e.write("crlf.txt", "a\r\nb\r\n")
 	for _, f := range []string{"missing.txt", "empty.txt", "crlf.txt", "../out.txt", "/etc/passwd"} {
-		notes := e.hook(HookRequest{Selects: []HookSelect{{File: f, Range: HookRange{Mode: RangeAll}, Tool: "Read"}}})
+		notes := e.hook(HookRequest{Looks: []HookLook{{File: f, Range: HookRange{Mode: RangeAll}, Tool: "Read"}}})
 		if len(notes) != 1 {
 			t.Errorf("%s: notes = %v", f, notes)
 		}
 	}
 	for _, k := range e.kinds() {
-		if k == tape.TypeSelect {
+		if k == tape.TypeLook {
 			t.Error("a select was recorded for a file that cannot be recorded")
 		}
 	}
@@ -78,10 +78,10 @@ func TestHookSelectNotesWhatItLeavesOut(t *testing.T) {
 func TestHookSelectSeesAnExternalChange(t *testing.T) {
 	e := newEnv(t)
 	e.write("f.txt", "a\nb\n")
-	e.hook(HookRequest{Selects: []HookSelect{{File: "f.txt", Range: HookRange{Mode: RangeAll}, Tool: "Read"}}})
+	e.hook(HookRequest{Looks: []HookLook{{File: "f.txt", Range: HookRange{Mode: RangeAll}, Tool: "Read"}}})
 	e.write("f.txt", "a\nB\nc\n")
-	e.hook(HookRequest{Selects: []HookSelect{{File: "f.txt", Range: HookRange{Mode: RangeAll}, Tool: "Read"}}})
-	if got, want := e.kinds(), []string{"snapshot", "select", "external", "select"}; !reflect.DeepEqual(got, want) {
+	e.hook(HookRequest{Looks: []HookLook{{File: "f.txt", Range: HookRange{Mode: RangeAll}, Tool: "Read"}}})
+	if got, want := e.kinds(), []string{"snapshot", "look", "external", "look"}; !reflect.DeepEqual(got, want) {
 		t.Errorf("kinds = %v, want %v", got, want)
 	}
 	for _, ev := range e.events() {
@@ -98,7 +98,7 @@ func TestObserveAllFindsWhatBashChanged(t *testing.T) {
 	e.write("b.txt", "2\n")
 	e.write("c.txt", "3\n")
 	for _, f := range []string{"a.txt", "b.txt", "c.txt"} {
-		e.hook(HookRequest{Selects: []HookSelect{{File: f, Range: HookRange{Mode: RangeAll}, Tool: "Read"}}})
+		e.hook(HookRequest{Looks: []HookLook{{File: f, Range: HookRange{Mode: RangeAll}, Tool: "Read"}}})
 	}
 	e.write("a.txt", "one\n")
 	e.write("c.txt", "")
@@ -164,11 +164,11 @@ func TestHookEdit(t *testing.T) {
 		e := newEnv(t)
 		e.write("f.txt", tc.text)
 		// the tape knows the file from an earlier look
-		e.hook(HookRequest{Selects: []HookSelect{{File: "f.txt", Range: HookRange{Mode: RangeAll}, Tool: "Read"}}})
+		e.hook(HookRequest{Looks: []HookLook{{File: "f.txt", Range: HookRange{Mode: RangeAll}, Tool: "Read"}}})
 		evs := e.edit("f.txt", tc.old, tc.repl, tc.all, nil)
 		var got []want
 		for _, ev := range evs {
-			if ev.Type != tape.TypeReplace {
+			if ev.Type != tape.TypeEdit {
 				t.Errorf("%s: %s recorded after the edit", name, ev.Type)
 				continue
 			}
@@ -193,7 +193,7 @@ func TestHookEditNeedsOnlyTheOriginalWhenTheTapeKnowsNothing(t *testing.T) {
 	for _, ev := range evs {
 		kinds = append(kinds, ev.Type)
 	}
-	if !reflect.DeepEqual(kinds, []string{"snapshot", "replace"}) {
+	if !reflect.DeepEqual(kinds, []string{"snapshot", "edit"}) {
 		t.Fatalf("kinds = %v", kinds)
 	}
 	if evs[0].Text == nil || *evs[0].Text != orig {
@@ -216,7 +216,7 @@ func TestHookEditWithoutAnyKnowledgeRecordsTheFileAsItIs(t *testing.T) {
 func TestHookEditThatDoesNotMatchTheFileIsExternal(t *testing.T) {
 	e := newEnv(t)
 	e.write("f.txt", "a\nb\nc\n")
-	e.hook(HookRequest{Selects: []HookSelect{{File: "f.txt", Range: HookRange{Mode: RangeAll}, Tool: "Read"}}})
+	e.hook(HookRequest{Looks: []HookLook{{File: "f.txt", Range: HookRange{Mode: RangeAll}, Tool: "Read"}}})
 	// the file now is not what the edit makes of the old content (something else changed it as well)
 	e.write("f.txt", "a\nB\nc\nextra\n")
 	before := len(e.events())

@@ -135,8 +135,8 @@ func TestNewLines(t *testing.T) {
 func TestStateKeepsBlankLines(t *testing.T) {
 	st := Build([]Event{
 		{Type: TypeSnapshot, Seq: 1, File: "a.go", Text: Str("a\nb\n")},
-		{Type: TypeReplace, Seq: 2, File: "a.go", StartLine: 2, EndLine: 2, NewText: "x\n", NewStartLine: 2, NewEndLine: 3},
-		{Type: TypeReplace, Seq: 3, File: "a.go", StartLine: 1, EndLine: 0, NewText: "", NewStartLine: 1, NewEndLine: 1},
+		{Type: TypeEdit, Seq: 2, File: "a.go", StartLine: 2, EndLine: 2, NewText: "x\n", NewStartLine: 2, NewEndLine: 3},
+		{Type: TypeEdit, Seq: 3, File: "a.go", StartLine: 1, EndLine: 0, NewText: "", NewStartLine: 1, NewEndLine: 1},
 	})
 	if got, want := st.Files["a.go"].Text, "\na\nx\n\n"; got != want {
 		t.Errorf("text = %q, want %q", got, want)

@@ -5,10 +5,10 @@
   "tabs": [],
   "tree": [
    {
-    "label": "1  select  entry.go:29",
+    "label": "1  look  entry.go:29",
     "description": "秒からミリ秒への倍率が間違っていて 1.5s が 150ms になっているため",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    }
   ],
   "status": [
@@ -605,34 +605,34 @@
   ],
   "tree": [
    {
-    "label": "1  select  entry.go:29",
+    "label": "1  look  entry.go:29",
     "description": "秒からミリ秒への倍率が間違っていて 1.5s が 150ms になっているため",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  select  stats.go:45",
+    "label": "2  look  stats.go:45",
     "description": "Merge の平均が件数を無視した単純平均になっているため",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "3  select  stats.go:81-89",
+    "label": "3  look  stats.go:81-89",
     "description": "PerMinute が「分」の数字だけで集計していて、別の時の同じ分が混ざるため",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "4  replace  entry.go:29",
+    "label": "4  edit  entry.go:29",
     "description": "1秒は1000ミリ秒なので",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "5  replace  stats.go:45-47",
+    "label": "5  edit  stats.go:45-47",
     "description": "件数で重み付けしないと全体の平均にならず、空の集計を混ぜると平均が半分になってしまうため",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    }
   ],
   "status": [
@@ -729,34 +729,34 @@
   ],
   "tree": [
    {
-    "label": "1  select  entry.go:29",
+    "label": "1  look  entry.go:29",
     "description": "秒からミリ秒への倍率が間違っていて 1.5s が 150ms になっているため",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  select  stats.go:45",
+    "label": "2  look  stats.go:45",
     "description": "Merge の平均が件数を無視した単純平均になっているため",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "3  select  stats.go:81-89",
+    "label": "3  look  stats.go:81-89",
     "description": "PerMinute が「分」の数字だけで集計していて、別の時の同じ分が混ざるため",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "4  replace  entry.go:29",
+    "label": "4  edit  entry.go:29",
     "description": "1秒は1000ミリ秒なので",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "5  replace  stats.go:45-47",
+    "label": "5  edit  stats.go:45-47",
     "description": "件数で重み付けしないと全体の平均にならず、空の集計を混ぜると平均が半分になってしまうため",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
     "label": "6  外部変更  stats.go:1-126",
@@ -1338,34 +1338,34 @@
   ],
   "tree": [
    {
-    "label": "1  select  entry.go:29",
+    "label": "1  look  entry.go:29",
     "description": "秒からミリ秒への倍率が間違っていて 1.5s が 150ms になっているため",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "2  select  stats.go:45",
+    "label": "2  look  stats.go:45",
     "description": "Merge の平均が件数を無視した単純平均になっているため",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "3  select  stats.go:81-89",
+    "label": "3  look  stats.go:81-89",
     "description": "PerMinute が「分」の数字だけで集計していて、別の時の同じ分が混ざるため",
     "color": "charts.blue",
-    "kind": "select"
+    "kind": "look"
    },
    {
-    "label": "4  replace  entry.go:29",
+    "label": "4  edit  entry.go:29",
     "description": "1秒は1000ミリ秒なので",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
-    "label": "5  replace  stats.go:45-47",
+    "label": "5  edit  stats.go:45-47",
     "description": "件数で重み付けしないと全体の平均にならず、空の集計を混ぜると平均が半分になってしまうため",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    },
    {
     "label": "6  外部変更  stats.go:1-126",
@@ -1374,10 +1374,10 @@
     "kind": "external"
    },
    {
-    "label": "7  replace  stats.go:83-86",
+    "label": "7  edit  stats.go:83-86",
     "description": "分の先頭時刻そのものをキーにすれば、10:59 と 11:59 のような別の時が混ざらないため",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
    }
   ],
   "status": [

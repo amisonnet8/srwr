@@ -113,9 +113,10 @@ class Live {
   }
 }
 
+// The lines of a tape that make a frame. The fixed tapes are version 1 and say select and replace.
 function isFrameLine(line: string): boolean {
   const t = (JSON.parse(line) as { type: string }).type;
-  return t === "select" || t === "replace" || t === "external";
+  return ["select", "replace", "look", "edit", "new", "external"].includes(t);
 }
 
 // Follows a fixed tape that is written into the workspace stage by stage.

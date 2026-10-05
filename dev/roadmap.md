@@ -59,13 +59,13 @@ srwr は、前のリポジトリで一度作った（段階 P0〜P5 と、UI の
 
 ## R2：`srwr mcp`（select / replace）とセッション
 
-参照：`docs/reference/mcp.md`・`docs/reference/tape.md`（セッション）・`docs/examples/select-replace.md`・`.claude/rules/go-code.md`
+参照：`docs/reference/mcp.md`・`docs/reference/tape.md`（セッション）・`docs/examples/look-edit.md`・`.claude/rules/go-code.md`
 
 - [ ] `internal/jsonrpc`（改行区切り。`mcp` と表示サーバーで共有する）
 - [ ] `internal/core`：範囲の検証、行番号の補正、内容の照合、`external` の検知
 - [ ] `internal/session`：`.srwr/active`、セッションの区切り（30分）、`.srwr/lock`（flock。OS ごとにビルドタグ）、テープからの読み足し、鍵の作成（書きかけを読ませない）
 - [ ] `internal/tools`・`internal/mcp`・`internal/cli`（`mcp`）・`cmd/srwr`
-- [ ] `internal/docs` に、`docs/examples/select-replace.md` の応答が本物と一致することの確認を足す
+- [ ] `internal/docs` に、`docs/examples/look-edit.md` の応答が本物と一致することの確認を足す
 
 **完了条件**：①`srwr mcp` を2つ起動し、片方のトークンをもう片方の `replace` で使える、②間が空くと新しいセッションになる（テストでは短く）、③別のセッションのトークンは `invalid_selection`、④2つ同時に起動しても鍵の作成で失敗しない。`qsoku race` と `qsoku cross` が通る。
 **人間の確認**：なし。

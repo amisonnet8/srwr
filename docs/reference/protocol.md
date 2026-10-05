@@ -39,7 +39,7 @@ The arguments are a JSON object (`{}` if none).
 
 | Method | Kind | Arguments → result |
 |---|---|---|
-| `initialize` | request | `{client:"vscode"\|"vim", protocolVersion:1, options:{diffFrames}}` → `{serverVersion, protocolVersion:1}`. The default of `options` has `diffFrames` as `true`. Unknown `options` are ignored |
+| `initialize` | request | `{client:"vscode"\|"vim", protocolVersion:2, options:{diffFrames}}` → `{serverVersion, protocolVersion:2}`. The default of `options` has `diffFrames` as `true`. Unknown `options` are ignored |
 | `tapes/list` | request | `{}` → `{tapes:[TapeInfo…]}`. Only tapes that have one or more operations, newest first (by the time the tape started; a tape without a header by its last update). Tapes that cannot be read are not listed |
 | `tape/open` | request | `{tapeId, withText?:false, kinds?}` → `{tapeId, frames:[Frame…], hidden?}`. The frames. If `diffFrames` is true, the **final diff** (`final`), compared with the current file of the workspace, is included at the end. Opening the same `tapeId` again reads it again |
 | `frame/state` | request | `{tapeId, index, file?}` → `{before, after, content}`. The before and after of the frame at `index` (both `""` when `index` is −1). `content` is the content of `file` (the file of that frame if omitted) at the time that frame has finished. `null` for a file no frame has touched |
@@ -52,7 +52,7 @@ The arguments are a JSON object (`{}` if none).
 
 **`tapeId`**: the file name of the tape without `.tape.jsonl` (for example `20260929-0237-1359`). Only the characters `0-9 A-Z a-z - _ .` are accepted and it must not start with `.`; anything else (such as `/`) gives `invalid_params`.
 
-**TapeInfo**: `{tapeId, startedAt, updatedAt, ops, files}`. `startedAt` is the value of the header (`""` if there is no header), `updatedAt` is the last update time of the tape's file (RFC 3339 in UTC with milliseconds, ending in `Z`), `ops` is the number of `select`, `replace` and `external`, and `files` are the files touched (in the order first touched). `startedAt` of a tape written by an older version may have an offset such as `+09:00`; it is the same moment. A client shows these times in the time zone of the machine.
+**TapeInfo**: `{tapeId, startedAt, updatedAt, ops, files}`. `startedAt` is the value of the header (`""` if there is no header), `updatedAt` is the last update time of the tape's file (RFC 3339 in UTC with milliseconds, ending in `Z`), `ops` is the number of `look`, `edit` and `external`, and `files` are the files touched (in the order first touched). `startedAt` of a tape written by an older version may have an offset such as `+09:00`; it is the same moment. A client shows these times in the time zone of the machine.
 
 ## Frames
 
@@ -60,36 +60,36 @@ The arguments are a JSON object (`{}` if none).
 
 | Kind (`kind`) | Made from | Information it holds (the main points) |
 |---|---|---|
-| `select` | A `select` of the tape (whether `source` is `mcp` or `hook`) | File, range, `why` (may be `null`), `seq`, lineage (`selection`) |
-| `replace` | A `replace` of the tape | File, the range and text before and after, `why` (may be `null`), `seq`, lineage (`from` → `selection`) |
-| `sub` | A `replace` of the tape made by `sub` (`tool` is `sub`): one file, all its places | File, the range and the text before and after, `why`, `seq`, `hits` (the number of places). Shown as a diff, like `external`, with the `why` in a band above both sides |
-| `new` | A `replace` of the tape made by `new` (`tool` is `new`): a whole new file | File, the range (the whole file) and the text after (before is empty), `why`, `seq`. Shown like a `replace`: one editor, the file painted orange, the `why` above it |
+| `look` | A `look` of the tape (whether `source` is `mcp` or `hook`) | File, range, `why` (may be `null`), `seq`, lineage (`selection`) |
+| `edit` | An `edit` of the tape | File, the range and text before and after, `why` (may be `null`), `seq`, lineage (`from` → `selection`) |
+| `replace` | A `replace` of the tape: one file, all its places | File, the range and the text before and after, `why`, `seq`, `hits` (the number of places). Shown as a diff, like `external`, with the `why` in a band above both sides |
+| `new` | A `new` of the tape: a whole new file | File, the range (the whole file) and the text after (before is empty), `why`, `seq`. Shown like an `edit`: one editor, the file painted orange, the `why` above it |
 | `external` | An `external` of the tape | File, before (the content just before) and after (`text`), whether it was deleted |
 | `final` | The last content of the tape compared with the current file | File, before (the end of the tape) and after (the current file), whether it no longer exists |
-| `failure` | A `failure` of the tape (a `select`, `replace`, `sub` or `new` that gave the AI an error) | `tool`, `code`, `message`, `why`; `file` is `""` when it is not known or is left out; `range` is the range given to a `select` (`{start:0,end:-1}` when there is none). The text before and after is empty |
+| `failure` | A `failure` of the tape (a `look`, `edit`, `replace` or `new` that gave the AI an error) | `tool`, `code`, `message`, `why`; `file` is `""` when it is not known or is left out; `range` is the range given to a `look` (`{start:0,end:-1}` when there is none). The text before and after is empty |
 
 The fields of a Frame:
 
 | Field | Content |
 |---|---|
 | `index` | The position in the list, starting from 0 |
-| `kind` | `select`, `replace`, `sub`, `new`, `external`, `final`, `failure` |
+| `kind` | `look`, `edit`, `replace`, `new`, `external`, `final`, `failure` |
 | `seq`, `ts` | The `seq` of the tape, and the time (epoch milliseconds; the value of the frame before if it cannot be read, 0 for the first). `final` has the value of the last frame |
 | `file` | A path relative to the workspace (separated by `/`) |
-| `range` | `{start, end}`. The range on the "after" side (`select` = that range, `replace`, `sub` and `new` = the new range, `external` and `final` = the whole file). `end < start` is an empty range |
-| `oldRange` | `replace` only. The range on the "before" side |
+| `range` | `{start, end}`. The range on the "after" side (`look` = that range, `edit`, `replace` and `new` = the new range, `external` and `final` = the whole file). `end < start` is an empty range |
+| `oldRange` | `edit` only. The range on the "before" side |
 | `why`, `selection`, `from` | A string or `null` |
 | `parent` | The parent in the lineage (the `index` of the frame `from` points to), or `null` |
-| `tool`, `code`, `message` | `failure` only: the tool (`select`, `replace`, `sub`, `new`), the error code, and the message (the real path is left out; see [tape.md](tape.md#failure)) |
-| `hits` | `sub` only. The number of places it changed in the file (not output otherwise) |
+| `tool`, `code`, `message` | `failure` only: the tool (`look`, `edit`, `replace`, `new`), the error code, and the message (the real path is left out; see [tape.md](tape.md#failure)) |
+| `hits` | `replace` only. The number of places it changed in the file (not output otherwise) |
 | `deleted` | Diff frames only. The file does not exist after the change (`true` only then; not output otherwise) |
 | `before`, `after` | **Only when `withText` is true.** The whole text before and after. Usually it is fetched with `frame/state` (so that not every frame carries the whole text in a big tape) |
 
-- **Which kinds are sent (`kinds`)**: `tape/open` and `live/start` take `kinds`, a list of `select`, `replace`, `external`, `failure`. The server sends only those, **numbers the frames from 0 again** (so `index` is the position in what is sent, and `frame/state` takes that `index`), and tells how many it left out: `hidden` is an object such as `{"failure": 2}` (a kind with none left out is not in it; when nothing is left out, `hidden` is not there). `final` follows `external`, and `sub` and `new` follow `replace`. Left out, `kinds` is `["select","replace","external"]`: `failure` frames are not sent unless asked for. An unknown name is `invalid_params`. An empty list sends nothing. To change what is shown, a client opens the tape again with other `kinds`. `frame/state` is not affected by what is left out: the content of a file after a frame includes the frames that are not sent
+- **Which kinds are sent (`kinds`)**: `tape/open` and `live/start` take `kinds`, a list of `look`, `edit`, `external`, `failure`. The server sends only those, **numbers the frames from 0 again** (so `index` is the position in what is sent, and `frame/state` takes that `index`), and tells how many it left out: `hidden` is an object such as `{"failure": 2}` (a kind with none left out is not in it; when nothing is left out, `hidden` is not there). `final` follows `external`, and `replace` and `new` follow `edit`. Left out, `kinds` is `["select","replace","external"]`: `failure` frames are not sent unless asked for. An unknown name is `invalid_params`. An empty list sends nothing. To change what is shown, a client opens the tape again with other `kinds`. `frame/state` is not affected by what is left out: the content of a file after a frame includes the frames that are not sent
 - The frames of live (`live/start`, `live/frame`) do not include the final diff (an `external` appears as written on the tape)
 - **The server decides the final diff.** The client only shows it
 - Even if items are added to the tape (`source`, `tool`, `vcs` and so on), the client need not use them
-- **The fields VSCode and Vim use** are only `index`, `kind`, `file`, `range`, `why`, `before`, `after`, `deleted`, `hits` (for `sub`), and for `failure` `tool`, `code` and `message`, and `seq` (to find the nearest frame again when the kinds that are shown are changed). They do not use `ts`, `selection`, `from`, `parent` or `oldRange`. Live also uses the text (`before`, `after`), so pass `withText: true` to `live/start`
+- **The fields VSCode and Vim use** are only `index`, `kind`, `file`, `range`, `why`, `before`, `after`, `deleted`, `hits` (for `replace`), and for `failure` `tool`, `code` and `message`, and `seq` (to find the nearest frame again when the kinds that are shown are changed). They do not use `ts`, `selection`, `from`, `parent` or `oldRange`. Live also uses the text (`before`, `after`), so pass `withText: true` to `live/start`
 
 ## Behavior of the server
 
@@ -121,4 +121,4 @@ The fields of a Frame:
 ## When you make a supported editor
 
 - The standard for how to draw is [vscode.md](vscode.md). Show each kind of frame (the color of the range, the `why` line, the diff frame) with the same information in the same order
-- Examples of working exchanges are in [the examples](../examples/select-replace.md)
+- Examples of working exchanges are in [the examples](../examples/look-edit.md)

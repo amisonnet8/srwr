@@ -25,11 +25,11 @@ func TestTokensInRealTapes(t *testing.T) {
 		st := tape.NewState()
 		for _, e := range tape.Parse(data).Events {
 			st.Apply(e)
-			if e.Selection == nil || (e.Type != tape.TypeSelect && e.Type != tape.TypeReplace) {
+			if e.Selection == nil || (e.Type != tape.TypeLook && e.Type != tape.TypeEdit) {
 				continue
 			}
 			start, end := e.StartLine, e.EndLine
-			if e.Type == tape.TypeReplace {
+			if e.Type == tape.TypeEdit {
 				start, end = e.NewStartLine, e.NewEndLine
 			}
 			got, _, mac, err := decodeBody(*e.Selection)

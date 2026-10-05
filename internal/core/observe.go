@@ -6,8 +6,8 @@ import (
 )
 
 // Observe compares a file with what the tape knows of it, and records the difference. current is
-// the content now, or nil if the file does not exist. detectedBy is what noticed it ("select",
-// "replace", "hook").
+// the content now, or nil if the file does not exist. detectedBy is what noticed it ("look",
+// "edit", "replace", "new", "hook").
 //
 //   - A file the tape has no content of: a snapshot, the first time it is touched.
 //   - A file that is not what the tape says: an external event with the lines that changed (or, when

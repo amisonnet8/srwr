@@ -156,16 +156,16 @@ func (c *client) call(name string, args map[string]any) (map[string]any, bool) {
 
 func (c *client) mustSelect(file string, start, end int) string {
 	c.t.Helper()
-	m, isErr := c.call("select", map[string]any{"file": file, "startLine": start, "endLine": end, "why": "見る"})
+	m, isErr := c.call("look", map[string]any{"file": file, "startLine": start, "endLine": end, "why": "見る"})
 	if isErr {
-		c.t.Fatalf("select %s %d..%d: %v", file, start, end, m)
+		c.t.Fatalf("look %s %d..%d: %v", file, start, end, m)
 	}
 	return m["selection"].(string)
 }
 
 func (c *client) mustReplace(token, newText string) {
 	c.t.Helper()
-	m, isErr := c.call("replace", map[string]any{"selection": token, "newText": newText, "why": "変える"})
+	m, isErr := c.call("edit", map[string]any{"selection": token, "newText": newText, "why": "変える"})
 	if isErr {
 		c.t.Fatalf("replace: %v", m)
 	}
@@ -258,7 +258,7 @@ func TestTokenWorksInAnotherProcess(t *testing.T) {
 	for _, e := range events[1:] {
 		kinds = append(kinds, e.Type)
 	}
-	if want := []string{"snapshot", "select", "replace", "select", "replace"}; !slices.Equal(kinds, want) {
+	if want := []string{"snapshot", "look", "edit", "look", "edit"}; !slices.Equal(kinds, want) {
 		t.Errorf("tape = %v, want %v", kinds, want)
 	}
 	if h := events[0]; h.Author == nil || h.Author.Name != "e2e" || h.Tool == nil || h.Tool.Name != "srwr" {
@@ -353,7 +353,7 @@ func TestNewSessionAfterAPause(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	m, isErr := a.call("replace", map[string]any{"selection": tok, "newText": "x", "why": "w"})
+	m, isErr := a.call("edit", map[string]any{"selection": tok, "newText": "x", "why": "w"})
 	if code := m["error"].(map[string]any)["code"]; !isErr || code != "invalid_selection" {
 		t.Fatalf("replace with the token of the old session: %v", m)
 	}
@@ -393,7 +393,7 @@ func TestRootDefaultsToTheCurrentDirectory(t *testing.T) {
 	write(t, root, "f.txt", "1\n")
 	cmd := exec.Command(binary(t), "mcp") //nolint:gosec // the binary was built by this test
 	cmd.Dir = root
-	cmd.Stdin = strings.NewReader(`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"select","arguments":{"file":"f.txt","startLine":1,"endLine":1,"why":"w"}}}` + "\n")
+	cmd.Stdin = strings.NewReader(`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"look","arguments":{"file":"f.txt","startLine":1,"endLine":1,"why":"w"}}}` + "\n")
 	out, err := cmd.Output()
 	if err != nil || !strings.Contains(string(out), `\"ok\":true`) {
 		t.Errorf("output = %s, err = %v", out, err)
@@ -435,7 +435,7 @@ func TestViewServerShowsWhatMCPWrote(t *testing.T) {
 
 	v := startViewer(t, root)
 	var init struct{ Result struct{ ProtocolVersion int } }
-	if err := json.Unmarshal([]byte(v.request("initialize", `{"client":"vim","protocolVersion":1}`)), &init); err != nil || init.Result.ProtocolVersion != 1 {
+	if err := json.Unmarshal([]byte(v.request("initialize", `{"client":"vim","protocolVersion":2}`)), &init); err != nil || init.Result.ProtocolVersion != 2 {
 		t.Fatalf("initialize: %+v %v", init, err)
 	}
 
@@ -471,7 +471,7 @@ func TestViewServerShowsWhatMCPWrote(t *testing.T) {
 		t.Fatalf("tape/open: %s %v", line, err)
 	}
 	f := opened.Result.Frames[1]
-	if f.Kind != "replace" || f.Why != "変える" || f.Range.Start != 3 || f.Range.End != 6 ||
+	if f.Kind != "edit" || f.Why != "変える" || f.Range.Start != 3 || f.Range.End != 6 ||
 		f.Before != "package main\n\nfunc main() {\n\trun()\n}\n" || f.After != "package main\n\nfunc main() {\n\tsetup()\n\trun()\n}\n" {
 		t.Errorf("frame = %+v", f)
 	}
@@ -502,7 +502,7 @@ func TestExternalChangeIsHunksAndReplays(t *testing.T) {
 	for _, e := range events[1:] {
 		kinds = append(kinds, e.Type)
 	}
-	if want := []string{"snapshot", "select", "external", "select", "replace"}; !slices.Equal(kinds, want) {
+	if want := []string{"snapshot", "look", "external", "look", "edit"}; !slices.Equal(kinds, want) {
 		t.Fatalf("tape = %v, want %v", kinds, want)
 	}
 	if x := events[3]; x.Text != nil || len(x.Hunks) != 2 {
@@ -519,7 +519,7 @@ func TestFailedCallIsOnTheTapeAndNotAFrame(t *testing.T) {
 	write(t, root, "a.go", "package a\n")
 	c := startClient(t, root)
 	c.initialize()
-	if m, isErr := c.call("select", map[string]any{"file": filepath.Join(root, "a.go"), "startLine": 1, "endLine": 1, "why": "見る"}); !isErr || m["error"].(map[string]any)["code"] != "invalid_range" {
+	if m, isErr := c.call("look", map[string]any{"file": filepath.Join(root, "a.go"), "startLine": 1, "endLine": 1, "why": "見る"}); !isErr || m["error"].(map[string]any)["code"] != "invalid_range" {
 		t.Fatalf("select with an absolute path: %v (isError %v)", m, isErr)
 	}
 	c.mustSelect("a.go", 1, 1)

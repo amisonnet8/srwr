@@ -11,7 +11,7 @@ import (
 )
 
 // What srwr hook records (docs/reference/cli.md): what the agent did with its own tools, written to the same tape as
-// select and replace, with no why and no token. Nothing here fails the agent: a file that cannot be recorded is left out
+// look, edit and replace, with no why and no token. Nothing here fails the agent: a file that cannot be recorded is left out
 // and told in the notes.
 
 // Hook range modes.
@@ -21,14 +21,14 @@ const (
 	RangeTail  = "tail"  // the last A lines
 )
 
-// HookRange says which lines of a file a hook select covers.
+// HookRange says which lines of a file a hook look covers.
 type HookRange struct {
 	Mode string
 	A, B int
 }
 
-// HookSelect is something the agent looked at.
-type HookSelect struct {
+// HookLook is something the agent looked at.
+type HookLook struct {
 	File  string // relative to the workspace
 	Range HookRange
 	Tool  string // Read, Bash or Grep
@@ -46,7 +46,7 @@ type HookEdit struct {
 // HookRequest is everything one hook call records, in this order: the files read again, the selects, the edit.
 type HookRequest struct {
 	ObserveAll bool // read every file the tape has content of again, and record new files git lists (after Bash)
-	Selects    []HookSelect
+	Looks      []HookLook
 	Edit       *HookEdit
 }
 
@@ -65,8 +65,8 @@ func (c *Core) Hook(req HookRequest) (notes []string, err error) {
 				return err
 			}
 		}
-		for _, s := range req.Selects {
-			note, err := c.hookSelect(tx, s)
+		for _, s := range req.Looks {
+			note, err := c.hookLook(tx, s)
 			if note != "" {
 				notes = append(notes, note)
 			}
@@ -168,7 +168,7 @@ func (c *Core) readForHook(file string) (rel string, t target, note string) {
 	return rel, t, ""
 }
 
-func (c *Core) hookSelect(tx *session.Tx, s HookSelect) (string, error) {
+func (c *Core) hookLook(tx *session.Tx, s HookLook) (string, error) {
 	rel, t, note := c.readForHook(s.File)
 	if note != "" {
 		return note, nil
@@ -185,7 +185,7 @@ func (c *Core) hookSelect(tx *session.Tx, s HookSelect) (string, error) {
 		return fmt.Sprintf("the range of %s is empty, so it is not recorded", rel), nil
 	}
 	return "", tx.Append(tape.Event{
-		Type: tape.TypeSelect, Seq: tx.NextSeq(), File: rel, StartLine: a, EndLine: b,
+		Type: tape.TypeLook, Seq: tx.NextSeq(), File: rel, StartLine: a, EndLine: b,
 		Source: tape.SourceHook, HookTool: s.Tool,
 	})
 }
@@ -241,7 +241,7 @@ func (c *Core) hookEdit(tx *session.Tx, e HookEdit) (string, error) {
 	}
 	for _, s := range steps {
 		err := tx.Append(tape.Event{
-			Type: tape.TypeReplace, Seq: tx.NextSeq(), File: rel,
+			Type: tape.TypeEdit, Seq: tx.NextSeq(), File: rel,
 			StartLine: s.a, EndLine: s.b, OldText: s.oldText, NewText: strings.Join(s.newLines, "\n"),
 			NewStartLine: s.a, NewEndLine: s.a + len(s.newLines) - 1,
 			FileShaBefore: s.shaBefore, FileShaAfter: s.shaAfter, Source: tape.SourceHook, HookTool: "Edit",

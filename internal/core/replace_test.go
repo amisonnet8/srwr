@@ -1,6 +1,8 @@
 package core
 
 import (
+	"encoding/json"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -38,10 +40,16 @@ func TestSubChangesEveryPlaceInEveryFile(t *testing.T) {
 	if res.Count != 3 || len(res.Files) != 2 {
 		t.Fatalf("result = %+v", res)
 	}
-	a := res.Files[0]
-	if a.File != "a.go" || a.Hits != 2 || a.StartLine != 2 || a.EndLine != 5 || a.Selection == "" ||
-		strings.Join(a.Lines, "|") != "bar(1)|y|z|bar(2)" {
-		t.Errorf("a.go = %+v", a)
+	// One entry for each place: the lines as they are now, and the line before and the line after.
+	wantA := ReplaceFile{File: "a.go", Count: 2, Hits: []ReplaceHit{
+		{StartLine: 2, EndLine: 2, Lines: []string{"bar(1)"}, Before: []string{"x"}, After: []string{"y"}},
+		{StartLine: 5, EndLine: 5, Lines: []string{"bar(2)"}, Before: []string{"z"}, After: []string{"w"}},
+	}}
+	if !reflect.DeepEqual(res.Files[0], wantA) {
+		t.Errorf("a.go = %+v, want %+v", res.Files[0], wantA)
+	}
+	if b := res.Files[1]; b.File != "b.go" || b.Count != 1 || len(b.Hits) != 1 || len(b.Hits[0].Before) != 0 || len(b.Hits[0].After) != 0 {
+		t.Errorf("b.go = %+v: no line before or after is []", b)
 	}
 	// One replace for each file that changed, with the same why, the tool and the number of places.
 	rs := e.replaces()
@@ -49,7 +57,7 @@ func TestSubChangesEveryPlaceInEveryFile(t *testing.T) {
 		t.Fatalf("%d replaces", len(rs))
 	}
 	for i, r := range rs {
-		if r.Source != tape.SourceMCP || r.Why == nil || *r.Why != "rename the helper" || r.From != nil {
+		if r.Source != tape.SourceMCP || r.Why == nil || *r.Why != "rename the helper" || r.From != nil || r.Selection != nil {
 			t.Errorf("replace %d = %+v", i, r)
 		}
 	}
@@ -98,54 +106,149 @@ func TestSubMultiLineTexts(t *testing.T) {
 	if got := e.read("a.txt"); got != "1\nnew\n2\nnew\n3\n" {
 		t.Errorf("file = %q", got)
 	}
-	if f := res.Files[0]; f.StartLine != 2 || f.EndLine != 4 || strings.Join(f.Lines, "|") != "new|2|new" {
-		t.Errorf("result = %+v", f)
+	want := []ReplaceHit{
+		{StartLine: 2, EndLine: 2, Lines: []string{"new"}, Before: []string{"1"}, After: []string{"2"}},
+		{StartLine: 4, EndLine: 4, Lines: []string{"new"}, Before: []string{"2"}, After: []string{"3"}},
+	}
+	if !reflect.DeepEqual(res.Files[0].Hits, want) {
+		t.Errorf("hits = %+v, want %+v", res.Files[0].Hits, want)
 	}
 	e.checkTape()
 
-	// Deleting everything that is in the range leaves an empty range.
-	e.write("b.txt", "a\nX\nb\n")
-	res, err = e.sub([]string{"b.txt"}, "X\n", "", 1)
+	// A place that spans lines is a range of lines.
+	e.write("c.txt", "a\nx\ny\nb\nx\ny\n")
+	res, err = e.sub([]string{"c.txt"}, "x\ny", "p\nq\nr", 2)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := e.read("b.txt"); got != "a\nb\n" || len(res.Files[0].Lines) != 0 || res.Files[0].EndLine != 1 {
+	if h := res.Files[0].Hits; len(h) != 2 || h[0].StartLine != 2 || h[0].EndLine != 4 || strings.Join(h[0].Lines, "|") != "p|q|r" || h[1].StartLine != 6 || h[1].EndLine != 8 {
+		t.Errorf("hits = %+v", h)
+	}
+
+	// Deleting the text leaves the line where it was.
+	e.write("b.txt", "a\nX\nb\nX\nc\n")
+	res, err = e.sub([]string{"b.txt"}, "X\n", "", 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := e.read("b.txt"); got != "a\nb\nc\n" || len(res.Files[0].Hits) != 2 || res.Files[0].Hits[0].StartLine != 2 || strings.Join(res.Files[0].Hits[0].Lines, "|") != "b" {
 		t.Errorf("file = %q, result = %+v", got, res.Files[0])
 	}
 	e.checkTape()
 }
 
-func TestSubTwoPlacesOnOneLineAndOverlaps(t *testing.T) {
+func TestSubPlacesOnOneLineAreOneEntry(t *testing.T) {
 	e := newEnv(t)
 	e.write("a.txt", "ab ab\nxxx\n")
-	if _, err := e.sub([]string{"a.txt"}, "ab", "c", 2); err != nil {
+	res, err := e.sub([]string{"a.txt"}, "ab", "c", 2)
+	if err != nil {
 		t.Fatal(err)
 	}
 	if e.read("a.txt") != "c c\nxxx\n" {
 		t.Errorf("file = %q", e.read("a.txt"))
 	}
-	// "xx" in "xxx" is one place, since places do not overlap.
-	if _, err := e.sub([]string{"a.txt"}, "xx", "y", 1); err != nil {
-		t.Fatal(err)
-	}
-	if e.read("a.txt") != "c c\nyx\n" {
-		t.Errorf("file = %q", e.read("a.txt"))
+	if f := res.Files[0]; f.Count != 2 || len(f.Hits) != 1 || f.Hits[0].StartLine != 1 || f.Hits[0].EndLine != 1 {
+		t.Errorf("result = %+v: two places on a line are one entry, and the count is of the places", f)
 	}
 	e.checkTape()
+}
+
+func TestSubListsAtMostTwentyPlacesOfAFile(t *testing.T) {
+	e := newEnv(t)
+	e.write("a.txt", strings.Repeat("foo\nx\n", 25))
+	res, err := e.sub([]string{"a.txt"}, "foo", "bar", 25)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if f := res.Files[0]; f.Count != 25 || len(f.Hits) != 20 || f.More != 5 {
+		t.Errorf("count %d, %d listed, %d more", f.Count, len(f.Hits), f.More)
+	}
+	if strings.Contains(e.read("a.txt"), "foo") {
+		t.Error("not every place was changed")
+	}
+}
+
+// replace is for 2 or more places. One place is answered with where it is and the edit call to make; nothing is changed.
+func TestSubOfOnePlaceIsUseEdit(t *testing.T) {
+	e := newEnv(t)
+	e.write("a.txt", "keep\nxx and xx\nkeep\n")
+	e.write("b.txt", "none\n")
+	e.write("c.txt", "keep\nfoo SECRETWORD bar\nkeep\n")
+	_, err := e.sub([]string{"b.txt", "c.txt"}, "foo SECRETWORD", "baz", 1)
+	wantCode(t, err, CodeUseEdit)
+	if strings.Contains(err.Message, "SECRETWORD") || !strings.Contains(err.Message, "c.txt line 2") {
+		t.Errorf("message = %q: it names the place and has none of the file", err.Message)
+	}
+	if e.read("c.txt") != "keep\nfoo SECRETWORD bar\nkeep\n" || len(e.replaces()) != 0 {
+		t.Error("something was changed")
+	}
+	actual, _ := err.Actual.(map[string]any)
+	hits, _ := actual["hits"].([]useEditHit)
+	call, _ := actual["edit"].(useEditCall)
+	if len(hits) != 1 || hits[0].File != "c.txt" || hits[0].StartLine != 2 || strings.Join(hits[0].Lines, "|") != "foo SECRETWORD bar" {
+		t.Errorf("hits = %+v", hits)
+	}
+	if call != (useEditCall{File: "c.txt", StartLine: 2, EndLine: 2, Expect: "foo SECRETWORD bar", NewText: "baz bar"}) {
+		t.Errorf("edit = %+v", call)
+	}
+	// The failure is on the tape without the texts.
+	f := e.failures()
+	if len(f) != 1 || f[0].Tool != "replace" || f[0].Code != CodeUseEdit || f[0].File != nil {
+		t.Errorf("failures = %+v", f)
+	}
+	for _, ev := range e.eventsOf(tape.TypeFailure) { // the snapshot holds the file, but the failure holds neither text
+		if b, _ := json.Marshal(ev); strings.Contains(string(b), "SECRETWORD") || strings.Contains(string(b), "baz") {
+			t.Errorf("the failure holds a text: %s", b)
+		}
+	}
+
+	// The call it gives is the one that works.
+	if _, err := e.c.Edit(EditInput{File: call.File, HasLines: true, StartLine: call.StartLine, EndLine: call.EndLine, Expect: &call.Expect, NewText: call.NewText, Why: "change it"}); err != nil {
+		t.Fatal(err)
+	}
+	if e.read("c.txt") != "keep\nbaz bar\nkeep\n" {
+		t.Errorf("file = %q", e.read("c.txt"))
+	}
+
+	// Places that do not overlap are counted as replace counts them: "xx" is one place of "xxx".
+	e.write("d.txt", "xxx\n")
+	_, err = e.sub([]string{"d.txt"}, "xx", "y", 1)
+	wantCode(t, err, CodeUseEdit)
+
+	// With a count of 1 and no place, or more than one, it is the count that is wrong.
+	_, err = e.sub([]string{"b.txt"}, "zzz", "y", 1)
+	wantCode(t, err, CodeCountMismatch)
+	_, err = e.sub([]string{"a.txt"}, "xx", "y", 1)
+	wantCode(t, err, CodeCountMismatch)
+	// And a count of 2 for one place is a count that is wrong, not a case for edit.
+	_, err = e.sub([]string{"d.txt"}, "xx", "y", 2)
+	wantCode(t, err, CodeCountMismatch)
+}
+
+// A change that cannot be told in lines has no edit to give: the places are still told.
+func TestSubOfOnePlaceThatEditCannotTell(t *testing.T) {
+	e := newEnv(t)
+	e.write("a.txt", "x\nfoo\n")
+	_, err := e.sub([]string{"a.txt"}, "foo\n", "foo", 1)
+	wantCode(t, err, CodeUseEdit)
+	actual, _ := err.Actual.(map[string]any)
+	if _, has := actual["edit"]; has || actual["hits"] == nil || strings.Contains(err.Message, "actual.edit") {
+		t.Errorf("error = %+v", err)
+	}
 }
 
 func TestSubInputIsChecked(t *testing.T) {
 	e := newEnv(t)
 	e.write("a.txt", "foo\n")
 	for name, in := range map[string]ReplaceInput{
-		"no files":     {Old: "foo", New: "x", Count: 1, Why: "w"},
-		"empty old":    {Files: []string{"a.txt"}, New: "x", Count: 1, Why: "w"},
-		"zero count":   {Files: []string{"a.txt"}, Old: "foo", New: "x", Why: "w"},
-		"blank why":    {Files: []string{"a.txt"}, Old: "foo", New: "x", Count: 1, Why: " "},
-		"CR in new":    {Files: []string{"a.txt"}, Old: "foo", New: "x\r\n", Count: 1, Why: "w"},
-		"twice":        {Files: []string{"a.txt", "./a.txt"}, Old: "foo", New: "x", Count: 2, Why: "w"},
-		"empty file":   {Files: []string{""}, Old: "foo", New: "x", Count: 1, Why: "w"},
-		"no final \\n": {Files: []string{"a.txt"}, Old: "foo\n", New: "foo", Count: 1, Why: "w"},
+		"no files":   {Old: "foo", New: "x", Count: 1, Why: "w"},
+		"empty old":  {Files: []string{"a.txt"}, New: "x", Count: 1, Why: "w"},
+		"zero count": {Files: []string{"a.txt"}, Old: "foo", New: "x", Why: "w"},
+		"negative":   {Files: []string{"a.txt"}, Old: "foo", New: "x", Count: -1, Why: "w"},
+		"blank why":  {Files: []string{"a.txt"}, Old: "foo", New: "x", Count: 1, Why: " "},
+		"CR in new":  {Files: []string{"a.txt"}, Old: "foo", New: "x\r\n", Count: 1, Why: "w"},
+		"twice":      {Files: []string{"a.txt", "./a.txt"}, Old: "foo", New: "x", Count: 2, Why: "w"},
+		"empty file": {Files: []string{""}, Old: "foo", New: "x", Count: 1, Why: "w"},
 	} {
 		_, err := e.c.Replace(in)
 		wantCode(t, err, CodeInvalidInput)
@@ -154,6 +257,16 @@ func TestSubInputIsChecked(t *testing.T) {
 		}
 	}
 	e.checkTape()
+}
+
+func TestSubThatAddsOrRemovesTheFinalLineBreakIsInvalid(t *testing.T) {
+	e := newEnv(t)
+	e.write("a.txt", "foo\nbar foo\n")
+	_, err := e.sub([]string{"a.txt"}, "foo\n", "foo", 2)
+	wantCode(t, err, CodeInvalidInput)
+	if e.read("a.txt") != "foo\nbar foo\n" {
+		t.Error("the file was changed")
+	}
 }
 
 func TestSubPathsAndFilesThatCannotBeUsed(t *testing.T) {
@@ -191,20 +304,6 @@ func TestSubAfterAnEditOutsideSrwr(t *testing.T) {
 	}
 	if got := e.kinds(); !strings.Contains(strings.Join(got, ","), "external,replace") {
 		t.Errorf("kinds = %v", got)
-	}
-	e.checkTape()
-}
-
-func TestASubTokenCanBeUsedByReplace(t *testing.T) {
-	e := newEnv(t)
-	e.write("a.go", "x\nfoo\ny\nfoo\nz\n")
-	res, err := e.sub([]string{"a.go"}, "foo", "bar", 2)
-	if err != nil {
-		t.Fatal(err)
-	}
-	e.rep(e.c, res.Files[0].Selection, "BAR1\ny\nBAR2")
-	if e.read("a.go") != "x\nBAR1\ny\nBAR2\nz\n" {
-		t.Errorf("file = %q", e.read("a.go"))
 	}
 	e.checkTape()
 }

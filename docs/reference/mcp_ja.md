@@ -102,15 +102,17 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 
 ## replace
 
-複数のファイルで、文字列を別の文字列に一度に置き換える（簡単な sed のようなもの）。理由も記録する。文字列は、そのままの文字として探す（正規表現ではない）。各ファイルを左から探し、場所は重ならない。**全部のファイルでの場所の数 `count` は必須。見つかった数が違えば、何も変えない。**
+**2か所以上**で、1つのファイルでも複数のファイルでも、文字列を別の文字列に一度に置き換える（簡単な sed のようなもの）。理由も記録する。1か所なら `edit` を使う（`replace` は断られる。`use_edit`、下）。文字列は、そのままの文字として探す（正規表現ではない）。各ファイルを左から探し、場所は重ならない。**全部のファイルでの場所の数 `count` は必須で、2以上。見つかった数が違えば、何も変えない。**
 
 ```jsonc
 // 入力
 { "files": ["a.go", "b.go"], "old": "oldName(", "new": "newName(", "count": 3, "why": "新しい命名規則に合わせて、ヘルパーの名前を変える" }
 // 出力
 { "ok": true, "count": 3, "files": [
-  { "file": "a.go", "hits": 2, "startLine": 12, "endLine": 30, "selection": "sel_041G417ZRKYSPWJ7X4Z5PPKP", "lines": ["…"] },
-  { "file": "b.go", "hits": 1, "startLine": 7, "endLine": 7, "selection": "sel_042020AD5CH4C75M7DH075CM", "lines": ["…"] } ] }
+  { "file": "a.go", "count": 2, "hits": [
+      { "startLine": 12, "endLine": 12, "lines": ["…"], "before": ["…"], "after": ["…"] },
+      { "startLine": 30, "endLine": 31, "lines": ["…", "…"], "before": [], "after": ["…"] } ] },
+  { "file": "b.go", "count": 1, "hits": [ { "startLine": 7, "endLine": 7, "lines": ["…"], "before": ["…"], "after": ["…"] } ] } ] }
 ```
 
 | 項目 | 意味 |
@@ -118,14 +120,15 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 | `files` | 作業場からの相対パス。既存のファイルだけ。同じパスは1回だけ |
 | `old` | 探す文字列。空は不可。複数行（LF）でもよい |
 | `new` | 置き換える文字列。`""` は削除 |
-| `count` | 全部のファイルを合わせた、場所の数の見込み。1以上 |
+| `count` | 全部のファイルを合わせた、場所の数の見込み。2以上。文字列が1か所だけにあるとき、`1` は `use_edit` で返される |
 | `why` | なぜこう変えるか |
-| 出力の `files` | 変わったファイルだけ。`hits` はそのファイルの場所の数、`startLine`・`endLine` は変えたあとの、最初の場所から最後の場所までの行、`selection` はその行のトークン（`edit` で使える）、`lines` はその内容 |
+| 出力の `files` | 変わったファイルだけ。`count` はそのファイルの場所の数。`hits` は場所ごとに1件で、ファイルの今の状態の：`startLine`・`endLine`、`lines`（その行の内容）、`before`・`after`（直前・直後の1行。なければ `[]`）。同じ行にある場所は1件。1ファイルにつき20件まで載せ、`more` が載せなかった件数。**範囲トークンは返さない**：続けて直すときは `look` を使う |
 
-- 見つかった数が `count` と違えば `count_mismatch`。メッセージと `actual` が、ファイルごとの場所の数を言う（`{"a.go": 3, "b.go": 1}`）。**どのファイルも変えず、テープには `failure` しか書かない**
+- **1か所は `edit` で行う。** `count` が 1 で、文字列がちょうど1か所にあるとき、エラーは `use_edit` で、何も変えない。メッセージは場所（`a.go line 12`）だけを言い、ファイルの中身は入れない。`actual` に、`hits`（`file`・`startLine`・`endLine`・`lines`：その場所の今の位置）と、`edit`（`file`・`startLine`・`endLine`・`expect`・`newText`：同じ変更をする `edit` の呼び出し。足すのは `why` だけ）が付く
+- 見つかった数が `count` と違えば（`count` が 1 で、0か所や2か所以上のときも）`count_mismatch`。メッセージと `actual` が、ファイルごとの場所の数を言う（`{"a.go": 3, "b.go": 1}`）。**どのファイルも変えず、テープには `failure` しか書かない**
 - どのファイルも、`look` と同じ検査をする（記録しない・CRLF・バイナリ・作業場の外）。1つでも使えなければ、何も変えない
 - 行で表せない変更（ファイルの最後の改行を足す・消す）は `invalid_input`。`look` と `edit` で行う
-- テープには、変わったファイルごとに `replace` を1つ、同じ `why` で書く（[tape.md](tape_ja.md#replace)）。ビューワーは、それぞれをファイルの差分として、上に `why` を付けて見せる
+- テープには、変わったファイルごとに `replace` を1つ、同じ `why` で書く（[tape.md](tape_ja.md#replace)。トークンを返さないので `selection` は `null`）。ビューワーは、それぞれをファイルの差分として、上に `why` を付けて見せる
 - 正規表現は使えない。場所を1つずつ選びたいときは `look` と `edit` を使う
 
 ## new
@@ -179,6 +182,7 @@ MCP の応答では `isError: true` になり、本文は次の JSON。
 | `content_ambiguous` | `expect`（行番号なし）がファイルの2か所以上にある | 行番号を付ける。または `expect` の行を増やす |
 | `file_exists` | `new` で、既にあるファイルを作ろうとした | 変えるなら `look` と `edit` を使う |
 | `count_mismatch` | `replace` で見つかった場所の数が `count` と違う | ファイルごとの数を読み、正しい `count` で `replace` し直す（または `look` を使う） |
+| `use_edit` | 文字列が1か所だけにあるのに、`replace` を `count` が 1 で使った | `actual.edit` のとおりに `edit` を呼ぶ（`why` を足す） |
 | `ignored_file` | 記録しないファイルに `look`・`edit`・`replace`・`new` した。 | srwr では扱えない。ユーザーに頼む |
 | `invalid_input` | 必須の入力がない、型が違う、`why` が空。`file` が空か NUL を含む、`startLine` と `endLine` の片方だけがある、または両方なく `expect` もない、`selection` が空白だけ、`newText` に CR がある。`replace` では、`files`・`old`・`count` がない・空、同じパスが2回、`old` か `new` に CR がある。`new` では、`content` がない・CR がある、ファイルの上のディレクトリがファイルになっている | 入力を直す |
 | `unsupported_file` | CRLF やバイナリ | — |
@@ -192,6 +196,7 @@ MCP の応答では `isError: true` になり、本文は次の JSON。
 | `content_mismatch` | 範囲の現在の内容（行の配列） |
 | `selection_stale` | 重なった編集の直前まで補正した範囲の、現在の内容（ファイルの範囲内に収める） |
 | `count_mismatch` | ファイルごとの場所の数（`{"a.go": 3, "b.go": 1}`） |
+| `use_edit` | `{"hits": [{file, startLine, endLine, lines}], "edit": {file, startLine, endLine, expect, newText}}`。行で表せない変更では `edit` を付けない |
 | `invalid_range` | `{"lineCount": 行数}`。作業場の外のパスのときはなし |
 | ほか | なし |
 

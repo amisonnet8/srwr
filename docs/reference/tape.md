@@ -97,7 +97,7 @@ A `look` recorded by the hook (Read and the like) has a `why` of `null`. It has 
 An event of the `replace` tool ([mcp.md](mcp.md#replace)). It has the same fields as an `edit`, and:
 
 - `source` of `mcp`, `from` of `null`, and `hits`, the number of places it changed in the file
-- **One for each file** that changed, with the same `why`. The range is the whole lines from the first place to the last (so `oldText` holds the lines in between too), and `selection` is the token of the range after the change
+- **One for each file** that changed, with the same `why`. The range is the whole lines from the first place to the last (so `oldText` holds the lines in between too). `selection` is `null`: `replace` returns no token
 
 ### new
 

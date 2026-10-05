@@ -279,11 +279,17 @@ func TestSub(t *testing.T) {
 		t.Fatalf("sub = %v %v", m, isErr)
 	}
 	a := files[0].(map[string]any)
-	if a["file"] != "a.go" || a["hits"] != float64(2) || a["startLine"] != float64(1) || a["endLine"] != float64(3) || a["selection"] == "" {
-		t.Errorf("a.go = %v", a)
+	hits, _ := a["hits"].([]any)
+	if a["file"] != "a.go" || a["count"] != float64(2) || len(hits) != 2 {
+		t.Fatalf("a.go = %v", a)
 	}
-	if l := a["lines"].([]any); len(l) != 3 || l[0] != "bar & <baz>" {
-		t.Errorf("lines = %v", l)
+	if _, has := a["selection"]; has {
+		t.Error("replace returns no selection token")
+	}
+	h := hits[0].(map[string]any)
+	if h["startLine"] != float64(1) || h["endLine"] != float64(1) || h["lines"].([]any)[0] != "bar & <baz>" ||
+		len(h["before"].([]any)) != 0 || h["after"].([]any)[0] != "x" {
+		t.Errorf("first hit = %v: before is [] and not null", h)
 	}
 	if b, _ := os.ReadFile(filepath.Join(root, "b.go")); string(b) != "bar & <baz>\n" { //nolint:gosec // a path in a temporary directory
 		t.Errorf("b.go = %q", b)
@@ -351,6 +357,7 @@ func TestToolErrors(t *testing.T) {
 		{"new without content", "new", `{"file":"n.go","why":"w"}`, "invalid_input", nil},
 		{"new with content as a number", "new", `{"file":"n.go","content":1,"why":"w"}`, "invalid_input", nil},
 		{"new on an existing file", "new", `{"file":"a.go","content":"x","why":"w"}`, "file_exists", nil},
+		{"sub of one place", "replace", `{"files":["a.go"],"old":"1","new":"x","count":1,"why":"w"}`, "use_edit", map[string]any{"hits": []any{map[string]any{"file": "a.go", "startLine": float64(1), "endLine": float64(1), "lines": []any{"1"}}}, "edit": map[string]any{"file": "a.go", "startLine": float64(1), "endLine": float64(1), "expect": "1", "newText": "x"}}},
 		{"sub with the wrong count", "replace", `{"files":["a.go"],"old":"1","new":"x","count":2,"why":"w"}`, "count_mismatch", map[string]any{"a.go": float64(1)}},
 	}
 	for _, tt := range tests {

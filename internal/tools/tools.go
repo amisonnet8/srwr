@@ -73,9 +73,10 @@ func List() []Tool {
 		},
 		{
 			Name: Replace,
-			Description: "Replace a text with another in several files at once, like a simple sed, and record why. old is searched for as plain text (not a regular expression), left to right, places do not overlap. " +
-				"count is how many places you expect in all the files together. If the number found is different, nothing is changed and the error says how many there are in each file; this is the check that you changed what you meant. " +
-				"The result has, for each file that changed, hits (how many places), startLine and endLine (the lines from the first place to the last, after the change), selection (a token for those lines, usable by edit) and lines. " +
+			Description: "Replace a text with another in 2 or more places, in one file or several, like a simple sed, and record why. For one place, use edit (or look and edit): replace is refused for it, with where the place is and the edit call to make. " +
+				"old is searched for as plain text (not a regular expression), left to right, places do not overlap. " +
+				"count is how many places you expect in all the files together, 2 or more. If the number found is different, nothing is changed and the error says how many there are in each file; this is the check that you changed what you meant. " +
+				"The result has, for each file that changed, count (how many places) and hits, one for each place (places on the same line are one): startLine and endLine (after the change), lines (what they hold now), and before and after (the line before and the line after). There is no selection token; use look and edit for a place you want to go on with. " +
 				"Use look and edit instead when the places must be chosen one by one. " +
 				"why is required: say why you change it, in the language of the conversation with the user.",
 			InputSchema: map[string]any{
@@ -84,7 +85,7 @@ func List() []Tool {
 					"files": map[string]any{"type": "array", "minItems": 1, "items": map[string]any{"type": "string", "minLength": 1}, "description": "Paths relative to the workspace. Existing files only"},
 					"old":   map[string]any{"type": "string", "minLength": 1, "description": "The text to look for. It may have several lines (LF)"},
 					"new":   map[string]any{"type": "string", "description": "The text to put in its place. An empty string deletes it"},
-					"count": map[string]any{"type": "integer", "minimum": 1, "description": "How many places you expect in all the files together"},
+					"count": map[string]any{"type": "integer", "minimum": 1, "description": "How many places you expect in all the files together. 2 or more (1 is answered with use_edit)"},
 					"why":   map[string]any{"type": "string", "minLength": 1, "pattern": `\S`, "description": whyDescription},
 				},
 				"required": []string{"files", "old", "new", "count", "why"},

@@ -27,7 +27,7 @@ const calls = [
   '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"replace","arguments":{"files":["a.go","b.go"],"old":"foo(","new":"bar(","count":3,"why":"名前を変える"}}}',
 ]
 const answer = system(shellescape(g:srwr_path) .. ' mcp', join(calls, "\n") .. "\n")
-t.True(answer =~# 'hits\\":2', 'sub answered: ' .. answer)
+t.True(answer =~# 'count\\":2', 'replace answered: ' .. answer)
 t.Equal(['func a() {', '  bar(1)', '  x', '  bar(2)', '}'], readfile('a.go'), 'a.go was changed')
 const tapeId = trim(join(readfile('.srwr/active'), ''))
 

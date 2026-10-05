@@ -6,10 +6,13 @@ import (
 
 	"github.com/amisonnet8/srwr/internal/session"
 	"github.com/amisonnet8/srwr/internal/tape"
-	"github.com/amisonnet8/srwr/internal/token"
 )
 
-// ReplaceInput is the input of sub: replace every place that holds Old in Files with New, when there are exactly Count of them.
+// maxHitsShown is how many places a file's result lists; the rest are counted in More.
+const maxHitsShown = 20
+
+// ReplaceInput is the input of replace: replace every place that holds Old in Files with New, when there are exactly Count of them.
+// Count is 2 or more: one place is for edit (use_edit).
 type ReplaceInput struct {
 	Files []string
 	Old   string
@@ -18,17 +21,25 @@ type ReplaceInput struct {
 	Why   string
 }
 
-// ReplaceFile is what sub did to one file: how many places, and the range and token of the lines it changed (the first place to the last).
-type ReplaceFile struct {
-	File      string
-	Hits      int
+// ReplaceHit is one place that replace changed, as the file is now: its lines, and the line before and the line after. Places on the
+// same line are one.
+type ReplaceHit struct {
 	StartLine int
 	EndLine   int
-	Selection string
 	Lines     []string
+	Before    []string
+	After     []string
 }
 
-// ReplaceResult is what sub returns: the number of places and, for each file that had any, what changed.
+// ReplaceFile is what replace did to one file: how many places, and the places (at most maxHitsShown; More is how many were left out).
+type ReplaceFile struct {
+	File  string
+	Count int
+	Hits  []ReplaceHit
+	More  int
+}
+
+// ReplaceResult is what replace returns: the number of places and, for each file that had any, what changed.
 type ReplaceResult struct {
 	Count int
 	Files []ReplaceFile
@@ -54,7 +65,7 @@ func (c *Core) doReplace(in ReplaceInput) (*ReplaceResult, *Error) {
 	case in.Old == "":
 		return nil, newError(CodeInvalidInput, "old is empty. Give the text to look for")
 	case in.Count < 1:
-		return nil, newError(CodeInvalidInput, "count must be 1 or more: the number of places you expect, in all the files")
+		return nil, newError(CodeInvalidInput, "count must be 2 or more: the number of places you expect, in all the files (for one place, use edit)")
 	case strings.ContainsRune(in.Old, '\r') || strings.ContainsRune(in.New, '\r'):
 		return nil, newError(CodeInvalidInput, "old and new must not contain CR (line breaks are LF only)")
 	}
@@ -108,6 +119,9 @@ func (c *Core) replaceIn(tx *session.Tx, rels []string, in ReplaceInput) (*Repla
 		plans[i] = replacePlan{rel: rel, t: t, hits: strings.Count(t.text, in.Old)}
 		total += plans[i].hits
 	}
+	if in.Count == 1 && total == 1 {
+		return nil, useEdit(plans, in)
+	}
 	if total != in.Count {
 		per := make([]string, len(plans))
 		actual := make(map[string]int, len(plans))
@@ -140,27 +154,19 @@ func (c *Core) replaceIn(tx *session.Tx, rels []string, in ReplaceInput) (*Repla
 			return nil, err
 		}
 		newEnd := p.a + len(p.newLines) - 1
-		sel := token.Encode(token.Token{
-			Seq:       uint64(tx.NextSeq()), //nolint:gosec // NextSeq is at least 1
-			StartLine: uint64(p.a),          //nolint:gosec // a is at least 1
-			EndLine:   uint64(newEnd),       //nolint:gosec // newEnd is at least a-1
-			FileHash:  token.Hash4(p.rel),
-			TextHash:  token.Hash4(tape.RangeText(p.newText, p.a, newEnd)),
-		}, tx.TapeID(), tx.Key())
 		err := tx.Append(tape.Event{
 			Type: tape.TypeReplace, Seq: tx.NextSeq(), File: p.rel,
 			StartLine: p.a, EndLine: p.b, OldText: p.oldText, NewText: strings.Join(p.newLines, "\n"),
-			NewStartLine: p.a, NewEndLine: newEnd, Selection: &sel, Why: &in.Why,
+			NewStartLine: p.a, NewEndLine: newEnd, Why: &in.Why,
 			FileShaBefore: tape.Sha(p.t.text), FileShaAfter: tape.Sha(p.newText),
 			Source: tape.SourceMCP, Hits: p.hits,
 		})
 		if err != nil {
 			return nil, err
 		}
-		res.Files = append(res.Files, ReplaceFile{
-			File: p.rel, Hits: p.hits, StartLine: p.a, EndLine: newEnd, Selection: sel,
-			Lines: rangeLines(p.newText, p.a, newEnd),
-		})
+		hits := hitsOf(p.t.text, in.Old, in.New)
+		more := max(len(hits)-maxHitsShown, 0)
+		res.Files = append(res.Files, ReplaceFile{File: p.rel, Count: p.hits, Hits: hits[:len(hits)-more], More: more})
 	}
 	return res, nil
 }
@@ -189,4 +195,84 @@ func (p *replacePlan) plan(in ReplaceInput) *Error {
 		return newError(CodeInvalidInput, "the change to %s cannot be written as lines (it adds or removes the final line break of the file). Use look and edit for it", p.rel)
 	}
 	return nil
+}
+
+// hitsOf lists the places where old is replaced by repl in text, as lines of the text after the change. Places that share a line
+// are one.
+func hitsOf(text, old, repl string) []ReplaceHit {
+	var offsets []int // where each replacement starts in the new text
+	var b strings.Builder
+	for from := 0; ; {
+		i := strings.Index(text[from:], old)
+		if i < 0 {
+			b.WriteString(text[from:])
+			break
+		}
+		b.WriteString(text[from : from+i])
+		offsets = append(offsets, b.Len())
+		b.WriteString(repl)
+		from += i + len(old)
+	}
+	after := b.String()
+	var hits []ReplaceHit
+	for _, off := range offsets {
+		end := off
+		if len(repl) > 0 {
+			end = off + len(repl) - 1
+		}
+		start, last := 1+strings.Count(after[:off], "\n"), 1+strings.Count(after[:end], "\n")
+		if n := len(hits); n > 0 && start <= hits[n-1].EndLine {
+			hits[n-1].EndLine = max(hits[n-1].EndLine, last)
+			continue
+		}
+		hits = append(hits, ReplaceHit{StartLine: start, EndLine: last})
+	}
+	for i := range hits {
+		h := &hits[i]
+		h.Lines = rangeLines(after, h.StartLine, h.EndLine)
+		h.Before = rangeLines(after, h.StartLine-1, h.StartLine-1)
+		h.After = rangeLines(after, h.EndLine+1, h.EndLine+1)
+	}
+	return hits
+}
+
+// useEditHit and useEditCall are the parts of the actual of use_edit: where the one place is now, and the edit call that changes it
+// (the client adds why).
+type useEditHit struct {
+	File      string   `json:"file"`
+	StartLine int      `json:"startLine"`
+	EndLine   int      `json:"endLine"`
+	Lines     []string `json:"lines"`
+}
+
+type useEditCall struct {
+	File      string `json:"file"`
+	StartLine int    `json:"startLine"`
+	EndLine   int    `json:"endLine"`
+	Expect    string `json:"expect"`
+	NewText   string `json:"newText"`
+}
+
+// useEdit is the answer to a replace of one place: it changes nothing, and says where the place is and what to call edit with. The
+// message has no content of the file (it is written to the tape).
+func useEdit(plans []replacePlan, in ReplaceInput) *Error {
+	for i := range plans {
+		p := &plans[i]
+		if p.hits != 1 {
+			continue
+		}
+		cerr := p.plan(in) // sets the lines even when it then fails: the change cannot be told in lines
+		where := fmt.Sprintf("%s line %d", p.rel, p.a)
+		if p.b > p.a {
+			where = fmt.Sprintf("%s lines %d to %d", p.rel, p.a, p.b)
+		}
+		actual := map[string]any{"hits": []useEditHit{{File: p.rel, StartLine: p.a, EndLine: p.b, Lines: rangeLines(p.t.text, p.a, p.b)}}}
+		msg := fmt.Sprintf("replace is for 2 or more places, and the text is in one place only (%s). Use edit for it", where)
+		if cerr == nil {
+			actual["edit"] = useEditCall{File: p.rel, StartLine: p.a, EndLine: p.b, Expect: p.oldText, NewText: strings.Join(p.newLines, "\n")}
+			msg += ": actual.edit is the call to make (add why)"
+		}
+		return &Error{Code: CodeUseEdit, Message: msg, Actual: actual}
+	}
+	return newError(CodeInternalError, "no place found")
 }

@@ -11,6 +11,7 @@ const (
 	CodeContentNotFound   = "content_not_found"
 	CodeContentAmbiguous  = "content_ambiguous"
 	CodeCountMismatch     = "count_mismatch"
+	CodeUseEdit           = "use_edit"
 	CodeFileNotFound      = "file_not_found"
 	CodeFileExists        = "file_exists"
 	CodeInvalidRange      = "invalid_range"

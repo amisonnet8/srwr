@@ -97,7 +97,7 @@ hook が記録した `look`（Read など）は、`why` が `null`。`source`（
 `replace` ツール（[mcp.md](mcp_ja.md#replace)）が書くイベント。フィールドは `edit` と同じで、次の点が決まっている。
 
 - `source` が `mcp`、`from` が `null`。ファイルの中で変えた場所の数 `hits` を持つ
-- 変わったファイルごとに**1つ**で、`why` は同じ。範囲は、最初の場所から最後の場所までの行全体（間の行も `oldText` に入る）。`selection` は、変えたあとの範囲のトークン
+- 変わったファイルごとに**1つ**で、`why` は同じ。範囲は、最初の場所から最後の場所までの行全体（間の行も `oldText` に入る）。`selection` は `null`（`replace` はトークンを返さない）
 
 ### new
 

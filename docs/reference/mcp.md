@@ -102,15 +102,17 @@ Files that cannot be handled: files with line breaks other than LF (CRLF), and b
 
 ## replace
 
-Replaces a text with another in several files at once, like a simple sed, and records why. The text is searched for as it is (not a regular expression), from left to right in each file, and places do not overlap. **`count`, the number of places expected in all the files together, is required: if the number found is different, nothing is changed.**
+Replaces a text with another in **2 or more places**, in one file or several, like a simple sed, and records why. For one place, use `edit`: `replace` is refused for it (`use_edit`, below). The text is searched for as it is (not a regular expression), from left to right in each file, and places do not overlap. **`count`, the number of places expected in all the files together, is required and is 2 or more: if the number found is different, nothing is changed.**
 
 ```jsonc
 // input
 { "files": ["a.go", "b.go"], "old": "oldName(", "new": "newName(", "count": 3, "why": "Rename the helper to the new naming rule" }
 // output
 { "ok": true, "count": 3, "files": [
-  { "file": "a.go", "hits": 2, "startLine": 12, "endLine": 30, "selection": "sel_041G417ZRKYSPWJ7X4Z5PPKP", "lines": ["…"] },
-  { "file": "b.go", "hits": 1, "startLine": 7, "endLine": 7, "selection": "sel_042020AD5CH4C75M7DH075CM", "lines": ["…"] } ] }
+  { "file": "a.go", "count": 2, "hits": [
+      { "startLine": 12, "endLine": 12, "lines": ["…"], "before": ["…"], "after": ["…"] },
+      { "startLine": 30, "endLine": 31, "lines": ["…", "…"], "before": [], "after": ["…"] } ] },
+  { "file": "b.go", "count": 1, "hits": [ { "startLine": 7, "endLine": 7, "lines": ["…"], "before": ["…"], "after": ["…"] } ] } ] }
 ```
 
 | Item | Meaning |
@@ -118,14 +120,15 @@ Replaces a text with another in several files at once, like a simple sed, and re
 | `files` | Paths relative to the workspace. Existing files only. A path is given once |
 | `old` | The text to look for. Not empty. It may have several lines (LF) |
 | `new` | The text to put in its place. `""` deletes it |
-| `count` | How many places you expect in all the files together. 1 or more |
+| `count` | How many places you expect in all the files together. 2 or more. A `1` is answered with `use_edit` when the text is in one place |
 | `why` | Why it changes them |
-| `files` in the output | Only the files that changed. `hits` is the number of places in the file; `startLine` and `endLine` are the lines from the first place to the last, after the change; `selection` is a token for those lines (usable by `edit`); `lines` is their content |
+| `files` in the output | Only the files that changed. `count` is the number of places in the file. `hits` has one entry for each place, as the file is now: `startLine` and `endLine`, `lines` (what they hold), and `before` and `after` (the one line before and the one line after, `[]` if none). Places on the same line are one entry. At most 20 entries are listed for a file, and `more` is how many were left out. **There is no selection token**: to go on with a place, use `look` |
 
-- If the number found is not `count`, the error is `count_mismatch`. Its message and `actual` say how many places each file has (`{"a.go": 3, "b.go": 1}`), and **no file is changed and nothing but the `failure` is written to the tape**
+- **One place is for `edit`.** With a `count` of 1 and the text in exactly one place, the error is `use_edit`, and nothing is changed. Its message says where the place is (`a.go line 12`), without any of the file. `actual` has `hits` (`file`, `startLine`, `endLine`, `lines`: where the place is now) and `edit` (`file`, `startLine`, `endLine`, `expect`, `newText`: the `edit` call that makes the same change, to which only `why` is added)
+- If the number found is not `count` (a `count` of 1 with no place, or with two or more, too), the error is `count_mismatch`. Its message and `actual` say how many places each file has (`{"a.go": 3, "b.go": 1}`), and **no file is changed and nothing but the `failure` is written to the tape**
 - Every file is checked as `look` checks it (not recorded, CRLF, binary, outside the workspace). If one of them cannot be used, nothing is changed
 - A change that cannot be told in lines (it adds or removes the final line break of the file) is `invalid_input`: use `look` and `edit` for it
-- On the tape there is one `replace` for each file that changed, with the same `why` ([tape.md](tape.md#replace)). A viewer shows each as a diff of the file, with the `why` above it
+- On the tape there is one `replace` for each file that changed, with the same `why` ([tape.md](tape.md#replace); its `selection` is `null`, since no token is returned). A viewer shows each as a diff of the file, with the `why` above it
 - A regular expression is not supported. Use `look` and `edit` when the places must be chosen one by one
 
 ## new
@@ -179,6 +182,7 @@ In the MCP response `isError` is `true`, and the body is the following JSON.
 | `content_ambiguous` | `expect` (given without line numbers) is in the file in more than one place | Give line numbers, or more lines in `expect` |
 | `file_exists` | `new` was used on a file that already exists | Use `look` and `edit` on it |
 | `count_mismatch` | `replace` found a number of places other than `count` | Read how many each file has, and call `replace` again with the right `count` (or use `look`) |
+| `use_edit` | `replace` was used with a `count` of 1 for a text that is in one place only | Call `edit` as `actual.edit` says (add `why`) |
 | `ignored_file` | `look`, `edit`, `replace` or `new` was used on a file that is not recorded | srwr cannot handle it. Ask the user |
 | `invalid_input` | A required input is missing, has the wrong type, or `why` is empty; `file` is empty or has a NUL; only one of `startLine` and `endLine` is given, or none of them and no `expect`; `selection` is blank; `newText` has a CR; for `replace`, `files`, `old` or `count` is missing or empty, a path is given twice, `old` or `new` has a CR; for `new`, `content` is missing or has a CR, or a directory above the file is a file | Fix the input |
 | `unsupported_file` | CRLF or binary | — |
@@ -192,6 +196,7 @@ An error may carry the current content (`actual`). What it holds is decided for 
 | `content_mismatch` | The current content of the range (an array of lines) |
 | `selection_stale` | The current content of the range, corrected up to just before the overlapping edit (kept inside the file) |
 | `count_mismatch` | The number of places in each file (`{"a.go": 3, "b.go": 1}`) |
+| `use_edit` | `{"hits": [{file, startLine, endLine, lines}], "edit": {file, startLine, endLine, expect, newText}}`. `edit` is left out when the change cannot be told in lines |
 | `invalid_range` | `{"lineCount": number of lines}`. None for a path outside the workspace |
 | Others | None |
 

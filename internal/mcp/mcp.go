@@ -251,12 +251,18 @@ type replaceOK struct {
 }
 
 type replaceFileOK struct {
-	File      string   `json:"file"`
-	Hits      int      `json:"hits"`
+	File  string         `json:"file"`
+	Count int            `json:"count"`
+	Hits  []replaceHitOK `json:"hits"`
+	More  int            `json:"more,omitempty"`
+}
+
+type replaceHitOK struct {
 	StartLine int      `json:"startLine"`
 	EndLine   int      `json:"endLine"`
-	Selection string   `json:"selection"`
 	Lines     []string `json:"lines"`
+	Before    []string `json:"before"`
+	After     []string `json:"after"`
 }
 
 func (s *Server) callReplace(raw json.RawMessage) toolResult {
@@ -277,7 +283,11 @@ func (s *Server) callReplace(raw json.RawMessage) toolResult {
 	}
 	out := replaceOK{OK: true, Count: res.Count, Files: []replaceFileOK{}}
 	for _, f := range res.Files {
-		out.Files = append(out.Files, replaceFileOK{File: f.File, Hits: f.Hits, StartLine: f.StartLine, EndLine: f.EndLine, Selection: f.Selection, Lines: f.Lines})
+		file := replaceFileOK{File: f.File, Count: f.Count, Hits: []replaceHitOK{}, More: f.More}
+		for _, h := range f.Hits {
+			file.Hits = append(file.Hits, replaceHitOK{StartLine: h.StartLine, EndLine: h.EndLine, Lines: h.Lines, Before: h.Before, After: h.After})
+		}
+		out.Files = append(out.Files, file)
 	}
 	return success(out)
 }

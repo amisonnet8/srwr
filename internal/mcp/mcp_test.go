@@ -249,7 +249,7 @@ func TestSelectAndReplace(t *testing.T) {
 	}
 
 	// The result holds the range now and the lines around it; what is empty is [] and not null.
-	for key, want := range map[string]int{"lines": 1, "before": 1, "after": 0} {
+	for key, want := range map[string]int{"lines": 1, "above": 1, "below": 0} {
 		if l, ok := rep[key].([]any); !ok || len(l) != want {
 			t.Errorf("%s of the replace = %#v, want %d lines", key, rep[key], want)
 		}
@@ -288,7 +288,7 @@ func TestSub(t *testing.T) {
 	}
 	h := hits[0].(map[string]any)
 	if h["startLine"] != float64(1) || h["endLine"] != float64(1) || h["lines"].([]any)[0] != "bar & <baz>" ||
-		len(h["before"].([]any)) != 0 || h["after"].([]any)[0] != "x" {
+		len(h["above"].([]any)) != 0 || h["below"].([]any)[0] != "x" {
 		t.Errorf("first hit = %v: before is [] and not null", h)
 	}
 	if b, _ := os.ReadFile(filepath.Join(root, "b.go")); string(b) != "bar & <baz>\n" { //nolint:gosec // a path in a temporary directory

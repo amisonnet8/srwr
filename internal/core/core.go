@@ -65,8 +65,8 @@ type EditResult struct {
 	StartLine int
 	EndLine   int
 	Lines     []string
-	Before    []string
-	After     []string
+	Above     []string
+	Below     []string
 }
 
 // run runs fn with the workspace lock. fn returns a *Error for a failure the client is told about;
@@ -323,9 +323,9 @@ func (c *Core) writeEdit(tx *session.Tx, rel string, t target, a, b int, newText
 	}
 	return &EditResult{
 		Selection: sel, StartLine: a, EndLine: newEnd,
-		Lines:  rangeLines(newText, a, newEnd),
-		Before: rangeLines(newText, a-contextLines, a-1),
-		After:  rangeLines(newText, newEnd+1, newEnd+contextLines),
+		Lines: rangeLines(newText, a, newEnd),
+		Above: rangeLines(newText, a-contextLines, a-1),
+		Below: rangeLines(newText, newEnd+1, newEnd+contextLines),
 	}, nil
 }
 

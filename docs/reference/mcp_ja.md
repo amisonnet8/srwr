@@ -67,7 +67,7 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 { "selection": "sel_0410R3GZE4KV11C6325D32S7", "newText": "func main() {\n    setupSignals()\n    …\n}", "why": "シグナル処理の初期化が漏れていたので追加" }
 // 出力
 { "ok": true, "selection": "sel_041GR3RZE4KV0BBH2S177Q36", "startLine": 12, "endLine": 15,
-  "lines": ["func main() {", "    setupSignals()", "    …", "}"], "before": ["", "// main starts the app."], "after": ["", "func run() {"] }
+  "lines": ["func main() {", "    setupSignals()", "    …", "}"], "above": ["", "// main starts the app."], "below": ["", "func run() {"] }
 ```
 
 | 項目 | 意味 |
@@ -79,7 +79,7 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 | `why` | なぜこう変えるか |
 | 出力の `selection` | **置き換え後の範囲**の新しいトークン。同じ箇所を続けて直すときは、`look` し直さずにこれを使える |
 | 出力の `lines` | 置き換え後の範囲の内容（削除なら `[]`） |
-| 出力の `before`・`after` | その範囲の直前・直後の行（それぞれ最大2行。ファイルの先頭・末尾に近いと少なく、なければ `[]`）。ファイルを読み直さずに、結果を確かめられる |
+| 出力の `above`・`below` | 新しい範囲の直前・直後の、**今のファイルの**行（それぞれ最大2行。ファイルの先頭・末尾に近いと少なく、なければ `[]`）。置き換える前の内容ではない（置き換えた行は返さない。AI が `expect` で渡したもの）。ファイルを読み直さずに、結果を確かめられる |
 
 **`newText` の行の数え方**：`""` は0行（削除）。それ以外は `\n` で行に分け、末尾が `\n` なら最後の空要素は数えない（`"x\n"` は1行、`"\n"` は空行1つ）。返すトークンの範囲は、この数え方による。
 
@@ -113,9 +113,9 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 // 出力
 { "ok": true, "count": 3, "files": [
   { "file": "a.go", "count": 2, "hits": [
-      { "startLine": 12, "endLine": 12, "lines": ["…"], "before": ["…"], "after": ["…"] },
-      { "startLine": 30, "endLine": 31, "lines": ["…", "…"], "before": [], "after": ["…"] } ] },
-  { "file": "b.go", "count": 1, "hits": [ { "startLine": 7, "endLine": 7, "lines": ["…"], "before": ["…"], "after": ["…"] } ] } ] }
+      { "startLine": 12, "endLine": 12, "lines": ["…"], "above": ["…"], "below": ["…"] },
+      { "startLine": 30, "endLine": 31, "lines": ["…", "…"], "above": [], "below": ["…"] } ] },
+  { "file": "b.go", "count": 1, "hits": [ { "startLine": 7, "endLine": 7, "lines": ["…"], "above": ["…"], "below": ["…"] } ] } ] }
 ```
 
 | 項目 | 意味 |
@@ -125,7 +125,7 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 | `new` | 置き換える文字列。`""` は削除 |
 | `count` | 全部のファイルを合わせた、場所の数の見込み。2以上。文字列が1か所だけにあるとき、`1` は `use_edit` で返される |
 | `why` | なぜこう変えるか |
-| 出力の `files` | 変わったファイルだけ。`count` はそのファイルの場所の数。`hits` は場所ごとに1件で、ファイルの今の状態の：`startLine`・`endLine`、`lines`（その行の内容）、`before`・`after`（直前・直後の1行。なければ `[]`）。同じ行にある場所は1件。1ファイルにつき20件まで載せ、`more` が載せなかった件数。**範囲トークンは返さない**：続けて直すときは `look` を使う |
+| 出力の `files` | 変わったファイルだけ。`count` はそのファイルの場所の数。`hits` は場所ごとに1件で、ファイルの今の状態の：`startLine`・`endLine`、`lines`（その行の内容）、`above`・`below`（直前・直後の1行。なければ `[]`）。同じ行にある場所は1件。1ファイルにつき20件まで載せ、`more` が載せなかった件数。**範囲トークンは返さない**：続けて直すときは `look` を使う |
 
 - **1か所は `edit` で行う。** `count` が 1 で、文字列がちょうど1か所にあるとき、エラーは `use_edit` で、何も変えない。メッセージは場所（`a.go line 12`）だけを言い、ファイルの中身は入れない。`actual` に、`hits`（`file`・`startLine`・`endLine`・`lines`：その場所の今の位置）と、`edit`（`file`・`startLine`・`endLine`・`expect`・`newText`：同じ変更をする `edit` の呼び出し。足すのは `why` だけ）が付く
 - 見つかった数が `count` と違えば（`count` が 1 で、0か所や2か所以上のときも）`count_mismatch`。メッセージと `actual` が、ファイルごとの場所の数を言う（`{"a.go": 3, "b.go": 1}`）。**どのファイルも変えず、テープには `failure` しか書かない**
@@ -230,7 +230,7 @@ AI がこれらのツールを使って実際に犯したミス。どれも、�
 
 - **`file` は、作業場からの相対パスで渡す。** `/home/me/app/main.go` のような絶対パスは `invalid_range`、`../main.go` も `invalid_range` になる。`cmd/app/main.go` の形で書く。
 - **空範囲は、1 行ずれやすい。** `endLine = startLine - 1` は「`startLine` 行目の直前」を指すので、`startLine: 13, endLine: 12` は 12 行目と 13 行目の間になる。先にその場所の前後の行を読み、番号を確かめてから `look` を呼ぶ。
-- **新しい `look` の行番号は、今のファイルの行番号で渡す。** ほかの編集で行がずれたとき、すでに発行したトークンは srwr が補正するが、新しい `look` の `startLine`・`endLine` は補正しない。ほかの編集のあとは、ファイルを読み直すか、返ってきた `lines`（`edit` のあとは `before`・`after` も）で確かめる。もっと良いのは、`expect` に狙った行を渡すこと。番号が違えば、違う場所を選ばずに断られる。
+- **新しい `look` の行番号は、今のファイルの行番号で渡す。** ほかの編集で行がずれたとき、すでに発行したトークンは srwr が補正するが、新しい `look` の `startLine`・`endLine` は補正しない。ほかの編集のあとは、ファイルを読み直すか、返ってきた `lines`（`edit` のあとは `above`・`below` も）で確かめる。もっと良いのは、`expect` に狙った行を渡すこと。番号が違えば、違う場所を選ばずに断られる。
 - **新しいファイルは `new` で作る。** 存在しないファイルへの `look` は `file_not_found` になる。シェルのコマンドで作ったファイルも記録されるが、`created: true` の [`external`](tape_ja.md#external) で、`why` はない。
 - **同じ場所を続けて直すときは、`edit` が返した新しいトークンを使う。** 使ったトークンは使い切りで、もう一度使うと `selection_stale` になる。
 - **同じ変更を何か所もするときは、`look` と `edit` を何度も使わず、`count` つきの `replace` を使う。** `count` が違えば、ファイルごとの数を言って断られる。

@@ -29,12 +29,12 @@ AI は MCP の `tools/call` で、`look` と `edit` を呼ぶ。下の `→` が
 → {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"look","arguments":{"file":"cmd/main.go","startLine":3,"endLine":5,"why":"main に初期化の呼び出しを足せるか確認する"}}}
 ← {"jsonrpc":"2.0","id":2,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_041061E48KVH3K24RN324MN2\",\"startLine\":3,\"endLine\":5,\"lines\":[\"func main() {\",\"\\trun()\",\"}\"]}","type":"text"}],"isError":false}}
 → {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"edit","arguments":{"selection":"sel_041061E48KVH3K24RN324MN2","newText":"func main() {\n\tsetup()\n\trun()\n}","why":"run の前に設定の読み込みが要るので setup を呼ぶ"}}}
-← {"jsonrpc":"2.0","id":3,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_041G61P48KVH3AYWAY6Q99GP\",\"startLine\":3,\"endLine\":6,\"lines\":[\"func main() {\",\"\\tsetup()\",\"\\trun()\",\"}\"],\"before\":[\"package main\",\"\"],\"after\":[]}","type":"text"}],"isError":false}}
+← {"jsonrpc":"2.0","id":3,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_041G61P48KVH3AYWAY6Q99GP\",\"startLine\":3,\"endLine\":6,\"lines\":[\"func main() {\",\"\\tsetup()\",\"\\trun()\",\"}\"],\"above\":[\"package main\",\"\"],\"below\":[]}","type":"text"}],"isError":false}}
 ```
 
 - `look`（id 2）は、3〜5行目を宣言し、範囲トークン `sel_…` と、範囲の現在の内容 `lines` を返す
 - `edit`（id 3）は、そのトークンを**そのまま**渡す。ファイルや行番号は渡さない
-- `edit` の応答は、**置き換え後の範囲**（3〜6行目。1行増えた）の新しいトークン。続けて直すなら、これを使う。`lines`（範囲の今の内容）と、前後の行 `before`・`after` も付くので、ファイルを読み直さずに結果を確かめられる
+- `edit` の応答は、**置き換え後の範囲**（3〜6行目。1行増えた）の新しいトークン。続けて直すなら、これを使う。`lines`（範囲の今の内容）と、前後の行 `above`・`below`（今のファイルの行） も付くので、ファイルを読み直さずに結果を確かめられる
 
 この結果、`cmd/main.go` は次の6行になり、`.srwr/tapes/` にテープができる（[tape.md](../reference/tape_ja.md)、再生の様子は [protocol-session.md](protocol-session_ja.md)）。
 
@@ -73,7 +73,7 @@ AI は、`actual` を見て、`look` し直す。
 
 ```jsonrpc
 → {"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"edit","arguments":{"file":"cmd/main.go","startLine":4,"endLine":4,"expect":"\trun()","newText":"\trun()\n\tcleanup()","why":"run のあとに、setup で作ったものを片付ける"}}}
-← {"jsonrpc":"2.0","id":6,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_041G61P48KVH3AYWAY6Q99GP\",\"startLine\":5,\"endLine\":6,\"lines\":[\"\\trun()\",\"\\tcleanup()\"],\"before\":[\"func main() {\",\"\\tsetup()\"],\"after\":[\"}\"]}","type":"text"}],"isError":false}}
+← {"jsonrpc":"2.0","id":6,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_041G61P48KVH3AYWAY6Q99GP\",\"startLine\":5,\"endLine\":6,\"lines\":[\"\\trun()\",\"\\tcleanup()\"],\"above\":[\"func main() {\",\"\\tsetup()\"],\"below\":[\"}\"]}","type":"text"}],"isError":false}}
 ```
 
 ファイルは7行になる。
@@ -112,7 +112,7 @@ func main() {
 
 ```jsonrpc
 → {"jsonrpc":"2.0","id":9,"method":"tools/call","params":{"name":"edit","arguments":{"file":"cmd/main.go","expect":"\tsetup()","insert":"after","newText":"\tcheck()","why":"run の前に確認する"}}}
-← {"jsonrpc":"2.0","id":9,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_044GA1E48KVH269F6JJ94T8Z\",\"startLine\":5,\"endLine\":5,\"lines\":[\"\\tcheck()\"],\"before\":[\"func main() {\",\"\\tsetup()\"],\"after\":[\"\\trun()\",\"\\tcleanup()\"]}","type":"text"}],"isError":false}}
+← {"jsonrpc":"2.0","id":9,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_044GA1E48KVH269F6JJ94T8Z\",\"startLine\":5,\"endLine\":5,\"lines\":[\"\\tcheck()\"],\"above\":[\"func main() {\",\"\\tsetup()\"],\"below\":[\"\\trun()\",\"\\tcleanup()\"]}","type":"text"}],"isError":false}}
 ```
 
 ファイルは8行になった。`setup()` はそのままで、その後ろに `check()` が入っている。

@@ -896,11 +896,11 @@ func TestReplaceReturnsWhatIsThereNow(t *testing.T) {
 			if !slices.Equal(r.Lines, tt.lines) || r.Lines == nil {
 				t.Errorf("lines = %#v, want %#v", r.Lines, tt.lines)
 			}
-			if !slices.Equal(r.Before, tt.before) || r.Before == nil {
-				t.Errorf("before = %#v, want %#v", r.Before, tt.before)
+			if !slices.Equal(r.Above, tt.before) || r.Above == nil {
+				t.Errorf("before = %#v, want %#v", r.Above, tt.before)
 			}
-			if !slices.Equal(r.After, tt.after) || r.After == nil {
-				t.Errorf("after = %#v, want %#v", r.After, tt.after)
+			if !slices.Equal(r.Below, tt.after) || r.Below == nil {
+				t.Errorf("after = %#v, want %#v", r.Below, tt.after)
 			}
 		})
 	}

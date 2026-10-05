@@ -42,13 +42,13 @@ func TestSubChangesEveryPlaceInEveryFile(t *testing.T) {
 	}
 	// One entry for each place: the lines as they are now, and the line before and the line after.
 	wantA := ReplaceFile{File: "a.go", Count: 2, Hits: []ReplaceHit{
-		{StartLine: 2, EndLine: 2, Lines: []string{"bar(1)"}, Before: []string{"x"}, After: []string{"y"}},
-		{StartLine: 5, EndLine: 5, Lines: []string{"bar(2)"}, Before: []string{"z"}, After: []string{"w"}},
+		{StartLine: 2, EndLine: 2, Lines: []string{"bar(1)"}, Above: []string{"x"}, Below: []string{"y"}},
+		{StartLine: 5, EndLine: 5, Lines: []string{"bar(2)"}, Above: []string{"z"}, Below: []string{"w"}},
 	}}
 	if !reflect.DeepEqual(res.Files[0], wantA) {
 		t.Errorf("a.go = %+v, want %+v", res.Files[0], wantA)
 	}
-	if b := res.Files[1]; b.File != "b.go" || b.Count != 1 || len(b.Hits) != 1 || len(b.Hits[0].Before) != 0 || len(b.Hits[0].After) != 0 {
+	if b := res.Files[1]; b.File != "b.go" || b.Count != 1 || len(b.Hits) != 1 || len(b.Hits[0].Above) != 0 || len(b.Hits[0].Below) != 0 {
 		t.Errorf("b.go = %+v: no line before or after is []", b)
 	}
 	// One replace for each file that changed, with the same why, the tool and the number of places.
@@ -107,8 +107,8 @@ func TestSubMultiLineTexts(t *testing.T) {
 		t.Errorf("file = %q", got)
 	}
 	want := []ReplaceHit{
-		{StartLine: 2, EndLine: 2, Lines: []string{"new"}, Before: []string{"1"}, After: []string{"2"}},
-		{StartLine: 4, EndLine: 4, Lines: []string{"new"}, Before: []string{"2"}, After: []string{"3"}},
+		{StartLine: 2, EndLine: 2, Lines: []string{"new"}, Above: []string{"1"}, Below: []string{"2"}},
+		{StartLine: 4, EndLine: 4, Lines: []string{"new"}, Above: []string{"2"}, Below: []string{"3"}},
 	}
 	if !reflect.DeepEqual(res.Files[0].Hits, want) {
 		t.Errorf("hits = %+v, want %+v", res.Files[0].Hits, want)

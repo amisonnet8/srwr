@@ -665,3 +665,16 @@
 {"id":"9179355b4e004bbf86edfbe852b004fe","op":"create","type":"todo","status":"open","text":"【v0.1.7-b】edit のまとめ呼び（複数の編集を1回で渡す。1つの why、全部成功か全部取り消し）。入力とテープ（1回の呼び出しをどう記録するか）の設計から","v":1,"ts":"2026-10-05T12:13:46Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"1f8579ac265b495f9e783ef8e9883043","op":"create","type":"todo","status":"open","text":"【v0.1.7-c】look に検索を足す（パターンでマッチ行と前後の行を返し、edit 用のトークンを付ける）。AI が Read・Bash(grep/sed) でなく look を使う道を作る。入力の設計から","v":1,"ts":"2026-10-05T12:13:46Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"b9e4919bbc9c4533bcd076b46a18cbbf","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-05T12:13:49Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"e8e34236d4be421a97e90f9185b2f193","op":"create","type":"qa","status":"open","text":"v0.1.7-a：edit の結果の before/after の誤読をどう直すか","v":1,"ts":"2026-10-05T12:22:56Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"fdb8460a52444157a516c55b2c798f47","op":"create","type":"qa","status":"open","text":"v0.1.7-b：edit のまとめ呼びの形","v":1,"ts":"2026-10-05T12:22:56Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"2865a1757a3f42af9348f1e1fffa6c3c","op":"create","type":"qa","status":"open","text":"v0.1.7-c：look の検索の範囲と書き方","v":1,"ts":"2026-10-05T12:22:56Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"37faf79cc8b44f4ba9c756e21ec71cb6","op":"create","type":"qa","status":"open","text":"v0.1.7-c：検索で当たった行のテープへの記録","v":1,"ts":"2026-10-05T12:22:56Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"9de00ae486d54814836eabd4fe8b9af3","op":"create","type":"qa","re":"e8e34236d4be421a97e90f9185b2f193","text":"above/below に改名（edit の結果と replace の hits）。テープは変えない","v":1,"ts":"2026-10-05T12:22:59Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"91555caab43c49e1be285577c1f38448","op":"create","type":"qa","re":"fdb8460a52444157a516c55b2c798f47","text":"edit に edits 配列（1つの why、全部成功か何も変えない、テープは今の edit を並べる）。形式・画面は変えない","v":1,"ts":"2026-10-05T12:22:59Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"20e8553bd00a4813807270a935fedcbe","op":"create","type":"qa","re":"2865a1757a3f42af9348f1e1fffa6c3c","text":"1ファイル・ただの文字列の search（正規表現なし）","v":1,"ts":"2026-10-05T12:22:59Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"fdd960f04443440f9578c807bf713564","op":"create","type":"qa","re":"37faf79cc8b44f4ba9c756e21ec71cb6","text":"当たり1件ごとに、その1行の look を同じ why でテープに書く。0件は何も書かない","v":1,"ts":"2026-10-05T12:22:59Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"e8e34236d4be421a97e90f9185b2f193","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-05T12:22:59Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"fdb8460a52444157a516c55b2c798f47","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-05T12:22:59Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"2865a1757a3f42af9348f1e1fffa6c3c","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-05T12:22:59Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"37faf79cc8b44f4ba9c756e21ec71cb6","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-05T12:22:59Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"5b99d887387f4aebaca89c4511433721","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-05T12:24:36Z","author":{"kind":"ai","name":"claude-code"}}

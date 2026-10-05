@@ -29,12 +29,12 @@ The AI calls `look` and `edit` with the MCP `tools/call`. In what follows `→` 
 → {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"look","arguments":{"file":"cmd/main.go","startLine":3,"endLine":5,"why":"Check whether a call to initialization can be added to main"}}}
 ← {"jsonrpc":"2.0","id":2,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_041061E48KVH3K24RN324MN2\",\"startLine\":3,\"endLine\":5,\"lines\":[\"func main() {\",\"\\trun()\",\"}\"]}","type":"text"}],"isError":false}}
 → {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"edit","arguments":{"selection":"sel_041061E48KVH3K24RN324MN2","newText":"func main() {\n\tsetup()\n\trun()\n}","why":"run needs the settings loaded first, so call setup"}}}
-← {"jsonrpc":"2.0","id":3,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_041G61P48KVH3AYWAY6Q99GP\",\"startLine\":3,\"endLine\":6,\"lines\":[\"func main() {\",\"\\tsetup()\",\"\\trun()\",\"}\"],\"before\":[\"package main\",\"\"],\"after\":[]}","type":"text"}],"isError":false}}
+← {"jsonrpc":"2.0","id":3,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_041G61P48KVH3AYWAY6Q99GP\",\"startLine\":3,\"endLine\":6,\"lines\":[\"func main() {\",\"\\tsetup()\",\"\\trun()\",\"}\"],\"above\":[\"package main\",\"\"],\"below\":[]}","type":"text"}],"isError":false}}
 ```
 
 - `look` (id 2) declares lines 3 to 5, and returns the selection token `sel_…` and the current content of the range, `lines`
 - `edit` (id 3) passes that token **as it is**. It passes neither a file nor line numbers
-- The response of `edit` is a new token for **the range after the replacement** (lines 3 to 6; it grew by one line). To go on fixing the same place, use this one. It also holds `lines` (what the range is now) and `before` and `after` (the lines around it), so the edit can be checked without reading the file again
+- The response of `edit` is a new token for **the range after the replacement** (lines 3 to 6; it grew by one line). To go on fixing the same place, use this one. It also holds `lines` (what the range is now) and `above` and `below` (the lines just above and below it, as the file is now), so the edit can be checked without reading the file again
 
 As a result, `cmd/main.go` becomes the following 6 lines, and a tape is made in `.srwr/tapes/` ([tape.md](../reference/tape.md); how it replays is in [protocol-session.md](protocol-session.md)).
 
@@ -73,7 +73,7 @@ Here the line numbers are wrong (`\trun()` is on line 5, not 4), and srwr finds 
 
 ```jsonrpc
 → {"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"edit","arguments":{"file":"cmd/main.go","startLine":4,"endLine":4,"expect":"\trun()","newText":"\trun()\n\tcleanup()","why":"Release what setup made, after run"}}}
-← {"jsonrpc":"2.0","id":6,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_041G61P48KVH3AYWAY6Q99GP\",\"startLine\":5,\"endLine\":6,\"lines\":[\"\\trun()\",\"\\tcleanup()\"],\"before\":[\"func main() {\",\"\\tsetup()\"],\"after\":[\"}\"]}","type":"text"}],"isError":false}}
+← {"jsonrpc":"2.0","id":6,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_041G61P48KVH3AYWAY6Q99GP\",\"startLine\":5,\"endLine\":6,\"lines\":[\"\\trun()\",\"\\tcleanup()\"],\"above\":[\"func main() {\",\"\\tsetup()\"],\"below\":[\"}\"]}","type":"text"}],"isError":false}}
 ```
 
 The file is now 7 lines.
@@ -112,7 +112,7 @@ To put new lines after (or before) lines without changing them, point at those l
 
 ```jsonrpc
 → {"jsonrpc":"2.0","id":9,"method":"tools/call","params":{"name":"edit","arguments":{"file":"cmd/main.go","expect":"\tsetup()","insert":"after","newText":"\tcheck()","why":"Check before run"}}}
-← {"jsonrpc":"2.0","id":9,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_044GA1E48KVH269F6JJ94T8Z\",\"startLine\":5,\"endLine\":5,\"lines\":[\"\\tcheck()\"],\"before\":[\"func main() {\",\"\\tsetup()\"],\"after\":[\"\\trun()\",\"\\tcleanup()\"]}","type":"text"}],"isError":false}}
+← {"jsonrpc":"2.0","id":9,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_044GA1E48KVH269F6JJ94T8Z\",\"startLine\":5,\"endLine\":5,\"lines\":[\"\\tcheck()\"],\"above\":[\"func main() {\",\"\\tsetup()\"],\"below\":[\"\\trun()\",\"\\tcleanup()\"]}","type":"text"}],"isError":false}}
 ```
 
 The file is now 8 lines; `setup()` is kept and `check()` follows it.

@@ -27,8 +27,8 @@ type ReplaceHit struct {
 	StartLine int
 	EndLine   int
 	Lines     []string
-	Before    []string
-	After     []string
+	Above     []string
+	Below     []string
 }
 
 // ReplaceFile is what replace did to one file: how many places, and the places (at most maxHitsShown; More is how many were left out).
@@ -234,8 +234,8 @@ func hitsOf(text, old, repl string) []ReplaceHit {
 	for i := range hits {
 		h := &hits[i]
 		h.Lines = rangeLines(after, h.StartLine, h.EndLine)
-		h.Before = rangeLines(after, h.StartLine-1, h.StartLine-1)
-		h.After = rangeLines(after, h.EndLine+1, h.EndLine+1)
+		h.Above = rangeLines(after, h.StartLine-1, h.StartLine-1)
+		h.Below = rangeLines(after, h.EndLine+1, h.EndLine+1)
 	}
 	return hits
 }

@@ -67,7 +67,7 @@ Changes the range to new text, in one call. An insertion is a change of an empty
 { "selection": "sel_0410R3GZE4KV11C6325D32S7", "newText": "func main() {\n    setupSignals()\n    …\n}", "why": "Added the missing initialization of signal handling" }
 // output
 { "ok": true, "selection": "sel_041GR3RZE4KV0BBH2S177Q36", "startLine": 12, "endLine": 15,
-  "lines": ["func main() {", "    setupSignals()", "    …", "}"], "before": ["", "// main starts the app."], "after": ["", "func run() {"] }
+  "lines": ["func main() {", "    setupSignals()", "    …", "}"], "above": ["", "// main starts the app."], "below": ["", "func run() {"] }
 ```
 
 | Item | Meaning |
@@ -79,7 +79,7 @@ Changes the range to new text, in one call. An insertion is a change of an empty
 | `why` | Why it changes it this way |
 | `selection` in the output | A new token for **the range after the replacement**. To go on fixing the same place, it can be used without calling `look` again |
 | `lines` in the output | The content of the range after the replacement (`[]` for a deletion) |
-| `before`, `after` in the output | Up to 2 lines right before and right after that range (fewer near the start or the end of the file, `[]` if none). With them the result can be checked without reading the file again |
+| `above`, `below` in the output | Up to 2 lines of the file as it is now, right above and right below the new range (fewer near the start or the end of the file, `[]` if none). They are **not** the old content: what was replaced is not returned (the AI has just given it as `expect`). With them the result can be checked without reading the file again |
 
 **How the lines of `newText` are counted**: `""` is 0 lines (a deletion). Otherwise it is split into lines at `\n`, and if it ends with `\n` the last empty element is not counted (`"x\n"` is 1 line, `"\n"` is one empty line). The range of the returned token follows this count.
 
@@ -97,7 +97,7 @@ Zero places is `content_not_found` (`actual` holds the lines at the given line n
 
 An **insertion** (`endLine = startLine - 1`, no `expect`) has no lines to check. It is accepted only if the file has not changed since its last look (no `edit`, `replace`, `new` or `external` after it), and the line numbers are then taken as given. Otherwise it is `content_not_found`: look again, or point at the line next to the place with `expect` and `insert`.
 
-**`insert`** (`"after"` or `"before"`) inserts next to lines without needing them to be unchanged since a look: point at the lines as usual (a token, or `file` and `expect`, which is checked), and they are kept while `newText` goes just after (before) them. The result (`selection`, `startLine`, `endLine`, `lines`, `before`, `after`) is about the new lines, and the tape holds an `edit` of an empty range, as for any insertion. `insert` is `invalid_input` with an empty range (there are no lines to point at), with an `insert` other than `"after"` and `"before"`, and with an empty `newText`.
+**`insert`** (`"after"` or `"before"`) inserts next to lines without needing them to be unchanged since a look: point at the lines as usual (a token, or `file` and `expect`, which is checked), and they are kept while `newText` goes just after (before) them. The result (`selection`, `startLine`, `endLine`, `lines`, `above`, `below`) is about the new lines, and the tape holds an `edit` of an empty range, as for any insertion. `insert` is `invalid_input` with an empty range (there are no lines to point at), with an `insert` other than `"after"` and `"before"`, and with an empty `newText`.
 
 The tape holds the same `edit` as for a token, with `from` of `null`. `expect` is not written to the tape.
 
@@ -113,9 +113,9 @@ Replaces a text with another in **2 or more places**, in one file or several, li
 // output
 { "ok": true, "count": 3, "files": [
   { "file": "a.go", "count": 2, "hits": [
-      { "startLine": 12, "endLine": 12, "lines": ["…"], "before": ["…"], "after": ["…"] },
-      { "startLine": 30, "endLine": 31, "lines": ["…", "…"], "before": [], "after": ["…"] } ] },
-  { "file": "b.go", "count": 1, "hits": [ { "startLine": 7, "endLine": 7, "lines": ["…"], "before": ["…"], "after": ["…"] } ] } ] }
+      { "startLine": 12, "endLine": 12, "lines": ["…"], "above": ["…"], "below": ["…"] },
+      { "startLine": 30, "endLine": 31, "lines": ["…", "…"], "above": [], "below": ["…"] } ] },
+  { "file": "b.go", "count": 1, "hits": [ { "startLine": 7, "endLine": 7, "lines": ["…"], "above": ["…"], "below": ["…"] } ] } ] }
 ```
 
 | Item | Meaning |
@@ -125,7 +125,7 @@ Replaces a text with another in **2 or more places**, in one file or several, li
 | `new` | The text to put in its place. `""` deletes it |
 | `count` | How many places you expect in all the files together. 2 or more. A `1` is answered with `use_edit` when the text is in one place |
 | `why` | Why it changes them |
-| `files` in the output | Only the files that changed. `count` is the number of places in the file. `hits` has one entry for each place, as the file is now: `startLine` and `endLine`, `lines` (what they hold), and `before` and `after` (the one line before and the one line after, `[]` if none). Places on the same line are one entry. At most 20 entries are listed for a file, and `more` is how many were left out. **There is no selection token**: to go on with a place, use `look` |
+| `files` in the output | Only the files that changed. `count` is the number of places in the file. `hits` has one entry for each place, as the file is now: `startLine` and `endLine`, `lines` (what they hold), and `above` and `below` (the one line above and the one line below, `[]` if none). Places on the same line are one entry. At most 20 entries are listed for a file, and `more` is how many were left out. **There is no selection token**: to go on with a place, use `look` |
 
 - **One place is for `edit`.** With a `count` of 1 and the text in exactly one place, the error is `use_edit`, and nothing is changed. Its message says where the place is (`a.go line 12`), without any of the file. `actual` has `hits` (`file`, `startLine`, `endLine`, `lines`: where the place is now) and `edit` (`file`, `startLine`, `endLine`, `expect`, `newText`: the `edit` call that makes the same change, to which only `why` is added)
 - If the number found is not `count` (a `count` of 1 with no place, or with two or more, too), the error is `count_mismatch`. Its message and `actual` say how many places each file has (`{"a.go": 3, "b.go": 1}`), and **no file is changed and nothing but the `failure` is written to the tape**
@@ -230,7 +230,7 @@ These are the mistakes seen when an AI used the tools. Each is an ordinary error
 
 - **Give `file` as a path relative to the workspace.** An absolute path such as `/home/me/app/main.go` is `invalid_range`, and so is `../main.go`. Write `cmd/app/main.go`.
 - **An empty range is easy to place one line off.** `endLine = startLine - 1` means "just before line `startLine`", so `startLine: 13, endLine: 12` is between lines 12 and 13. Read the lines on both sides of the place first, and check the numbers before calling `look`.
-- **The line numbers of a new `look` are the numbers of the file now.** srwr corrects the token it has already issued when another edit moves the lines, but not the `startLine` and `endLine` of a new `look`. After other edits, read the file again, or check the returned `lines` (and, after a `edit`, `before` and `after`). Better: pass `expect` with the lines you mean, and a wrong number is refused instead of selecting the wrong place.
+- **The line numbers of a new `look` are the numbers of the file now.** srwr corrects the token it has already issued when another edit moves the lines, but not the `startLine` and `endLine` of a new `look`. After other edits, read the file again, or check the returned `lines` (and, after a `edit`, `above` and `below`). Better: pass `expect` with the lines you mean, and a wrong number is refused instead of selecting the wrong place.
 - **Make a new file with `new`.** `look` on a file that does not exist gives `file_not_found`. A file made with a shell command is recorded too, as an [`external`](tape.md#external) with `created: true`, but without a `why`.
 - **To change the same place again, use the new token that `edit` returned.** The token you used is spent: using it again gives `selection_stale`.
 - **For the same change in many places, use `replace` with `count`**, not many `look` and `edit`. A wrong `count` is refused with the number each file has.

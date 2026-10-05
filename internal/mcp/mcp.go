@@ -190,8 +190,8 @@ type editOK struct {
 	StartLine int      `json:"startLine"`
 	EndLine   int      `json:"endLine"`
 	Lines     []string `json:"lines"`
-	Before    []string `json:"before"`
-	After     []string `json:"after"`
+	Above     []string `json:"above"`
+	Below     []string `json:"below"`
 }
 
 func (s *Server) callEdit(raw json.RawMessage) toolResult {
@@ -230,7 +230,7 @@ func (s *Server) callEdit(raw json.RawMessage) toolResult {
 		return failure(*cerr)
 	}
 	return success(editOK{OK: true, Selection: res.Selection, StartLine: res.StartLine, EndLine: res.EndLine,
-		Lines: res.Lines, Before: res.Before, After: res.After})
+		Lines: res.Lines, Above: res.Above, Below: res.Below})
 }
 
 // rejectEdit turns an edit away for its input, and records that on the tape.
@@ -265,8 +265,8 @@ type replaceHitOK struct {
 	StartLine int      `json:"startLine"`
 	EndLine   int      `json:"endLine"`
 	Lines     []string `json:"lines"`
-	Before    []string `json:"before"`
-	After     []string `json:"after"`
+	Above     []string `json:"above"`
+	Below     []string `json:"below"`
 }
 
 func (s *Server) callReplace(raw json.RawMessage) toolResult {
@@ -289,7 +289,7 @@ func (s *Server) callReplace(raw json.RawMessage) toolResult {
 	for _, f := range res.Files {
 		file := replaceFileOK{File: f.File, Count: f.Count, Hits: []replaceHitOK{}, More: f.More}
 		for _, h := range f.Hits {
-			file.Hits = append(file.Hits, replaceHitOK{StartLine: h.StartLine, EndLine: h.EndLine, Lines: h.Lines, Before: h.Before, After: h.After})
+			file.Hits = append(file.Hits, replaceHitOK{StartLine: h.StartLine, EndLine: h.EndLine, Lines: h.Lines, Above: h.Above, Below: h.Below})
 		}
 		out.Files = append(out.Files, file)
 	}

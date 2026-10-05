@@ -57,8 +57,8 @@ func TestInsertNextToLines(t *testing.T) {
 			if res.StartLine != tc.start || res.EndLine != tc.end {
 				t.Errorf("range = %d..%d, want %d..%d", res.StartLine, res.EndLine, tc.start, tc.end)
 			}
-			if strings.Join(res.Before, "|") != strings.Join(tc.before, "|") || strings.Join(res.After, "|") != strings.Join(tc.after, "|") {
-				t.Errorf("before = %v after = %v", res.Before, res.After)
+			if strings.Join(res.Above, "|") != strings.Join(tc.before, "|") || strings.Join(res.Below, "|") != strings.Join(tc.after, "|") {
+				t.Errorf("before = %v after = %v", res.Above, res.Below)
 			}
 			// On the tape it is an edit of an empty range.
 			evs := e.events()

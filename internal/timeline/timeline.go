@@ -26,6 +26,16 @@ type Range struct {
 	End   int `json:"end"`
 }
 
+// Hunk is one block of changed lines of a replace frame: lines BeforeStart..BeforeEnd of the text before became lines
+// AfterStart..AfterEnd of the text after (1-based, inclusive). An insertion has BeforeEnd = BeforeStart-1, a deletion
+// AfterEnd = AfterStart-1. A client puts the why above each block.
+type Hunk struct {
+	BeforeStart int `json:"beforeStart"`
+	BeforeEnd   int `json:"beforeEnd"`
+	AfterStart  int `json:"afterStart"`
+	AfterEnd    int `json:"afterEnd"`
+}
+
 // Frame is one step. The fields are written in the order docs/examples/protocol-session.md shows.
 // Before and After are the whole file before and after the step; they are sent only when the
 // client asks for text.
@@ -42,7 +52,8 @@ type Frame struct {
 	From      *string `json:"from"`
 	Parent    *int    `json:"parent"`
 	Deleted   bool    `json:"deleted,omitempty"`
-	Hits      int     `json:"hits,omitempty"` // replace frames only: how many places it changed in the file
+	Hits      int     `json:"hits,omitempty"`  // replace frames only: how many places it changed in the file
+	Hunks     []Hunk  `json:"hunks,omitempty"` // replace frames only: the blocks of changed lines, top to bottom
 
 	// failure frames only: the tool that failed, the error code, and the message (the real path is left out of the tape).
 	Tool    string `json:"tool,omitempty"`
@@ -146,6 +157,9 @@ func (b *Builder) Add(e tape.Event) bool {
 		b.state.Apply(e)
 		f.After = b.text(e.File)
 		f.Hits = e.Hits
+		if e.Type == tape.TypeReplace {
+			f.Hunks = hunksOf(before, f.After, *f.OldRange, f.Range)
+		}
 	case tape.TypeExternal:
 		b.state.Apply(e)
 		switch {
@@ -253,4 +267,21 @@ func failureFrame(index int, e tape.Event, ts int64) Frame {
 		f.Why, f.Tool, f.Code, f.Message = cloneString(fi.Why), fi.Tool, fi.Code, fi.Message
 	}
 	return f
+}
+
+// hunksOf returns the blocks of lines that differ between before and after. When the texts differ by too much to compare, the
+// whole of what the replace changed (old and new range) is one block.
+func hunksOf(before, after string, oldRange, newRange Range) []Hunk {
+	if before == after {
+		return nil
+	}
+	hs, ok := tape.Diff(before, after)
+	if !ok || tape.ApplyHunks(before, hs) != after {
+		return []Hunk{{BeforeStart: oldRange.Start, BeforeEnd: oldRange.End, AfterStart: newRange.Start, AfterEnd: newRange.End}}
+	}
+	out := make([]Hunk, len(hs))
+	for i, h := range hs {
+		out[i] = Hunk{BeforeStart: h.StartLine, BeforeEnd: h.EndLine, AfterStart: h.NewStartLine, AfterEnd: h.NewEndLine}
+	}
+	return out
 }

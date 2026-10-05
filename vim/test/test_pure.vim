@@ -62,6 +62,8 @@ t.Equal(1, replay.BannerAt(-3, 9), 'banner position clamped to the top')
 t.Equal(['  1 ', '  2 ', '    ', '    ', '  3 '], paint.NumberLabels(5, 3, 2), 'labels: why rows are blank, the rest keep the file numbers')
 t.Equal(['  1 ', '    '], paint.NumberLabels(2, 2, 1), 'labels: why row at the end')
 t.Equal(['    ', '  1 '], paint.NumberLabels(2, 1, 1), 'labels: why row at the top')
+t.Equal(['  1 ', '    ', '  2 ', '  3 ', '    ', '  4 '], paint.NumberLabelsAt(6, [2, 5], 1), 'labels: several bands')
+t.Equal(['    ', '    ', '  1 ', '    ', '    ', '  2 '], paint.NumberLabelsAt(6, [1, 4], 2), 'labels: bands of two rows')
 t.Equal(5, strchars(paint.NumberLabels(1200, 1, 2)[2]), 'the width grows with the number of file lines')
 
 # --- the operation list ---

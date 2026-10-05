@@ -2,10 +2,10 @@
 import * as vscode from "vscode";
 import { pick } from "./lang";
 import { Nav } from "./controls";
-import { BANNER_PREFIX, insertBanner, wrapWhy } from "./lines";
+import { bandRows, BANNER_PREFIX, belowBands, insertBanner, insertBands, wrapWhy } from "./lines";
 import { OpsSource } from "./sidebar";
 import { Presenter } from "./present";
-import { basename, changedLines, formatRange, Frame, Hidden, isDiff, isReplace, Timeline, splitLines, toneOf } from "./timeline";
+import { basename, changedLines, formatRange, Frame, Hidden, hunkLines, hunksOf, isDiff, isReplace, Timeline, splitLines, toneOf } from "./timeline";
 
 export const REPLAY_SCHEME = "srwr-replay";
 
@@ -125,9 +125,14 @@ export class ReplaySession implements OpsSource, Nav, vscode.Disposable {
         return "";
       }
       const text = m[2] === "before" ? f.before : f.after;
-      // A sub frame has its why in a band above the text, on the right; on the left there are empty rows, so the lines line up.
-      const band = isReplace(f) ? subBand(f) : [];
-      return band.length > 0 ? insertBanner(text, 1, m[2] === "before" ? band.map(() => "") : band) : text;
+      // A replace frame has its why in a band above each block of changed lines, on the right; on the left there are empty rows,
+      // so the lines line up.
+      if (!isReplace(f)) {
+        return text;
+      }
+      const band = subBand(f);
+      const starts = hunksOf(f).map((h) => (m[2] === "before" ? h.beforeStart : h.afterStart));
+      return insertBands(text, starts, m[2] === "before" ? band.map(() => "") : band);
     }
     const fm = /(?:^|&)failure=(\d+)/.exec(uri.query);
     if (fm) {
@@ -188,7 +193,7 @@ export class ReplaySession implements OpsSource, Nav, vscode.Disposable {
     const range = { start: f.range.start + n, end: f.range.end + n };
     const shown = this.presenter.show(editor, { range, tone: toneOf(f), banner: n > 0 ? { line: f.range.start, rows: n } : undefined });
     if (n > 0) {
-      this.presenter.showLineNumbers(editor, f.range.start, n);
+      this.presenter.showLineNumbers(editor, [f.range.start], n);
     }
     editor.revealRange(shown, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
     this.fire();
@@ -223,17 +228,37 @@ export class ReplaySession implements OpsSource, Nav, vscode.Disposable {
     if (g !== this.gen) {
       return;
     }
-    const band = isReplace(f) ? subBand(f).length : 0;
-    const changed = changedLines(splitLines(f.before), splitLines(f.after));
-    const below = (lines: number[]): number[] => lines.map((n) => n + band);
     this.presenter.clear();
-    this.presenter.paintLines(leftEditor, "look", below(changed.before), band);
-    this.presenter.paintLines(rightEditor, "edit", below(changed.after), band);
+    if (isReplace(f)) {
+      // Bands above each block; the first band goes about 30% from the top, so that the why is read before the change.
+      const rows = subBand(f).length;
+      const hunks = hunksOf(f);
+      const changed = hunkLines(hunks);
+      const sides = [
+        { editor: leftEditor, tone: "look" as const, starts: hunks.map((h) => h.beforeStart), lines: changed.before },
+        { editor: rightEditor, tone: "edit" as const, starts: hunks.map((h) => h.afterStart), lines: changed.after },
+      ];
+      for (const s of sides) {
+        const bands = bandRows(s.starts, rows);
+        this.presenter.paintLines(
+          s.editor,
+          s.tone,
+          s.lines.map((n) => belowBands(s.starts, rows, n)),
+          bands,
+          rows,
+        );
+        revealNearTop(s.editor, bands[0] ?? 1);
+      }
+      return;
+    }
+    const changed = changedLines(splitLines(f.before), splitLines(f.after));
+    this.presenter.paintLines(leftEditor, "look", changed.before);
+    this.presenter.paintLines(rightEditor, "edit", changed.after);
     // The first changed line goes about 30% from the top. A side with no changed line (only added or only removed)
     // follows the other side.
-    const first = (changed.before[0] ?? changed.after[0] ?? 1) + band;
-    revealNearTop(leftEditor, changed.before[0] !== undefined ? changed.before[0] + band : first);
-    revealNearTop(rightEditor, changed.after[0] !== undefined ? changed.after[0] + band : first);
+    const first = changed.before[0] ?? changed.after[0] ?? 1;
+    revealNearTop(leftEditor, changed.before[0] ?? first);
+    revealNearTop(rightEditor, changed.after[0] ?? first);
   }
 
   // Closes the right-hand editor, when going from a diff frame back to a normal one. Tabs do not pile up.

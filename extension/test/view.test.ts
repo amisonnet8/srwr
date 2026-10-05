@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
 import { ServerError } from "../src/server";
+import type { Hunk } from "../src/timeline";
 import { FakeServer } from "./fakeserver";
 import { state } from "./fakevscode";
 import { goldenFrames, loadGolden } from "./helpers";
@@ -321,39 +322,58 @@ test("the line numbers are as wide as the file's last line number, not the docum
 });
 
 // A replace frame: a diff of the file with its why in a band above both sides (blue on the left, orange on the right).
-function serverWithReplace(): FakeServer {
+function serverWithReplace(hunks?: Hunk[]): FakeServer {
   const s = new FakeServer();
   const id = "20261005-1030-sub";
   const before = "1\nfoo(1)\n3\nfoo(2)\n5\n";
   const after = "1\nbar(1)\n3\nbar(2)\n5\n";
   const frames = [
-    { index: 0, kind: "replace" as const, seq: 2, file: "a.go", range: { start: 2, end: 4 }, why: "名前を変える", before, after, hits: 2 },
+    { index: 0, kind: "replace" as const, seq: 2, file: "a.go", range: { start: 2, end: 4 }, why: "名前を変える", before, after, hits: 2, ...(hunks ? { hunks } : {}) },
   ];
   s.frames.set(id, frames);
   s.tapes.push({ tapeId: id, startedAt: "2026-10-05T10:30:00+09:00", ops: 1, files: ["a.go"] });
   return s;
 }
 
-test("a replace frame: left and right, the why in a band above both, the changed lines painted below it", async () => {
-  const a = await openTape(serverWithReplace(), "20261005-1030-sub");
+const twoPlaces = [
+  { beforeStart: 2, beforeEnd: 2, afterStart: 2, afterEnd: 2 },
+  { beforeStart: 4, beforeEnd: 4, afterStart: 4, afterEnd: 4 },
+];
+
+test("a replace frame: left and right, the why in a band above each block, the changed lines painted below it", async () => {
+  const a = await openTape(serverWithReplace(twoPlaces), "20261005-1030-sub");
   const s = a.screen();
   assert.equal(s.tabs.length, 2);
   const [left, right] = s.tabs;
   assert.ok(left.uri.includes("前 ⚠ replace: a.go?diff=0&side=before"), left.uri);
   assert.ok(right.uri.includes("後 a.go?diff=0&side=after"), right.uri);
-  assert.equal(left.text, "\n1\nfoo(1)\n3\nfoo(2)\n5\n", "the left has an empty row where the why is on the right");
-  assert.equal(right.text, "◆ 名前を変える\n1\nbar(1)\n3\nbar(2)\n5\n");
-  // The band, then the changed lines (moved down by the band), then the file's own numbers.
+  assert.equal(left.text, "1\n\nfoo(1)\n3\n\nfoo(2)\n5\n", "the left has an empty row where the why is on the right");
+  assert.equal(right.text, "1\n◆ 名前を変える\nbar(1)\n3\n◆ 名前を変える\nbar(2)\n5\n");
+  // The bands, then the changed lines (moved down by the bands above them), then the file's own numbers.
   const leftColors = colorsOf(left);
   const rightColors = colorsOf(right);
   assert.ok(leftColors.includes("#0b61a4") && leftColors.includes("#1d3a5c") && leftColors.includes("numbers"), `${leftColors}`);
   assert.ok(rightColors.includes("#b45f06") && rightColors.includes("#583c27") && rightColors.includes("numbers"), `${rightColors}`);
   const painted = (tab: typeof left, color: string): unknown => tab.decorations.find((d) => d.opts.backgroundColor === color)?.ranges;
-  assert.deepEqual(painted(left, "#0b61a4"), [{ line: 0 }], "the band on the left is blue");
-  assert.deepEqual(painted(right, "#b45f06"), [{ line: 0 }], "the band on the right is orange");
-  assert.deepEqual(painted(left, "#1d3a5c"), [{ line: 2 }, { line: 4 }]);
-  assert.deepEqual(painted(right, "#583c27"), [{ line: 2 }, { line: 4 }]);
-  assert.equal(left.options.lineNumbers, 0, "the file's own numbers are drawn, since the band moves the lines");
+  assert.deepEqual(painted(left, "#0b61a4"), [{ line: 1 }, { line: 4 }], "the bands on the left are blue");
+  assert.deepEqual(painted(right, "#b45f06"), [{ line: 1 }, { line: 4 }], "the bands on the right are orange");
+  assert.deepEqual(painted(left, "#1d3a5c"), [{ line: 2 }, { line: 5 }]);
+  assert.deepEqual(painted(right, "#583c27"), [{ line: 2 }, { line: 5 }]);
+  assert.equal(left.options.lineNumbers, 0, "the file's own numbers are drawn, since the bands move the lines");
+  // The numbers: a band row has none, and the lines after it count on as the file's own (1, blank, 2, 3, blank, 4, 5).
+  const nbsp = "\u00a0";
+  const numbers = left.decorations.find((d) => "before" in d.opts)!;
+  assert.deepEqual(
+    numbers.ranges.map((r) => String(r.before).replaceAll(nbsp, " ").trim()),
+    ["1", "", "2", "3", "", "4", "5", "6"], // the last is the empty row after the final line break, as in any document
+  );
+});
+
+test("a replace frame from a server that sends no blocks has one band, at the top", async () => {
+  const a = await openTape(serverWithReplace(), "20261005-1030-sub");
+  const [left, right] = a.screen().tabs;
+  assert.equal(left.text, "\n1\nfoo(1)\n3\nfoo(2)\n5\n");
+  assert.equal(right.text, "◆ 名前を変える\n1\nbar(1)\n3\nbar(2)\n5\n");
 });
 
 test("a replace frame is listed with its file and the number of places, in orange", async () => {

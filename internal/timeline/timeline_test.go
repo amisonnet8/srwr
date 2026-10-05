@@ -2,6 +2,8 @@ package timeline
 
 import (
 	"encoding/json"
+	"fmt"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -470,5 +472,58 @@ func TestFilterGroupsReplaceAndNewWithEdit(t *testing.T) {
 	k, _ = NewKinds([]string{"edit"})
 	if _, orig, _ = Filter(frames, k); !slices.Equal(orig, []int{1, 2}) {
 		t.Errorf("edit only: orig %v", orig)
+	}
+}
+
+func TestReplaceFrameHunks(t *testing.T) {
+	// Two places far apart are two blocks; the lines between them are not in either.
+	f := Build(parse(t,
+		`{"v":1,"seq":1,"ts":"2026-10-05T03:00:01.000Z","type":"snapshot","file":"a.go","text":"1\nfoo\n3\n4\n5\nfoo\n7\n"}`,
+		`{"v":1,"seq":2,"ts":"2026-10-05T03:00:02.000Z","type":"replace","file":"a.go","from":null,"startLine":2,"endLine":6,"oldText":"foo\n3\n4\n5\nfoo","newText":"bar\n3\n4\n5\nbar","newStartLine":2,"newEndLine":6,"selection":"sel_1","why":"w","source":"mcp","tool":"sub","hits":2}`,
+	)).Frames()[0]
+	want := []Hunk{{2, 2, 2, 2}, {6, 6, 6, 6}}
+	if !reflect.DeepEqual(f.Hunks, want) {
+		t.Errorf("hunks = %+v, want %+v", f.Hunks, want)
+	}
+	if b, _ := json.Marshal(f); !strings.Contains(string(b), `"hunks":[{"beforeStart":2,"beforeEnd":2,"afterStart":2,"afterEnd":2}`) {
+		t.Errorf("json = %s", b)
+	}
+
+	// Lines that follow each other are one block; a line added is a block with no lines before, a line removed one with none after.
+	for name, tc := range map[string]struct {
+		before, after string
+		want          []Hunk
+	}{
+		"adjacent lines":    {"a\nb\nc\nd\n", "a\nX\nY\nd\n", []Hunk{{2, 3, 2, 3}}},
+		"an insertion":      {"a\nb\n", "a\nNEW\nb\n", []Hunk{{2, 1, 2, 2}}},
+		"a deletion":        {"a\nb\nc\n", "a\nc\n", []Hunk{{2, 2, 2, 1}}},
+		"the first line":    {"a\nb\n", "X\nb\n", []Hunk{{1, 1, 1, 1}}},
+		"the last line":     {"a\nb\n", "a\nX\n", []Hunk{{2, 2, 2, 2}}},
+		"a line in between": {"a\nb\nc\nd\ne\n", "X\nb\nc\nd\nY\n", []Hunk{{1, 1, 1, 1}, {5, 5, 5, 5}}},
+		"sizes differ":      {"a\nb\nc\nd\n", "a\nX\nY\nb\nc\nZ\n", []Hunk{{2, 1, 2, 3}, {4, 4, 6, 6}}},
+		"nothing":           {"a\n", "a\n", nil},
+	} {
+		if got := hunksOf(tc.before, tc.after, Range{1, 1}, Range{1, 1}); !reflect.DeepEqual(got, tc.want) {
+			t.Errorf("%s: hunks = %+v, want %+v", name, got, tc.want)
+		}
+	}
+
+	// Texts that differ by too much to compare are one block: what the replace changed.
+	var a, b strings.Builder
+	for i := range 3000 {
+		fmt.Fprintf(&a, "a%d\n", i)
+		fmt.Fprintf(&b, "b%d\n", i)
+	}
+	if got := hunksOf(a.String(), b.String(), Range{1, 3000}, Range{1, 3000}); !reflect.DeepEqual(got, []Hunk{{1, 3000, 1, 3000}}) {
+		t.Errorf("a big change = %+v", got)
+	}
+
+	// Frames other than replace have no blocks.
+	e := Build(parse(t,
+		`{"v":1,"seq":1,"ts":"2026-10-05T03:00:01.000Z","type":"snapshot","file":"a.go","text":"1\n"}`,
+		`{"v":1,"seq":2,"ts":"2026-10-05T03:00:02.000Z","type":"external","file":"a.go","text":"2\n"}`,
+	)).Frames()[0]
+	if e.Hunks != nil {
+		t.Errorf("external hunks = %+v", e.Hunks)
 	}
 }

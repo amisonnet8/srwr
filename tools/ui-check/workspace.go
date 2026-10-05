@@ -23,7 +23,7 @@ var tapes = map[string]struct {
 	// with-failure is made the same way (addWithFailure): two calls that failed are on it as failure frames, which are left out until
 	// the kinds are changed (the funnel button in VSCode, tf in Vim).
 	"with-failure": {failureTape, "一覧の一番上（20260101-0001-with-failure.tape.jsonl）", "初めは2コマ（failure は隠れていて、一覧の上に「Hiding: failure (2)」、Vim は右下に「hidden: failure (2)」）。failure を出すと4コマになり、2コマ目と4コマ目が赤い「✖ … failed」の説明の画面。赤が橙と見分けられ、説明が読めるか"},
-	"long-why":     {longWhyTape, "一覧の一番上（20260101-0000-long-why.tape.jsonl）", "2コマ。select（青）と replace（橙）の理由の行が、複数行に折り返され、2行目以降が字下げされ、全文が読めて、行番号は理由の行だけ空白。範囲がその直下に見えるか"},
+	"long-why":     {longWhyTape, "一覧の一番上（20260101-0000-long-why.tape.jsonl）", "4コマ。1・2コマ目の look（青）と edit（橙）の理由の行が、複数行に折り返され、2行目以降が字下げされ、全文が読めて、行番号は理由の行だけ空白。範囲がその直下に見えるか。4コマ目（replace）は左右の差分で、3か所の変更の直前ごとに、右は橙の理由、左は青の空の帯が出て、行が揃っているか"},
 }
 
 // liveLook is what to look at in the live view, which is fed by feedLive and has no tape to pick (the words are those of the

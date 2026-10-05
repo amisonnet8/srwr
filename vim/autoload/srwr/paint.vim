@@ -32,15 +32,20 @@ enddef
 # NumberLabels is the text at the start of each of `total` rows, of which `rows` why rows were put in at line `at`
 # (WithBanner clamps `at`): the file's own line number, right-aligned, and blank space for a why row.
 export def NumberLabels(total: number, at: number, rows: number): list<string>
-  const width = max([3, len(string(total - rows))])
-  const banner = min([max([at, 1]), total - rows + 1])
+  return NumberLabelsAt(total, [min([max([at, 1]), total - rows + 1])], rows)
+enddef
+
+# NumberLabelsAt is the same for several bands of `rows` rows each, which start at the rows `bands` (top to bottom, rows of the
+# buffer with the bands in).
+export def NumberLabelsAt(total: number, bands: list<number>, rows: number): list<string>
+  const width = max([3, len(string(total - rows * len(bands)))])
   var out: list<string> = []
   for lnum in range(1, total)
-    if lnum < banner || lnum >= banner + rows
-      const n = lnum < banner ? lnum : lnum - rows
-      add(out, repeat(' ', width - len(string(n))) .. n .. ' ')
-    else
+    if !empty(filter(copy(bands), (_, b) => lnum >= b && lnum < b + rows))
       add(out, repeat(' ', width + 1))
+    else
+      const n = lnum - rows * len(filter(copy(bands), (_, b) => b + rows <= lnum))
+      add(out, repeat(' ', width - len(string(n))) .. n .. ' ')
     endif
   endfor
   return out
@@ -53,8 +58,17 @@ export def Numbers(buf: number, at: number, rows: number)
   if empty(info)
     return
   endif
+  NumbersAt(buf, [min([max([at, 1]), info[0].linecount - rows + 1])], rows)
+enddef
+
+# NumbersAt is Numbers for several bands (the rows they start at, `rows` rows each).
+export def NumbersAt(buf: number, bands: list<number>, rows: number)
+  const info = getbufinfo(buf)
+  if empty(info)
+    return
+  endif
   var lnum = 1
-  for label in NumberLabels(info[0].linecount, at, rows)
+  for label in NumberLabelsAt(info[0].linecount, bands, rows)
     prop_add(lnum, 1, {bufnr: buf, type: 'srwr_num', text: label})
     lnum += 1
   endfor

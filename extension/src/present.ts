@@ -63,16 +63,17 @@ export class Presenter implements vscode.Disposable {
   }
 
   // The why rows make the standard numbers wrong, so they are turned off and the file's own numbers are drawn at the
-  // left of each row (a why row gets blank space). `at` is the first why row (1-based), `rows` how many there are.
-  showLineNumbers(editor: vscode.TextEditor, at: number, rows: number): void {
+  // left of each row (a why row gets blank space). `bands` are the first rows of the bands (1-based, top to bottom), `rows` how
+  // many rows each has.
+  showLineNumbers(editor: vscode.TextEditor, bands: number[], rows: number): void {
     const doc = editor.document;
-    const last = rows > 0 ? doc.lineCount - rows : doc.lineCount;
+    const last = doc.lineCount - rows * bands.length;
     const width = String(Math.max(last, 1)).length;
     const gap = " ".repeat(2);
     const decos: vscode.DecorationOptions[] = [];
     for (let i = 1; i <= doc.lineCount; i++) {
-      const isWhy = i >= at && i < at + rows;
-      const n = i < at ? i : i - rows;
+      const isWhy = bands.some((at) => i >= at && i < at + rows);
+      const n = i - rows * bands.filter((at) => at + rows <= i).length;
       const text = isWhy ? " ".repeat(width) : String(n).padStart(width, " ");
       decos.push({ range: lineAt(editor, i), renderOptions: { before: { contentText: text + gap } } });
     }
@@ -82,17 +83,18 @@ export class Presenter implements vscode.Disposable {
   }
 
   // A diff frame: paints the changed lines (1-based). Does not clear; it is called for the left and the right editor.
-  // A sub frame has a band of `band` rows above the text (blue on the left, orange on the right): the band is painted in the
-  // tone, and the file's own line numbers are drawn, since the band makes the standard ones wrong.
-  paintLines(editor: vscode.TextEditor, tone: Tone, lines: number[], band = 0): void {
+  // A replace frame has a band of `rows` rows above each block of changed lines, starting at the rows `bands` (blue on the left,
+  // orange on the right): the bands are painted in the tone, and the file's own line numbers are drawn, since the bands make
+  // the standard ones wrong.
+  paintLines(editor: vscode.TextEditor, tone: Tone, lines: number[], bands: number[] = [], rows = 0): void {
     this.painted.add(editor);
     this.nativeLineNumbers(editor);
-    if (band > 0) {
+    if (bands.length > 0 && rows > 0) {
       editor.setDecorations(
         this.why[tone],
-        Array.from({ length: band }, (_, k) => lineAt(editor, 1 + k)),
+        bands.flatMap((at) => Array.from({ length: rows }, (_, k) => lineAt(editor, at + k))),
       );
-      this.showLineNumbers(editor, 1, band);
+      this.showLineNumbers(editor, bands, rows);
     }
     editor.setDecorations(
       this.range[tone],

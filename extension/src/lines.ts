@@ -12,6 +12,26 @@ export function insertBanner(text: string, at: number, rows: string[]): string {
   return lines.join("\n") + (trailingNL ? "\n" : "");
 }
 
+// Puts `rows` above each of the lines `starts` (1-based, in the text as it is, top to bottom). With the rows in, block i starts
+// `starts[i] + i * rows.length` lines down; bandRows gives those first rows.
+export function insertBands(text: string, starts: number[], rows: string[]): string {
+  let out = text;
+  for (let i = starts.length - 1; i >= 0; i--) {
+    out = insertBanner(out, starts[i], rows);
+  }
+  return out;
+}
+
+// The first row of each band after insertBands (1-based).
+export function bandRows(starts: number[], rows: number): number[] {
+  return starts.map((s, i) => s + i * rows);
+}
+
+// Moves line `n` (of the text before the bands went in) down by the bands above it. The bands are at `starts`, `rows` each.
+export function belowBands(starts: number[], rows: number, n: number): number {
+  return n + rows * starts.filter((s) => s <= n).length;
+}
+
 // Display width of one character: 2 for wide ones, 1 for the others.
 function cells(ch: string): number {
   const c = ch.codePointAt(0) ?? 0;

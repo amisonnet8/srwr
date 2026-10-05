@@ -23,6 +23,54 @@ const (
 	longReplaceWhy = "置き換えの理由も長くします。橙の理由の行が、幅を超えたときに何行かに分かれ、2行目からは字下げされ、全文が読めて、範囲がその直下に見えることを確かめるための文です。"
 )
 
+// longSubWhy is the why of the replace that ends the long-why tape: long enough to be more than one row, since it is shown above
+// each of the three places the replace changed.
+const longSubWhy = "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、理由はそれぞれの変更の直前に出る。"
+
+// storeSource is the file the replace of the long-why tape works on: three places of errEmpty, far enough apart that the first
+// of them is below the top of a window.
+const storeSource = `package store
+
+import (
+	"errors"
+	"fmt"
+)
+
+var ErrNotFound = errors.New("not found")
+
+type Store struct {
+	items map[string]string
+}
+
+func (s *Store) Get(id string) (string, error) {
+	if id == "" {
+		return "", errEmpty
+	}
+	v, ok := s.items[id]
+	if !ok {
+		return "", ErrNotFound
+	}
+	return v, nil
+}
+
+func (s *Store) Load(id string) error {
+	if _, err := s.Get(id); err != nil {
+		return fmt.Errorf("load: %w", errEmpty)
+	}
+	return nil
+}
+
+func (s *Store) Put(id, v string) error {
+	if id == "" {
+		return errEmpty
+	}
+	s.items[id] = v
+	return nil
+}
+
+func (s *Store) Len() int { return len(s.items) }
+`
+
 // makeLongWhyTape makes, in extra, the workspace pieces of the tape (a.go and .srwr/tapes/<longWhyTape>.tape.jsonl), which can be
 // copied over the fixed workspace. bin is the srwr binary; the work happens in a temporary directory.
 func makeLongWhyTape(bin, extra string) error {
@@ -32,7 +80,14 @@ func makeLongWhyTape(bin, extra string) error {
 			return err
 		}
 		token, _ := sel["selection"].(string)
-		_, err = c.tool("edit", map[string]any{"selection": token, "newText": mainReplacement, "why": longReplaceWhy})
+		if _, err = c.tool("edit", map[string]any{"selection": token, "newText": mainReplacement, "why": longReplaceWhy}); err != nil {
+			return err
+		}
+		// A file with three places to rename, for a replace frame: the why is shown above each of the places.
+		if _, err = c.tool("new", map[string]any{"file": "store.go", "content": storeSource, "why": "名前を変える対象のファイルを作る"}); err != nil {
+			return err
+		}
+		_, err = c.tool("replace", map[string]any{"files": []string{"store.go"}, "old": "errEmpty", "new": "ErrEmpty", "count": 3, "why": longSubWhy})
 		return err
 	})
 }
@@ -112,12 +167,24 @@ func makeTape(bin, extra, id string, session func(c *mcpClient) error) error {
 	if err := os.WriteFile(filepath.Join(extra, ".srwr", "tapes", id+".tape.jsonl"), fixTimes(tape), 0o600); err != nil { //nolint:gosec // the directory of this run
 		return err
 	}
-	// The file as the last replace left it, so that the tape has no frame for a change after the recording.
-	after, err := os.ReadFile(filepath.Join(work, "a.go")) //nolint:gosec // the temporary directory
+	// The files as the last call left them, so that the tape has no frame for a change after the recording.
+	entries, err := os.ReadDir(work)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filepath.Join(extra, "a.go"), after, 0o600) //nolint:gosec // see above
+	for _, e := range entries {
+		if e.IsDir() { // .srwr
+			continue
+		}
+		after, err := os.ReadFile(filepath.Join(work, e.Name())) //nolint:gosec // the temporary directory
+		if err != nil {
+			return err
+		}
+		if err := os.WriteFile(filepath.Join(extra, e.Name()), after, 0o600); err != nil { //nolint:gosec // see above
+			return err
+		}
+	}
+	return nil
 }
 
 // mcpClient talks to `srwr mcp` over its standard input and output.

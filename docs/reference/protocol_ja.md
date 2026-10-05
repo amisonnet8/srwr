@@ -62,7 +62,7 @@
 |---|---|---|
 | `look` | テープの `look`（`source` が `mcp` でも `hook` でも） | ファイル、範囲、`why`（`null` のことがある）、`seq`、系譜（`selection`） |
 | `edit` | テープの `edit` | ファイル、変更前後の範囲とテキスト、`why`（`null` のことがある）、`seq`、系譜（`from`→`selection`） |
-| `replace` | テープの `replace`：1ファイルの、全部の場所 | ファイル、範囲と変更前後のテキスト、`why`、`seq`、`hits`（場所の数）。`external` と同じ差分で見せ、`why` は左右の上の帯に出す |
+| `replace` | テープの `replace`：1ファイルの、全部の場所 | ファイル、範囲と変更前後のテキスト、`why`、`seq`、`hits`（場所の数）、`hunks`。`external` と同じ差分で見せ、`why` は変わった行のまとまりごとの直前の帯に出す |
 | `new` | テープの `new`：新しいファイル全体 | ファイル、範囲（ファイル全体）と変更後のテキスト（変更前は空）、`why`、`seq`。`edit` と同じ1枚のエディタで、ファイルを橙で塗り、上に `why` を出す |
 | `external` | テープの `external` | ファイル、変更前（直前の内容）と変更後（`text`）、削除されたか |
 | `final` | テープの最後の内容と、今のファイルの比較 | ファイル、変更前（テープの最後）と変更後（今のファイル）、今は存在しないか |
@@ -82,6 +82,7 @@ Frame のフィールド：
 | `parent` | 系譜の親（`from` が指すコマの `index`）、なければ `null` |
 | `tool`・`code`・`message` | `failure` だけ。ツール（`look`・`edit`・`replace`・`new`）、エラーコード、エラー文（実際のパスは伏せてある。[tape_ja.md](tape_ja.md#failure)） |
 | `hits` | `replace` だけ。ファイルの中で変えた場所の数（ほかのコマでは出さない） |
+| `hunks` | `replace` だけ。変わった行のまとまりを上から順に：`[{beforeStart, beforeEnd, afterStart, afterEnd}]`（1始まり、端を含む。変更前・変更後のテキストの行）。まとまりは、変わった行が続く塊なので、間に変わらない行がある場所は別のまとまり。挿入は `beforeEnd = beforeStart - 1`、削除は `afterEnd = afterStart - 1`。クライアントは、まとまりごとの直前に `why` を出す。比べきれないほど違うときは、変更の全体を1つのまとまりにする（ほかのコマでは出さない） |
 | `deleted` | 差分のコマだけ。変更後にファイルが存在しない（そのときだけ `true`。それ以外は出さない） |
 | `before`・`after` | **`withText` が真のときだけ**。変更前・変更後の全文。ふだんは `frame/state` で取る（大きいテープで、全コマが全文を持たないため） |
 
@@ -89,7 +90,7 @@ Frame のフィールド：
 - ライブのコマ（`live/start`・`live/frame`）に、最後の差分は含まれない（`external` はテープに書かれたものが出る）
 - **最後の差分は、サーバーが決める。** クライアントは出すだけ
 - テープの項目が増えても（`source`・`tool`・`vcs` など）、クライアントは使わなくてよい
-- **VSCode・Vim が使うフィールド**は、`index`・`kind`・`file`・`range`・`why`・`before`・`after`・`deleted`、`replace` では `hits`、`failure` では `tool`・`code`・`message`、それに `seq`（表示する種類を替えたとき、今に一番近いコマを探し直すため）だけ。`ts`・`selection`・`from`・`parent`・`oldRange` は使わない。ライブでも本文（`before`・`after`）を使うので、`live/start` に `withText: true` を渡す
+- **VSCode・Vim が使うフィールド**は、`index`・`kind`・`file`・`range`・`why`・`before`・`after`・`deleted`、`replace` では `hits` と `hunks`、`failure` では `tool`・`code`・`message`、それに `seq`（表示する種類を替えたとき、今に一番近いコマを探し直すため）だけ。`ts`・`selection`・`from`・`parent`・`oldRange` は使わない。ライブでも本文（`before`・`after`）を使うので、`live/start` に `withText: true` を渡す
 
 ## サーバーの振る舞い
 

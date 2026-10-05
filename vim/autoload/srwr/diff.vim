@@ -76,8 +76,30 @@ def ScrollNearTop(w: number, lnum: number)
   win_execute(w, 'call winrestview({topline: ' .. top .. ', lnum: ' .. lnum .. ', col: 1})')
 enddef
 
-# Enter shows frame f as a diff. It returns true when it had to create the right-hand window. A sub frame has a band of rows
-# above the text, the same number on both sides: its why on the right (orange), empty rows on the left (blue).
+# InsertBands puts `rows` above each of the lines `starts` (1-based, top to bottom, of the lines as they are).
+def InsertBands(lines: list<string>, starts: list<number>, rows: list<string>): list<string>
+  var out = copy(lines)
+  for i in reverse(range(len(starts)))
+    const at = min([max([starts[i], 1]), len(out) + 1])
+    out = (at > 1 ? out[0 : at - 2] : []) + rows + out[at - 1 : ]
+  endfor
+  return out
+enddef
+
+# BandRows is the first row of each band after InsertBands: block i is pushed down by the i bands above it.
+def BandRows(starts: list<number>, n: number): list<number>
+  return mapnew(starts, (i, st) => max([st, 1]) + i * n)
+enddef
+
+# Hunks of a replace frame: where each block of changed lines starts on each side. A server that sends none is taken to have
+# one block, at the top.
+def Starts(f: dict<any>, key: string): list<number>
+  const hunks: list<dict<any>> = get(f, 'hunks', [])
+  return empty(hunks) ? [1] : mapnew(hunks, (_, h) => h[key])
+enddef
+
+# Enter shows frame f as a diff. It returns true when it had to create the right-hand window. A replace frame has a band of rows
+# above each block of changed lines, the same number on both sides: its why on the right (orange), empty rows on the left (blue).
 export def Enter(s: dict<any>, f: dict<any>, before: string, after: string, band: list<string> = []): bool
   var created = false
   if !Active(s)
@@ -98,8 +120,12 @@ export def Enter(s: dict<any>, f: dict<any>, before: string, after: string, band
     win_execute(w, 'diffoff')
   endfor
   const n = len(band)
-  buf.SetLines(s.buf, repeat([''], n) + buf.Lines(before))
-  buf.SetLines(s.diffBuf, band + buf.Lines(after))
+  const startsL = n > 0 ? Starts(f, 'beforeStart') : []
+  const startsR = n > 0 ? Starts(f, 'afterStart') : []
+  const bandsL = BandRows(startsL, n)
+  const bandsR = BandRows(startsR, n)
+  buf.SetLines(s.buf, InsertBands(buf.Lines(before), startsL, repeat([''], n)))
+  buf.SetLines(s.diffBuf, InsertBands(buf.Lines(after), startsR, band))
   TakeAwayDiffColors()
   for w in [s.win, s.diffWin]
     win_execute(w, n > 0 ? 'setlocal nonumber' : 'setlocal number')
@@ -107,24 +133,27 @@ export def Enter(s: dict<any>, f: dict<any>, before: string, after: string, band
     win_execute(w, 'setlocal foldtext=srwr#diff#FoldText()')
   endfor
   var firsts: dict<number> = {}
-  for [w, b, tone] in [[s.win, s.buf, 'select'], [s.diffWin, s.diffBuf, 'replace']]
+  for [w, b, tone, bands] in [[s.win, s.buf, 'select', bandsL], [s.diffWin, s.diffBuf, 'replace', bandsR]]
     paint.Clear(b)
     # The band rows differ between the sides (the why against empty rows), so they are not changed lines.
-    const lines = filter(Changed(w), (_, l) => l > n)
+    const lines = filter(Changed(w), (_, l) => empty(filter(copy(bands), (_, at) => l >= at && l < at + n)))
     for lnum in lines
       paint.Line(b, lnum, 'srwr_' .. tone)
     endfor
-    if n > 0
-      for k in range(1, n)
-        paint.Line(b, k, 'srwr_why_' .. tone)
+    for at in bands
+      for k in range(n)
+        paint.Line(b, at + k, 'srwr_why_' .. tone)
       endfor
-      # The band makes 'number' wrong: the file's own numbers are drawn instead.
-      paint.Numbers(b, 1, n)
+    endfor
+    if n > 0
+      # The bands make 'number' wrong: the file's own numbers are drawn instead.
+      paint.NumbersAt(b, bands, n)
     endif
-    firsts[string(w)] = empty(lines) ? 0 : lines[0]
+    # What goes about 30% from the top of the window: the first band (the why is read before the change), or the first changed line.
+    firsts[string(w)] = !empty(bands) ? bands[0] : (empty(lines) ? 0 : lines[0])
   endfor
-  # The first changed line goes about 30% from the top of the window (from the top of the file, a change that is
-  # far down needs scrolling). A side without a changed line (only added, only removed) follows the other side.
+  # From the top of the file, a change that is far down needs scrolling. A side without a changed line (only added, only
+  # removed) follows the other side.
   const any = max([firsts[string(s.win)], firsts[string(s.diffWin)]])
   for w in [s.win, s.diffWin]
     const own = firsts[string(w)]

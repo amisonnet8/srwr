@@ -17,6 +17,15 @@ export interface LineRange {
 }
 
 // Only the fields the editor uses (docs/reference/protocol.md). Unknown fields are ignored.
+// A block of changed lines of a replace frame (1-based, inclusive). An insertion has beforeEnd = beforeStart - 1, a deletion
+// afterEnd = afterStart - 1. The why is shown above each block.
+export interface Hunk {
+  beforeStart: number;
+  beforeEnd: number;
+  afterStart: number;
+  afterEnd: number;
+}
+
 export interface Frame {
   index: number;
   seq?: number; // the seq of the tape; used to find the nearest frame again after the kinds shown were changed
@@ -28,6 +37,7 @@ export interface Frame {
   after: string;
   deleted?: boolean;
   hits?: number; // replace frames only: how many places it changed in the file
+  hunks?: Hunk[]; // replace frames only: the blocks of changed lines, top to bottom
   // failure frames only
   tool?: string;
   code?: string;
@@ -44,6 +54,20 @@ export function isDiff(f: Frame): boolean {
 // A replace frame (the replace tool) is shown as a diff: left and right, with its why in a band above both.
 export function isReplace(f: Frame): boolean {
   return f.kind === "replace";
+}
+
+// The blocks of a replace frame. A server that does not send them is taken to have one block, at the top.
+export function hunksOf(f: Frame): Hunk[] {
+  return f.hunks && f.hunks.length > 0 ? f.hunks : [{ beforeStart: 1, beforeEnd: 0, afterStart: 1, afterEnd: 0 }];
+}
+
+// The changed lines of each side (1-based) that the blocks say.
+export function hunkLines(hunks: Hunk[]): { before: number[]; after: number[] } {
+  const rows = (start: number, end: number): number[] => (end < start ? [] : Array.from({ length: end - start + 1 }, (_, k) => start + k));
+  return {
+    before: hunks.flatMap((h) => rows(h.beforeStart, h.beforeEnd)),
+    after: hunks.flatMap((h) => rows(h.afterStart, h.afterEnd)),
+  };
 }
 
 export function toneOf(f: Frame): Tone {
@@ -77,6 +101,7 @@ export function toFrame(raw: Record<string, unknown>): Frame {
     after: typeof f.after === "string" ? f.after : "",
     ...(f.deleted ? { deleted: true } : {}),
     ...(f.kind === "replace" ? { hits: typeof f.hits === "number" ? f.hits : 0 } : {}),
+    ...(f.kind === "replace" && Array.isArray(f.hunks) ? { hunks: f.hunks } : {}),
     ...(f.kind === "failure" ? { tool: f.tool ?? "", code: f.code ?? "", message: f.message ?? "" } : {}),
   };
 }

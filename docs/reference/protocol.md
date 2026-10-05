@@ -62,7 +62,7 @@ The arguments are a JSON object (`{}` if none).
 |---|---|---|
 | `look` | A `look` of the tape (whether `source` is `mcp` or `hook`) | File, range, `why` (may be `null`), `seq`, lineage (`selection`) |
 | `edit` | An `edit` of the tape | File, the range and text before and after, `why` (may be `null`), `seq`, lineage (`from` → `selection`) |
-| `replace` | A `replace` of the tape: one file, all its places | File, the range and the text before and after, `why`, `seq`, `hits` (the number of places). Shown as a diff, like `external`, with the `why` in a band above both sides |
+| `replace` | A `replace` of the tape: one file, all its places | File, the range and the text before and after, `why`, `seq`, `hits` (the number of places), `hunks`. Shown as a diff, like `external`, with the `why` in a band above each block of changed lines |
 | `new` | A `new` of the tape: a whole new file | File, the range (the whole file) and the text after (before is empty), `why`, `seq`. Shown like an `edit`: one editor, the file painted orange, the `why` above it |
 | `external` | An `external` of the tape | File, before (the content just before) and after (`text`), whether it was deleted |
 | `final` | The last content of the tape compared with the current file | File, before (the end of the tape) and after (the current file), whether it no longer exists |
@@ -82,6 +82,7 @@ The fields of a Frame:
 | `parent` | The parent in the lineage (the `index` of the frame `from` points to), or `null` |
 | `tool`, `code`, `message` | `failure` only: the tool (`look`, `edit`, `replace`, `new`), the error code, and the message (the real path is left out; see [tape.md](tape.md#failure)) |
 | `hits` | `replace` only. The number of places it changed in the file (not output otherwise) |
+| `hunks` | `replace` only. The blocks of changed lines, top to bottom: `[{beforeStart, beforeEnd, afterStart, afterEnd}]` (1-based, inclusive, lines of the text before and after). A block is changed lines that follow each other, so places with an unchanged line between them are two blocks. An insertion has `beforeEnd = beforeStart - 1`, a deletion `afterEnd = afterStart - 1`. The client puts the `why` above each block. When the texts differ by too much to compare, the whole change is one block (not output otherwise) |
 | `deleted` | Diff frames only. The file does not exist after the change (`true` only then; not output otherwise) |
 | `before`, `after` | **Only when `withText` is true.** The whole text before and after. Usually it is fetched with `frame/state` (so that not every frame carries the whole text in a big tape) |
 
@@ -89,7 +90,7 @@ The fields of a Frame:
 - The frames of live (`live/start`, `live/frame`) do not include the final diff (an `external` appears as written on the tape)
 - **The server decides the final diff.** The client only shows it
 - Even if items are added to the tape (`source`, `tool`, `vcs` and so on), the client need not use them
-- **The fields VSCode and Vim use** are only `index`, `kind`, `file`, `range`, `why`, `before`, `after`, `deleted`, `hits` (for `replace`), and for `failure` `tool`, `code` and `message`, and `seq` (to find the nearest frame again when the kinds that are shown are changed). They do not use `ts`, `selection`, `from`, `parent` or `oldRange`. Live also uses the text (`before`, `after`), so pass `withText: true` to `live/start`
+- **The fields VSCode and Vim use** are only `index`, `kind`, `file`, `range`, `why`, `before`, `after`, `deleted`, `hits` and `hunks` (for `replace`), and for `failure` `tool`, `code` and `message`, and `seq` (to find the nearest frame again when the kinds that are shown are changed). They do not use `ts`, `selection`, `from`, `parent` or `oldRange`. Live also uses the text (`before`, `after`), so pass `withText: true` to `live/start`
 
 ## Behavior of the server
 

@@ -103,7 +103,7 @@ The same as [vscode.md](vscode.md). **look is blue, and what changes a file (edi
 
 ### 4b. Frames of replace
 
-- One frame for each file a `replace` changed, shown like an external change: two windows side by side, before on the left and after on the right, only the changed lines painted (blue and orange). **The `why` is in a band at the top of both windows**: the same number of rows on both sides, the `why` on the right (white bold on orange, wrapped to the width of the window and centered in it), empty rows on blue on the left. The file's own line numbers are drawn at the left of each row, and the band rows have none
+- One frame for each file a `replace` changed, shown like an external change: two windows side by side, before on the left and after on the right, only the changed lines painted (blue and orange). **The `why` is in a band above each block of changed lines** (a block is changed lines that follow each other; one unchanged line between them makes two blocks): the same number of rows on both sides, the `why` on the right (white bold on orange, wrapped to the width of the window and centered in it), empty rows on blue on the left. Every block has the whole `why`, so it is read right above the change wherever the change is in the file. The file's own line numbers are drawn at the left of each row, and the band rows have none. The first band goes about 30% from the top of the window
 - The heading of the left status line is "Before  ⚠ replace: main.go". In the operation list a row reads `● n replace file (N hits)` with an orange dot
 
 ### 4c. Frames of new

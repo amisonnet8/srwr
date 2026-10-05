@@ -124,7 +124,7 @@ func locateEdit(st *tape.State, rel, text string, in EditInput) (start, end int,
 		}
 		// Nothing says the place is still the one the client meant, unless the file has not moved since a look.
 		if look, ok := st.LastLook[rel]; !ok || look < st.LastChange[rel] {
-			return 0, 0, newError(CodeContentNotFound, "%s changed after the last look (or was not looked at), so line %d may not be the place you mean. Call look again, or edit the line before it with expect and put the new line in newText", rel, in.StartLine)
+			return 0, 0, newError(CodeContentNotFound, "%s changed after the last look (or was not looked at), so line %d may not be the place you mean. Call look again, or point at the line next to it with expect and insert: \"after\" (or \"before\")", rel, in.StartLine)
 		}
 		return in.StartLine, in.EndLine, nil
 	}

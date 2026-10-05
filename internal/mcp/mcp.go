@@ -180,6 +180,7 @@ type editArgs struct {
 	EndLine   *int    `json:"endLine"`
 	Expect    *string `json:"expect"`
 	NewText   *string `json:"newText"`
+	Insert    *string `json:"insert"`
 	Why       *string `json:"why"`
 }
 
@@ -211,6 +212,9 @@ func (s *Server) callEdit(raw json.RawMessage) toolResult {
 	}
 	if a.File != nil {
 		in.File = *a.File
+	}
+	if a.Insert != nil {
+		in.Insert = *a.Insert
 	}
 	if in.HasLines {
 		in.StartLine, in.EndLine = *a.StartLine, *a.EndLine

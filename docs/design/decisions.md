@@ -32,6 +32,10 @@ In one experiment 69 of 74 calls of the old `sub` changed one place only: it was
 
 The AI often wrote `expect` or `old` with spaces where the file has tabs (or the other way round), was told only that nothing was found, and read the file again to find out why. Now, if the text is found but for runs of spaces and tabs and trailing spaces, the error lists those places in `nearMatches` with their lines as they are, so the next call can copy them. It is next to `actual`, not in it, because `actual` already has a different form for each code. Only the lines of the file go in it, and **they are not written to the tape**: the message, which is on the tape, says only where. Only whitespace is folded; a different word is not "near", because a hint that is wrong costs the AI more than none. The same goes for an `expect` that is only part of a line (the second re-run had three such failures): if there is no place that differs only in whitespace, the lines that hold `expect` as a part are listed instead, and the message says that `expect` must be whole lines.
 
+### `insert` puts new lines next to lines that are kept
+
+The AI wanted to add a line after a line. An empty range could do it, but only while the file had not changed since a look, so the AI wrote the neighbouring line again as `expect` and `newText`, and could get it wrong. With `insert: "after"` (or `"before"`) the lines are pointed at as usual (a token, or `file` and `expect`, which is checked), so the place is still checked after the file has changed; they are kept, and `newText` goes next to them. An `insert` that is a part of the call, not a new tool or a new tape event: the tape holds an `edit` of an empty range, as before.
+
 ### srwr absorbs the shifting of line numbers
 
 When a range is given by line numbers, it drifts as edits pile up. This is why the Edit of Claude Code takes the `old_string` form. In srwr the token carries the `seq` at the time it was issued, and srwr corrects the numbers automatically from the later edit history. Then it checks the hash of the content, and edits nothing if it does not match ([token.md](token.md)).

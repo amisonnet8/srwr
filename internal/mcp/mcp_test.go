@@ -426,6 +426,26 @@ func TestFailedCallsAreOnTheTape(t *testing.T) {
 }
 
 // A failure to match that is only about spaces and tabs carries the near places next to actual; other errors do not have the key.
+// insert keeps the lines pointed at and puts newText next to them; the schema offers it, and a wrong value is refused.
+func TestEditInsert(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "a.go"), []byte("a\nb\nc\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	m, isErr := body(t, serve(t, root, toolCall(1, "edit", `{"file":"a.go","expect":"b","insert":"after","newText":"x","why":"w"}`))[0])
+	if isErr || m["startLine"] != float64(3) || m["endLine"] != float64(3) {
+		t.Fatalf("got %v", m)
+	}
+	b, _ := os.ReadFile(filepath.Join(root, "a.go")) //nolint:gosec // a path in a temporary directory
+	if string(b) != "a\nb\nx\nc\n" {
+		t.Errorf("file = %q", b)
+	}
+	m, isErr = body(t, serve(t, root, toolCall(1, "edit", `{"file":"a.go","expect":"b","insert":"next","newText":"x","why":"w"}`))[0])
+	if e, _ := m["error"].(map[string]any); !isErr || e["code"] != "invalid_input" {
+		t.Errorf("got %v", m)
+	}
+}
+
 func TestNearMatchesInTheError(t *testing.T) {
 	root := t.TempDir()
 	if err := os.WriteFile(filepath.Join(root, "a.go"), []byte("func f() {\n\treturn 1\n}\n"), 0o600); err != nil {

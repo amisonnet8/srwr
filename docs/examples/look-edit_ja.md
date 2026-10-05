@@ -106,4 +106,26 @@ func main() {
 ← {"jsonrpc":"2.0","id":8,"result":{"content":[{"text":"{\"ok\":false,\"error\":{\"code\":\"use_edit\",\"message\":\"replace is for 2 or more places, and the text is in one place only (cmd/main.go line 6). Use edit for it: actual.edit is the call to make (add why)\",\"actual\":{\"edit\":{\"file\":\"cmd/main.go\",\"startLine\":6,\"endLine\":6,\"expect\":\"\\tcleanup()\",\"newText\":\"\\tteardown()\"},\"hits\":[{\"file\":\"cmd/main.go\",\"startLine\":6,\"endLine\":6,\"lines\":[\"\\tcleanup()\"]}]}}}","type":"text"}],"isError":true}}
 ```
 
+## 行の前後に足す
+
+行を変えずに、その後ろ（前）に行を足すには、いつもと同じに行を指して `insert: "after"`（または `"before"`）を付ける。`expect` を確かめるので、ファイルがどう変わっていても使える。返るのは、足した行のこと。
+
+```jsonrpc
+→ {"jsonrpc":"2.0","id":9,"method":"tools/call","params":{"name":"edit","arguments":{"file":"cmd/main.go","expect":"\tsetup()","insert":"after","newText":"\tcheck()","why":"run の前に確認する"}}}
+← {"jsonrpc":"2.0","id":9,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_044GA1E48KVH269F6JJ94T8Z\",\"startLine\":5,\"endLine\":5,\"lines\":[\"\\tcheck()\"],\"before\":[\"func main() {\",\"\\tsetup()\"],\"after\":[\"\\trun()\",\"\\tcleanup()\"]}","type":"text"}],"isError":false}}
+```
+
+ファイルは8行になった。`setup()` はそのままで、その後ろに `check()` が入っている。
+
+```go
+package main
+
+func main() {
+	setup()
+	check()
+	run()
+	cleanup()
+}
+```
+
 エラーの一覧は [mcp.md](../reference/mcp_ja.md)。

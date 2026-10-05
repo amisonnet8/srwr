@@ -75,6 +75,7 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 | `selection` | `look`、`edit`、`new` が返したトークン。ファイルはここから決まる（`file` は不要）。これか、`file` と `expect` のどちらか（両方は不可） |
 | `file`・`startLine`・`endLine`・`expect` | トークンなしのとき：ファイル、AI が見た範囲（行番号は両方か、どちらもなし）、その範囲が今持っている行（`\n` でつなぐ。`look` と同じ）。下を参照 |
 | `newText` | 置き換え後のテキスト。`""` は削除 |
+| `insert` | 省略可。`"after"` か `"before"`。範囲（トークンの範囲、または `expect` の行）を残し、その後ろ（前）に `newText` を足す。置き換えない |
 | `why` | なぜこう変えるか |
 | 出力の `selection` | **置き換え後の範囲**の新しいトークン。同じ箇所を続けて直すときは、`look` し直さずにこれを使える |
 | 出力の `lines` | 置き換え後の範囲の内容（削除なら `[]`） |
@@ -94,7 +95,9 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 
 0か所なら `content_not_found`（行番号があれば、`actual` にその行を付ける）。2か所以上、または 1 と 2 が別の場所を指すときは `content_ambiguous`（場所を知らせる。行番号か、`expect` の行を増やす）。だから、同じファイルへの edit を、順不同で、並列でもまとめて送れる。先の編集で行がずれても、それぞれが見つかる。
 
-**挿入**（`endLine = startLine - 1`、`expect` なし）は、確かめる行がない。ファイルが最後の look のあと変わっていない（`edit`・`replace`・`new`・`external` が後にない）ときだけ受け付け、行番号をそのまま使う。そうでなければ `content_not_found`。`look` し直すか、置きたい場所の隣の行を `expect` にして edit し、`newText` に新しい行を含める。
+**挿入**（`endLine = startLine - 1`、`expect` なし）は、確かめる行がない。ファイルが最後の look のあと変わっていない（`edit`・`replace`・`new`・`external` が後にない）ときだけ受け付け、行番号をそのまま使う。そうでなければ `content_not_found`。`look` し直すか、置きたい場所の隣の行を `expect` と `insert` で指す。
+
+**`insert`**（`"after"` か `"before"`）は、最後の look のあとファイルが変わっていても、行の隣に挿入できる。いつもと同じに行を指す（トークン、または `file` と `expect`。`expect` は確かめる）と、その行は残り、`newText` がその直後（直前）に入る。返事（`selection`・`startLine`・`endLine`・`lines`・`before`・`after`）は足した行のことで、テープには、ほかの挿入と同じく空範囲の `edit` が入る。`insert` が `invalid_input` になるのは、範囲が空のとき（指す行がない）、`"after"`・`"before"` 以外のとき、`newText` が空のとき。
 
 テープには、トークンの場合と同じ `edit` を書く（`from` は `null`）。`expect` はテープに書かない。
 

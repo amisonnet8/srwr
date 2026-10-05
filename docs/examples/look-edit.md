@@ -106,4 +106,26 @@ If `expect` differs from the file only in spaces or tabs (here four spaces were 
 ← {"jsonrpc":"2.0","id":8,"result":{"content":[{"text":"{\"ok\":false,\"error\":{\"code\":\"use_edit\",\"message\":\"replace is for 2 or more places, and the text is in one place only (cmd/main.go line 6). Use edit for it: actual.edit is the call to make (add why)\",\"actual\":{\"edit\":{\"file\":\"cmd/main.go\",\"startLine\":6,\"endLine\":6,\"expect\":\"\\tcleanup()\",\"newText\":\"\\tteardown()\"},\"hits\":[{\"file\":\"cmd/main.go\",\"startLine\":6,\"endLine\":6,\"lines\":[\"\\tcleanup()\"]}]}}}","type":"text"}],"isError":true}}
 ```
 
+## Insert next to lines
+
+To put new lines after (or before) lines without changing them, point at those lines as usual and add `insert: "after"` (or `"before"`). `expect` is checked, so this works however the file has changed. The result is about the new lines.
+
+```jsonrpc
+→ {"jsonrpc":"2.0","id":9,"method":"tools/call","params":{"name":"edit","arguments":{"file":"cmd/main.go","expect":"\tsetup()","insert":"after","newText":"\tcheck()","why":"Check before run"}}}
+← {"jsonrpc":"2.0","id":9,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_044GA1E48KVH269F6JJ94T8Z\",\"startLine\":5,\"endLine\":5,\"lines\":[\"\\tcheck()\"],\"before\":[\"func main() {\",\"\\tsetup()\"],\"after\":[\"\\trun()\",\"\\tcleanup()\"]}","type":"text"}],"isError":false}}
+```
+
+The file is now 8 lines; `setup()` is kept and `check()` follows it.
+
+```go
+package main
+
+func main() {
+	setup()
+	check()
+	run()
+	cleanup()
+}
+```
+
 The list of errors is in [mcp.md](../reference/mcp.md).

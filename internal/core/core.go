@@ -51,6 +51,9 @@ type EditInput struct {
 	EndLine   int
 	HasLines  bool
 	Expect    *string
+
+	// Insert, "after" or "before", keeps the range chosen (by the token, or by File and Expect) and puts NewText after or before it.
+	Insert string
 }
 
 // contextLines is how many lines before and after the new range edit returns.
@@ -183,6 +186,14 @@ func (c *Core) doEdit(in EditInput) (*EditResult, *Error) {
 	if strings.ContainsRune(in.NewText, '\r') {
 		return nil, newError(CodeInvalidInput, "newText must not contain CR (line breaks are LF only)")
 	}
+	switch {
+	case in.Insert != "" && in.Insert != InsertAfter && in.Insert != InsertBefore:
+		return nil, newError(CodeInvalidInput, "insert must be \"after\" or \"before\"")
+	case in.Insert != "" && in.NewText == "":
+		return nil, newError(CodeInvalidInput, "insert needs newText: the lines to put in (for an empty line, newText is a line break)")
+	case in.Insert != "" && in.HasLines && in.EndLine == in.StartLine-1:
+		return nil, newError(CodeInvalidInput, "with insert, point at lines to put the text next to (an empty range has none): give expect, and startLine and endLine of those lines")
+	}
 	var rel string
 	if byFile {
 		var cerr *Error
@@ -244,6 +255,7 @@ func (c *Core) editIn(tx *session.Tx, in EditInput) (*EditResult, error) {
 		}
 	}
 
+	a, b = insertAt(a, b, in.Insert)
 	return c.writeEdit(tx, rel, t, a, b, in.NewText, in.Why, &in.Selection)
 }
 
@@ -260,7 +272,25 @@ func (c *Core) editFileIn(tx *session.Tx, rel string, in EditInput) (*EditResult
 	if cerr != nil {
 		return nil, cerr
 	}
+	a, b = insertAt(a, b, in.Insert)
 	return c.writeEdit(tx, rel, t, a, b, in.NewText, in.Why, nil)
+}
+
+// The values of EditInput.Insert.
+const (
+	InsertAfter  = "after"
+	InsertBefore = "before"
+)
+
+// insertAt turns the range a..b to keep into the empty range where the new text goes: just after b, or just before a.
+func insertAt(a, b int, insert string) (int, int) {
+	switch insert {
+	case InsertAfter:
+		return b + 1, b
+	case InsertBefore:
+		return a, a - 1
+	}
+	return a, b
 }
 
 // writeEdit puts newText in lines a..b of the file, and records it. from is the token the range came from, if any.

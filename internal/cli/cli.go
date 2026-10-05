@@ -2,12 +2,14 @@
 package cli
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"strings"
 	"time"
 
 	"github.com/amisonnet8/srwr/internal/core"
@@ -64,7 +66,7 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	case "mcp":
 		return runMCP(args[1:], stdin, stdout, stderr)
 	case "hook":
-		return runHook(args[1:], stdin, stderr)
+		return runHook(args[1:], stdin, stdout, stderr)
 	case "view-server":
 		return runViewServer(args[1:], stdin, stdout, stderr)
 	case "tapes":
@@ -149,7 +151,7 @@ func runMCP(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 // runHook records what Claude Code tells a hook. It never gets in the agent's way: whatever goes wrong it only says so on the
 // standard error output and exits with 0 (an exit code of 2 would stop the agent's tool call). A wrong command line is the
 // one thing that exits with 1, which the agent sees as a failed hook and goes on.
-func runHook(args []string, stdin io.Reader, stderr io.Writer) int {
+func runHook(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("srwr hook", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	def := os.Getenv("CLAUDE_PROJECT_DIR")
@@ -170,9 +172,16 @@ func runHook(args []string, stdin io.Reader, stderr io.Writer) int {
 		return 0
 	}
 	ws.SetAuthor(tape.Author{Kind: "ai", Name: "claude"})
-	notes, err := hook.Run(stdin, &core.Core{WS: ws})
+	notes, advice, err := hook.RunWithAdvice(stdin, &core.Core{WS: ws})
 	for _, n := range notes {
 		_, _ = fmt.Fprintf(stderr, "srwr hook: %s\n", n)
+	}
+	if len(advice) > 0 {
+		// What Claude Code shows the agent after the tool: the JSON of a PostToolUse hook on the standard output (exit code 0).
+		out := map[string]any{"hookSpecificOutput": map[string]any{"hookEventName": "PostToolUse", "additionalContext": strings.Join(advice, "\n")}}
+		if b, mErr := json.Marshal(out); mErr == nil {
+			_, _ = fmt.Fprintf(stdout, "%s\n", b)
+		}
 	}
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "srwr hook: %v\n", err)

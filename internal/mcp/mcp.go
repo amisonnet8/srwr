@@ -260,6 +260,7 @@ type editOK struct {
 	Lines     []string `json:"lines"`
 	Above     []string `json:"above"`
 	Below     []string `json:"below"`
+	Hint      string   `json:"hint,omitempty"`
 }
 
 func (s *Server) callEdit(raw json.RawMessage) toolResult {
@@ -285,7 +286,7 @@ func (s *Server) callEdit(raw json.RawMessage) toolResult {
 		return failure(*cerr)
 	}
 	return success(editOK{OK: true, Selection: res.Selection, StartLine: res.StartLine, EndLine: res.EndLine,
-		Lines: res.Lines, Above: res.Above, Below: res.Below})
+		Lines: res.Lines, Above: res.Above, Below: res.Below, Hint: res.Hint})
 }
 
 // callEdits is edit with edits: several edits in one call, with one why.

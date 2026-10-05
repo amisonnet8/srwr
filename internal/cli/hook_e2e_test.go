@@ -228,3 +228,47 @@ func TestHookRecordsANewFileFromBash(t *testing.T) {
 		t.Errorf("tapes check: code %d, stderr %q\n%s", code, errOut, out)
 	}
 }
+
+// After a Read, srwr hook writes the JSON Claude Code shows the agent on the standard output, and exits with 0.
+func TestHookTellsTheAgentAboutLook(t *testing.T) {
+	root := t.TempDir()
+	if real, err := filepath.EvalSymlinks(root); err == nil {
+		root = real
+	}
+	write(t, root, "main.go", "package main\n")
+	for _, tc := range []struct {
+		tool  string
+		input map[string]any
+		want  bool
+	}{
+		{"Read", map[string]any{"file_path": filepath.Join(root, "main.go")}, true},
+		{"Grep", map[string]any{"pattern": "main", "output_mode": "content", "path": filepath.Join(root, "main.go")}, false},
+	} {
+		payload := toolPayload(tc.tool, tc.input, map[string]any{"content": "1:package main\n"})
+		payload["hook_event_name"], payload["cwd"] = "PostToolUse", root
+		b, _ := json.Marshal(payload)
+		cmd := exec.Command(binary(t), "hook") //nolint:gosec // the binary was built by this test
+		cmd.Dir = root
+		cmd.Stdin = bytes.NewReader(b)
+		var out bytes.Buffer
+		cmd.Stdout = &out
+		if err := cmd.Run(); err != nil {
+			t.Fatal(err)
+		}
+		var got struct {
+			Out struct {
+				Event   string `json:"hookEventName"`
+				Context string `json:"additionalContext"`
+			} `json:"hookSpecificOutput"`
+		}
+		if !tc.want {
+			if out.Len() != 0 {
+				t.Errorf("%s: stdout = %q, want nothing", tc.tool, out.String())
+			}
+			continue
+		}
+		if err := json.Unmarshal(out.Bytes(), &got); err != nil || got.Out.Event != "PostToolUse" || !strings.Contains(got.Out.Context, "look") {
+			t.Errorf("%s: stdout = %q (%v)", tc.tool, out.String(), err)
+		}
+	}
+}

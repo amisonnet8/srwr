@@ -93,6 +93,7 @@ Called from a hook of Claude Code, it records the operations of the tools the AI
 - A single call records at most 100 `look`s (so that a search over a wide range does not swell the tape)
 - For a pipe, only the first command is looked at. `$( )`, redirects that write, `sed -i`, `tail -f` and `grep` without `-n` are not recorded
 - A frame recorded by the hook is shown with a `why` of `null` (no `why` line). It has no selection token (`selection` and `from` are `null`). A token issued earlier by `srwr mcp` can still be used after a `edit` by the hook; its line numbers are corrected
+- **After it records a read of one file** (a Read, or a Bash `cat`, `nl`, `head`, `tail` or `sed -n`; not a search over several files or `grep -n`), the hook tells the agent in one line to use `look` (with `search`, or with `startLine` and `endLine`): it returns the same lines with a selection token for `edit`. It writes the JSON of a `PostToolUse` hook to standard output (`{"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": "…"}}`) and exits with 0. Nothing is written when the read was not recorded
 
 ## srwr view-server
 

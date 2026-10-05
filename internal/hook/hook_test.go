@@ -310,3 +310,51 @@ func TestToRel(t *testing.T) {
 		t.Errorf("a path through a link to the outside was accepted: %q", got)
 	}
 }
+
+// advice runs the hook and returns what the agent is to be told.
+func (e *env) advice(tool string, toolInput, toolResponse any) []string {
+	e.t.Helper()
+	msg := map[string]any{"hook_event_name": "PostToolUse", "cwd": e.root, "tool_name": tool, "tool_input": toolInput, "tool_response": toolResponse}
+	b, err := json.Marshal(msg)
+	if err != nil {
+		e.t.Fatal(err)
+	}
+	_, advice, err := RunWithAdvice(strings.NewReader(string(b)), e.c)
+	if err != nil {
+		e.t.Fatal(err)
+	}
+	return advice
+}
+
+// After one file is read the agent is told about look; after a search, or a read that was not recorded, it is not.
+func TestLookAdvice(t *testing.T) {
+	cases := []struct {
+		name string
+		tool string
+		in   map[string]any
+		resp any
+		want bool
+	}{
+		{"Read", "Read", map[string]any{"file_path": "a.go"}, map[string]any{"type": "text"}, true},
+		{"Read of lines", "Read", map[string]any{"file_path": "a.go", "offset": 1, "limit": 2}, map[string]any{"type": "text"}, true},
+		{"cat", "Bash", map[string]any{"command": "cat a.go"}, map[string]any{"stdout": ""}, true},
+		{"sed -n", "Bash", map[string]any{"command": "sed -n '1,2p' a.go"}, map[string]any{"stdout": ""}, true},
+		{"head", "Bash", map[string]any{"command": "head -n 2 a.go"}, map[string]any{"stdout": ""}, true},
+		{"grep -n of one file", "Bash", map[string]any{"command": "grep -n a a.go"}, map[string]any{"stdout": "1:a\n"}, false},
+		{"Grep", "Grep", map[string]any{"pattern": "a", "output_mode": "content", "path": "a.go"}, map[string]any{"content": "1:a\n"}, false},
+		{"a command that reads nothing", "Bash", map[string]any{"command": "ls"}, map[string]any{"stdout": ""}, false},
+		{"Read outside the workspace", "Read", map[string]any{"file_path": "/etc/hostname"}, map[string]any{"type": "text"}, false},
+		{"Read of a file that is not recorded", "Read", map[string]any{"file_path": ".env"}, map[string]any{"type": "text"}, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			e := newEnv(t)
+			e.write("a.go", "a\nb\nc\n")
+			e.write(".env", "KEY=1\n")
+			got := e.advice(tc.tool, tc.in, tc.resp)
+			if (len(got) == 1 && got[0] == LookAdvice) != tc.want || (!tc.want && len(got) != 0) {
+				t.Errorf("advice = %q, want advice %v", got, tc.want)
+			}
+		})
+	}
+}

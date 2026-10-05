@@ -152,7 +152,7 @@ func main() {
 
 ```jsonrpc
 → {"jsonrpc":"2.0","id":12,"method":"tools/call","params":{"name":"edit","arguments":{"file":"cmd/main.go","old":"stop()","new":"stop(true)","why":"旗をつけて止める"}}}
-← {"jsonrpc":"2.0","id":12,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_047GG2648KVH3FFGG4WYYXPE\",\"startLine\":8,\"endLine\":8,\"lines\":[\"\\tstop(true)\"],\"above\":[\"\\trun()\",\"\\tlog()\"],\"below\":[\"}\"]}","type":"text"}],"isError":false}}
+← {"jsonrpc":"2.0","id":12,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_047GG2648KVH3FFGG4WYYXPE\",\"startLine\":8,\"endLine\":8,\"lines\":[\"\\tstop(true)\"],\"above\":[\"\\trun()\",\"\\tlog()\"],\"below\":[\"}\"],\"hint\":\"Edits to one file in a row: edit with edits makes them in one call (one why, all or none; the ranges are found as the file is now, so no order is needed).\"}","type":"text"}],"isError":false}}
 ```
 
 ファイルは9行になった。

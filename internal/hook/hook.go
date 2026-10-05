@@ -45,22 +45,55 @@ func (n *flexInt) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// LookAdvice is what the agent is told after it read one file with Read, cat, head, tail or sed -n (not after a search over
+// several files): look returns the same lines with a token for edit.
+const LookAdvice = "srwr: to read part of a file and then edit it, call look (with search, or with startLine and endLine): it returns those lines with a selection token that edit takes as it is."
+
 // Run records one hook call. root is the workspace. The returned notes say what was left out and why.
 func Run(stdin io.Reader, c *core.Core) (notes []string, err error) {
+	notes, _, err = RunWithAdvice(stdin, c)
+	return notes, err
+}
+
+// RunWithAdvice is Run that also returns what the agent is to be told (advice): to use look after it read one file.
+func RunWithAdvice(stdin io.Reader, c *core.Core) (notes, advice []string, err error) {
 	var in input
 	dec := json.NewDecoder(stdin)
 	if err := dec.Decode(&in); err != nil {
-		return nil, fmt.Errorf("the hook input is not valid JSON: %w", err)
+		return nil, nil, fmt.Errorf("the hook input is not valid JSON: %w", err)
 	}
 	if in.Event != "" && in.Event != "PostToolUse" {
-		return nil, nil
+		return nil, nil, nil
 	}
 	req, notes := request(in, c.WS.Root())
 	if len(req.Looks) == 0 && req.Edit == nil && !req.ObserveAll {
-		return notes, nil
+		return notes, nil, nil
 	}
 	more, err := c.Hook(req)
-	return append(notes, more...), err
+	notes = append(notes, more...)
+	if err == nil && len(notes) == 0 && len(req.Looks) == 1 && readsOneFile(in) {
+		advice = []string{LookAdvice}
+	}
+	return notes, advice, err
+}
+
+// readsOneFile tells whether the tool call read one file as a whole or by lines: a Read, or a Bash cat, nl, head, tail or sed -n. A
+// search (Grep, grep -n) is not that.
+func readsOneFile(in input) bool {
+	switch in.Tool {
+	case "Read":
+		return true
+	case "Bash":
+		var t struct {
+			Command string `json:"command"`
+		}
+		if json.Unmarshal(in.Input, &t) != nil {
+			return false
+		}
+		r, ok := parseBashRead(t.Command)
+		return ok && !r.Numbers
+	}
+	return false
 }
 
 // request makes what to record out of a hook call.

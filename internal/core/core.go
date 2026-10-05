@@ -73,6 +73,23 @@ type EditResult struct {
 	Lines     []string
 	Above     []string
 	Below     []string
+
+	// Hint, when there is one, tells the client of edits: it is given when the edit follows an edit of the same file with nothing
+	// between them on the tape. It is not on the tape.
+	Hint string
+}
+
+// EditsHint is what a single edit is told when it follows another edit of the same file.
+const EditsHint = "Edits to one file in a row: edit with edits makes them in one call (one why, all or none; the ranges are found as the file is now, so no order is needed)."
+
+// followsEdit tells whether the last event of the tape is an edit of the file made through srwr mcp.
+func followsEdit(st *tape.State, rel string) bool {
+	n := len(st.Edits)
+	if n == 0 {
+		return false
+	}
+	last := st.Edits[n-1]
+	return last.Seq == st.LastSeq && last.Type == tape.TypeEdit && last.Source == tape.SourceMCP && last.File == rel
 }
 
 // run runs fn with the workspace lock. fn returns a *Error for a failure the client is told about;
@@ -181,7 +198,11 @@ func (c *Core) doEdit(in EditInput) (*EditResult, *Error) {
 		if err != nil {
 			return err
 		}
+		follows := followsEdit(tx.State(), p.rel)
 		res, err = c.writeEdit(tx, p.rel, p.t, p.a, p.b, p.textOf(in), in.Why, p.from)
+		if err == nil && follows {
+			res.Hint = EditsHint
+		}
 		return err
 	})
 	if cerr != nil {

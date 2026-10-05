@@ -28,7 +28,7 @@ func List() []Tool {
 				"a selection token for editing that range with edit (selection) and the current content of the range (lines). " +
 				"The result also has startLine and endLine (the range that was selected). " +
 				"Pass the token to edit as it is (no line numbers or content needed). " +
-				"Line numbers can be wrong, so pass expect too: the lines the range must hold, joined with \\n. If they differ, the look is refused and the message says where those lines are. If a place differs from expect only in spaces or tabs, the error has it in nearMatches: copy expect from there. " +
+				"Line numbers can be wrong, so pass expect too: the lines the range must hold, joined with \\n. If they differ, the look is refused and the message says where those lines are. expect is whole lines: a part of a line is not found. If a place differs from expect only in spaces or tabs, or holds it only as part of a line, the error has it in nearMatches: copy expect from there. " +
 				"Or leave out startLine and endLine and pass only expect: srwr finds those consecutive lines (exactly one place is needed; give line numbers if they appear in more than one). " +
 				"To point at a place to insert, use an empty range with endLine = startLine - 1 (just before line startLine; to append to the end of the file, startLine = number of lines + 1). " +
 				"Only existing files can be selected; create a new file with new. " +
@@ -39,7 +39,7 @@ func List() []Tool {
 					"file":      map[string]any{"type": "string", "minLength": 1, "description": "Path relative to the workspace"},
 					"startLine": map[string]any{"type": "integer", "minimum": 1, "description": "First line (1-based)"},
 					"endLine":   map[string]any{"type": "integer", "minimum": 0, "description": "Last line (inclusive); startLine - 1 for an empty range. Give both startLine and endLine, or neither"},
-					"expect":    map[string]any{"type": "string", "description": "The lines the range must hold, joined with \\n (whitespace counts). Without startLine and endLine, the range is where these lines are"},
+					"expect":    map[string]any{"type": "string", "description": "The lines the range must hold, joined with \\n (whole lines, whitespace counts). Without startLine and endLine, the range is where these lines are"},
 					"why":       map[string]any{"type": "string", "minLength": 1, "pattern": `\S`, "description": whyDescription},
 				},
 				"required": []string{"file", "why"},
@@ -51,7 +51,7 @@ func List() []Tool {
 				"With a selection token returned by look (or by the previous edit or new): pass selection, newText and why, no file or line numbers. This is the usual way: look first, then edit. " +
 				"Without a token: pass file and expect, the lines the range must hold joined with \\n (whitespace counts), and, if you know them, startLine and endLine. srwr then finds the range by itself: " +
 				"the lines you gave, those lines moved to where they are after edits made since your last look at the file (so edits to one file can be sent together in any order), or the one place where expect is in the file. " +
-				"If expect is in the file in more than one place, or not at all, nothing is changed and the error says so; give startLine and endLine, or more lines in expect. If a place differs from expect only in spaces or tabs, the error has it in nearMatches: copy expect from there. " +
+				"If expect is in the file in more than one place, or not at all, nothing is changed and the error says so; give startLine and endLine, or more lines in expect. expect is whole lines: a part of a line is not found. If a place differs from expect only in spaces or tabs, or holds it only as part of a line, the error has it in nearMatches: copy expect from there. " +
 				"To insert without a token, give startLine and endLine = startLine - 1 and no expect: this works only if the file has not changed since your last look at it. " +
 				"To delete, make newText an empty string. " +
 				"The result has selection (the token of the range after the replacement; use it to go on fixing the same place), lines (the content of the range now) and before and after (up to 2 lines around it), so you can check the edit without reading the file again. " +
@@ -64,7 +64,7 @@ func List() []Tool {
 					"file":      map[string]any{"type": "string", "minLength": 1, "description": "Path relative to the workspace. Only when there is no selection"},
 					"startLine": map[string]any{"type": "integer", "minimum": 1, "description": "With file: first line (1-based) of the range, as you saw it. Give both startLine and endLine, or neither"},
 					"endLine":   map[string]any{"type": "integer", "minimum": 0, "description": "With file: last line (inclusive); startLine - 1 inserts before startLine"},
-					"expect":    map[string]any{"type": "string", "description": "With file: the lines the range holds now, joined with \\n (whitespace counts). Required unless inserting"},
+					"expect":    map[string]any{"type": "string", "description": "With file: the lines the range holds now, joined with \\n (whole lines, whitespace counts). Required unless inserting"},
 					"newText":   map[string]any{"type": "string", "description": "The text to put in. An empty string deletes. Line breaks are LF"},
 					"why":       map[string]any{"type": "string", "minLength": 1, "pattern": `\S`, "description": whyDescription},
 				},

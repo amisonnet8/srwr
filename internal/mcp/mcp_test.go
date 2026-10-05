@@ -438,6 +438,7 @@ func TestNearMatchesInTheError(t *testing.T) {
 		{"look", "look", `{"file":"a.go","expect":"    return 1","why":"w"}`, true},
 		{"edit", "edit", `{"file":"a.go","expect":"    return 1","newText":"x","why":"w"}`, true},
 		{"replace", "replace", `{"files":["a.go"],"old":"  return 1","new":"x","count":2,"why":"w"}`, true},
+		{"part of a line", "edit", `{"file":"a.go","expect":"return 1","newText":"x","why":"w"}`, true},
 		{"nothing near", "look", `{"file":"a.go","expect":"zzz","why":"w"}`, false},
 	} {
 		t.Run(tt.name, func(t *testing.T) {

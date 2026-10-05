@@ -93,12 +93,48 @@ func nearText(text, old string) []NearMatch {
 	return out
 }
 
-// withNear adds the near matches to the error: the first maxNear of them, and a sentence of the message that says where, without
-// any of the file (the message goes on the tape). what is "expect" or "old".
-func withNear(e *Error, file string, near []NearMatch, what string) *Error {
-	if len(near) == 0 {
-		return e
+// partLines returns the places where every line of want is in the lines of the file as a part of the line (spaces and tabs
+// folded). The caller has found no place where they are exactly or but for spaces and tabs.
+func partLines(lines, want []string) []NearMatch {
+	nw := make([]string, len(want))
+	blank := true
+	for i, w := range want {
+		nw[i] = strings.TrimSpace(normLine(w))
+		if nw[i] != "" {
+			blank = false
+		}
 	}
+	if len(want) == 0 || blank {
+		return nil
+	}
+	nl := normLines(lines)
+	var out []NearMatch
+	for i := 0; i+len(nw) <= len(nl); i++ {
+		ok := true
+		for k, w := range nw {
+			if !strings.Contains(nl[i+k], w) {
+				ok = false
+				break
+			}
+		}
+		if ok {
+			out = append(out, NearMatch{StartLine: i + 1, EndLine: i + len(nw), Lines: slices.Clone(lines[i : i+len(nw)])})
+		}
+	}
+	return out
+}
+
+// nearOrPart adds to the error the places that differ from want only in spaces or tabs or, if there are none, the places that
+// hold want as parts of their lines.
+func nearOrPart(e *Error, file string, lines, want []string) *Error {
+	if near := nearLines(lines, want); len(near) > 0 {
+		return withNear(e, file, near, "expect")
+	}
+	return withPart(e, file, partLines(lines, want))
+}
+
+// nearWhere keeps at most maxNear of the matches, sets their file, and names their places ("line 3", "lines 3, 9").
+func nearWhere(file string, near []NearMatch) ([]NearMatch, string) {
 	if len(near) > maxNear {
 		near = near[:maxNear]
 	}
@@ -111,8 +147,33 @@ func withNear(e *Error, file string, near []NearMatch, what string) *Error {
 	if len(near) == 1 && near[0].EndLine > near[0].StartLine {
 		where = fmt.Sprintf("lines %d to %d", near[0].StartLine, near[0].EndLine)
 	}
+	return near, where
+}
+
+// withNear adds the near matches to the error: the first maxNear of them, and a sentence of the message that says where, without
+// any of the file (the message goes on the tape). what is "expect" or "old".
+func withNear(e *Error, file string, near []NearMatch, what string) *Error {
+	if len(near) == 0 {
+		return e
+	}
+	near, where := nearWhere(file, near)
 	e.Message += fmt.Sprintf(". %s differ%s from %s only in spaces or tabs: see nearMatches", capFirst(where), plural(where), what)
 	e.NearMatches = near
+	return e
+}
+
+// withPart adds the places that hold expect only as parts of lines.
+func withPart(e *Error, file string, part []NearMatch) *Error {
+	if len(part) == 0 {
+		return e
+	}
+	part, where := nearWhere(file, part)
+	verb := "hold"
+	if plural(where) == "s" {
+		verb = "holds"
+	}
+	e.Message += fmt.Sprintf(". %s %s expect only as part of the line: expect must be whole lines. Copy them from nearMatches", capFirst(where), verb)
+	e.NearMatches = part
 	return e
 }
 

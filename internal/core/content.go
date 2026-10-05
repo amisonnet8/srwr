@@ -36,8 +36,8 @@ func chooseRange(rel, text string, in LookInput) (start, end int, cerr *Error) {
 		at := findLines(lines, want)
 		switch len(at) {
 		case 0:
-			return 0, 0, withNear(newError(CodeContentNotFound, "the lines of expect are not in %s (%d lines). Check the content, or give startLine and endLine", rel, n),
-				"", nearLines(lines, want), "expect")
+			return 0, 0, nearOrPart(newError(CodeContentNotFound, "the lines of expect are not in %s (%d lines). Check the content, or give startLine and endLine", rel, n),
+				"", lines, want)
 		case 1:
 			return at[0], at[0] + len(want) - 1, nil
 		}
@@ -64,7 +64,7 @@ func chooseRange(rel, text string, in LookInput) (start, end int, cerr *Error) {
 	}
 	e := &Error{Code: CodeContentMismatch, Message: msg, Actual: rangeLines(text, start, end)}
 	if len(want) > 0 && len(findLines(lines, want)) == 0 {
-		_ = withNear(e, "", nearLines(lines, want), "expect")
+		_ = nearOrPart(e, "", lines, want)
 	}
 	return 0, 0, e
 }
@@ -157,7 +157,7 @@ func locateEdit(st *tape.State, rel, text string, in EditInput) (start, end int,
 		return cands[0], cands[0] + len(want) - 1, nil
 	case 0:
 		e := newError(CodeContentNotFound, "the lines of expect are not in %s (%d lines). Check the content, or call look again", rel, n)
-		_ = withNear(e, "", nearLines(lines, want), "expect")
+		_ = nearOrPart(e, "", lines, want)
 		if in.HasLines && in.StartLine >= 1 {
 			e.Actual = rangeLines(text, in.StartLine, in.EndLine)
 		}

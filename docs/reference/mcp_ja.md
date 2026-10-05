@@ -202,7 +202,7 @@ MCP の応答では `isError: true` になり、本文は次の JSON。
 
 ### `nearMatches`
 
-文字列が見つからないとき、いちばんありそうな原因は、空白（スペース・タブ）の取り違えである。そこで、`expect`（`look`・`edit`）や `old`（`replace`。見つかった数が `count` より少ないときだけ）が、空白を除けば見つかるとき、エラーに `nearMatches` が付く（`actual` の中でなく隣。`actual` の形は変えない）：`[{"file", "startLine", "endLine", "lines"}]`。`lines` はファイルの今の行のままで、`file` は `replace` のときだけ。比べるときは、各行の空白（スペース・タブ）の連続を1つのスペースにし、行末の空白を削る。文字列がそのまま見つかる場所は入れない。5件まで。なければ `nearMatches` 自体を出さない。`message` は場所だけを言い（`Line 12 differs from expect only in spaces or tabs: see nearMatches`）、ファイルの中身は入れない。**`nearMatches` はテープに書かない**（行はファイルの中身のため）。
+文字列が見つからないとき、いちばんありそうな原因は、空白（スペース・タブ）の取り違えである。そこで、`expect`（`look`・`edit`）や `old`（`replace`。見つかった数が `count` より少ないときだけ）が、空白を除けば見つかるとき、エラーに `nearMatches` が付く（`actual` の中でなく隣。`actual` の形は変えない）：`[{"file", "startLine", "endLine", "lines"}]`。`lines` はファイルの今の行のままで、`file` は `replace` のときだけ。比べるときは、各行の空白（スペース・タブ）の連続を1つのスペースにし、行末の空白を削る。文字列がそのまま見つかる場所は入れない。5件まで。なければ `nearMatches` 自体を出さない。空白だけ違う場所がなくても、`expect` が行の一部として見つかる（行 `x := foo(1)` に対する `foo(`）ときは、その行を入れ、`message` は「`expect` は行全体で書く」と言う（`Line 12 holds expect only as part of the line: expect must be whole lines. Copy them from nearMatches`）。これは `look`・`edit` だけ。`message` は場所だけを言い（`Line 12 differs from expect only in spaces or tabs: see nearMatches`）、ファイルの中身は入れない。**`nearMatches` はテープに書かない**（行はファイルの中身のため）。
 
 失敗した呼び出しは、AI のミスをあとで読めるように、[`failure`](tape_ja.md#failure) としてテープにも書く。絶対パスや作業場の外のパスは、実際のパスを伏せる。
 

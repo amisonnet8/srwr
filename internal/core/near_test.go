@@ -176,3 +176,77 @@ func (e *env) noContentInFailures(texts ...string) {
 		}
 	}
 }
+
+func TestPartOfALine(t *testing.T) {
+	cases := []struct {
+		name   string
+		file   string
+		expect string
+		near   []NearMatch
+		msg    string // the end of the message; "" when nothing is listed
+	}{
+		{name: "end of a line", file: "x\nfoo := bar(1)\n", expect: "bar(1)",
+			near: []NearMatch{{StartLine: 2, EndLine: 2, Lines: []string{"foo := bar(1)"}}},
+			msg:  "Line 2 holds expect only as part of the line: expect must be whole lines. Copy them from nearMatches"},
+		{name: "start of a line", file: "x\nfoo := bar(1)\n", expect: "foo :=",
+			near: []NearMatch{{StartLine: 2, EndLine: 2, Lines: []string{"foo := bar(1)"}}}, msg: "Line 2 holds expect"},
+		{name: "middle, spaces folded", file: "\tfoo  :=  bar(1)\n", expect: "foo := bar",
+			near: []NearMatch{{StartLine: 1, EndLine: 1, Lines: []string{"\tfoo  :=  bar(1)"}}}, msg: "Line 1 holds expect"},
+		{name: "two lines", file: "a\n\tfoo(\n\t\tbar)\nz\n", expect: "foo(\nbar)",
+			near: []NearMatch{{StartLine: 2, EndLine: 3, Lines: []string{"\tfoo(", "\t\tbar)"}}},
+			msg:  "Lines 2 to 3 hold expect only as part of the line: expect must be whole lines. Copy them from nearMatches"},
+		{name: "two places", file: "ab\nx\nab\n", expect: "b",
+			near: []NearMatch{{StartLine: 1, EndLine: 1, Lines: []string{"ab"}}, {StartLine: 3, EndLine: 3, Lines: []string{"ab"}}},
+			msg:  "Lines 1, 3 hold expect"},
+		{name: "spaces only differ: that sentence wins", file: "\tfoo(\n", expect: "  foo(",
+			near: []NearMatch{{StartLine: 1, EndLine: 1, Lines: []string{"\tfoo("}}}, msg: "differs from expect only in spaces or tabs: see nearMatches"},
+		{name: "blank expect", file: "a\n", expect: "  ", near: nil},
+		{name: "one line of two is not part", file: "foo(1)\nx\n", expect: "foo\nbar", near: nil},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			e := newEnv(t)
+			e.write("f.txt", tc.file)
+			_, err := e.editAt("f.txt", nil, str(tc.expect), "X")
+			wantCode(t, err, CodeContentNotFound)
+			if !reflect.DeepEqual(err.NearMatches, tc.near) {
+				t.Errorf("near = %+v, want %+v", err.NearMatches, tc.near)
+			}
+			if tc.msg != "" && !strings.Contains(err.Message, tc.msg) {
+				t.Errorf("message = %q, want it to hold %q", err.Message, tc.msg)
+			}
+			if tc.near == nil && strings.Contains(err.Message, "nearMatches") {
+				t.Errorf("message = %q", err.Message)
+			}
+			if e.read("f.txt") != tc.file {
+				t.Error("the file was changed")
+			}
+			e.noContentInFailures("bar(1)", "foo :=")
+		})
+	}
+
+	t.Run("six places, five are listed", func(t *testing.T) {
+		e := newEnv(t)
+		e.write("f.txt", strings.Repeat("xab\n", 6))
+		_, err := e.editAt("f.txt", nil, str("ab"), "X")
+		wantCode(t, err, CodeContentNotFound)
+		if len(err.NearMatches) != maxNear {
+			t.Errorf("near matches = %d", len(err.NearMatches))
+		}
+	})
+
+	t.Run("look", func(t *testing.T) {
+		e := newEnv(t)
+		e.write("f.txt", "x\nfoo := bar(1)\n")
+		_, err := e.c.Look(LookInput{File: "f.txt", Locate: true, Expect: str("bar(1)"), Why: "w"})
+		wantCode(t, err, CodeContentNotFound)
+		if len(err.NearMatches) != 1 || err.NearMatches[0].StartLine != 2 {
+			t.Errorf("near = %+v", err.NearMatches)
+		}
+		_, err = e.c.Look(LookInput{File: "f.txt", StartLine: 1, EndLine: 1, Expect: str("bar(1)"), Why: "w"})
+		wantCode(t, err, CodeContentMismatch)
+		if len(err.NearMatches) != 1 || !strings.Contains(err.Message, "as part of the line") {
+			t.Errorf("near = %+v, message %q", err.NearMatches, err.Message)
+		}
+	})
+}

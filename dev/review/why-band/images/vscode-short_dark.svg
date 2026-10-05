@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="618" viewBox="0 0 1280 618" role="img" aria-label="B: the first full, the others one row in VSCode (dark)">
+<rect x="0" y="0" width="1280" height="618" fill="#1e1e1e"/>
+<rect x="0" y="0" width="1280" height="28" fill="#2d2d2d"/>
+<text x="640" y="18" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12" text-anchor="middle">srwr-view  –  replace 3/5</text>
+<rect x="0" y="28" width="640" height="28" fill="#2d2d2d"/>
+<text x="16" y="46" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Before  ⚠ replace: store.go</text>
+<text x="10" y="70" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">  6</text>
+<text x="66" y="70" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">)</text>
+<text x="10" y="89" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">  7</text>
+<text x="66" y="89" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"></text>
+<text x="10" y="108" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">  8</text>
+<text x="66" y="108" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">var ErrNotFound = errors.New("not found")</text>
+<text x="10" y="127" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">  9</text>
+<text x="66" y="127" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"></text>
+<text x="10" y="146" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 10</text>
+<text x="66" y="146" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">type Store struct {</text>
+<text x="10" y="165" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 11</text>
+<text x="66" y="165" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">    items map[string]string</text>
+<text x="10" y="184" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 12</text>
+<text x="66" y="184" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">}</text>
+<text x="10" y="203" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 13</text>
+<text x="66" y="203" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"></text>
+<rect x="0" y="208" width="640" height="19" fill="#4aa3ff"/>
+<rect x="0" y="227" width="640" height="19" fill="#4aa3ff"/>
+<rect x="0" y="246" width="640" height="19" fill="#1d3b57"/>
+<text x="10" y="260" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 14</text>
+<text x="66" y="260" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">        return errEmpty</text>
+<text x="10" y="279" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 15</text>
+<text x="66" y="279" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">    }</text>
+<text x="10" y="298" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 16</text>
+<text x="66" y="298" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">    return s.loadByID(id)</text>
+<text x="10" y="317" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 17</text>
+<text x="66" y="317" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">}</text>
+<text x="10" y="336" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 18</text>
+<text x="66" y="336" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"></text>
+<rect x="0" y="341" width="640" height="19" fill="#4aa3ff"/>
+<rect x="0" y="360" width="640" height="19" fill="#1d3b57"/>
+<text x="10" y="374" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 19</text>
+<text x="66" y="374" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">        return fmt.Errorf("load: %w", errEmpty)</text>
+<text x="10" y="393" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 20</text>
+<text x="66" y="393" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">    }</text>
+<text x="10" y="412" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 21</text>
+<text x="66" y="412" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">    return nil</text>
+<text x="10" y="431" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 22</text>
+<text x="66" y="431" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">}</text>
+<text x="10" y="450" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 23</text>
+<text x="66" y="450" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"></text>
+<text x="10" y="469" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 24</text>
+<text x="66" y="469" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">func (s *Store) Close() error {</text>
+<rect x="0" y="474" width="640" height="19" fill="#4aa3ff"/>
+<rect x="0" y="493" width="640" height="19" fill="#1d3b57"/>
+<text x="10" y="507" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 25</text>
+<text x="66" y="507" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">    if errors.Is(err, errEmpty) {</text>
+<text x="10" y="526" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 26</text>
+<text x="66" y="526" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">        return nil</text>
+<text x="10" y="545" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 27</text>
+<text x="66" y="545" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">    }</text>
+<text x="10" y="564" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 28</text>
+<text x="66" y="564" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">    return err</text>
+<text x="10" y="583" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 29</text>
+<text x="66" y="583" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">}</text>
+<rect x="640" y="28" width="640" height="28" fill="#2d2d2d"/>
+<text x="656" y="46" fill="#cccccc" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">After  store.go</text>
+<text x="650" y="70" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">  6</text>
+<text x="706" y="70" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">)</text>
+<text x="650" y="89" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">  7</text>
+<text x="706" y="89" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"></text>
+<text x="650" y="108" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">  8</text>
+<text x="706" y="108" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">var ErrNotFound = errors.New("not found")</text>
+<text x="650" y="127" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">  9</text>
+<text x="706" y="127" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"></text>
+<text x="650" y="146" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 10</text>
+<text x="706" y="146" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">type Store struct {</text>
+<text x="650" y="165" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 11</text>
+<text x="706" y="165" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">    items map[string]string</text>
+<text x="650" y="184" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 12</text>
+<text x="706" y="184" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">}</text>
+<text x="650" y="203" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 13</text>
+<text x="706" y="203" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"></text>
+<rect x="640" y="208" width="640" height="19" fill="#f0883e"/>
+<text x="706" y="222" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13" font-weight="bold">◆ Rename errEmpty to ErrEmpty, following the naming rule</text>
+<rect x="640" y="227" width="640" height="19" fill="#f0883e"/>
+<text x="706" y="241" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13" font-weight="bold">  of the exported error variables</text>
+<rect x="640" y="246" width="640" height="19" fill="#583c27"/>
+<text x="650" y="260" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 14</text>
+<text x="706" y="260" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">        return ErrEmpty</text>
+<text x="650" y="279" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 15</text>
+<text x="706" y="279" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">    }</text>
+<text x="650" y="298" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 16</text>
+<text x="706" y="298" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">    return s.loadByID(id)</text>
+<text x="650" y="317" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 17</text>
+<text x="706" y="317" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">}</text>
+<text x="650" y="336" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 18</text>
+<text x="706" y="336" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"></text>
+<rect x="640" y="341" width="640" height="19" fill="#f0883e"/>
+<text x="706" y="355" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13" font-weight="bold">◆ Rename errEmpty to ErrEmpty, following the naming rule…</text>
+<rect x="640" y="360" width="640" height="19" fill="#583c27"/>
+<text x="650" y="374" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 19</text>
+<text x="706" y="374" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">        return fmt.Errorf("load: %w", ErrEmpty)</text>
+<text x="650" y="393" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 20</text>
+<text x="706" y="393" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">    }</text>
+<text x="650" y="412" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 21</text>
+<text x="706" y="412" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">    return nil</text>
+<text x="650" y="431" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 22</text>
+<text x="706" y="431" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">}</text>
+<text x="650" y="450" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 23</text>
+<text x="706" y="450" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"></text>
+<text x="650" y="469" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 24</text>
+<text x="706" y="469" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">func (s *Store) Close() error {</text>
+<rect x="640" y="474" width="640" height="19" fill="#f0883e"/>
+<text x="706" y="488" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="13" font-weight="bold">◆ Rename errEmpty to ErrEmpty, following the naming rule…</text>
+<rect x="640" y="493" width="640" height="19" fill="#583c27"/>
+<text x="650" y="507" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 25</text>
+<text x="706" y="507" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">    if errors.Is(err, ErrEmpty) {</text>
+<text x="650" y="526" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 26</text>
+<text x="706" y="526" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">        return nil</text>
+<text x="650" y="545" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 27</text>
+<text x="706" y="545" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">    }</text>
+<text x="650" y="564" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 28</text>
+<text x="706" y="564" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">    return err</text>
+<text x="650" y="583" fill="#6a6a6a" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre"> 29</text>
+<text x="706" y="583" fill="#d4d4d4" font-family="'DejaVu Sans Mono','Menlo','Consolas',monospace" font-size="13" xml:space="preserve" style="white-space:pre">}</text>
+<rect x="0" y="588" width="1280" height="30" fill="#007acc"/>
+<text x="14" y="607" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">‹ Back</text>
+<text x="80" y="607" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">Forward ›</text>
+<text x="160" y="607" fill="#ffffff" font-family="'Segoe UI','Hiragino Sans','Noto Sans JP','Meiryo',system-ui,sans-serif" font-size="12">3/5</text>
+</svg>

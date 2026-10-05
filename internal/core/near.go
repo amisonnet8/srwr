@@ -185,3 +185,21 @@ func plural(where string) string {
 	}
 	return ""
 }
+
+// onlyPlace returns the one place that differs from want only in spaces or tabs or, if there is none, the one place that holds want
+// as parts of its lines. ok is false when there is no such place or more than one.
+func onlyPlace(lines, want []string) (m NearMatch, ok bool) {
+	near := nearLines(lines, want)
+	if len(near) == 0 {
+		near = partLines(lines, want)
+	}
+	if len(near) != 1 {
+		return NearMatch{}, false
+	}
+	return near[0], true
+}
+
+// retryAt is the call that points at lines a..b of file with expect (look takes these, edit adds newText and insert).
+func retryAt(file string, a, b int, expect string) map[string]any {
+	return map[string]any{"file": file, "startLine": a, "endLine": b, "expect": expect}
+}

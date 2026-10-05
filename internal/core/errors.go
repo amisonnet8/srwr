@@ -29,6 +29,8 @@ type Error struct {
 	Actual  any
 	// NearMatches are places that differ from expect (or old) only in spaces and tabs. Not on the tape.
 	NearMatches []NearMatch
+	// Retry is the call to make again, when there is one place it must have meant (the arguments, without why). Not on the tape.
+	Retry map[string]any
 }
 
 func (e *Error) Error() string { return e.Code + ": " + e.Message }

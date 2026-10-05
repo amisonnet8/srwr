@@ -481,10 +481,11 @@ type errorInfo struct {
 	Actual  any    `json:"actual,omitempty"`
 
 	NearMatches []core.NearMatch `json:"nearMatches,omitempty"`
+	Retry       map[string]any   `json:"retry,omitempty"`
 }
 
 func failure(e core.Error) toolResult {
-	body := errorBody{Error: errorInfo{Code: e.Code, Message: e.Message, Actual: e.Actual, NearMatches: e.NearMatches}}
+	body := errorBody{Error: errorInfo{Code: e.Code, Message: e.Message, Actual: e.Actual, NearMatches: e.NearMatches, Retry: e.Retry}}
 	return toolResult{Content: []textContent{text(body)}, IsError: true}
 }
 

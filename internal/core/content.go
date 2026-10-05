@@ -37,8 +37,12 @@ func chooseRange(rel, text string, in LookInput) (start, end int, cerr *Error) {
 		at := findLines(lines, want)
 		switch len(at) {
 		case 0:
-			return 0, 0, nearOrPart(newError(CodeContentNotFound, "the lines of expect are not in %s (%d lines). Check the content, or give startLine and endLine", rel, n),
+			e := nearOrPart(newError(CodeContentNotFound, "the lines of expect are not in %s (%d lines). Check the content, or give startLine and endLine", rel, n),
 				"", lines, want)
+			if m, ok := onlyPlace(lines, want); ok {
+				e.Retry = retryAt(rel, m.StartLine, m.EndLine, strings.Join(m.Lines, "\n"))
+			}
+			return 0, 0, e
 		case 1:
 			return at[0], at[0] + len(want) - 1, nil
 		}
@@ -64,8 +68,15 @@ func chooseRange(rel, text string, in LookInput) (start, end int, cerr *Error) {
 		msg += " They are not in the file. Read the file again"
 	}
 	e := &Error{Code: CodeContentMismatch, Message: msg, Actual: rangeLines(text, start, end)}
-	if len(want) > 0 && len(findLines(lines, want)) == 0 {
+	at := findLines(lines, want)
+	switch {
+	case len(want) > 0 && len(at) == 0:
 		_ = nearOrPart(e, "", lines, want)
+		if m, ok := onlyPlace(lines, want); ok {
+			e.Retry = retryAt(rel, m.StartLine, m.EndLine, strings.Join(m.Lines, "\n"))
+		}
+	case len(want) > 0 && len(at) == 1:
+		e.Retry = retryAt(rel, at[0], at[0]+len(want)-1, *in.Expect)
 	}
 	return 0, 0, e
 }
@@ -159,6 +170,14 @@ func locateEdit(st *tape.State, rel, text string, in EditInput) (start, end int,
 	case 0:
 		e := newError(CodeContentNotFound, "the lines of expect are not in %s (%d lines). Check the content, or call look again", rel, n)
 		_ = nearOrPart(e, "", lines, want)
+		if m, ok := onlyPlace(lines, want); ok {
+			r := retryAt(rel, m.StartLine, m.EndLine, strings.Join(m.Lines, "\n"))
+			r["newText"] = in.NewText
+			if in.Insert != "" {
+				r["insert"] = in.Insert
+			}
+			e.Retry = r
+		}
 		if in.HasLines && in.StartLine >= 1 {
 			e.Actual = rangeLines(text, in.StartLine, in.EndLine)
 		}

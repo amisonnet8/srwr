@@ -259,6 +259,10 @@ MCP の応答では `isError: true` になり、本文は次の JSON。
 
 文字列が見つからないとき、いちばんありそうな原因は、空白（スペース・タブ）の取り違えである。そこで、`expect`（`look`・`edit`）や `old`（`replace`。見つかった数が `count` より少ないときだけ）が、空白を除けば見つかるとき、エラーに `nearMatches` が付く（`actual` の中でなく隣。`actual` の形は変えない）：`[{"file", "startLine", "endLine", "lines"}]`。`lines` はファイルの今の行のままで、`file` は `replace` のときだけ。比べるときは、各行の空白（スペース・タブ）の連続を1つのスペースにし、行末の空白を削る。文字列がそのまま見つかる場所は入れない。5件まで。なければ `nearMatches` 自体を出さない。空白だけ違う場所がなくても、`expect` が行の一部として見つかる（行 `x := foo(1)` に対する `foo(`）ときは、その行を入れ、`message` は「`expect` は行全体で書く」と言う（`Line 12 holds expect only as part of the line: expect must be whole lines. Copy them from nearMatches`）。これは `look`・`edit` だけ。`message` は場所だけを言い（`Line 12 differs from expect only in spaces or tabs: see nearMatches`）、ファイルの中身は入れない。**`nearMatches` はテープに書かない**（行はファイルの中身のため）。
 
+### `retry`
+
+AI が指したはずの場所がただ1つに決まるとき、`look`・`edit` のエラーに `retry` が付く。もう一度呼ぶ引数（`why` を除く）で、行は今のファイルのとおり。付くのは、`expect` が見つからず、空白やタブだけ違う場所がちょうど1つのとき（なければ、行の一部として含む場所がちょうど1つのとき）と、`look` で `expect` が、指した行とは別の行にただ1か所あるとき。中身は、その場所の `{"file", "startLine", "endLine", "expect"}`。`edit` では、渡された `newText`（と `insert`）がそのまま付く。何も適用しない：AI が読んで、呼び直す。場所がないとき、2か所以上のときは `retry` を付けない。`edits` の項目では、1件の `edit` の呼び出し。**`retry` はテープに書かない**（行はファイルの中身だから）。
+
 失敗した呼び出しは、AI のミスをあとで読めるように、[`failure`](tape_ja.md#failure) としてテープにも書く。絶対パスや作業場の外のパスは、実際のパスを伏せる。
 
 ## 処理の順序

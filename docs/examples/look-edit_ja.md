@@ -90,11 +90,11 @@ func main() {
 
 ## 行が合わないとき
 
-`expect` が、ファイルと空白（タブ・スペース）だけ違うとき（ここでは、タブのところにスペース4つを書いた）、何も変えず、エラーの `nearMatches` に、空白を除けば同じ場所を、今の行のまま入れる。`message` に書くのは場所だけで、中身は書かない。`lines` から `expect` を写して、もう一度呼ぶ。
+`expect` が、ファイルと空白（タブ・スペース）だけ違うとき（ここでは、タブのところにスペース4つを書いた）、何も変えず、エラーの `nearMatches` に、空白を除けば同じ場所を、今の行のまま入れる。`message` に書くのは場所だけで、中身は書かない。`lines` から `expect` を写して、もう一度呼ぶ。 ただ1か所に決まるので、`retry` に、そのまま呼び直せる引数（`why` を除く）が付く。
 
 ```jsonrpc
 → {"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"edit","arguments":{"file":"cmd/main.go","expect":"    run()","newText":"    run()\n    wait()","why":"run の終わりを待つ"}}}
-← {"jsonrpc":"2.0","id":7,"result":{"content":[{"text":"{\"ok\":false,\"error\":{\"code\":\"content_not_found\",\"message\":\"the lines of expect are not in cmd/main.go (7 lines). Check the content, or call look again. Line 5 differs from expect only in spaces or tabs: see nearMatches\",\"nearMatches\":[{\"startLine\":5,\"endLine\":5,\"lines\":[\"\\trun()\"]}]}}","type":"text"}],"isError":true}}
+← {"jsonrpc":"2.0","id":7,"result":{"content":[{"text":"{\"ok\":false,\"error\":{\"code\":\"content_not_found\",\"message\":\"the lines of expect are not in cmd/main.go (7 lines). Check the content, or call look again. Line 5 differs from expect only in spaces or tabs: see nearMatches\",\"nearMatches\":[{\"startLine\":5,\"endLine\":5,\"lines\":[\"\\trun()\"]}],\"retry\":{\"endLine\":5,\"expect\":\"\\trun()\",\"file\":\"cmd/main.go\",\"newText\":\"    run()\\n    wait()\",\"startLine\":5}}}","type":"text"}],"isError":true}}
 ```
 
 ## 1か所は `edit` で

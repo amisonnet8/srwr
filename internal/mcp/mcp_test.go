@@ -424,3 +424,39 @@ func TestFailedCallsAreOnTheTape(t *testing.T) {
 		t.Errorf("the tape holds a real path or the new text:\n%s", b)
 	}
 }
+
+// A failure to match that is only about spaces and tabs carries the near places next to actual; other errors do not have the key.
+func TestNearMatchesInTheError(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "a.go"), []byte("func f() {\n\treturn 1\n}\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	for _, tt := range []struct {
+		name, tool, args string
+		near             bool
+	}{
+		{"look", "look", `{"file":"a.go","expect":"    return 1","why":"w"}`, true},
+		{"edit", "edit", `{"file":"a.go","expect":"    return 1","newText":"x","why":"w"}`, true},
+		{"replace", "replace", `{"files":["a.go"],"old":"  return 1","new":"x","count":2,"why":"w"}`, true},
+		{"nothing near", "look", `{"file":"a.go","expect":"zzz","why":"w"}`, false},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			m, isErr := body(t, serve(t, root, toolCall(1, tt.tool, tt.args))[0])
+			errObj, _ := m["error"].(map[string]any)
+			near, has := errObj["nearMatches"].([]any)
+			if !isErr || has != tt.near {
+				t.Fatalf("got %v, want nearMatches: %v", m, tt.near)
+			}
+			if !tt.near {
+				return
+			}
+			first, _ := near[0].(map[string]any)
+			if lines, _ := json.Marshal(first["lines"]); !strings.Contains(string(lines), `\treturn 1`) || first["startLine"] != float64(2) {
+				t.Errorf("first = %v", first)
+			}
+			if strings.Contains(errObj["message"].(string), "return 1") {
+				t.Errorf("the message holds the file: %v", errObj["message"])
+			}
+		})
+	}
+}

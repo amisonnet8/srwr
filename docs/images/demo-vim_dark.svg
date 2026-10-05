@@ -1,29 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1190" height="520" viewBox="0 0 1190.4 520.0" role="img" aria-label="srwr view in Vim: the AI&#39;s select and replace, with the reason of each, step by step" font-family="'DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Noto Sans JP','Meiryo',monospace" font-size="16" style="white-space:pre">
+<svg xmlns="http://www.w3.org/2000/svg" width="1190" height="520" viewBox="0 0 1190.4 520.0" role="img" aria-label="srwr view in Vim: the AI&#39;s look and edit, with the reason of each, step by step" font-family="'DejaVu Sans Mono','Menlo','Consolas','Noto Sans Mono CJK JP','Noto Sans JP','Meiryo',monospace" font-size="16" style="white-space:pre">
 <g visibility="hidden"><animate attributeName="visibility" calcMode="discrete" values="visible;hidden;hidden" keyTimes="0.0000;0.1795;1.0000" dur="15.60s" repeatCount="indefinite"/>
 <rect width="1190.4" height="520.0" fill="#1e1e1e"/>
 <rect x="0.0" y="0" width="384.0" height="20" fill="#666666"/>
 <rect x="384.0" y="0" width="9.6" height="20" fill="#d4d4d4"/>
 <text x="0.0" y="15" fill="#4aa3ff" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">●</text>
-<text x="28.8" y="15" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">1 select   main.go:9-11  greet is wha</text>
+<text x="28.8" y="15" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">1 look     main.go:9-11  greet is wha</text>
 <text x="384.0" y="15" fill="#1e1e1e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">|</text>
 <text x="412.8" y="15" fill="#ffff00" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">1</text>
 <text x="432.0" y="15" fill="#ffff60" textLength="67.2" lengthAdjust="spacing" xml:space="preserve">package</text>
 <text x="508.8" y="15" fill="#d4d4d4" textLength="38.4" lengthAdjust="spacing" xml:space="preserve">main</text>
 <rect x="384.0" y="20" width="9.6" height="20" fill="#d4d4d4"/>
 <text x="0.0" y="35" fill="#f0883e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">●</text>
-<text x="28.8" y="35" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">2 replace  main.go:9-14  An empty nam</text>
+<text x="28.8" y="35" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">2 edit     main.go:9-14  An empty nam</text>
 <text x="384.0" y="35" fill="#1e1e1e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">|</text>
 <text x="412.8" y="35" fill="#ffff00" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">2</text>
 <rect x="384.0" y="40" width="9.6" height="20" fill="#d4d4d4"/>
 <text x="0.0" y="55" fill="#4aa3ff" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">●</text>
-<text x="28.8" y="55" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">3 select   main.go:5-7  main tries on</text>
+<text x="28.8" y="55" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">3 look     main.go:5-7  main tries on</text>
 <text x="384.0" y="55" fill="#1e1e1e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">|</text>
 <text x="412.8" y="55" fill="#ffff00" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">3</text>
 <text x="432.0" y="55" fill="#ffff60" textLength="57.6" lengthAdjust="spacing" xml:space="preserve">import</text>
 <text x="499.2" y="55" fill="#ffa0a0" textLength="48.0" lengthAdjust="spacing" xml:space="preserve">&#34;fmt&#34;</text>
 <rect x="384.0" y="60" width="9.6" height="20" fill="#d4d4d4"/>
 <text x="0.0" y="75" fill="#f0883e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">●</text>
-<text x="28.8" y="75" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">4 replace  main.go:5-8  Print both gr</text>
+<text x="28.8" y="75" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">4 edit     main.go:5-8  Print both gr</text>
 <text x="384.0" y="75" fill="#1e1e1e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">|</text>
 <text x="412.8" y="75" fill="#ffff00" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">4</text>
 <rect x="384.0" y="80" width="9.6" height="20" fill="#d4d4d4"/>
@@ -137,7 +137,7 @@
 <rect width="1190.4" height="520.0" fill="#1e1e1e"/>
 <rect x="384.0" y="0" width="9.6" height="20" fill="#d4d4d4"/>
 <text x="0.0" y="15" fill="#4aa3ff" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">●</text>
-<text x="28.8" y="15" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">1 select   main.go:9-11  greet is wha</text>
+<text x="28.8" y="15" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">1 look     main.go:9-11  greet is wha</text>
 <text x="384.0" y="15" fill="#1e1e1e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">|</text>
 <text x="412.8" y="15" fill="#ffff00" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">1</text>
 <text x="432.0" y="15" fill="#ffff60" textLength="67.2" lengthAdjust="spacing" xml:space="preserve">package</text>
@@ -145,19 +145,19 @@
 <rect x="0.0" y="20" width="384.0" height="20" fill="#666666"/>
 <rect x="384.0" y="20" width="9.6" height="20" fill="#d4d4d4"/>
 <text x="0.0" y="35" fill="#f0883e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">●</text>
-<text x="28.8" y="35" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">2 replace  main.go:9-14  An empty nam</text>
+<text x="28.8" y="35" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">2 edit     main.go:9-14  An empty nam</text>
 <text x="384.0" y="35" fill="#1e1e1e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">|</text>
 <text x="412.8" y="35" fill="#ffff00" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">2</text>
 <rect x="384.0" y="40" width="9.6" height="20" fill="#d4d4d4"/>
 <text x="0.0" y="55" fill="#4aa3ff" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">●</text>
-<text x="28.8" y="55" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">3 select   main.go:5-7  main tries on</text>
+<text x="28.8" y="55" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">3 look     main.go:5-7  main tries on</text>
 <text x="384.0" y="55" fill="#1e1e1e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">|</text>
 <text x="412.8" y="55" fill="#ffff00" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">3</text>
 <text x="432.0" y="55" fill="#ffff60" textLength="57.6" lengthAdjust="spacing" xml:space="preserve">import</text>
 <text x="499.2" y="55" fill="#ffa0a0" textLength="48.0" lengthAdjust="spacing" xml:space="preserve">&#34;fmt&#34;</text>
 <rect x="384.0" y="60" width="9.6" height="20" fill="#d4d4d4"/>
 <text x="0.0" y="75" fill="#f0883e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">●</text>
-<text x="28.8" y="75" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">4 replace  main.go:5-8  Print both gr</text>
+<text x="28.8" y="75" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">4 edit     main.go:5-8  Print both gr</text>
 <text x="384.0" y="75" fill="#1e1e1e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">|</text>
 <text x="412.8" y="75" fill="#ffff00" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">4</text>
 <rect x="384.0" y="80" width="9.6" height="20" fill="#d4d4d4"/>
@@ -279,27 +279,27 @@
 <rect width="1190.4" height="520.0" fill="#1e1e1e"/>
 <rect x="384.0" y="0" width="9.6" height="20" fill="#d4d4d4"/>
 <text x="0.0" y="15" fill="#4aa3ff" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">●</text>
-<text x="28.8" y="15" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">1 select   main.go:9-11  greet is wha</text>
+<text x="28.8" y="15" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">1 look     main.go:9-11  greet is wha</text>
 <text x="384.0" y="15" fill="#1e1e1e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">|</text>
 <text x="412.8" y="15" fill="#ffff00" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">1</text>
 <text x="432.0" y="15" fill="#ffff60" textLength="67.2" lengthAdjust="spacing" xml:space="preserve">package</text>
 <text x="508.8" y="15" fill="#d4d4d4" textLength="38.4" lengthAdjust="spacing" xml:space="preserve">main</text>
 <rect x="384.0" y="20" width="9.6" height="20" fill="#d4d4d4"/>
 <text x="0.0" y="35" fill="#f0883e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">●</text>
-<text x="28.8" y="35" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">2 replace  main.go:9-14  An empty nam</text>
+<text x="28.8" y="35" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">2 edit     main.go:9-14  An empty nam</text>
 <text x="384.0" y="35" fill="#1e1e1e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">|</text>
 <text x="412.8" y="35" fill="#ffff00" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">2</text>
 <rect x="0.0" y="40" width="384.0" height="20" fill="#666666"/>
 <rect x="384.0" y="40" width="9.6" height="20" fill="#d4d4d4"/>
 <text x="0.0" y="55" fill="#4aa3ff" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">●</text>
-<text x="28.8" y="55" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">3 select   main.go:5-7  main tries on</text>
+<text x="28.8" y="55" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">3 look     main.go:5-7  main tries on</text>
 <text x="384.0" y="55" fill="#1e1e1e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">|</text>
 <text x="412.8" y="55" fill="#ffff00" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">3</text>
 <text x="432.0" y="55" fill="#ffff60" textLength="57.6" lengthAdjust="spacing" xml:space="preserve">import</text>
 <text x="499.2" y="55" fill="#ffa0a0" textLength="48.0" lengthAdjust="spacing" xml:space="preserve">&#34;fmt&#34;</text>
 <rect x="384.0" y="60" width="9.6" height="20" fill="#d4d4d4"/>
 <text x="0.0" y="75" fill="#f0883e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">●</text>
-<text x="28.8" y="75" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">4 replace  main.go:5-8  Print both gr</text>
+<text x="28.8" y="75" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">4 edit     main.go:5-8  Print both gr</text>
 <text x="384.0" y="75" fill="#1e1e1e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">|</text>
 <text x="412.8" y="75" fill="#ffff00" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">4</text>
 <rect x="384.0" y="80" width="9.6" height="20" fill="#d4d4d4"/>
@@ -417,19 +417,19 @@
 <rect width="1190.4" height="520.0" fill="#1e1e1e"/>
 <rect x="384.0" y="0" width="9.6" height="20" fill="#d4d4d4"/>
 <text x="0.0" y="15" fill="#4aa3ff" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">●</text>
-<text x="28.8" y="15" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">1 select   main.go:9-11  greet is wha</text>
+<text x="28.8" y="15" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">1 look     main.go:9-11  greet is wha</text>
 <text x="384.0" y="15" fill="#1e1e1e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">|</text>
 <text x="412.8" y="15" fill="#ffff00" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">1</text>
 <text x="432.0" y="15" fill="#ffff60" textLength="67.2" lengthAdjust="spacing" xml:space="preserve">package</text>
 <text x="508.8" y="15" fill="#d4d4d4" textLength="38.4" lengthAdjust="spacing" xml:space="preserve">main</text>
 <rect x="384.0" y="20" width="9.6" height="20" fill="#d4d4d4"/>
 <text x="0.0" y="35" fill="#f0883e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">●</text>
-<text x="28.8" y="35" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">2 replace  main.go:9-14  An empty nam</text>
+<text x="28.8" y="35" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">2 edit     main.go:9-14  An empty nam</text>
 <text x="384.0" y="35" fill="#1e1e1e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">|</text>
 <text x="412.8" y="35" fill="#ffff00" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">2</text>
 <rect x="384.0" y="40" width="9.6" height="20" fill="#d4d4d4"/>
 <text x="0.0" y="55" fill="#4aa3ff" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">●</text>
-<text x="28.8" y="55" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">3 select   main.go:5-7  main tries on</text>
+<text x="28.8" y="55" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">3 look     main.go:5-7  main tries on</text>
 <text x="384.0" y="55" fill="#1e1e1e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">|</text>
 <text x="412.8" y="55" fill="#ffff00" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">3</text>
 <text x="432.0" y="55" fill="#ffff60" textLength="57.6" lengthAdjust="spacing" xml:space="preserve">import</text>
@@ -437,7 +437,7 @@
 <rect x="0.0" y="60" width="384.0" height="20" fill="#666666"/>
 <rect x="384.0" y="60" width="9.6" height="20" fill="#d4d4d4"/>
 <text x="0.0" y="75" fill="#f0883e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">●</text>
-<text x="28.8" y="75" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">4 replace  main.go:5-8  Print both gr</text>
+<text x="28.8" y="75" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">4 edit     main.go:5-8  Print both gr</text>
 <text x="384.0" y="75" fill="#1e1e1e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">|</text>
 <text x="412.8" y="75" fill="#ffff00" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">4</text>
 <rect x="384.0" y="80" width="9.6" height="20" fill="#d4d4d4"/>
@@ -562,7 +562,7 @@
 <rect x="787.2" y="0" width="9.6" height="20" fill="#d4d4d4"/>
 <rect x="796.8" y="0" width="19.2" height="20" fill="#bebebe"/>
 <text x="0.0" y="15" fill="#4aa3ff" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">●</text>
-<text x="28.8" y="15" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">1 select   main.go:9-11  greet is wha</text>
+<text x="28.8" y="15" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">1 look     main.go:9-11  greet is wha</text>
 <text x="384.0" y="15" fill="#1e1e1e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">|</text>
 <text x="432.0" y="15" fill="#ffff00" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">1</text>
 <text x="451.2" y="15" fill="#ffff60" textLength="67.2" lengthAdjust="spacing" xml:space="preserve">package</text>
@@ -576,7 +576,7 @@
 <rect x="787.2" y="20" width="9.6" height="20" fill="#d4d4d4"/>
 <rect x="796.8" y="20" width="19.2" height="20" fill="#bebebe"/>
 <text x="0.0" y="35" fill="#f0883e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">●</text>
-<text x="28.8" y="35" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">2 replace  main.go:9-14  An empty nam</text>
+<text x="28.8" y="35" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">2 edit     main.go:9-14  An empty nam</text>
 <text x="384.0" y="35" fill="#1e1e1e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">|</text>
 <text x="432.0" y="35" fill="#ffff00" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">2</text>
 <text x="787.2" y="35" fill="#1e1e1e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">|</text>
@@ -586,7 +586,7 @@
 <rect x="787.2" y="40" width="9.6" height="20" fill="#d4d4d4"/>
 <rect x="796.8" y="40" width="19.2" height="20" fill="#bebebe"/>
 <text x="0.0" y="55" fill="#4aa3ff" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">●</text>
-<text x="28.8" y="55" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">3 select   main.go:5-7  main tries on</text>
+<text x="28.8" y="55" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">3 look     main.go:5-7  main tries on</text>
 <text x="384.0" y="55" fill="#1e1e1e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">|</text>
 <text x="432.0" y="55" fill="#ffff00" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">3</text>
 <text x="451.2" y="55" fill="#ffff60" textLength="57.6" lengthAdjust="spacing" xml:space="preserve">import</text>
@@ -600,7 +600,7 @@
 <rect x="787.2" y="60" width="9.6" height="20" fill="#d4d4d4"/>
 <rect x="796.8" y="60" width="19.2" height="20" fill="#bebebe"/>
 <text x="0.0" y="75" fill="#f0883e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">●</text>
-<text x="28.8" y="75" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">4 replace  main.go:5-8  Print both gr</text>
+<text x="28.8" y="75" fill="#d4d4d4" textLength="355.2" lengthAdjust="spacing" xml:space="preserve">4 edit     main.go:5-8  Print both gr</text>
 <text x="384.0" y="75" fill="#1e1e1e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">|</text>
 <text x="432.0" y="75" fill="#ffff00" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">4</text>
 <text x="787.2" y="75" fill="#1e1e1e" textLength="9.6" lengthAdjust="spacing" xml:space="preserve">|</text>

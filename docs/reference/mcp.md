@@ -177,11 +177,11 @@ In the MCP response `isError` is `true`, and the body is the following JSON.
 | `selection_mismatch` | Even with the line numbers corrected, the content of the range differs from when `look` was called (it may have been changed outside srwr) | Check the content and call `look` again |
 | `file_not_found` | The target file does not exist, or is not a regular file (a directory, for example) | — |
 | `invalid_range` | The line numbers are outside the file, or the path is outside the workspace | Check the number of lines and call `look` again |
-| `content_mismatch` | The range holds other lines than `expect` | Read where the message says the lines are, and call `look` again |
-| `content_not_found` | `expect` (given without line numbers) is not in the file | Check the content, or give line numbers |
+| `content_mismatch` | The range holds other lines than `expect` | Read where the message says the lines are, and call `look` again (or copy from `nearMatches`) |
+| `content_not_found` | `expect` is not in the file | Check the content, or give line numbers. If `nearMatches` is there, copy `expect` from it |
 | `content_ambiguous` | `expect` (given without line numbers) is in the file in more than one place | Give line numbers, or more lines in `expect` |
 | `file_exists` | `new` was used on a file that already exists | Use `look` and `edit` on it |
-| `count_mismatch` | `replace` found a number of places other than `count` | Read how many each file has, and call `replace` again with the right `count` (or use `look`) |
+| `count_mismatch` | `replace` found a number of places other than `count` | Read how many each file has, and call `replace` again with the right `count` (or use `look`). If `nearMatches` is there, copy `old` from it |
 | `use_edit` | `replace` was used with a `count` of 1 for a text that is in one place only | Call `edit` as `actual.edit` says (add `why`) |
 | `ignored_file` | `look`, `edit`, `replace` or `new` was used on a file that is not recorded | srwr cannot handle it. Ask the user |
 | `invalid_input` | A required input is missing, has the wrong type, or `why` is empty; `file` is empty or has a NUL; only one of `startLine` and `endLine` is given, or none of them and no `expect`; `selection` is blank; `newText` has a CR; for `replace`, `files`, `old` or `count` is missing or empty, a path is given twice, `old` or `new` has a CR; for `new`, `content` is missing or has a CR, or a directory above the file is a file | Fix the input |
@@ -199,6 +199,10 @@ An error may carry the current content (`actual`). What it holds is decided for 
 | `use_edit` | `{"hits": [{file, startLine, endLine, lines}], "edit": {file, startLine, endLine, expect, newText}}`. `edit` is left out when the change cannot be told in lines |
 | `invalid_range` | `{"lineCount": number of lines}`. None for a path outside the workspace |
 | Others | None |
+
+### `nearMatches`
+
+When a text is not found, a mistake in spaces and tabs is the likeliest reason. So when `expect` (for `look` and `edit`) or `old` (for `replace`, only if fewer places were found than `count`) is not found but for spaces and tabs, the error has `nearMatches` (next to `actual`, not in it; `actual` is not changed): `[{"file", "startLine", "endLine", "lines"}]`, with the lines as they are in the file (`file` is only for `replace`). To compare, each line has its runs of spaces and tabs folded into one space and its trailing spaces dropped. A place where the text is exactly is not listed. At most 5 are listed, and `nearMatches` is left out if there is none. The message says where (`Line 12 differs from expect only in spaces or tabs: see nearMatches`), without any of the file. **`nearMatches` is not written to the tape**: its lines are the file's.
 
 A failed call is also written to the tape as a [`failure`](tape.md#failure), so that the mistakes the AI makes can be read later. The real path is left out when it is absolute or outside the workspace.
 

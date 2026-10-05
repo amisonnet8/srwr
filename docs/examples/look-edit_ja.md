@@ -88,4 +88,22 @@ func main() {
 }
 ```
 
+## 行が合わないとき
+
+`expect` が、ファイルと空白（タブ・スペース）だけ違うとき（ここでは、タブのところにスペース4つを書いた）、何も変えず、エラーの `nearMatches` に、空白を除けば同じ場所を、今の行のまま入れる。`message` に書くのは場所だけで、中身は書かない。`lines` から `expect` を写して、もう一度呼ぶ。
+
+```jsonrpc
+→ {"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"edit","arguments":{"file":"cmd/main.go","expect":"    run()","newText":"    run()\n    wait()","why":"run の終わりを待つ"}}}
+← {"jsonrpc":"2.0","id":7,"result":{"content":[{"text":"{\"ok\":false,\"error\":{\"code\":\"content_not_found\",\"message\":\"the lines of expect are not in cmd/main.go (7 lines). Check the content, or call look again. Line 5 differs from expect only in spaces or tabs: see nearMatches\",\"nearMatches\":[{\"startLine\":5,\"endLine\":5,\"lines\":[\"\\trun()\"]}]}}","type":"text"}],"isError":true}}
+```
+
+## 1か所は `edit` で
+
+`replace` は2か所以上のためのもの。1か所の文字列には `use_edit` を返し、何も変えない。`actual.edit` は、同じ変更をする `edit` の呼び出しで、`why` だけを足せばよい。
+
+```jsonrpc
+→ {"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"name":"replace","arguments":{"files":["cmd/main.go"],"old":"cleanup()","new":"teardown()","count":1,"why":"cleanup の名前を替える"}}}
+← {"jsonrpc":"2.0","id":8,"result":{"content":[{"text":"{\"ok\":false,\"error\":{\"code\":\"use_edit\",\"message\":\"replace is for 2 or more places, and the text is in one place only (cmd/main.go line 6). Use edit for it: actual.edit is the call to make (add why)\",\"actual\":{\"edit\":{\"file\":\"cmd/main.go\",\"startLine\":6,\"endLine\":6,\"expect\":\"\\tcleanup()\",\"newText\":\"\\tteardown()\"},\"hits\":[{\"file\":\"cmd/main.go\",\"startLine\":6,\"endLine\":6,\"lines\":[\"\\tcleanup()\"]}]}}}","type":"text"}],"isError":true}}
+```
+
 エラーの一覧は [mcp.md](../reference/mcp_ja.md)。

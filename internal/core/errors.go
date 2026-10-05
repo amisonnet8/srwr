@@ -27,6 +27,8 @@ type Error struct {
 	Code    string
 	Message string
 	Actual  any
+	// NearMatches are places that differ from expect (or old) only in spaces and tabs. Not on the tape.
+	NearMatches []NearMatch
 }
 
 func (e *Error) Error() string { return e.Code + ": " + e.Message }

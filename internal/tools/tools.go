@@ -28,7 +28,7 @@ func List() []Tool {
 				"a selection token for editing that range with edit (selection) and the current content of the range (lines). " +
 				"The result also has startLine and endLine (the range that was selected). " +
 				"Pass the token to edit as it is (no line numbers or content needed). " +
-				"Line numbers can be wrong, so pass expect too: the lines the range must hold, joined with \\n. If they differ, the look is refused and the message says where those lines are. " +
+				"Line numbers can be wrong, so pass expect too: the lines the range must hold, joined with \\n. If they differ, the look is refused and the message says where those lines are. If a place differs from expect only in spaces or tabs, the error has it in nearMatches: copy expect from there. " +
 				"Or leave out startLine and endLine and pass only expect: srwr finds those consecutive lines (exactly one place is needed; give line numbers if they appear in more than one). " +
 				"To point at a place to insert, use an empty range with endLine = startLine - 1 (just before line startLine; to append to the end of the file, startLine = number of lines + 1). " +
 				"Only existing files can be selected; create a new file with new. " +
@@ -51,7 +51,7 @@ func List() []Tool {
 				"With a selection token returned by look (or by the previous edit or new): pass selection, newText and why, no file or line numbers. This is the usual way: look first, then edit. " +
 				"Without a token: pass file and expect, the lines the range must hold joined with \\n (whitespace counts), and, if you know them, startLine and endLine. srwr then finds the range by itself: " +
 				"the lines you gave, those lines moved to where they are after edits made since your last look at the file (so edits to one file can be sent together in any order), or the one place where expect is in the file. " +
-				"If expect is in the file in more than one place, or not at all, nothing is changed and the error says so; give startLine and endLine, or more lines in expect. " +
+				"If expect is in the file in more than one place, or not at all, nothing is changed and the error says so; give startLine and endLine, or more lines in expect. If a place differs from expect only in spaces or tabs, the error has it in nearMatches: copy expect from there. " +
 				"To insert without a token, give startLine and endLine = startLine - 1 and no expect: this works only if the file has not changed since your last look at it. " +
 				"To delete, make newText an empty string. " +
 				"The result has selection (the token of the range after the replacement; use it to go on fixing the same place), lines (the content of the range now) and before and after (up to 2 lines around it), so you can check the edit without reading the file again. " +
@@ -75,7 +75,7 @@ func List() []Tool {
 			Name: Replace,
 			Description: "Replace a text with another in 2 or more places, in one file or several, like a simple sed, and record why. For one place, use edit (or look and edit): replace is refused for it, with where the place is and the edit call to make. " +
 				"old is searched for as plain text (not a regular expression), left to right, places do not overlap. " +
-				"count is how many places you expect in all the files together, 2 or more. If the number found is different, nothing is changed and the error says how many there are in each file; this is the check that you changed what you meant. " +
+				"count is how many places you expect in all the files together, 2 or more. If the number found is different, nothing is changed and the error says how many there are in each file (and, in nearMatches, the places that differ from old only in spaces or tabs); this is the check that you changed what you meant. " +
 				"The result has, for each file that changed, count (how many places) and hits, one for each place (places on the same line are one): startLine and endLine (after the change), lines (what they hold now), and before and after (the line before and the line after). There is no selection token; use look and edit for a place you want to go on with. " +
 				"Use look and edit instead when the places must be chosen one by one. " +
 				"why is required: say why you change it, in the language of the conversation with the user.",

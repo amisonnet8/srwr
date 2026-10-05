@@ -86,7 +86,7 @@ Frame のフィールド：
 | `deleted` | 差分のコマだけ。変更後にファイルが存在しない（そのときだけ `true`。それ以外は出さない） |
 | `before`・`after` | **`withText` が真のときだけ**。変更前・変更後の全文。ふだんは `frame/state` で取る（大きいテープで、全コマが全文を持たないため） |
 
-- **送る種類（`kinds`）**：`tape/open` と `live/start` は `kinds`（`look`・`edit`・`external`・`failure` の配列）を受ける。サーバーは、その種類だけを送り、**0 から番号を振り直す**（`index` は送ったものの中の位置で、`frame/state` もその `index` を受ける）。送らなかった数は `hidden` で返す（`{"failure": 2}` のような形。送らなかったものがない種類は入れない。何も送らなかったものがないときは、`hidden` 自体を出さない）。`final` は `external` に、`replace` と `new` は `edit` に連れる。省略すると `["select","replace","external"]`：頼まない限り `failure` のコマは送らない。知らない名前は `invalid_params`。空の配列は何も送らない。表示する種類を替えるときは、クライアントが別の `kinds` でもう一度開く。`frame/state` は、送らなかったコマに左右されない：ファイルの内容は、送らなかったコマも含めた結果になる
+- **送る種類（`kinds`）**：`tape/open` と `live/start` は `kinds`（`look`・`edit`・`external`・`failure` の配列）を受ける。サーバーは、その種類だけを送り、**0 から番号を振り直す**（`index` は送ったものの中の位置で、`frame/state` もその `index` を受ける）。送らなかった数は `hidden` で返す（`{"failure": 2}` のような形。送らなかったものがない種類は入れない。何も送らなかったものがないときは、`hidden` 自体を出さない）。`final` は `external` に、`replace` と `new` は `edit` に連れる。省略すると `["look","edit","external"]`：頼まない限り `failure` のコマは送らない。知らない名前は `invalid_params`。空の配列は何も送らない。表示する種類を替えるときは、クライアントが別の `kinds` でもう一度開く。`frame/state` は、送らなかったコマに左右されない：ファイルの内容は、送らなかったコマも含めた結果になる
 - ライブのコマ（`live/start`・`live/frame`）に、最後の差分は含まれない（`external` はテープに書かれたものが出る）
 - **最後の差分は、サーバーが決める。** クライアントは出すだけ
 - テープの項目が増えても（`source`・`tool`・`vcs` など）、クライアントは使わなくてよい

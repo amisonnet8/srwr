@@ -88,4 +88,22 @@ func main() {
 }
 ```
 
+## When the lines do not match
+
+If `expect` differs from the file only in spaces or tabs (here four spaces were written for a tab), nothing is changed, and the error lists the places that are the same but for that in `nearMatches`, with their lines as they are. The message says only where, not what. Copy `expect` from `lines` and call again.
+
+```jsonrpc
+→ {"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"edit","arguments":{"file":"cmd/main.go","expect":"    run()","newText":"    run()\n    wait()","why":"Wait for run to finish"}}}
+← {"jsonrpc":"2.0","id":7,"result":{"content":[{"text":"{\"ok\":false,\"error\":{\"code\":\"content_not_found\",\"message\":\"the lines of expect are not in cmd/main.go (7 lines). Check the content, or call look again. Line 5 differs from expect only in spaces or tabs: see nearMatches\",\"nearMatches\":[{\"startLine\":5,\"endLine\":5,\"lines\":[\"\\trun()\"]}]}}","type":"text"}],"isError":true}}
+```
+
+## One place is for `edit`
+
+`replace` is for 2 or more places. For a text in one place, the answer is `use_edit`: nothing is changed, and `actual.edit` is the `edit` call that makes the same change (add `why`).
+
+```jsonrpc
+→ {"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"name":"replace","arguments":{"files":["cmd/main.go"],"old":"cleanup()","new":"teardown()","count":1,"why":"Rename cleanup"}}}
+← {"jsonrpc":"2.0","id":8,"result":{"content":[{"text":"{\"ok\":false,\"error\":{\"code\":\"use_edit\",\"message\":\"replace is for 2 or more places, and the text is in one place only (cmd/main.go line 6). Use edit for it: actual.edit is the call to make (add why)\",\"actual\":{\"edit\":{\"file\":\"cmd/main.go\",\"startLine\":6,\"endLine\":6,\"expect\":\"\\tcleanup()\",\"newText\":\"\\tteardown()\"},\"hits\":[{\"file\":\"cmd/main.go\",\"startLine\":6,\"endLine\":6,\"lines\":[\"\\tcleanup()\"]}]}}}","type":"text"}],"isError":true}}
+```
+
 The list of errors is in [mcp.md](../reference/mcp.md).

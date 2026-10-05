@@ -177,11 +177,11 @@ MCP の応答では `isError: true` になり、本文は次の JSON。
 | `selection_mismatch` | 行番号を補正しても、範囲の内容が `look` したときと違う（srwr の外で変更された疑い） | 内容を確認して `look` し直す |
 | `file_not_found` | 対象のファイルがない、または通常のファイルでない（ディレクトリなど） | — |
 | `invalid_range` | 行番号がファイルの範囲外、または作業場の外のパス | 行数を確認して `look` し直す |
-| `content_mismatch` | 範囲の内容が `expect` と違う | メッセージが言う場所を読んで、`look` し直す |
-| `content_not_found` | `expect`（行番号なし）がファイルにない | 内容を確認する。または行番号を付ける |
+| `content_mismatch` | 範囲の内容が `expect` と違う | メッセージが言う場所を読んで、`look` し直す（または `nearMatches` から写す） |
+| `content_not_found` | `expect` がファイルにない | 内容を確認する。または行番号を付ける。`nearMatches` があれば、そこから `expect` を写す |
 | `content_ambiguous` | `expect`（行番号なし）がファイルの2か所以上にある | 行番号を付ける。または `expect` の行を増やす |
 | `file_exists` | `new` で、既にあるファイルを作ろうとした | 変えるなら `look` と `edit` を使う |
-| `count_mismatch` | `replace` で見つかった場所の数が `count` と違う | ファイルごとの数を読み、正しい `count` で `replace` し直す（または `look` を使う） |
+| `count_mismatch` | `replace` で見つかった場所の数が `count` と違う | ファイルごとの数を読み、正しい `count` で `replace` し直す（または `look` を使う）。`nearMatches` があれば、そこから `old` を写す |
 | `use_edit` | 文字列が1か所だけにあるのに、`replace` を `count` が 1 で使った | `actual.edit` のとおりに `edit` を呼ぶ（`why` を足す） |
 | `ignored_file` | 記録しないファイルに `look`・`edit`・`replace`・`new` した。 | srwr では扱えない。ユーザーに頼む |
 | `invalid_input` | 必須の入力がない、型が違う、`why` が空。`file` が空か NUL を含む、`startLine` と `endLine` の片方だけがある、または両方なく `expect` もない、`selection` が空白だけ、`newText` に CR がある。`replace` では、`files`・`old`・`count` がない・空、同じパスが2回、`old` か `new` に CR がある。`new` では、`content` がない・CR がある、ファイルの上のディレクトリがファイルになっている | 入力を直す |
@@ -199,6 +199,10 @@ MCP の応答では `isError: true` になり、本文は次の JSON。
 | `use_edit` | `{"hits": [{file, startLine, endLine, lines}], "edit": {file, startLine, endLine, expect, newText}}`。行で表せない変更では `edit` を付けない |
 | `invalid_range` | `{"lineCount": 行数}`。作業場の外のパスのときはなし |
 | ほか | なし |
+
+### `nearMatches`
+
+文字列が見つからないとき、いちばんありそうな原因は、空白（スペース・タブ）の取り違えである。そこで、`expect`（`look`・`edit`）や `old`（`replace`。見つかった数が `count` より少ないときだけ）が、空白を除けば見つかるとき、エラーに `nearMatches` が付く（`actual` の中でなく隣。`actual` の形は変えない）：`[{"file", "startLine", "endLine", "lines"}]`。`lines` はファイルの今の行のままで、`file` は `replace` のときだけ。比べるときは、各行の空白（スペース・タブ）の連続を1つのスペースにし、行末の空白を削る。文字列がそのまま見つかる場所は入れない。5件まで。なければ `nearMatches` 自体を出さない。`message` は場所だけを言い（`Line 12 differs from expect only in spaces or tabs: see nearMatches`）、ファイルの中身は入れない。**`nearMatches` はテープに書かない**（行はファイルの中身のため）。
 
 失敗した呼び出しは、AI のミスをあとで読めるように、[`failure`](tape_ja.md#failure) としてテープにも書く。絶対パスや作業場の外のパスは、実際のパスを伏せる。
 

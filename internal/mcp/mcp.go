@@ -355,10 +355,12 @@ type errorInfo struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
 	Actual  any    `json:"actual,omitempty"`
+
+	NearMatches []core.NearMatch `json:"nearMatches,omitempty"`
 }
 
 func failure(e core.Error) toolResult {
-	body := errorBody{Error: errorInfo{Code: e.Code, Message: e.Message, Actual: e.Actual}}
+	body := errorBody{Error: errorInfo{Code: e.Code, Message: e.Message, Actual: e.Actual, NearMatches: e.NearMatches}}
 	return toolResult{Content: []textContent{text(body)}, IsError: true}
 }
 

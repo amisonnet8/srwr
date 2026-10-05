@@ -28,6 +28,10 @@ The same experiment showed that a token makes edits slow to send: each needs a `
 
 In one experiment 69 of 74 calls of the old `sub` changed one place only: it was the shortest way, and it left no range on the tape, so "look, then change" was not recorded. Now `replace` with a `count` of 1 for a text that is in one place is refused (`use_edit`), and the answer holds where the place is and the `edit` call that makes the same change, so going to `edit` costs one call and no thinking. The check is `count`, not a rule about the tool, so a `count` of 1 for a text in several places is still the usual `count_mismatch`. The result is one entry for each place (the lines as they are, one line around), not the whole stretch from the first place to the last, and has no token: the AI went on to a place with `look` anyway, and a long result costs it every time.
 
+### A mismatch in spaces and tabs is told with the lines (`nearMatches`)
+
+The AI often wrote `expect` or `old` with spaces where the file has tabs (or the other way round), was told only that nothing was found, and read the file again to find out why. Now, if the text is found but for runs of spaces and tabs and trailing spaces, the error lists those places in `nearMatches` with their lines as they are, so the next call can copy them. It is next to `actual`, not in it, because `actual` already has a different form for each code. Only the lines of the file go in it, and **they are not written to the tape**: the message, which is on the tape, says only where. Only whitespace is folded; a different word is not "near", because a hint that is wrong costs the AI more than none.
+
 ### srwr absorbs the shifting of line numbers
 
 When a range is given by line numbers, it drifts as edits pile up. This is why the Edit of Claude Code takes the `old_string` form. In srwr the token carries the `seq` at the time it was issued, and srwr corrects the numbers automatically from the later edit history. Then it checks the hash of the content, and edits nothing if it does not match ([token.md](token.md)).
@@ -42,7 +46,7 @@ Without a series of operations with a `why`, a person can hardly understand the 
 
 ### The investigation goes on the same tape
 
-The AI often finishes investigating with Bash and Read and then `select`s only the place to fix, so the investigation stays outside the tape. Therefore a hook records the operations of the existing tools on the same tape. `srwr mcp` and `srwr hook` are one binary and write to the same tape. They are shown as frames without a `why` (`null`).
+The AI often finishes investigating with Bash and Read and then `look`s only the place to fix, so the investigation stays outside the tape. Therefore a hook records the operations of the existing tools on the same tape. `srwr mcp` and `srwr hook` are one binary and write to the same tape. They are shown as frames without a `why` (`null`).
 
 ## The tape and the real files
 
@@ -56,7 +60,7 @@ A change to a file that was never touched cannot be seen, because there is no ba
 
 ### The server chooses which kinds of frames are sent
 
-A switch that turns select, replace, external and failure on and off could be done by each client. Then the numbering, the position in the bar, the stepping and the count of new frames in live would be made twice (VSCode and Vim), and could disagree. So the client says which kinds it wants (`kinds`) and the server sends only those, numbered again, so that a client keeps drawing what it is given. A change opens the tape again. The choice is not saved, because srwr has no settings for the look.
+A switch that turns look, edit, external and failure on and off could be done by each client. Then the numbering, the position in the bar, the stepping and the count of new frames in live would be made twice (VSCode and Vim), and could disagree. So the client says which kinds it wants (`kinds`) and the server sends only those, numbered again, so that a client keeps drawing what it is given. A change opens the tape again. The choice is not saved, because srwr has no settings for the look.
 
 ### A failed call is written to the tape, and shown only when asked for
 

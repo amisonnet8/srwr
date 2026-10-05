@@ -129,11 +129,15 @@ func (c *Core) replaceIn(tx *session.Tx, rels []string, in ReplaceInput) (*Repla
 			per[i] = fmt.Sprintf("%s: %d", p.rel, p.hits)
 			actual[p.rel] = p.hits
 		}
-		return nil, &Error{
+		e := &Error{
 			Code:    CodeCountMismatch,
 			Message: fmt.Sprintf("expected %d places of the text, found %d (%s). Nothing was changed", in.Count, total, strings.Join(per, ", ")),
 			Actual:  actual,
 		}
+		if total < in.Count {
+			nearReplace(e, plans, in.Old)
+		}
+		return nil, e
 	}
 	for i := range plans {
 		if plans[i].hits == 0 {
@@ -275,4 +279,25 @@ func useEdit(plans []replacePlan, in ReplaceInput) *Error {
 		return &Error{Code: CodeUseEdit, Message: msg, Actual: actual}
 	}
 	return newError(CodeInternalError, "no place found")
+}
+
+// nearReplace adds the places of old that differ only in spaces and tabs, in every file. The message names the files and lines.
+func nearReplace(e *Error, plans []replacePlan, old string) {
+	var all []NearMatch
+	var where []string
+	for _, p := range plans {
+		for _, m := range nearText(p.t.text, old) {
+			if len(all) == maxNear {
+				break
+			}
+			m.File = p.rel
+			all = append(all, m)
+			where = append(where, fmt.Sprintf("%s line %d", p.rel, m.StartLine))
+		}
+	}
+	if len(all) == 0 {
+		return
+	}
+	e.Message += fmt.Sprintf(". Differing from old only in spaces or tabs: %s (see nearMatches)", strings.Join(where, ", "))
+	e.NearMatches = all
 }

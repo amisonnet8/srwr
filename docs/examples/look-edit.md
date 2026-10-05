@@ -137,4 +137,27 @@ To find a place, `look` with `search` instead of line numbers returns every line
 ← {"jsonrpc":"2.0","id":10,"result":{"content":[{"text":"{\"ok\":true,\"count\":2,\"matches\":[{\"selection\":\"sel_045081648KVH3Z5DC93GTFB3\",\"startLine\":4,\"endLine\":4,\"lines\":[\"\\tsetup()\"],\"above\":[\"\",\"func main() {\"],\"below\":[\"\\tcheck()\",\"\\trun()\"]},{\"selection\":\"sel_045GE1Y48KVH3MCC2C6EXB6B\",\"startLine\":7,\"endLine\":7,\"lines\":[\"\\tcleanup()\"],\"above\":[\"\\tcheck()\",\"\\trun()\"],\"below\":[\"}\"]}]}","type":"text"}],"isError":false}}
 ```
 
+## Several edits in one call
+
+Edits that share a reason go in one call, with `edits` and one `why`. Each item points at its lines as `edit` does. All the ranges are found as the file is before the call, so the items need no order and none depends on another; they must not overlap. All are made, or none. The result has one entry for each item, in your order, with the line numbers after the call.
+
+```jsonrpc
+→ {"jsonrpc":"2.0","id":11,"method":"tools/call","params":{"name":"edit","arguments":{"edits":[{"file":"cmd/main.go","expect":"\tsetup()","newText":"\tstart()"},{"file":"cmd/main.go","expect":"\tcleanup()","newText":"\tstop()"},{"file":"cmd/main.go","expect":"\trun()","insert":"after","newText":"\tlog()"}],"why":"Rename the calls and log the run"}}}
+← {"jsonrpc":"2.0","id":11,"result":{"content":[{"text":"{\"ok\":true,\"edits\":[{\"selection\":\"sel_046081648KVH3M6NE7HJW31K\",\"startLine\":4,\"endLine\":4,\"lines\":[\"\\tstart()\"],\"above\":[\"\",\"func main() {\"],\"below\":[\"\\tcheck()\",\"\\trun()\"]},{\"selection\":\"sel_0470G2648KVH257ZXQFSTS3K\",\"startLine\":8,\"endLine\":8,\"lines\":[\"\\tstop()\"],\"above\":[\"\\trun()\",\"\\tlog()\"],\"below\":[\"}\"]},{\"selection\":\"sel_046GE1Y48KVH28BMME71JYMC\",\"startLine\":7,\"endLine\":7,\"lines\":[\"\\tlog()\"],\"above\":[\"\\tcheck()\",\"\\trun()\"],\"below\":[\"\\tstop()\",\"}\"]}]}","type":"text"}],"isError":false}}
+```
+
+The file is now 9 lines.
+
+```go
+package main
+
+func main() {
+	start()
+	check()
+	run()
+	log()
+	stop()
+}
+```
+
 The list of errors is in [mcp.md](../reference/mcp.md).

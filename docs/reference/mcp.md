@@ -121,6 +121,26 @@ The tape holds the same `edit` as for a token, with `from` of `null`. `expect` i
 
 Files that cannot be handled: files with line breaks other than LF (CRLF), and binary files. They give `unsupported_file`.
 
+### Several edits in one call (`edits`)
+
+`edits` holds 1 to 50 edits that share one `why`. Instead of `selection`, `file`, `startLine`, `endLine`, `expect`, `newText` and `insert`, which are then **not** given beside it, each item has them: a `selection`, or a `file` and `expect` (with `startLine` and `endLine` if known), a `newText` and, if wanted, an `insert`. It is for the same change in many places that `replace` cannot make (the text differs from place to place).
+
+```jsonc
+// input
+{ "edits": [
+    { "file": "cmd/main.go", "expect": "\tsetup()", "newText": "\tstart()" },
+    { "file": "cmd/main.go", "expect": "\trun()", "insert": "after", "newText": "\tlog()" } ],
+  "why": "Rename the call and log the run" }
+// output
+{ "ok": true, "edits": [ { "selection": "sel_…", "startLine": 4, "endLine": 4, "lines": ["…"], "above": ["…"], "below": ["…"] }, … ] }
+```
+
+- **All or none.** Every range is found first, then every file is written, then the tape. If one item fails, nothing is changed, and the error is the item's own with `edits[2]: ` at the start of its message (`edits[2]` is the third item). A call that is wrong as a whole (no items, more than 50, a `why` that is blank, ranges that overlap) is `invalid_input`
+- **Every range is found as the files are before the call.** So the items do not depend on each other, can be in any order, and an item's `startLine` and `endLine` are the lines as you saw them, not as the other items would leave them
+- **The ranges must not overlap.** Two ranges that share a line, an insertion inside another range (lines `a+1` to `b` of the range `a..b`), and two insertions at one place are `invalid_input` (`edits[0] and edits[1] overlap in a.go`). An insertion just before or just after another range is fine
+- The output has `edits`, one entry for each item **in the order given**. Each is as the output of a single `edit` is, but its lines are those of the file **after the whole call**, and its `selection` can be used as it is
+- On the tape there is one `edit` for each item, with the same `why`, the lines as the edits above it have left them (the same events as for separate calls, made from the top of each file down; [tape.md](tape.md#edit)). A failed call is one `failure` about the item that failed. A viewer shows each `edit` as it does for a single call
+
 ## replace
 
 Replaces a text with another in **2 or more places**, in one file or several, like a simple sed, and records why. For one place, use `edit`: `replace` is refused for it (`use_edit`, below). The text is searched for as it is (not a regular expression), from left to right in each file, and places do not overlap. **`count`, the number of places expected in all the files together, is required and is 2 or more: if the number found is different, nothing is changed.**
@@ -205,7 +225,7 @@ In the MCP response `isError` is `true`, and the body is the following JSON.
 | `count_mismatch` | `replace` found a number of places other than `count` | Read how many each file has, and call `replace` again with the right `count` (or use `look`). If `nearMatches` is there, copy `old` from it |
 | `use_edit` | `replace` was used with a `count` of 1 for a text that is in one place only | Call `edit` as `actual.edit` says (add `why`) |
 | `ignored_file` | `look`, `edit`, `replace` or `new` was used on a file that is not recorded | srwr cannot handle it. Ask the user |
-| `invalid_input` | A required input is missing, has the wrong type, or `why` is empty; `file` is empty or has a NUL; only one of `startLine` and `endLine` is given, or none of them and no `expect`; `selection` is blank; `newText` has a CR; for `replace`, `files`, `old` or `count` is missing or empty, a path is given twice, `old` or `new` has a CR; for `new`, `content` is missing or has a CR, or a directory above the file is a file | Fix the input |
+| `invalid_input` | A required input is missing, has the wrong type, or `why` is empty; `file` is empty or has a NUL; only one of `startLine` and `endLine` is given, or none of them and no `expect`; `selection` is blank; `newText` has a CR; for `look`, `search` is empty, has a line break, or is given with `startLine`, `endLine` or `expect`; for `edit` with `edits`, there are no items or more than 50, ranges overlap, or an item or the call has one of the faults above; for `replace`, `files`, `old` or `count` is missing or empty, a path is given twice, `old` or `new` has a CR; for `new`, `content` is missing or has a CR, or a directory above the file is a file | Fix the input |
 | `unsupported_file` | CRLF or binary | — |
 | `internal_error` | An I/O error and the like | — |
 

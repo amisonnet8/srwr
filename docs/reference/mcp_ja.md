@@ -121,6 +121,26 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 
 扱えないファイル：LF 以外の改行（CRLF）を含むファイルと、バイナリ。`unsupported_file` になる。
 
+### 1回で複数の編集をする（`edits`）
+
+`edits` は、1つの `why` を共有する編集を1〜50件持つ。`selection`・`file`・`startLine`・`endLine`・`expect`・`newText`・`insert` は、`edits` の外には**渡さず**、項目ごとに持つ：`selection`、または `file` と `expect`（分かれば `startLine`・`endLine`）、`newText`、必要なら `insert`。場所ごとに文字列が違って `replace` ではできない、同じ種類の変更をたくさんするためのもの。
+
+```jsonc
+// 入力
+{ "edits": [
+    { "file": "cmd/main.go", "expect": "\tsetup()", "newText": "\tstart()" },
+    { "file": "cmd/main.go", "expect": "\trun()", "insert": "after", "newText": "\tlog()" } ],
+  "why": "呼び出しの名前を替え、実行をログに残す" }
+// 出力
+{ "ok": true, "edits": [ { "selection": "sel_…", "startLine": 4, "endLine": 4, "lines": ["…"], "above": ["…"], "below": ["…"] }, … ] }
+```
+
+- **全部行うか、何も行わないか。** 先に範囲を全部決め、次にファイルを全部書き、最後にテープに書く。1つでも失敗したら何も変えず、エラーはその項目のもので、`message` の頭に `edits[2]: `（3番目の項目）が付く。呼び出し全体の誤り（項目がない・50件を超える・`why` が空白・範囲が重なる）は `invalid_input`
+- **範囲は全部、呼ぶ前のファイルで決める。** だから項目同士は関係せず、順番は自由で、項目の `startLine`・`endLine` は、ほかの項目が変えたあとでなく、AI が見た行番号でよい
+- **範囲は重なってはいけない。** 行を共有する2つの範囲、別の範囲（`a..b`）の中への挿入（`a+1` 行目から `b` 行目の前）、同じ場所への2つの挿入は `invalid_input`（`edits[0] and edits[1] overlap in a.go`）。別の範囲のすぐ前・すぐ後ろへの挿入はよい
+- 出力の `edits` は、項目ごとに1つで、**渡した順**。1つ1つは単独の `edit` の出力と同じ形だが、`lines` などは**呼び出し全体のあと**のファイルの行で、`selection` はそのまま使える
+- テープには、項目ごとに `edit` が1つ、同じ `why` で入る。行番号は、上の項目が変えたあとのもの（別々に呼んだときと同じ中身のイベントを、ファイルの上から順に書く。[tape.md](tape.md#edit)）。失敗した呼び出しは、失敗した項目についての `failure` が1つ。ビューアーでは、単独の呼び出しと同じに見える
+
 ## replace
 
 **2か所以上**で、1つのファイルでも複数のファイルでも、文字列を別の文字列に一度に置き換える（簡単な sed のようなもの）。理由も記録する。1か所なら `edit` を使う（`replace` は断られる。`use_edit`、下）。文字列は、そのままの文字として探す（正規表現ではない）。各ファイルを左から探し、場所は重ならない。**全部のファイルでの場所の数 `count` は必須で、2以上。見つかった数が違えば、何も変えない。**
@@ -205,7 +225,7 @@ MCP の応答では `isError: true` になり、本文は次の JSON。
 | `count_mismatch` | `replace` で見つかった場所の数が `count` と違う | ファイルごとの数を読み、正しい `count` で `replace` し直す（または `look` を使う）。`nearMatches` があれば、そこから `old` を写す |
 | `use_edit` | 文字列が1か所だけにあるのに、`replace` を `count` が 1 で使った | `actual.edit` のとおりに `edit` を呼ぶ（`why` を足す） |
 | `ignored_file` | 記録しないファイルに `look`・`edit`・`replace`・`new` した。 | srwr では扱えない。ユーザーに頼む |
-| `invalid_input` | 必須の入力がない、型が違う、`why` が空。`file` が空か NUL を含む、`startLine` と `endLine` の片方だけがある、または両方なく `expect` もない、`selection` が空白だけ、`newText` に CR がある。`replace` では、`files`・`old`・`count` がない・空、同じパスが2回、`old` か `new` に CR がある。`new` では、`content` がない・CR がある、ファイルの上のディレクトリがファイルになっている | 入力を直す |
+| `invalid_input` | 必須の入力がない、型が違う、`why` が空。`file` が空か NUL を含む、`startLine` と `endLine` の片方だけがある、または両方なく `expect` もない、`selection` が空白だけ、`newText` に CR がある。`look` では、`search` が空・改行を含む・`startLine`・`endLine`・`expect` と一緒。`edit` の `edits` では、項目が0件か50件を超える、範囲が重なる、項目や呼び出しに上の誤りがある。`replace` では、`files`・`old`・`count` がない・空、同じパスが2回、`old` か `new` に CR がある。`new` では、`content` がない・CR がある、ファイルの上のディレクトリがファイルになっている | 入力を直す |
 | `unsupported_file` | CRLF やバイナリ | — |
 | `internal_error` | I/O エラーなど | — |
 

@@ -480,6 +480,44 @@ func TestLookSearch(t *testing.T) {
 	}
 }
 
+// edit with edits makes several edits with one why, all or none.
+func TestEditWithEdits(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "a.go")
+	if err := os.WriteFile(path, []byte("a\nb\nc\nd\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	m, isErr := body(t, serve(t, root, toolCall(1, "edit",
+		`{"edits":[{"file":"a.go","expect":"d","newText":"D"},{"file":"a.go","expect":"a","newText":"x\ny"},{"file":"a.go","expect":"b","insert":"after","newText":"z"}],"why":"w"}`))[0])
+	es, _ := m["edits"].([]any)
+	if isErr || len(es) != 3 {
+		t.Fatalf("got %v", m)
+	}
+	if first, _ := es[0].(map[string]any); first["startLine"] != float64(6) || first["selection"] == "" {
+		t.Errorf("first = %v", es[0])
+	}
+	b, _ := os.ReadFile(path) //nolint:gosec // a path in a temporary directory
+	if string(b) != "x\ny\nb\nz\nc\nD\n" {
+		t.Errorf("file = %q", b)
+	}
+	for _, args := range []string{
+		`{"edits":[{"file":"a.go","expect":"b","newText":"B"}],"newText":"x","why":"w"}`,
+		`{"edits":[{"file":"a.go","expect":"b"}],"why":"w"}`,
+		`{"edits":[{"file":"a.go","expect":"b","newText":"B"}]}`,
+		`{"edits":[],"why":"w"}`,
+		`{"edits":[{"file":"a.go","expect":"b","newText":"B"},{"file":"a.go","expect":"b","newText":"C"}],"why":"w"}`,
+	} {
+		m, isErr = body(t, serve(t, root, toolCall(1, "edit", args))[0])
+		if e, _ := m["error"].(map[string]any); !isErr || e["code"] != "invalid_input" {
+			t.Errorf("%s: got %v", args, m)
+		}
+	}
+	b, _ = os.ReadFile(path) //nolint:gosec // a path in a temporary directory
+	if string(b) != "x\ny\nb\nz\nc\nD\n" {
+		t.Errorf("a refused call changed the file: %q", b)
+	}
+}
+
 func TestNearMatchesInTheError(t *testing.T) {
 	root := t.TempDir()
 	if err := os.WriteFile(filepath.Join(root, "a.go"), []byte("func f() {\n\treturn 1\n}\n"), 0o600); err != nil {

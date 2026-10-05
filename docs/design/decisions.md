@@ -36,6 +36,10 @@ The AI often wrote `expect` or `old` with spaces where the file has tabs (or the
 
 In the experiments the AI read files with Read and `sed`/`grep`, not with `look`, so the tape held its reading only as hook records without a `why`, and it still had to call `look` again before editing. `look` with `search` (plain text, one file, one line) returns the matching lines with a token each, so finding and editing is one path in srwr. Every match returned is written as a `look` of its line with the same `why`: a token needs the `look` it came from (its `seq`), and the replay shows what the AI looked at. Neither the tape format nor the screens change. A regular expression and several files are left out: a wrong pattern is another way to fail, and `replace` and the hook already cover the wide cases.
 
+### `edit` takes `edits`: several edits, one why, all or none
+
+The AI sent 5 to 10 similar edits one by one, each with the same `why`, and each made the build hook run. `edit` with `edits` makes them in one call. It is part of `edit`, not a fifth tool, and the tape does not change: one `edit` for each item, as if they had been sent one after the other from the top of each file down. Every range is found as the files are before the call, so the items do not depend on each other and can be in any order (an item's line numbers are the ones the AI saw), and ranges that overlap are refused, since no order of them would be right. The files are written before the tape, as in every edit; if the process dies in between, the next call finds the difference as `external`. A mistake in one item changes nothing, and the error says which.
+
 ### `above` and `below`, not `before` and `after`
 
 The result of `edit` (and the `hits` of `replace`) holds the lines just above and just below the new range, as the file is now. They were called `before` and `after`, and an AI read them as the content before and after the change, and asked for the old lines. They are named by where they are, `above` and `below`, and the description says they are not the old content. The tape is not touched: its `before` and `after` are about the whole text, and are another thing.

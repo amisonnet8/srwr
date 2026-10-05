@@ -5,6 +5,7 @@ package mcp
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"slices"
 	"strings"
@@ -210,6 +211,19 @@ func (s *Server) rejectLook(message string) toolResult {
 }
 
 type editArgs struct {
+	Selection *string         `json:"selection"`
+	File      *string         `json:"file"`
+	StartLine *int            `json:"startLine"`
+	EndLine   *int            `json:"endLine"`
+	Expect    *string         `json:"expect"`
+	NewText   *string         `json:"newText"`
+	Insert    *string         `json:"insert"`
+	Edits     *[]editItemArgs `json:"edits"`
+	Why       *string         `json:"why"`
+}
+
+// editItemArgs is one of the edits of an edit call with edits.
+type editItemArgs struct {
 	Selection *string `json:"selection"`
 	File      *string `json:"file"`
 	StartLine *int    `json:"startLine"`
@@ -217,7 +231,21 @@ type editArgs struct {
 	Expect    *string `json:"expect"`
 	NewText   *string `json:"newText"`
 	Insert    *string `json:"insert"`
-	Why       *string `json:"why"`
+}
+
+type editsOK struct {
+	OK    bool         `json:"ok"`
+	Edits []editItemOK `json:"edits"`
+}
+
+// editItemOK is the result of one of the edits of a call with edits.
+type editItemOK struct {
+	Selection string   `json:"selection"`
+	StartLine int      `json:"startLine"`
+	EndLine   int      `json:"endLine"`
+	Lines     []string `json:"lines"`
+	Above     []string `json:"above"`
+	Below     []string `json:"below"`
 }
 
 type editOK struct {
@@ -235,6 +263,9 @@ func (s *Server) callEdit(raw json.RawMessage) toolResult {
 	if err := decodeArgs(raw, &a); err != nil {
 		s.Core.RecordInputFailure(tools.Edit, err.Code, err.Message)
 		return failure(*err)
+	}
+	if a.Edits != nil {
+		return s.callEdits(a)
 	}
 	if missing := firstMissing(map[string]bool{"newText": a.NewText == nil, "why": a.Why == nil}, "newText", "why"); missing != "" {
 		return s.rejectEdit("missing required input: " + missing)
@@ -267,6 +298,48 @@ func (s *Server) callEdit(raw json.RawMessage) toolResult {
 	}
 	return success(editOK{OK: true, Selection: res.Selection, StartLine: res.StartLine, EndLine: res.EndLine,
 		Lines: res.Lines, Above: res.Above, Below: res.Below})
+}
+
+// callEdits is edit with edits: several edits in one call, with one why.
+func (s *Server) callEdits(a editArgs) toolResult {
+	if a.Why == nil {
+		return s.rejectEdit("missing required input: why")
+	}
+	if a.Selection != nil || a.File != nil || a.StartLine != nil || a.EndLine != nil || a.Expect != nil || a.NewText != nil || a.Insert != nil {
+		return s.rejectEdit("with edits, give selection, file, startLine, endLine, expect, newText and insert inside each of the edits, not beside it")
+	}
+	in := core.EditsInput{Why: *a.Why, Edits: make([]core.EditInput, len(*a.Edits))}
+	for i, item := range *a.Edits {
+		if item.NewText == nil {
+			return s.rejectEdit(fmt.Sprintf("edits[%d]: missing required input: newText", i))
+		}
+		if (item.StartLine == nil) != (item.EndLine == nil) {
+			return s.rejectEdit(fmt.Sprintf("edits[%d]: give both startLine and endLine, or neither", i))
+		}
+		e := core.EditInput{NewText: *item.NewText, Expect: item.Expect, HasLines: item.StartLine != nil}
+		if item.Selection != nil {
+			e.Selection = *item.Selection
+		}
+		if item.File != nil {
+			e.File = *item.File
+		}
+		if item.Insert != nil {
+			e.Insert = *item.Insert
+		}
+		if e.HasLines {
+			e.StartLine, e.EndLine = *item.StartLine, *item.EndLine
+		}
+		in.Edits[i] = e
+	}
+	res, cerr := s.Core.Edits(in)
+	if cerr != nil {
+		return failure(*cerr)
+	}
+	out := editsOK{OK: true, Edits: make([]editItemOK, len(res.Edits))}
+	for i, r := range res.Edits {
+		out.Edits[i] = editItemOK{Selection: r.Selection, StartLine: r.StartLine, EndLine: r.EndLine, Lines: r.Lines, Above: r.Above, Below: r.Below}
+	}
+	return success(out)
 }
 
 // rejectEdit turns an edit away for its input, and records that on the tape.

@@ -137,4 +137,27 @@ func main() {
 ← {"jsonrpc":"2.0","id":10,"result":{"content":[{"text":"{\"ok\":true,\"count\":2,\"matches\":[{\"selection\":\"sel_045081648KVH3Z5DC93GTFB3\",\"startLine\":4,\"endLine\":4,\"lines\":[\"\\tsetup()\"],\"above\":[\"\",\"func main() {\"],\"below\":[\"\\tcheck()\",\"\\trun()\"]},{\"selection\":\"sel_045GE1Y48KVH3MCC2C6EXB6B\",\"startLine\":7,\"endLine\":7,\"lines\":[\"\\tcleanup()\"],\"above\":[\"\\tcheck()\",\"\\trun()\"],\"below\":[\"}\"]}]}","type":"text"}],"isError":false}}
 ```
 
+## 1回で複数の編集をする
+
+同じ理由の編集は、`edits` に並べて、1つの `why` で1回に呼べる。各項目は、`edit` と同じに行を指す。範囲は全部、呼ぶ前のファイルで決めるので、順番は自由で、項目同士は関係しない。重なってはいけない。全部が行われるか、何も行われない。返事は項目ごとに1つで、入力の順、行番号は呼んだあとのもの。
+
+```jsonrpc
+→ {"jsonrpc":"2.0","id":11,"method":"tools/call","params":{"name":"edit","arguments":{"edits":[{"file":"cmd/main.go","expect":"\tsetup()","newText":"\tstart()"},{"file":"cmd/main.go","expect":"\tcleanup()","newText":"\tstop()"},{"file":"cmd/main.go","expect":"\trun()","insert":"after","newText":"\tlog()"}],"why":"呼び出しの名前を替え、実行をログに残す"}}}
+← {"jsonrpc":"2.0","id":11,"result":{"content":[{"text":"{\"ok\":true,\"edits\":[{\"selection\":\"sel_046081648KVH3M6NE7HJW31K\",\"startLine\":4,\"endLine\":4,\"lines\":[\"\\tstart()\"],\"above\":[\"\",\"func main() {\"],\"below\":[\"\\tcheck()\",\"\\trun()\"]},{\"selection\":\"sel_0470G2648KVH257ZXQFSTS3K\",\"startLine\":8,\"endLine\":8,\"lines\":[\"\\tstop()\"],\"above\":[\"\\trun()\",\"\\tlog()\"],\"below\":[\"}\"]},{\"selection\":\"sel_046GE1Y48KVH28BMME71JYMC\",\"startLine\":7,\"endLine\":7,\"lines\":[\"\\tlog()\"],\"above\":[\"\\tcheck()\",\"\\trun()\"],\"below\":[\"\\tstop()\",\"}\"]}]}","type":"text"}],"isError":false}}
+```
+
+ファイルは9行になった。
+
+```go
+package main
+
+func main() {
+	start()
+	check()
+	run()
+	log()
+	stop()
+}
+```
+
 エラーの一覧は [mcp.md](../reference/mcp_ja.md)。

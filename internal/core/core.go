@@ -158,60 +158,24 @@ func (c *Core) lookIn(tx *session.Tx, rel string, in LookInput) (*LookResult, er
 func (c *Core) Edit(in EditInput) (*EditResult, *Error) {
 	res, cerr := c.doEdit(in)
 	if cerr != nil {
-		f := failedCall{tool: toolEdit, why: &in.Why, err: cerr}
-		if in.Selection != "" || in.File == "" {
-			f.selection = &in.Selection
-		} else {
-			f.file = in.File
-			if in.HasLines {
-				f.startLine, f.endLine = &in.StartLine, &in.EndLine
-			}
-		}
+		f := editFailure(in, in.Why, cerr)
 		c.recordFailure(f)
 	}
 	return res, cerr
 }
 
 func (c *Core) doEdit(in EditInput) (*EditResult, *Error) {
-	byFile := strings.TrimSpace(in.Selection) == ""
-	switch {
-	case byFile && in.File == "":
-		return nil, newError(CodeInvalidInput, "give selection (from look), or file with expect (and startLine and endLine, if you know them)")
-	case !byFile && (in.File != "" || in.HasLines || in.Expect != nil):
-		return nil, newError(CodeInvalidInput, "give selection, or file with expect; not both")
-	}
-	if err := checkWhy(in.Why); err != nil {
-		return nil, err
-	}
-	if strings.ContainsRune(in.NewText, '\r') {
-		return nil, newError(CodeInvalidInput, "newText must not contain CR (line breaks are LF only)")
-	}
-	switch {
-	case in.Insert != "" && in.Insert != InsertAfter && in.Insert != InsertBefore:
-		return nil, newError(CodeInvalidInput, "insert must be \"after\" or \"before\"")
-	case in.Insert != "" && in.NewText == "":
-		return nil, newError(CodeInvalidInput, "insert needs newText: the lines to put in (for an empty line, newText is a line break)")
-	case in.Insert != "" && in.HasLines && in.EndLine == in.StartLine-1:
-		return nil, newError(CodeInvalidInput, "with insert, point at lines to put the text next to (an empty range has none): give expect, and startLine and endLine of those lines")
-	}
-	var rel string
-	if byFile {
-		var cerr *Error
-		if rel, cerr = cleanPath(in.File); cerr != nil {
-			return nil, cerr
-		}
-		if in.Expect != nil && strings.ContainsRune(*in.Expect, '\r') {
-			return nil, newError(CodeInvalidInput, "expect must not contain CR (line breaks are LF only)")
-		}
+	byFile, rel, cerr := checkEdit(in)
+	if cerr != nil {
+		return nil, cerr
 	}
 	var res *EditResult
-	cerr := c.run(func(tx *session.Tx) error {
-		var err error
-		if byFile {
-			res, err = c.editFileIn(tx, rel, in)
-		} else {
-			res, err = c.editIn(tx, in)
+	cerr = c.run(func(tx *session.Tx) error {
+		p, err := c.resolve(tx, byFile, rel, in, map[string]*target{})
+		if err != nil {
+			return err
 		}
+		res, err = c.writeEdit(tx, p.rel, p.t, p.a, p.b, in.NewText, in.Why, p.from)
 		return err
 	})
 	if cerr != nil {
@@ -220,26 +184,90 @@ func (c *Core) doEdit(in EditInput) (*EditResult, *Error) {
 	return res, nil
 }
 
-func (c *Core) editIn(tx *session.Tx, in EditInput) (*EditResult, error) {
-	tok, err := token.Decode(in.Selection, tx.TapeID(), tx.Key())
-	if err != nil {
-		return nil, newError(CodeInvalidSelection, "the selection token is not valid: it was altered, or issued in another session. Call look again")
+// checkEdit checks the input of one edit before the workspace is touched. byFile is true when the range is pointed at by file and
+// expect, and rel is then the cleaned path.
+func checkEdit(in EditInput) (byFile bool, rel string, cerr *Error) {
+	byFile = strings.TrimSpace(in.Selection) == ""
+	switch {
+	case byFile && in.File == "":
+		return false, "", newError(CodeInvalidInput, "give selection (from look), or file with expect (and startLine and endLine, if you know them)")
+	case !byFile && (in.File != "" || in.HasLines || in.Expect != nil):
+		return false, "", newError(CodeInvalidInput, "give selection, or file with expect; not both")
 	}
-	rel, ok := findFile(tx.State(), tok.FileHash)
-	if !ok {
-		return nil, newError(CodeInvalidSelection, "the file of the selection token is not on the tape. Call look again")
+	if err := checkWhy(in.Why); err != nil {
+		return false, "", err
+	}
+	if strings.ContainsRune(in.NewText, '\r') {
+		return false, "", newError(CodeInvalidInput, "newText must not contain CR (line breaks are LF only)")
+	}
+	switch {
+	case in.Insert != "" && in.Insert != InsertAfter && in.Insert != InsertBefore:
+		return false, "", newError(CodeInvalidInput, "insert must be \"after\" or \"before\"")
+	case in.Insert != "" && in.NewText == "":
+		return false, "", newError(CodeInvalidInput, "insert needs newText: the lines to put in (for an empty line, newText is a line break)")
+	case in.Insert != "" && in.HasLines && in.EndLine == in.StartLine-1:
+		return false, "", newError(CodeInvalidInput, "with insert, point at lines to put the text next to (an empty range has none): give expect, and startLine and endLine of those lines")
+	}
+	if byFile {
+		if rel, cerr = cleanPath(in.File); cerr != nil {
+			return false, "", cerr
+		}
+		if in.Expect != nil && strings.ContainsRune(*in.Expect, '\r') {
+			return false, "", newError(CodeInvalidInput, "expect must not contain CR (line breaks are LF only)")
+		}
+	}
+	return byFile, rel, nil
+}
+
+// editPlan is where one edit puts its text: the lines a..b of the file rel (an empty range for an insertion), found but not yet written.
+type editPlan struct {
+	rel  string
+	t    target
+	a, b int
+	from *string // the token the range came from, if any
+}
+
+// loadTarget reads the file rel and records what Observe finds, once for each file of a call: seen holds the files already read.
+func (c *Core) loadTarget(tx *session.Tx, rel, detectedBy string, seen map[string]*target) (target, error) {
+	if t, ok := seen[rel]; ok {
+		return *t, nil
 	}
 	t, cerr := c.readTarget(rel)
 	if cerr != nil {
-		return nil, cerr
+		return target{}, cerr
 	}
-	if err := c.observeTarget(tx, rel, "edit", t); err != nil {
-		return nil, err
+	if err := c.observeTarget(tx, rel, detectedBy, t); err != nil {
+		return target{}, err
+	}
+	seen[rel] = &t
+	return t, nil
+}
+
+// resolve finds the range of an edit that checkEdit accepted, by its token or by file and expect, and applies insert to it.
+func (c *Core) resolve(tx *session.Tx, byFile bool, rel string, in EditInput, seen map[string]*target) (editPlan, error) {
+	if byFile {
+		return c.resolveFile(tx, rel, in, seen)
+	}
+	return c.resolveToken(tx, in, seen)
+}
+
+func (c *Core) resolveToken(tx *session.Tx, in EditInput, seen map[string]*target) (editPlan, error) {
+	tok, err := token.Decode(in.Selection, tx.TapeID(), tx.Key())
+	if err != nil {
+		return editPlan{}, newError(CodeInvalidSelection, "the selection token is not valid: it was altered, or issued in another session. Call look again")
+	}
+	rel, ok := findFile(tx.State(), tok.FileHash)
+	if !ok {
+		return editPlan{}, newError(CodeInvalidSelection, "the file of the selection token is not on the tape. Call look again")
+	}
+	t, err := c.loadTarget(tx, rel, "edit", seen)
+	if err != nil {
+		return editPlan{}, err
 	}
 
 	a, b, ok := Correct(tx.State().Edits, rel, int(tok.Seq), int(tok.StartLine), int(tok.EndLine)) //nolint:gosec // line numbers and seq are far below the int range
 	if !ok {
-		return nil, &Error{
+		return editPlan{}, &Error{
 			Code:    CodeSelectionStale,
 			Message: "an edit overlapped the range after the look. Call look again",
 			Actual:  rangeLines(t.text, a, b),
@@ -248,7 +276,7 @@ func (c *Core) editIn(tx *session.Tx, in EditInput) (*EditResult, error) {
 	n := len(tape.Lines(t.text))
 	oldText := tape.RangeText(t.text, a, b)
 	if a < 1 || b > n || b < a-1 || token.Hash4(oldText) != tok.TextHash {
-		return nil, &Error{
+		return editPlan{}, &Error{
 			Code:    CodeSelectionMismatch,
 			Message: "even with the line numbers corrected, the range differs from what look returned (it may have been changed outside srwr). Check the content and call look again",
 			Actual:  rangeLines(t.text, a, b),
@@ -256,24 +284,21 @@ func (c *Core) editIn(tx *session.Tx, in EditInput) (*EditResult, error) {
 	}
 
 	a, b = insertAt(a, b, in.Insert)
-	return c.writeEdit(tx, rel, t, a, b, in.NewText, in.Why, &in.Selection)
+	return editPlan{rel: rel, t: t, a: a, b: b, from: &in.Selection}, nil
 }
 
-// editFileIn edits the range chosen by locateEdit in a file given by its path.
-func (c *Core) editFileIn(tx *session.Tx, rel string, in EditInput) (*EditResult, error) {
-	t, cerr := c.readTarget(rel)
-	if cerr != nil {
-		return nil, cerr
-	}
-	if err := c.observeTarget(tx, rel, "edit", t); err != nil {
-		return nil, err
+// resolveFile finds the range chosen by locateEdit in a file given by its path.
+func (c *Core) resolveFile(tx *session.Tx, rel string, in EditInput, seen map[string]*target) (editPlan, error) {
+	t, err := c.loadTarget(tx, rel, "edit", seen)
+	if err != nil {
+		return editPlan{}, err
 	}
 	a, b, cerr := locateEdit(tx.State(), rel, t.text, in)
 	if cerr != nil {
-		return nil, cerr
+		return editPlan{}, cerr
 	}
 	a, b = insertAt(a, b, in.Insert)
-	return c.writeEdit(tx, rel, t, a, b, in.NewText, in.Why, nil)
+	return editPlan{rel: rel, t: t, a: a, b: b}, nil
 }
 
 // The values of EditInput.Insert.

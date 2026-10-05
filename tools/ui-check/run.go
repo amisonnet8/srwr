@@ -374,7 +374,6 @@ func captureVimOne(root, bin, dir string, ex extras, sc screenRun, theme, lang s
 	if len(now.Frames) != len(want.Frames) {
 		// The number of frames changed, so no frame is compared with its own: show every frame as it is now, next to the one of
 		// the baseline at the same place if there is one.
-		diffs = nil
 		for i, nf := range now.Frames {
 			fi := FrameInfo{Index: i + 1, Label: got.Labels[i], Diffs: []string{fmt.Sprintf("コマの数が違う：今 %d コマ、基準 %d コマ", len(now.Frames), len(want.Frames))}}
 			if i < len(want.Frames) {

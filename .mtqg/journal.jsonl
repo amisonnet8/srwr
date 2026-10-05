@@ -681,3 +681,5 @@
 {"id":"1f8579ac265b495f9e783ef8e9883043","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-05T12:26:47Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"9179355b4e004bbf86edfbe852b004fe","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-05T12:33:01Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"a87adf8a016440069b3c393c07a4cdbc","op":"create","type":"memo","text":"v0.1.7 実装済み（a: above/below 改名、c: look の search、b: edit の edits）。確認：qsoku check・race、壊して確かめる（重なり3種・ずれの足し算・50件上限・search の20件/前後/改行）が全部落ちた、本物の srwr mcp で search→edits→view-server が5コマ。実験の手引き（mtqg/.claude/rules/srwr.md）への search・edits の案内の書き足しは、リポジトリの外なので人間の作業。","v":1,"ts":"2026-10-05T12:33:01Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"2c643e607e7444159b0237a9d563530f","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-05T12:56:49Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"3ef10d517f1f431c8fbca4eddf0d7fa8","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-05T12:56:49Z","author":{"kind":"ai","name":"claude-code"}}

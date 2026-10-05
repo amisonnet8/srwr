@@ -47,20 +47,28 @@ func List() []Tool {
 		},
 		{
 			Name: Edit,
-			Description: "Replace the range of the selection token returned by look (or by the previous edit or new) with newText. " +
-				"Do not pass a file or line numbers. To delete, make newText an empty string. To insert, look at an empty range and then edit. " +
-				"The selection in the result is the token of the range after the replacement; use it to go on fixing the same place without calling look again. " +
-				"The result also has lines (the content of the range now) and before and after (up to 2 lines around it), so you can check the edit without reading the file again. " +
-				"If edits elsewhere shift the lines, srwr corrects the line numbers. Only an edit that overlaps the range makes the result selection_stale; then call look again. " +
+			Description: "Replace a range with newText, in one call. Two ways to point at the range. " +
+				"With a selection token returned by look (or by the previous edit or new): pass selection, newText and why, no file or line numbers. This is the usual way: look first, then edit. " +
+				"Without a token: pass file and expect, the lines the range must hold joined with \\n (whitespace counts), and, if you know them, startLine and endLine. srwr then finds the range by itself: " +
+				"the lines you gave, those lines moved to where they are after edits made since your last look at the file (so edits to one file can be sent together in any order), or the one place where expect is in the file. " +
+				"If expect is in the file in more than one place, or not at all, nothing is changed and the error says so; give startLine and endLine, or more lines in expect. " +
+				"To insert without a token, give startLine and endLine = startLine - 1 and no expect: this works only if the file has not changed since your last look at it. " +
+				"To delete, make newText an empty string. " +
+				"The result has selection (the token of the range after the replacement; use it to go on fixing the same place), lines (the content of the range now) and before and after (up to 2 lines around it), so you can check the edit without reading the file again. " +
+				"With a token, edits elsewhere shift the lines and srwr corrects the line numbers; only an edit that overlaps the range makes the result selection_stale, and then you call look again. " +
 				"why is required: say why you change it this way, in the language of the conversation with the user.",
 			InputSchema: map[string]any{
 				"type": "object",
 				"properties": map[string]any{
-					"selection": map[string]any{"type": "string", "minLength": 1, "description": "The selection token (sel_…) returned by look, edit or new"},
+					"selection": map[string]any{"type": "string", "minLength": 1, "description": "The selection token (sel_…) returned by look, edit or new. Without it, give file and expect"},
+					"file":      map[string]any{"type": "string", "minLength": 1, "description": "Path relative to the workspace. Only when there is no selection"},
+					"startLine": map[string]any{"type": "integer", "minimum": 1, "description": "With file: first line (1-based) of the range, as you saw it. Give both startLine and endLine, or neither"},
+					"endLine":   map[string]any{"type": "integer", "minimum": 0, "description": "With file: last line (inclusive); startLine - 1 inserts before startLine"},
+					"expect":    map[string]any{"type": "string", "description": "With file: the lines the range holds now, joined with \\n (whitespace counts). Required unless inserting"},
 					"newText":   map[string]any{"type": "string", "description": "The text to put in. An empty string deletes. Line breaks are LF"},
 					"why":       map[string]any{"type": "string", "minLength": 1, "pattern": `\S`, "description": whyDescription},
 				},
-				"required": []string{"selection", "newText", "why"},
+				"required": []string{"newText", "why"},
 			},
 		},
 		{

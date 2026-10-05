@@ -378,6 +378,21 @@ func TestStateExternal(t *testing.T) {
 	}
 }
 
+func TestStateRemembersTheLastLookAndChange(t *testing.T) {
+	st := Build(Parse([]byte(strings.Join([]string{
+		`{"v":1,"seq":1,"type":"snapshot","file":"a.go","text":"a\nb\n"}`,
+		`{"v":1,"seq":2,"type":"select","file":"a.go","startLine":1,"endLine":2,"source":"mcp"}`,
+		`{"v":1,"seq":3,"type":"replace","file":"a.go","startLine":1,"endLine":1,"newText":"x","newStartLine":1,"newEndLine":1}`,
+		`{"v":2,"seq":4,"type":"look","file":"a.go","startLine":1,"endLine":2,"source":"hook","tool":"Read"}`,
+		`{"v":2,"seq":5,"type":"look","file":"b.go","startLine":1,"endLine":1,"source":"mcp"}`,
+		`{"v":2,"seq":6,"type":"external","file":"b.go","text":"t\n"}`,
+		"",
+	}, "\n"))).Events)
+	if st.LastLook["a.go"] != 4 || st.LastChange["a.go"] != 3 || st.LastLook["b.go"] != 5 || st.LastChange["b.go"] != 6 {
+		t.Errorf("LastLook = %v, LastChange = %v", st.LastLook, st.LastChange)
+	}
+}
+
 func TestStateCollectsReplaces(t *testing.T) {
 	res := readTape(t, filepath.Join(fixtures, "basic.tape.jsonl"))
 	st := Build(res.Events)

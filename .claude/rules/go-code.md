@@ -69,6 +69,7 @@
 
 - `look`・`edit` が失敗したら、`core.recordFailure`（`internal/core/failure.go`）の**1か所**でテープに `failure` を書く。`Core.Look`・`Core.Edit` が、返す前に呼ぶ。MCP の層で弾く失敗（必須の入力がない、型が違う）は `Core.RecordInputFailure`
 - **`look` の `expect` の中身も、テープに書かない**（`edit` の `newText` と同じ。ファイルの内容が入りうる）。`expect` だけで範囲を探す呼び出し（`Locate`）の失敗は、`startLine`・`endLine` を `null` にする
+- **`edit` を `file` と `expect` で呼ぶ失敗**（`locateEdit`）：`file` は `look` と同じ伏せ方で書き、`startLine`・`endLine` は渡されたときだけ。`expect`・`newText` は書かない。範囲は、渡された行番号 → 最後の look（`tape.State.LastLook`。hook の Read も含む）からずらした行番号 → `expect` のただ1か所、の順。1 と 2 が別の場所なら `content_ambiguous`。挿入（空の範囲）は、`LastLook` が `LastChange` より後のときだけ受ける
 - **`replace` の失敗**（`core.Replace`。版 0.1.4 までの `sub`）も同じ1か所で書く。`old`・`new` はテープに書かない（`newText` と同じ）。`file` は、ファイルを1つだけ渡したときだけ書く。複数のときは、パスの誤りの文も決まった文に替える（どれかのパスが実際のパスを含みうるため）。`replace` は、全部のファイルを読んで数えて計画を立ててから書く（数が違えば何も書かない。`count_mismatch`）。変えたファイルごとに `replace` を1つ（`hits`）
 - **`new` の失敗**（`core.New`）も同じ1か所。`content` は書かない。`file` は渡したパスを、今の伏せ（絶対パス・外・`ignored_file`）に通して書く。ファイルは、同じディレクトリの一時ファイルに書いて `os.Link` で置く（先にできていたら `file_exists`。鍵と同じ先勝ち）。**親ディレクトリは、いちばん近い既にある祖先を `EvalSymlinks` して、作業場の中か・記録しない場所でないかを確かめてから作る**（`readTarget` は、まだないパスの途中のリンクを見ない）。`readTarget` は、`a/b` の `a` がファイルのとき（`ENOTDIR`）も「ない」として扱う
 - **返事を変えない。** 書けなくても握りつぶす（AI の作業を止めない）。AI に返すエラー文は今のまま（パスを含む）

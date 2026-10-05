@@ -83,7 +83,7 @@ func checkSelectReplaceExample(t *testing.T, path string) {
 	if err := os.MkdirAll(filepath.Dir(file), 0o750); err != nil {
 		t.Fatal(err)
 	}
-	// The first go block is the file the example starts from; the second is what it ends as.
+	// The first go block is the file the example starts from; the last is what it ends as.
 	if err := os.WriteFile(file, []byte(strings.Join(goBlocks[0], "\n")+"\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -141,13 +141,13 @@ func checkSelectReplaceExample(t *testing.T, path string) {
 		t.Errorf("only %d exchanges were checked", exchanges)
 	}
 
-	// The document also shows the file after the replace.
+	// The document also shows the file after the last exchange (its last go block).
 	if len(goBlocks) > 1 {
 		b, err := os.ReadFile(file) //nolint:gosec // a path in a temporary directory
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got, want := string(b), strings.Join(goBlocks[1], "\n")+"\n"; got != want {
+		if got, want := string(b), strings.Join(goBlocks[len(goBlocks)-1], "\n")+"\n"; got != want {
 			t.Errorf("file after the example:\n%s\nthe document says:\n%s", got, want)
 		}
 	}

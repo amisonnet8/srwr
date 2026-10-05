@@ -66,7 +66,7 @@ func (f failedCall) info(tx *session.Tx) *tape.FailureInfo {
 		}
 	}
 	switch f.tool {
-	case toolLook, toolReplace, toolNew:
+	case toolLook, toolReplace, toolNew, toolEdit:
 		if given != "" {
 			rel, perr := cleanPath(given)
 			switch {
@@ -80,8 +80,7 @@ func (f failedCall) info(tx *session.Tx) *tape.FailureInfo {
 				}
 			}
 		}
-	case toolEdit:
-		if f.selection != nil {
+		if f.tool == toolEdit && f.selection != nil {
 			if tok, err := token.Decode(*f.selection, tx.TapeID(), tx.Key()); err == nil {
 				file, _ = findFile(tx.State(), tok.FileHash)
 			}

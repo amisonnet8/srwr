@@ -89,6 +89,7 @@ A `look` recorded by the hook (Read and the like) has a `why` of `null`. It has 
 - `startLine` and `endLine` are the real range after correction
 - `oldText` and `newText` are the lines of the range joined with `\n` (without a trailing line break). A deletion has `newEndLine = newStartLine - 1` and an empty `newText`. One empty line has `newEndLine = newStartLine` and an empty `newText` too, so the number of lines is read from `newStartLine` and `newEndLine`
 - The `seq` inside a selection token is the `seq` of the event that issued the token
+- An `edit` made by `file` and `expect` instead of a token has `from` of `null` too (its `source` is `mcp`, and it has a `selection` and a `why`)
 - An `edit` recorded by the hook (Edit) has `from`, `selection` and `why` of `null`, `source` of `hook` and `tool` of `Edit`. The range is the whole lines that contain the replaced place
 
 ### replace

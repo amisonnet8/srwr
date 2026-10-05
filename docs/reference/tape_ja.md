@@ -89,6 +89,7 @@ hook が記録した `look`（Read など）は、`why` が `null`。`source`（
 - `startLine`・`endLine` は、補正後の実際の範囲
 - `oldText`・`newText` は、範囲の行を `\n` でつないだもの（末尾の改行は含まない）。削除は `newEndLine = newStartLine - 1` で、`newText` は空。空行1つは `newEndLine = newStartLine` で `newText` も空なので、行の数は `newStartLine`・`newEndLine` から読む
 - 範囲トークンの中の `seq` は、そのトークンを発行したイベントの `seq`
+- トークンでなく `file` と `expect` で行った `edit` も、`from` は `null`（`source` は `mcp`で、`selection` と `why` は持つ）
 - hook が記録した `edit`（Edit）は、`from`・`selection`・`why` が `null` で、`source` が `hook`、`tool` が `Edit`。範囲は置換位置を含む行全体
 
 ### replace

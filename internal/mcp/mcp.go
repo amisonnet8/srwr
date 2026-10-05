@@ -175,6 +175,10 @@ func (s *Server) rejectLook(message string) toolResult {
 
 type editArgs struct {
 	Selection *string `json:"selection"`
+	File      *string `json:"file"`
+	StartLine *int    `json:"startLine"`
+	EndLine   *int    `json:"endLine"`
+	Expect    *string `json:"expect"`
 	NewText   *string `json:"newText"`
 	Why       *string `json:"why"`
 }
@@ -195,18 +199,41 @@ func (s *Server) callEdit(raw json.RawMessage) toolResult {
 		s.Core.RecordInputFailure(tools.Edit, err.Code, err.Message)
 		return failure(*err)
 	}
-	if missing := firstMissing(map[string]bool{"selection": a.Selection == nil, "newText": a.NewText == nil, "why": a.Why == nil},
-		"selection", "newText", "why"); missing != "" {
-		e := core.Error{Code: core.CodeInvalidInput, Message: "missing required input: " + missing}
-		s.Core.RecordInputFailure(tools.Edit, e.Code, e.Message)
-		return failure(e)
+	if missing := firstMissing(map[string]bool{"newText": a.NewText == nil, "why": a.Why == nil}, "newText", "why"); missing != "" {
+		return s.rejectEdit("missing required input: " + missing)
 	}
-	res, cerr := s.Core.Edit(core.EditInput{Selection: *a.Selection, NewText: *a.NewText, Why: *a.Why})
+	if (a.StartLine == nil) != (a.EndLine == nil) {
+		return s.rejectEdit("give both startLine and endLine, or neither")
+	}
+	in := core.EditInput{NewText: *a.NewText, Why: *a.Why, Expect: a.Expect, HasLines: a.StartLine != nil}
+	if a.Selection != nil {
+		in.Selection = *a.Selection
+	}
+	if a.File != nil {
+		in.File = *a.File
+	}
+	if in.HasLines {
+		in.StartLine, in.EndLine = *a.StartLine, *a.EndLine
+	}
+	if a.Selection != nil && strings.TrimSpace(*a.Selection) != "" && (a.File != nil || in.HasLines || a.Expect != nil) {
+		return s.rejectEdit("give selection, or file with expect; not both")
+	}
+	if a.Selection == nil && a.File == nil {
+		return s.rejectEdit("missing required input: selection (from look), or file with expect")
+	}
+	res, cerr := s.Core.Edit(in)
 	if cerr != nil {
 		return failure(*cerr)
 	}
 	return success(editOK{OK: true, Selection: res.Selection, StartLine: res.StartLine, EndLine: res.EndLine,
 		Lines: res.Lines, Before: res.Before, After: res.After})
+}
+
+// rejectEdit turns an edit away for its input, and records that on the tape.
+func (s *Server) rejectEdit(message string) toolResult {
+	e := core.Error{Code: core.CodeInvalidInput, Message: message}
+	s.Core.RecordInputFailure(tools.Edit, e.Code, e.Message)
+	return failure(e)
 }
 
 type replaceArgs struct {

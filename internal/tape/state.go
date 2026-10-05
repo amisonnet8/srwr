@@ -16,10 +16,16 @@ type State struct {
 	Files map[string]*File
 	// Edits lists the edit, replace and new events in order, for line number correction.
 	Edits []Event
+	// LastLook is the seq of the last look of each file. LastChange is the seq of the last event that moved lines of a file:
+	// an edit, replace, new, or an external change. A file looked at after its last change has the lines the look showed.
+	LastLook   map[string]int
+	LastChange map[string]int
 }
 
 // NewState returns an empty state.
-func NewState() *State { return &State{Files: map[string]*File{}} }
+func NewState() *State {
+	return &State{Files: map[string]*File{}, LastLook: map[string]int{}, LastChange: map[string]int{}}
+}
 
 // Build returns the state after all events.
 func Build(events []Event) *State {
@@ -36,7 +42,10 @@ func (s *State) Apply(e Event) {
 	switch e.Type {
 	case TypeSnapshot:
 		s.Files[e.File] = &File{Text: deref(e.Text)}
+	case TypeLook:
+		s.LastLook[e.File] = e.Seq
 	case TypeEdit, TypeReplace, TypeNew:
+		s.LastChange[e.File] = e.Seq
 		f := s.Files[e.File]
 		if f == nil {
 			f = &File{}
@@ -46,6 +55,7 @@ func (s *State) Apply(e Event) {
 		f.Text = SpliceLines(f.Text, e.StartLine, e.EndLine, NewLines(e))
 		s.Edits = append(s.Edits, e)
 	case TypeExternal:
+		s.LastChange[e.File] = e.Seq
 		switch {
 		case e.Deleted:
 			s.Files[e.File] = &File{Deleted: true}

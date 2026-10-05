@@ -65,4 +65,27 @@ AI は、`actual` を見て、`look` し直す。
 ← {"jsonrpc":"2.0","id":5,"result":{"content":[{"text":"{\"ok\":false,\"error\":{\"code\":\"invalid_range\",\"message\":\"cmd/main.go has 6 lines; startLine=9 endLine=9 is out of range\",\"actual\":{\"lineCount\":6}}}","type":"text"}],"isError":true}}
 ```
 
+## トークンなしの edit
+
+`edit` は、範囲を自分で指すこともできる。`file` と、範囲が今持っている行 `expect` を渡す。行番号（`startLine`・`endLine`）は省いてよく、あっても手がかりにすぎない。違っていれば、srwr が `expect` の行を探し、1か所だけなら、そこを範囲にする。同じファイルへの edit を、`look` を挟まずに、順不同でまとめて送れる。
+
+ここでは行番号が違う（`\trun()` は4行目でなく5行目）が、srwr が見つける。
+
+```jsonrpc
+→ {"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"edit","arguments":{"file":"cmd/main.go","startLine":4,"endLine":4,"expect":"\trun()","newText":"\trun()\n\tcleanup()","why":"run のあとに、setup で作ったものを片付ける"}}}
+← {"jsonrpc":"2.0","id":6,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_041G61P48KVH3AYWAY6Q99GP\",\"startLine\":5,\"endLine\":6,\"lines\":[\"\\trun()\",\"\\tcleanup()\"],\"before\":[\"func main() {\",\"\\tsetup()\"],\"after\":[\"}\"]}","type":"text"}],"isError":false}}
+```
+
+ファイルは7行になる。
+
+```go
+package main
+
+func main() {
+	setup()
+	run()
+	cleanup()
+}
+```
+
 エラーの一覧は [mcp.md](../reference/mcp_ja.md)。

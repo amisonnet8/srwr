@@ -60,7 +60,7 @@ Looks at a range, and returns a **selection token** for editing that range with 
 
 ## edit
 
-Changes the range to new text. An insertion is a change of an empty range, and a deletion is `newText` as an empty string.
+Changes the range to new text, in one call. An insertion is a change of an empty range, and a deletion is `newText` as an empty string. The range is pointed at in one of two ways: with the **selection token** from `look` (the usual way: look, then edit), or with **`file` and `expect`**, with no token.
 
 ```jsonc
 // input
@@ -72,7 +72,8 @@ Changes the range to new text. An insertion is a change of an empty range, and a
 
 | Item | Meaning |
 |---|---|
-| `selection` | The token returned by `look`, `edit` or `new`. The file is decided from it (no `file` is needed) |
+| `selection` | The token returned by `look`, `edit` or `new`. The file is decided from it (no `file` is needed). Give this, or `file` and `expect`; not both |
+| `file`, `startLine`, `endLine`, `expect` | Without a token: the file, the range as the AI saw it (both line numbers, or neither) and the lines that range holds now, joined with `\n` (as in `look`). See below |
 | `newText` | The text after the replacement. `""` is a deletion |
 | `why` | Why it changes it this way |
 | `selection` in the output | A new token for **the range after the replacement**. To go on fixing the same place, it can be used without calling `look` again |
@@ -82,6 +83,20 @@ Changes the range to new text. An insertion is a change of an empty range, and a
 **How the lines of `newText` are counted**: `""` is 0 lines (a deletion). Otherwise it is split into lines at `\n`, and if it ends with `\n` the last empty element is not counted (`"x\n"` is 1 line, `"\n"` is one empty line). The range of the returned token follows this count.
 
 **The AI does not have to calculate line numbers.** If edits elsewhere shift the lines, srwr corrects them. Only when an edit overlaps the range does it become `selection_stale`.
+
+### Without a token (`file` and `expect`)
+
+`expect` is required, because it is what makes the call safe: the range is never taken for its line numbers alone. (One case needs no `expect`: an insertion, below.) srwr decides the range in this order:
+
+1. the line numbers as given, if that range holds the lines of `expect`;
+2. those line numbers moved to where the lines are now, following the `edit`, `replace` and `new` made on the file **after its last look** (a `look`, or a read of the hook), if that range holds the lines of `expect`;
+3. otherwise, the one place where the lines of `expect` are in the file.
+
+Zero places is `content_not_found` (`actual` holds the lines at the given line numbers, if there were any). Two or more places, or 1 and 2 pointing at different places, is `content_ambiguous`, which says where: give line numbers, or more lines in `expect`. So edits to one file can be sent together, in any order, even in parallel: each is found wherever the earlier ones moved it.
+
+An **insertion** (`endLine = startLine - 1`, no `expect`) has no lines to check. It is accepted only if the file has not changed since its last look (no `edit`, `replace`, `new` or `external` after it), and the line numbers are then taken as given. Otherwise it is `content_not_found`: look again, or edit the line next to the place with `expect`, putting the new line in `newText`.
+
+The tape holds the same `edit` as for a token, with `from` of `null`. `expect` is not written to the tape.
 
 Files that cannot be handled: files with line breaks other than LF (CRLF), and binary files. They give `unsupported_file`.
 

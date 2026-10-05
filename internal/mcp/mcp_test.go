@@ -181,8 +181,18 @@ func TestToolsList(t *testing.T) {
 	if _, ok := sel.Properties["expect"]; !ok {
 		t.Error("select has no expect")
 	}
-	if !contains(r.Result.Tools[0].InputSchema.Required, "file") || !contains(r.Result.Tools[1].InputSchema.Required, "selection") {
+	if !contains(r.Result.Tools[0].InputSchema.Required, "file") || !contains(r.Result.Tools[1].InputSchema.Required, "newText") {
 		t.Error("required lists are wrong")
+	}
+	// edit takes a token or a file: neither alone is required, and the by-file inputs exist.
+	ed := r.Result.Tools[1].InputSchema
+	for _, name := range []string{"selection", "file", "startLine", "endLine", "expect"} {
+		if contains(ed.Required, name) {
+			t.Errorf("edit requires %s", name)
+		}
+		if _, ok := ed.Properties[name]; !ok {
+			t.Errorf("edit has no %s", name)
+		}
 	}
 }
 
@@ -220,6 +230,16 @@ func TestSelectAndReplace(t *testing.T) {
 	}
 	if b, _ := os.ReadFile(filepath.Join(root, "a.go")); string(b) != "1\na < b && c > d\n" { //nolint:gosec // a path in a temporary directory
 		t.Errorf("file = %q", b)
+	}
+
+	// An edit by file and expect needs no token, and takes the line numbers if it has them.
+	byFile, isErr := call(5, "edit", `{"file":"a.go","startLine":2,"endLine":2,"expect":"a < b && c > d","newText":"two","why":"変える"}`)
+	if isErr || byFile["ok"] != true || byFile["selection"] == "" || byFile["startLine"] != float64(2) {
+		t.Fatalf("edit by file = %v %v", byFile, isErr)
+	}
+	byExpect, isErr := call(6, "edit", `{"file":"a.go","expect":"two","newText":"a < b && c > d","why":"戻す"}`)
+	if isErr || byExpect["ok"] != true {
+		t.Fatalf("edit by expect = %v %v", byExpect, isErr)
 	}
 
 	// A select with only expect finds its own range, and says where.
@@ -318,6 +338,12 @@ func TestToolErrors(t *testing.T) {
 		{"replace without newText", "edit", `{"selection":"sel_x","why":"w"}`, "invalid_input", nil},
 		{"replace with a bad token", "edit", `{"selection":"sel_x","newText":"","why":"w"}`, "invalid_selection", nil},
 		{"replace with newText as a number", "edit", `{"selection":"sel_x","newText":1,"why":"w"}`, "invalid_input", nil},
+		{"edit with neither selection nor file", "edit", `{"newText":"x","why":"w"}`, "invalid_input", nil},
+		{"edit with selection and file", "edit", `{"selection":"sel_x","file":"a.go","expect":"1","newText":"x","why":"w"}`, "invalid_input", nil},
+		{"edit with selection and expect", "edit", `{"selection":"sel_x","expect":"1","newText":"x","why":"w"}`, "invalid_input", nil},
+		{"edit by file without expect", "edit", `{"file":"a.go","startLine":1,"endLine":1,"newText":"x","why":"w"}`, "invalid_input", nil},
+		{"edit by file with only startLine", "edit", `{"file":"a.go","startLine":1,"expect":"1","newText":"x","why":"w"}`, "invalid_input", nil},
+		{"edit by file with expect that is not there", "edit", `{"file":"a.go","expect":"zzz","newText":"x","why":"w"}`, "content_not_found", nil},
 		{"sub without count", "replace", `{"files":["a.go"],"old":"1","new":"x","why":"w"}`, "invalid_input", nil},
 		{"sub with files as a string", "replace", `{"files":"a.go","old":"1","new":"x","count":1,"why":"w"}`, "invalid_input", nil},
 		{"sub with count as a string", "replace", `{"files":["a.go"],"old":"1","new":"x","count":"1","why":"w"}`, "invalid_input", nil},

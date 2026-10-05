@@ -38,11 +38,19 @@ type LookResult struct {
 	Lines     []string
 }
 
-// EditInput is the input of edit.
+// EditInput is the input of edit: a selection token, or a file with where to edit it. NewText and Why are always given.
 type EditInput struct {
 	Selection string
 	NewText   string
 	Why       string
+
+	// By file (Selection is empty): the range is StartLine to EndLine when HasLines, and Expect, which never goes on the tape, is
+	// what that range holds. Without line numbers, Expect says where the range is. An empty range (an insertion) needs no Expect.
+	File      string
+	StartLine int
+	EndLine   int
+	HasLines  bool
+	Expect    *string
 }
 
 // contextLines is how many lines before and after the new range edit returns.
@@ -147,14 +155,27 @@ func (c *Core) lookIn(tx *session.Tx, rel string, in LookInput) (*LookResult, er
 func (c *Core) Edit(in EditInput) (*EditResult, *Error) {
 	res, cerr := c.doEdit(in)
 	if cerr != nil {
-		c.recordFailure(failedCall{tool: toolEdit, selection: &in.Selection, why: &in.Why, err: cerr})
+		f := failedCall{tool: toolEdit, why: &in.Why, err: cerr}
+		if in.Selection != "" || in.File == "" {
+			f.selection = &in.Selection
+		} else {
+			f.file = in.File
+			if in.HasLines {
+				f.startLine, f.endLine = &in.StartLine, &in.EndLine
+			}
+		}
+		c.recordFailure(f)
 	}
 	return res, cerr
 }
 
 func (c *Core) doEdit(in EditInput) (*EditResult, *Error) {
-	if strings.TrimSpace(in.Selection) == "" {
-		return nil, newError(CodeInvalidInput, "selection is empty")
+	byFile := strings.TrimSpace(in.Selection) == ""
+	switch {
+	case byFile && in.File == "":
+		return nil, newError(CodeInvalidInput, "give selection (from look), or file with expect (and startLine and endLine, if you know them)")
+	case !byFile && (in.File != "" || in.HasLines || in.Expect != nil):
+		return nil, newError(CodeInvalidInput, "give selection, or file with expect; not both")
 	}
 	if err := checkWhy(in.Why); err != nil {
 		return nil, err
@@ -162,10 +183,24 @@ func (c *Core) doEdit(in EditInput) (*EditResult, *Error) {
 	if strings.ContainsRune(in.NewText, '\r') {
 		return nil, newError(CodeInvalidInput, "newText must not contain CR (line breaks are LF only)")
 	}
+	var rel string
+	if byFile {
+		var cerr *Error
+		if rel, cerr = cleanPath(in.File); cerr != nil {
+			return nil, cerr
+		}
+		if in.Expect != nil && strings.ContainsRune(*in.Expect, '\r') {
+			return nil, newError(CodeInvalidInput, "expect must not contain CR (line breaks are LF only)")
+		}
+	}
 	var res *EditResult
 	cerr := c.run(func(tx *session.Tx) error {
 		var err error
-		res, err = c.editIn(tx, in)
+		if byFile {
+			res, err = c.editFileIn(tx, rel, in)
+		} else {
+			res, err = c.editIn(tx, in)
+		}
 		return err
 	})
 	if cerr != nil {
@@ -209,7 +244,29 @@ func (c *Core) editIn(tx *session.Tx, in EditInput) (*EditResult, error) {
 		}
 	}
 
-	newLines := tape.Lines(in.NewText)
+	return c.writeEdit(tx, rel, t, a, b, in.NewText, in.Why, &in.Selection)
+}
+
+// editFileIn edits the range chosen by locateEdit in a file given by its path.
+func (c *Core) editFileIn(tx *session.Tx, rel string, in EditInput) (*EditResult, error) {
+	t, cerr := c.readTarget(rel)
+	if cerr != nil {
+		return nil, cerr
+	}
+	if err := c.observeTarget(tx, rel, "edit", t); err != nil {
+		return nil, err
+	}
+	a, b, cerr := locateEdit(tx.State(), rel, t.text, in)
+	if cerr != nil {
+		return nil, cerr
+	}
+	return c.writeEdit(tx, rel, t, a, b, in.NewText, in.Why, nil)
+}
+
+// writeEdit puts newText in lines a..b of the file, and records it. from is the token the range came from, if any.
+func (c *Core) writeEdit(tx *session.Tx, rel string, t target, a, b int, newTextIn, why string, from *string) (*EditResult, error) {
+	oldText := tape.RangeText(t.text, a, b)
+	newLines := tape.Lines(newTextIn)
 	newText := tape.SpliceLines(t.text, a, b, newLines)
 	newEnd := a + len(newLines) - 1
 
@@ -220,15 +277,15 @@ func (c *Core) editIn(tx *session.Tx, in EditInput) (*EditResult, error) {
 	}
 	sel := token.Encode(token.Token{
 		Seq:       uint64(tx.NextSeq()), //nolint:gosec // NextSeq is at least 1
-		StartLine: uint64(a),
-		EndLine:   uint64(newEnd),
-		FileHash:  tok.FileHash,
+		StartLine: uint64(a),            //nolint:gosec // a is at least 1, checked by the caller
+		EndLine:   uint64(newEnd),       //nolint:gosec // newEnd is at least a-1
+		FileHash:  token.Hash4(rel),
 		TextHash:  token.Hash4(tape.RangeText(newText, a, newEnd)),
 	}, tx.TapeID(), tx.Key())
-	err = tx.Append(tape.Event{
-		Type: tape.TypeEdit, Seq: tx.NextSeq(), File: rel, From: &in.Selection,
+	err := tx.Append(tape.Event{
+		Type: tape.TypeEdit, Seq: tx.NextSeq(), File: rel, From: from,
 		StartLine: a, EndLine: b, OldText: oldText, NewText: strings.Join(newLines, "\n"),
-		NewStartLine: a, NewEndLine: newEnd, Selection: &sel, Why: &in.Why,
+		NewStartLine: a, NewEndLine: newEnd, Selection: &sel, Why: &why,
 		FileShaBefore: tape.Sha(t.text), FileShaAfter: tape.Sha(newText), Source: tape.SourceMCP,
 	})
 	if err != nil {

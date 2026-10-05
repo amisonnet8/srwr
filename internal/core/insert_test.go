@@ -30,6 +30,10 @@ func TestInsertNextToLines(t *testing.T) {
 			want: "l1\nl2\na\nb\nl3\n", start: 3, end: 4, before: []string{"l1", "l2"}, after: []string{"l3"}},
 		{name: "an empty line", in: EditInput{Expect: str("l1"), NewText: "\n", Insert: "after"},
 			want: "l1\n\nl2\nl3\n", start: 2, end: 2, before: []string{"l1"}, after: []string{"l2", "l3"}},
+		{name: "an empty newText is an empty line (after)", in: EditInput{Expect: str("l1"), NewText: "", Insert: "after"},
+			want: "l1\n\nl2\nl3\n", start: 2, end: 2, before: []string{"l1"}, after: []string{"l2", "l3"}},
+		{name: "an empty newText is an empty line (before)", in: EditInput{Expect: str("l2"), NewText: "", Insert: "before"},
+			want: "l1\n\nl2\nl3\n", start: 2, end: 2, before: []string{"l1"}, after: []string{"l2", "l3"}},
 		{name: "with line numbers", in: EditInput{Expect: str("l3"), NewText: "new", Insert: "after", HasLines: true, StartLine: 3, EndLine: 3},
 			want: "l1\nl2\nl3\nnew\n", start: 4, end: 4, before: []string{"l2", "l3"}, after: []string{}},
 		{name: "the file changed since the look: expect still finds the lines", changed: true,
@@ -100,7 +104,6 @@ func TestInsertIsRefused(t *testing.T) {
 		code string
 	}{
 		{"unknown value", EditInput{Expect: str("l2"), NewText: "n", Insert: "next"}, CodeInvalidInput},
-		{"empty newText", EditInput{Expect: str("l2"), NewText: "", Insert: "after"}, CodeInvalidInput},
 		{"empty range", EditInput{NewText: "n", Insert: "after", HasLines: true, StartLine: 2, EndLine: 1}, CodeInvalidInput},
 		{"expect not found", EditInput{Expect: str("zz"), NewText: "n", Insert: "after"}, CodeContentNotFound},
 		{"expect is part of a line", EditInput{Expect: str("l"), NewText: "n", Insert: "after"}, CodeContentNotFound},

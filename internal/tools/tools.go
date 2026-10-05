@@ -53,7 +53,7 @@ func List() []Tool {
 				"Without a token: pass file and expect, the lines the range must hold joined with \\n (whitespace counts), and, if you know them, startLine and endLine. srwr then finds the range by itself: " +
 				"the lines you gave, those lines moved to where they are after edits made since your last look at the file (so edits to one file can be sent together in any order), or the one place where expect is in the file. " +
 				"If expect is in the file in more than one place, or not at all, nothing is changed and the error says so; give startLine and endLine, or more lines in expect. expect is whole lines: a part of a line is not found. If a place differs from expect only in spaces or tabs, or holds it only as part of a line, the error has it in nearMatches: copy expect from there. " +
-				"To insert next to lines, point at them as usual (selection, or file and expect) and add insert: \"after\" or \"before\": those lines are kept and newText goes after (before) them. This works however the file has changed, because expect is checked. " +
+				"To insert next to lines, point at them as usual (selection, or file and expect) and add insert: \"after\" or \"before\": those lines are kept and newText goes after (before) them; an empty newText with insert puts one empty line (without insert it deletes). This works however the file has changed, because expect is checked. " +
 				"To insert at a place that is not next to any lines you can name, give startLine and endLine = startLine - 1 and no expect: this works only if the file has not changed since your last look at it. " +
 				"To delete, make newText an empty string. " +
 				"The result has selection (the token of the range after the replacement; use it to go on fixing the same place), lines (the content of the range now) and above and below (up to 2 lines of the file now, just above and just below the new range; they are not the old content), so you can check the edit without reading the file again. " +
@@ -68,7 +68,7 @@ func List() []Tool {
 					"endLine":   map[string]any{"type": "integer", "minimum": 0, "description": "With file: last line (inclusive); startLine - 1 inserts before startLine"},
 					"expect":    map[string]any{"type": "string", "description": "With file: the lines the range holds now, joined with \\n (whole lines, whitespace counts). Required unless inserting"},
 					"newText":   map[string]any{"type": "string", "description": "The text to put in. An empty string deletes. Line breaks are LF"},
-					"insert":    map[string]any{"type": "string", "enum": []string{"after", "before"}, "description": "Keep the range (the selection, or the lines of expect) and put newText after (or before) it, instead of replacing it. Not with an empty range; newText must not be empty"},
+					"insert":    map[string]any{"type": "string", "enum": []string{"after", "before"}, "description": "Keep the range (the selection, or the lines of expect) and put newText after (or before) it, instead of replacing it. Not with an empty range. An empty newText puts one empty line"},
 					"why":       map[string]any{"type": "string", "minLength": 1, "pattern": `\S`, "description": whyDescription},
 				},
 				"required": []string{"newText", "why"},

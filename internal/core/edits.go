@@ -119,7 +119,7 @@ func (c *Core) editsIn(tx *session.Tx, items []EditInput, byFile []bool, rels []
 			}
 			return nil, item, err
 		}
-		plans[i] = itemPlan{editPlan: p, idx: i, newLines: tape.Lines(item.NewText)}
+		plans[i] = itemPlan{editPlan: p, idx: i, newLines: tape.Lines(putIn(item))}
 		if !slices.Contains(files, p.rel) {
 			files = append(files, p.rel)
 		}

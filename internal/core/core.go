@@ -175,7 +175,7 @@ func (c *Core) doEdit(in EditInput) (*EditResult, *Error) {
 		if err != nil {
 			return err
 		}
-		res, err = c.writeEdit(tx, p.rel, p.t, p.a, p.b, in.NewText, in.Why, p.from)
+		res, err = c.writeEdit(tx, p.rel, p.t, p.a, p.b, putIn(in), in.Why, p.from)
 		return err
 	})
 	if cerr != nil {
@@ -203,8 +203,6 @@ func checkEdit(in EditInput) (byFile bool, rel string, cerr *Error) {
 	switch {
 	case in.Insert != "" && in.Insert != InsertAfter && in.Insert != InsertBefore:
 		return false, "", newError(CodeInvalidInput, "insert must be \"after\" or \"before\"")
-	case in.Insert != "" && in.NewText == "":
-		return false, "", newError(CodeInvalidInput, "insert needs newText: the lines to put in (for an empty line, newText is a line break)")
 	case in.Insert != "" && in.HasLines && in.EndLine == in.StartLine-1:
 		return false, "", newError(CodeInvalidInput, "with insert, point at lines to put the text next to (an empty range has none): give expect, and startLine and endLine of those lines")
 	}
@@ -299,6 +297,14 @@ func (c *Core) resolveFile(tx *session.Tx, rel string, in EditInput, seen map[st
 	}
 	a, b = insertAt(a, b, in.Insert)
 	return editPlan{rel: rel, t: t, a: a, b: b}, nil
+}
+
+// putIn is the text an edit puts in. With insert, an empty NewText is one empty line (without insert it deletes).
+func putIn(in EditInput) string {
+	if in.Insert != "" && in.NewText == "" {
+		return "\n"
+	}
+	return in.NewText
 }
 
 // The values of EditInput.Insert.

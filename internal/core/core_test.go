@@ -919,6 +919,9 @@ func TestLookCutsEndLinePastTheEnd(t *testing.T) {
 	if err != nil || res.Note != "" || res.LineCount != 0 {
 		t.Errorf("%+v %v", res, err)
 	}
+	if res, err = e.c.Look(LookInput{File: "f.txt", StartLine: 1, EndLine: 4, Why: "w"}); err != nil || res.EndLine != 3 || res.Note == "" {
+		t.Errorf("one past the end: %+v %v", res, err)
+	}
 	// With expect, the cut range is what is compared.
 	exp := "2\n3"
 	if _, err := e.c.Look(LookInput{File: "f.txt", StartLine: 2, EndLine: 9, Expect: &exp, Why: "w"}); err != nil {

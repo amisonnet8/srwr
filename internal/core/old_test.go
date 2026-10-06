@@ -197,3 +197,18 @@ func TestEditOldNewOneSidedLines(t *testing.T) {
 		})
 	}
 }
+
+// With one line number the lines moved by the changes after the last look are not tried: the lines asked for, then the whole file.
+func TestEditOldNewOneLineNumberDoesNotFollowTheLook(t *testing.T) {
+	e := newEnv(t)
+	e.write("f.txt", "foo\nb\nfoo\nc\n")
+	e.sel(e.c, "f.txt", 1, 4)
+	s := e.sel(e.c, "f.txt", 2, 2)
+	e.rep(e.c, s.Selection, "") // the second foo is now line 2
+	_, err := e.oldNew(EditInput{Old: str("foo"), New: str("F"), HasLines: true, StartLine: 3, OpenEnd: true})
+	wantCode(t, err, CodeContentAmbiguous)
+	_, err = e.oldNew(EditInput{Old: str("foo"), New: str("F"), HasLines: true, StartLine: 3, EndLine: 3})
+	if err != nil {
+		t.Errorf("with both numbers the moved lines are tried: %+v", err)
+	}
+}

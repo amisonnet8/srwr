@@ -214,3 +214,13 @@ func TestSearchDirectoryFailureHasNoSearchText(t *testing.T) {
 	wantCode(t, err, CodeInvalidRange)
 	e.noContentInFailures("secret-needle")
 }
+
+func TestSearchDirectoryLeavesOutBigFiles(t *testing.T) {
+	e := newEnv(t)
+	e.write("big.txt", "needle\n"+strings.Repeat("x", maxSearchSize))
+	e.write("small.txt", "needle\n")
+	res, err := e.c.Search(SearchInput{File: ".", Search: "needle", Why: "w"})
+	if err != nil || res.Count != 1 || res.Matches[0].File != "small.txt" {
+		t.Errorf("%+v %v", res, err)
+	}
+}

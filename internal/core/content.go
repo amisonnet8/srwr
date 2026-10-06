@@ -205,6 +205,13 @@ func locateOld(st *tape.State, rel, text string, in EditInput) (start, end int, 
 	lines := tape.Lines(text)
 	n := len(lines)
 	old, repl := *in.Old, *in.New
+	if in.OpenStart {
+		in.StartLine = 1
+	}
+	if in.OpenEnd {
+		in.EndLine = n
+	}
+	both := !in.OpenStart && !in.OpenEnd
 
 	// starts[i] is where line i+1 begins in full, which is the lines each with its line break.
 	starts := make([]int, n+1)
@@ -244,7 +251,7 @@ func locateOld(st *tape.State, rel, text string, in EditInput) (start, end int, 
 		}
 		hits = within(in.StartLine, in.EndLine)
 		if len(hits) == 0 {
-			if a, b, ok := correctedFromLook(st, rel, in); ok && a != in.StartLine && a >= 1 && b <= n && b >= a {
+			if a, b, ok := correctedFromLook(st, rel, in); both && ok && a != in.StartLine && a >= 1 && b <= n && b >= a {
 				hits = within(a, b)
 			}
 		}

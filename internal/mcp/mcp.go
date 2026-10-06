@@ -330,10 +330,11 @@ func editInputOf(a editItemArgs) (in core.EditInput, msg string) {
 		return in, "give old and new, or newText; not both"
 	case !hasOld && a.NewText == nil:
 		return in, "missing required input: newText (or old and new)"
-	case (a.StartLine == nil) != (a.EndLine == nil):
+	case (a.StartLine == nil) != (a.EndLine == nil) && !hasOld:
 		return in, "give both startLine and endLine, or neither"
 	}
-	in = core.EditInput{Expect: a.Expect, HasLines: a.StartLine != nil, Old: a.Old, New: a.New}
+	in = core.EditInput{Expect: a.Expect, HasLines: a.StartLine != nil || a.EndLine != nil, Old: a.Old, New: a.New,
+		OpenStart: hasOld && a.StartLine == nil && a.EndLine != nil, OpenEnd: hasOld && a.EndLine == nil && a.StartLine != nil}
 	if a.NewText != nil {
 		in.NewText = *a.NewText
 	}
@@ -346,8 +347,11 @@ func editInputOf(a editItemArgs) (in core.EditInput, msg string) {
 	if a.Insert != nil {
 		in.Insert = *a.Insert
 	}
-	if in.HasLines {
-		in.StartLine, in.EndLine = *a.StartLine, *a.EndLine
+	if a.StartLine != nil {
+		in.StartLine = *a.StartLine
+	}
+	if a.EndLine != nil {
+		in.EndLine = *a.EndLine
 	}
 	if a.Selection != nil && strings.TrimSpace(*a.Selection) != "" && (a.File != nil || in.HasLines || a.Expect != nil || hasOld) {
 		return in, "give selection, or file with expect (or old and new); not both"

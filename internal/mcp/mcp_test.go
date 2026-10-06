@@ -602,3 +602,16 @@ func TestEditsFailureSaysNothingChanged(t *testing.T) {
 		t.Error(body)
 	}
 }
+
+func TestEditOldWithOneLineNumber(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "a.txt"), []byte("foo\nb\nfoo\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	r := serve(t, dir,
+		toolCall(1, "edit", `{"file":"a.txt","startLine":2,"old":"foo","new":"F","why":"w"}`),
+		toolCall(2, "edit", `{"file":"a.txt","startLine":1,"expect":"foo","newText":"x","why":"w"}`))
+	if !strings.Contains(r[0], `\"ok\":true`) || !strings.Contains(r[1], "give both startLine and endLine") {
+		t.Error(r)
+	}
+}

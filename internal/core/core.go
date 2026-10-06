@@ -62,6 +62,10 @@ type EditInput struct {
 	// Insert or NewText. Neither goes on the tape.
 	Old *string
 	New *string
+	// With Old, one of the line numbers is enough: OpenStart (no startLine) means from line 1, OpenEnd (no endLine) to the last line.
+	// HasLines is then true, and the number not given is 0.
+	OpenStart bool
+	OpenEnd   bool
 
 	// Insert, "after" or "before", keeps the range chosen (by the token, or by File and Expect) and puts NewText after or before it.
 	Insert string
@@ -280,7 +284,7 @@ func checkOld(in EditInput, byFile bool) *Error {
 		return newError(CodeInvalidInput, "old and new must not contain CR (line breaks are LF only)")
 	case *in.Old == *in.New:
 		return newError(CodeInvalidInput, "old and new are the same: nothing would change")
-	case in.HasLines && in.EndLine < in.StartLine:
+	case in.HasLines && !in.OpenStart && !in.OpenEnd && in.EndLine < in.StartLine:
 		return newError(CodeInvalidInput, "with old, startLine and endLine are the lines to look in: give at least one line")
 	}
 	return nil

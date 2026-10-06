@@ -164,3 +164,36 @@ func TestEditsWithOldNew(t *testing.T) {
 	}
 	e.checkTape()
 }
+
+func TestEditOldNewOneSidedLines(t *testing.T) {
+	file := "foo\nb\nfoo\nc\nfoo\n"
+	cases := []struct {
+		name string
+		in   EditInput
+		want string
+		code string
+	}{
+		{"startLine only: to the end", EditInput{HasLines: true, StartLine: 4, OpenEnd: true}, "foo\nb\nfoo\nc\nF\n", ""},
+		{"endLine only: from the top", EditInput{HasLines: true, EndLine: 2, OpenStart: true}, "F\nb\nfoo\nc\nfoo\n", ""},
+		{"startLine only, still two places", EditInput{HasLines: true, StartLine: 2, OpenEnd: true}, "", CodeContentAmbiguous},
+		{"startLine only, past the end: not in the lines, found in the file as a whole", EditInput{HasLines: true, StartLine: 6, OpenEnd: true}, "", CodeInvalidRange},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			e := newEnv(t)
+			e.write("f.txt", file)
+			c.in.Old, c.in.New = str("foo"), str("F")
+			_, err := e.oldNew(c.in)
+			if c.code != "" {
+				wantCode(t, err, c.code)
+				return
+			}
+			if err != nil {
+				t.Fatalf("err = %+v", err)
+			}
+			if got := e.read("f.txt"); got != c.want {
+				t.Errorf("file = %q", got)
+			}
+		})
+	}
+}

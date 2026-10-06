@@ -198,6 +198,9 @@ func (c *Core) editsIn(tx *session.Tx, items []EditInput, byFile []bool, rels []
 			Above: rangeLines(final, st.a-contextLines, st.a-1),
 			Below: rangeLines(final, st.newEnd+1, st.newEnd+contextLines),
 		}
+		if st.b < st.a {
+			res.Edits[st.idx].Hint = touchHint(final, st.a, st.newEnd)
+		}
 	}
 	return res, EditInput{}, nil
 }

@@ -452,12 +452,42 @@ func (c *Core) writeEdit(tx *session.Tx, rel string, t target, a, b int, newText
 	if err != nil {
 		return nil, err
 	}
-	return &EditResult{
+	res := &EditResult{
 		Selection: sel, StartLine: a, EndLine: newEnd,
 		Lines: rangeLines(newText, a, newEnd),
 		Above: rangeLines(newText, a-contextLines, a-1),
 		Below: rangeLines(newText, newEnd+1, newEnd+contextLines),
-	}, nil
+	}
+	if b < a {
+		res.Hint = touchHint(newText, a, newEnd)
+	}
+	return res, nil
+}
+
+// touchHint is what an insertion of lines a..end of text is told when its first (last) line sits against a line of the same
+// indentation with no empty line between: two blocks (functions, paragraphs) put together are usually meant to be apart. The
+// insertion is at least 2 lines; a single line is not a block.
+func touchHint(text string, a, end int) string {
+	if end-a < 1 {
+		return ""
+	}
+	lines := tape.Lines(text)
+	indent := func(l string) int { return len(l) - len(strings.TrimLeft(l, " \t")) }
+	touches := func(in, next int) bool { // line numbers; next is the line outside the insertion
+		if next < 1 || next > len(lines) {
+			return false
+		}
+		x, y := lines[in-1], lines[next-1]
+		return strings.TrimSpace(x) != "" && strings.TrimSpace(y) != "" && indent(x) == indent(y)
+	}
+	var msgs []string
+	if touches(a, a-1) {
+		msgs = append(msgs, "The inserted lines touch the line above with no empty line between. If they are a separate block, start newText with an empty line.")
+	}
+	if touches(end, end+1) {
+		msgs = append(msgs, "The inserted lines touch the line below with no empty line between. If they are a separate block, end newText with an empty line.")
+	}
+	return strings.Join(msgs, " ")
 }
 
 // observeTarget records what Observe finds. For a file that is gone it then reports file_not_found.

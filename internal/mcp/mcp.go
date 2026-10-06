@@ -254,6 +254,7 @@ type editItemOK struct {
 	Lines     []string `json:"lines"`
 	Above     []string `json:"above"`
 	Below     []string `json:"below"`
+	Hint      string   `json:"hint,omitempty"`
 }
 
 type editOK struct {
@@ -315,7 +316,7 @@ func (s *Server) callEdits(a editArgs) toolResult {
 	}
 	out := editsOK{OK: true, Edits: make([]editItemOK, len(res.Edits))}
 	for i, r := range res.Edits {
-		out.Edits[i] = editItemOK{Selection: r.Selection, StartLine: r.StartLine, EndLine: r.EndLine, Lines: r.Lines, Above: r.Above, Below: r.Below}
+		out.Edits[i] = editItemOK{Selection: r.Selection, StartLine: r.StartLine, EndLine: r.EndLine, Lines: r.Lines, Above: r.Above, Below: r.Below, Hint: r.Hint}
 	}
 	return success(out)
 }

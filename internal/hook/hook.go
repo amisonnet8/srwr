@@ -49,6 +49,34 @@ func (n *flexInt) UnmarshalJSON(b []byte) error {
 // several files): look returns the same lines with a token for edit.
 const LookAdvice = "srwr: to read part of a file and then edit it, call look (with search, or with startLine and endLine): it returns those lines with a selection token that edit takes as it is."
 
+// OutsideAdvice is what the agent is told after a Bash command made or changed files: they are on the tape as changes made outside
+// srwr, with no why. It is calm on purpose: files a tool writes (a generator, a formatter) are fine as they are. It is empty when
+// the command changed nothing.
+func OutsideAdvice(o core.OutsideChanges) string {
+	var parts []string
+	if s := nameList(o.Created); s != "" {
+		parts = append(parts, "created "+s)
+	}
+	if s := nameList(o.Changed); s != "" {
+		parts = append(parts, "changed "+s)
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	return "srwr: this command " + strings.Join(parts, " and ") + ". They are on the tape as changes made outside srwr, with no why. When you write a file yourself, new (a new file) or edit (a change) records why with it; files a tool writes (a generator, a formatter) are fine as they are."
+}
+
+// nameList names up to 5 files, and counts the rest.
+func nameList(names []string) string {
+	if len(names) == 0 {
+		return ""
+	}
+	if len(names) > 5 {
+		return strings.Join(names[:5], ", ") + fmt.Sprintf(" and %d more", len(names)-5)
+	}
+	return strings.Join(names, ", ")
+}
+
 // Run records one hook call. root is the workspace. The returned notes say what was left out and why.
 func Run(stdin io.Reader, c *core.Core) (notes []string, err error) {
 	notes, _, err = RunWithAdvice(stdin, c)
@@ -69,10 +97,15 @@ func RunWithAdvice(stdin io.Reader, c *core.Core) (notes, advice []string, err e
 	if len(req.Looks) == 0 && req.Edit == nil && !req.ObserveAll {
 		return notes, nil, nil
 	}
-	more, err := c.Hook(req)
+	more, outside, err := c.HookChanges(req)
 	notes = append(notes, more...)
 	if err == nil && len(notes) == 0 && len(req.Looks) == 1 && readsOneFile(in) {
 		advice = []string{LookAdvice}
+	}
+	if err == nil && in.Tool == "Bash" {
+		if a := OutsideAdvice(outside); a != "" {
+			advice = append(advice, a)
+		}
 	}
 	return notes, advice, err
 }

@@ -3,6 +3,7 @@ package hook
 import (
 	"encoding/json"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -356,5 +357,34 @@ func TestLookAdvice(t *testing.T) {
 				t.Errorf("advice = %q, want advice %v", got, tc.want)
 			}
 		})
+	}
+}
+
+// After a Bash command that made or changed files the agent is told, calmly; after one that changed nothing, or a Read, it is not.
+func TestOutsideAdvice(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git is not installed")
+	}
+	e := newEnv(t)
+	if out, err := exec.Command("git", "-C", e.root, "init", "-q").CombinedOutput(); err != nil { //nolint:gosec // git in a temporary directory
+		t.Fatalf("git init: %v\n%s", err, out)
+	}
+	e.write("a.go", "a\nb\n")
+	bash := func(cmd string) []string { return e.advice("Bash", map[string]any{"command": cmd}, map[string]any{"stdout": ""}) }
+	e.advice("Read", map[string]any{"file_path": "a.go"}, map[string]any{"type": "text"}) // the tape knows a.go
+	if got := bash("ls"); len(got) != 0 {
+		t.Errorf("a command that changed nothing: %q", got)
+	}
+	e.write("a.go", "a\nB\n")
+	e.write("gen.go", "x\n")
+	got := bash("go generate")
+	if len(got) != 1 || !strings.Contains(got[0], "created gen.go and changed a.go") || !strings.Contains(got[0], "fine as they are") {
+		t.Errorf("advice = %q", got)
+	}
+	if got := bash("ls"); len(got) != 0 {
+		t.Errorf("the same changes again: %q", got)
+	}
+	if a := OutsideAdvice(core.OutsideChanges{Created: []string{"1", "2", "3", "4", "5", "6", "7"}}); !strings.Contains(a, "created 1, 2, 3, 4, 5 and 2 more.") {
+		t.Errorf("advice = %q", a)
 	}
 }

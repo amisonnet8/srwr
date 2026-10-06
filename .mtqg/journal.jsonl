@@ -737,3 +737,4 @@
 {"id":"9d914e0f9390460bac6e9efef4162c5f","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-06T02:28:09Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"e74e6fd81467498686fccd5132ed4f6d","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-06T02:28:09Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"812e3e59fd654b6c91d1c94498f00029","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-10-06T02:28:09Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"c28e50ebba0146a6aef662ef668198ff","op":"create","type":"memo","text":"v0.1.9 を公開した（2026-10-06）。タグ v0.1.9、GitHub Release（Assets 9個、checksum と publish-check OK）、Marketplace に srwr-view 0.1.9 をアップロード。実験コンテナは go install github.com/amisonnet8/srwr/cmd/srwr@v0.1.9 で入れ、srwr --version で確かめる。次は実験8（mtqg/ の手引きに brief・insert start/end・ディレクトリ search・old の片方の行番号を書き足す案あり）","v":1,"ts":"2026-10-06T02:33:57Z","author":{"kind":"ai","name":"claude-code"}}

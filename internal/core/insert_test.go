@@ -121,3 +121,53 @@ func TestInsertIsRefused(t *testing.T) {
 		})
 	}
 }
+
+func TestInsertStartAndEnd(t *testing.T) {
+	cases := []struct {
+		name, file string
+		in         EditInput
+		want       string
+		code       string
+	}{
+		{name: "end", file: "l1\nl2\n", in: EditInput{NewText: "new", Insert: "end"}, want: "l1\nl2\nnew\n"},
+		{name: "start", file: "l1\nl2\n", in: EditInput{NewText: "new", Insert: "start"}, want: "new\nl1\nl2\n"},
+		{name: "end of an empty file", file: "", in: EditInput{NewText: "new", Insert: "end"}, want: "new\n"},
+		{name: "empty newText is an empty line", file: "l1\n", in: EditInput{Insert: "end"}, want: "l1\n\n"},
+		{name: "with expect", file: "l1\n", in: EditInput{NewText: "n", Insert: "end", Expect: str("l1")}, code: CodeInvalidInput},
+		{name: "with lines", file: "l1\n", in: EditInput{NewText: "n", Insert: "start", HasLines: true, StartLine: 1, EndLine: 1}, code: CodeInvalidInput},
+		{name: "with a token", file: "l1\n", in: EditInput{NewText: "n", Insert: "start", Selection: "sel_x"}, code: CodeInvalidInput},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			e := newEnv(t)
+			e.write("f.txt", c.file)
+			c.in.File, c.in.Why = "f.txt", "w"
+			_, err := e.c.Edit(c.in)
+			if c.code != "" {
+				wantCode(t, err, c.code)
+				return
+			}
+			if err != nil {
+				t.Fatalf("err = %+v", err)
+			}
+			if got := e.read("f.txt"); got != c.want {
+				t.Errorf("file = %q, want %q", got, c.want)
+			}
+		})
+	}
+}
+
+func TestEditsInsertStartAndEnd(t *testing.T) {
+	e := newEnv(t)
+	e.write("f.txt", "l1\nl2\n")
+	_, err := e.c.Edits(EditsInput{Why: "w", Edits: []EditInput{
+		{File: "f.txt", NewText: "top", Insert: "start"},
+		{File: "f.txt", NewText: "bottom", Insert: "end"},
+	}})
+	if err != nil {
+		t.Fatalf("err = %+v", err)
+	}
+	if got := e.read("f.txt"); got != "top\nl1\nl2\nbottom\n" {
+		t.Errorf("file = %q", got)
+	}
+}

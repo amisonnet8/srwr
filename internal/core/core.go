@@ -250,8 +250,10 @@ func checkEdit(in EditInput) (byFile bool, rel string, cerr *Error) {
 		return false, "", newError(CodeInvalidInput, "newText must not contain CR (line breaks are LF only)")
 	}
 	switch {
-	case in.Insert != "" && in.Insert != InsertAfter && in.Insert != InsertBefore:
-		return false, "", newError(CodeInvalidInput, "insert must be \"after\" or \"before\"")
+	case in.Insert != "" && in.Insert != InsertAfter && in.Insert != InsertBefore && in.Insert != InsertStart && in.Insert != InsertEnd:
+		return false, "", newError(CodeInvalidInput, "insert must be \"after\", \"before\", \"start\" or \"end\"")
+	case (in.Insert == InsertStart || in.Insert == InsertEnd) && (!byFile || in.HasLines || in.Expect != nil):
+		return false, "", newError(CodeInvalidInput, "insert %q puts newText at the start (or end) of the file: give file and newText only, no selection, expect or line numbers", in.Insert)
 	case in.Insert != "" && in.HasLines && in.EndLine == in.StartLine-1:
 		return false, "", newError(CodeInvalidInput, "with insert, point at lines to put the text next to (an empty range has none): give expect, and startLine and endLine of those lines")
 	}
@@ -380,6 +382,13 @@ func (c *Core) resolveFile(tx *session.Tx, rel string, in EditInput, seen map[st
 		}
 		return editPlan{rel: rel, t: t, a: a, b: b, put: &put}, nil
 	}
+	if in.Insert == InsertStart || in.Insert == InsertEnd {
+		n := len(tape.Lines(t.text))
+		if in.Insert == InsertStart {
+			return editPlan{rel: rel, t: t, a: 1, b: 0}, nil
+		}
+		return editPlan{rel: rel, t: t, a: n + 1, b: n}, nil
+	}
 	a, b, cerr := locateEdit(tx.State(), rel, t.text, in)
 	if cerr != nil {
 		return editPlan{}, cerr
@@ -400,6 +409,8 @@ func putIn(in EditInput) string {
 const (
 	InsertAfter  = "after"
 	InsertBefore = "before"
+	InsertStart  = "start" // at the top of the file
+	InsertEnd    = "end"   // at the bottom of the file
 )
 
 // insertAt turns the range a..b to keep into the empty range where the new text goes: just after b, or just before a.

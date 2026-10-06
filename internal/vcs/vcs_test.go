@@ -344,7 +344,7 @@ func TestListFilesWithoutGit(t *testing.T) {
 	write(t, dir, "sub/b.go", "b\n")
 	write(t, dir, ".hidden/c.go", "c\n")
 	// A temporary directory is not under git, unless the machine's temp directory is in a work tree.
-	if out, err := exec.Command("git", "-C", dir, "rev-parse").CombinedOutput(); err == nil {
+	if out, err := exec.Command("git", "-C", dir, "rev-parse").CombinedOutput(); err == nil { //nolint:gosec // git in a temporary directory
 		t.Skipf("under git: %s", out)
 	}
 	all, more := ListFiles(dir, ".")

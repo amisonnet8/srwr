@@ -94,6 +94,7 @@ Claude Code の hook から呼ばれ、AI が持つ既存のツールの操作�
 - パイプは先頭のコマンドだけを見る。`$( )`・書き込みのリダイレクト・`sed -i`・`tail -f`・`-n` なしの `grep` は記録しない
 - hook が記録したコマは、`why` が `null` で表示される（`why` の行が出ない）。範囲トークンは持たない（`selection`・`from` は `null`）。`srwr mcp` が先に発行したトークンは、hook の `edit` のあとも、行番号が補正されて使える
 - **1つのファイルの読み取りを記録したあと**（Read、または Bash の `cat`・`nl`・`head`・`tail`・`sed -n`。複数ファイルの検索や `grep -n` では出さない）、hook は AI に、`look`（`search`、または `startLine` と `endLine`）を使うよう1行で伝える。同じ行が `edit` に渡せる範囲トークンつきで返るため。`PostToolUse` の hook の JSON を標準出力に書き（`{"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": "…"}}`）、終了コードは 0。読み取りを記録しなかったときは何も書かない
+- **Bash のコマンドがファイルを作った・変えたあと**（git が数える新しいファイルと、テープが内容を持っていて今は違うファイル）、同じ JSON にもう1行が付く：そのファイル（5つまで名前、あとは数）、srwr の外での変更として `why` なしでテープにあること、自分でファイルを書くときは `new`・`edit` なら `why` が残ること、ツール（ジェネレーター・整形）が書くファイルはそのままでよいこと。何も変えなかったときは何も書かない
 
 ## srwr view-server
 

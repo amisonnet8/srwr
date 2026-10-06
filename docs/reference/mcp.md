@@ -40,9 +40,10 @@ Looks at a range, and returns a **selection token** for editing that range with 
 | `selection` | The selection token. The AI passes it to `edit` as it is ([what the token is](../design/token.md)) |
 | `startLine`, `endLine` in the output | The range that was selected (when `expect` found it, this is where) |
 | `lines` | The current content of the range. Always returned |
+| `lineCount`, `note` in the output | Only when an `endLine` past the end of the file was cut to the last line: how many lines the file has, and a sentence that says so |
 
 - **A place to insert**: an empty range with `endLine = startLine - 1` means "just before line `startLine`". For example `startLine: 13, endLine: 12` is between lines 12 and 13. To append to the end of the file, `startLine = number of lines + 1`
-- Conditions of the range: `1 ≤ startLine ≤ number of lines + 1`, `startLine - 1 ≤ endLine ≤ number of lines`. Outside them, `invalid_range`
+- Conditions of the range: `1 ≤ startLine ≤ number of lines + 1`, `startLine - 1 ≤ endLine ≤ number of lines`. Outside them, `invalid_range`. **One exception, since a look only reads:** an `endLine` past the end of the file, with a `startLine` that is in the file (or just after it), is cut to the last line, and the result says so (`lineCount`, `note`). The tape holds the range that was looked at. `edit` does not do this
 - A path that points outside the workspace (`../`, an absolute path) is also `invalid_range`
 
 ### Checking the content (`expect`)
@@ -72,6 +73,7 @@ Looks at a range, and returns a **selection token** for editing that range with 
   { "selection": "sel_…", "startLine": 7, "endLine": 7, "lines": ["\tcleanup()"], "above": ["\tcheck()", "\trun()"], "below": ["}"] } ] }
 ```
 
+- **A directory**: `file` may be a directory (`"."` is the whole workspace) with `search`. Every file below it that git lists (the tracked ones and the new ones it does not ignore; without git, every file in directories whose names do not begin with a dot) is searched, in the order of their paths, and each match has its `file`. Files that are not recorded, not text, or bigger than 1 MiB are left out without a word. At most 5000 files are searched (`note` says when there were more). The 20 matches are 20 in all, and `count` is the number of all lines that hold the text. Only the files that have a match get a snapshot on the tape, besides the looks. `file` that is not a directory or a file that exists is `file_not_found`, as before
 - `search` is plain text (not a regular expression), in one line (a line break is `invalid_input`; so is an empty text), and capital letters and spaces count. A line that holds it more than once is one match
 - Each match is **a `look` of that one line**, with its own `selection` (to pass to `edit` as it is), and `above` and `below` (up to 2 lines of the file each). The result is in line order. `count` is how many lines hold the text. At most 20 matches are returned and put on the tape; `more` is how many lines were left out (it is left out when none). No match is not an error: `matches` is `[]` and nothing is written to the tape
 - With `startLine`, `endLine` or `expect`, the call is `invalid_input`. The text searched for is not written to the tape. The same files are refused as for any `look`
@@ -94,11 +96,12 @@ Changes the range to new text, in one call. An insertion is a change of an empty
 | `file`, `startLine`, `endLine`, `expect` | Without a token: the file, the range as the AI saw it (both line numbers, or neither) and the lines that range holds now, joined with `\n` (as in `look`). See below |
 | `old`, `new` | Instead of `expect` and `newText`, to change a part of a line: with `file`, the text `old` that is in the file in one place only, and `new` that takes its place. See below. Not with `selection`, `expect`, `newText` or `insert` |
 | `newText` | The text after the replacement. `""` is a deletion |
-| `insert` | Optional, `"after"` or `"before"`. Keep the range (the token's, or the lines of `expect`) and put `newText` after (before) it, instead of replacing it. An empty `newText` puts one empty line |
+| `insert` | Optional, `"after"` or `"before"`. Keep the range (the token's, or the lines of `expect`) and put `newText` after (before) it, instead of replacing it. An empty `newText` puts one empty line. `"start"` or `"end"`: with `file` and `newText` only, put `newText` at the top (bottom) of the file |
+| `brief` | Optional, `true`. The result has only `selection`, `startLine`, `endLine` (and `hint`): no `lines`, `above`, `below`. For many edits when they need not be read back. It works for `edits` too. The default is as before |
 | `why` | Why it changes it this way |
 | `selection` in the output | A new token for **the range after the replacement**. To go on fixing the same place, it can be used without calling `look` again |
 | `lines` in the output | The content of the range after the replacement (`[]` for a deletion) |
-| `hint` in the output | Only when this edit follows an edit of the same file with nothing between them on the tape: a line that tells of `edits`. It is not on the tape |
+| `hint` in the output | A line, in two cases. When this edit follows an edit of the same file with nothing between them on the tape: it tells of `edits` (a single edit only). When lines of 2 or more were inserted with no empty line between them and the line above (or below), which is not empty and has the same indentation: it says so, since two blocks put together (functions, paragraphs) are usually meant to be apart; start (end) `newText` with an empty line. srwr does not add the empty line itself, because what a block is differs by language. In `edits` the second one is in the item's result. A hint is not on the tape |
 | `above`, `below` in the output | Up to 2 lines of the file as it is now, right above and right below the new range (fewer near the start or the end of the file, `[]` if none). They are **not** the old content: what was replaced is not returned (the AI has just given it as `expect`). With them the result can be checked without reading the file again |
 
 **How the lines of `newText` are counted**: `""` is 0 lines (a deletion). Otherwise it is split into lines at `\n`, and if it ends with `\n` the last empty element is not counted (`"x\n"` is 1 line, `"\n"` is one empty line). The range of the returned token follows this count.
@@ -119,6 +122,8 @@ An **insertion** (`endLine = startLine - 1`, no `expect`) has no lines to check.
 
 **`insert`** (`"after"` or `"before"`) inserts next to lines without needing them to be unchanged since a look: point at the lines as usual (a token, or `file` and `expect`, which is checked), and they are kept while `newText` goes just after (before) them. The result (`selection`, `startLine`, `endLine`, `lines`, `above`, `below`) is about the new lines, and the tape holds an `edit` of an empty range, as for any insertion. `insert` is `invalid_input` with an empty range (there are no lines to point at), and with an `insert` other than `"after"` and `"before"`. An empty `newText` with `insert` puts **one empty line** (without `insert` it deletes).
 
+**`insert: "start"` and `"end"`** put `newText` at the top or the bottom of the file, with `file` and `newText` and nothing else (no `selection`, `expect` or line numbers: `invalid_input`). No look is needed and the file may have changed, since the place cannot move. The tape holds an `edit` of an empty range (`1..0`, or `n+1..n`), as for any insertion. They can be items of `edits`; two at one place overlap.
+
 The tape holds the same `edit` as for a token, with `from` of `null`. `expect` is not written to the tape.
 
 ### A part of a line (`old` and `new`)
@@ -132,6 +137,7 @@ The tape holds the same `edit` as for a token, with `from` of `null`. `expect` i
 
 - `old` must be in the file in **one place** (places that overlap, as `aa` in `aaa`, are two). With line numbers, the lines asked for are searched first, then those lines moved by the changes after the file's last look, then the whole file; the first that has any decides. Zero places is `content_not_found` (with `nearMatches` for places that differ only in spaces or tabs); two or more is `content_ambiguous`, which says the lines: give `startLine` and `endLine`, or more text in `old`.
 - The result is the same as for any edit. The range is the lines `old` touches, whole, and they become what they would be with `new` in the place of `old`. If `old` ends with a line break and `new` does not, the next line joins what follows. On the tape it is the same `edit` as for `expect` (`from` is `null`), with the whole lines as `oldText` and `newText`. `old` and `new` themselves are not written to the tape.
+- With `old`, **one line number is enough**: `startLine` alone looks from that line to the end of the file, `endLine` alone from the top to that line (both are still needed with `expect`). The moved lines of the last look are tried only when both are given.
 - `old` is not empty, `old` and `new` are not the same, neither has CR, and they are not given with `selection`, `expect`, `newText` or `insert` (`invalid_input`). They can be used in the items of `edits`.
 
 Files that cannot be handled: files with line breaks other than LF (CRLF), and binary files. They give `unsupported_file`.
@@ -150,7 +156,7 @@ Files that cannot be handled: files with line breaks other than LF (CRLF), and b
 { "ok": true, "edits": [ { "selection": "sel_…", "startLine": 4, "endLine": 4, "lines": ["…"], "above": ["…"], "below": ["…"] }, … ] }
 ```
 
-- **All or none.** Every range is found first, then every file is written, then the tape. If one item fails, nothing is changed, and the error is the item's own with `edits[2]: ` at the start of its message (`edits[2]` is the third item). A call that is wrong as a whole (no items, more than 50, a `why` that is blank, ranges that overlap) is `invalid_input`
+- **All or none.** Every range is found first, then every file is written, then the tape. If one item fails, nothing is changed, and the error is the item's own with `edits[2]: ` at the start of its message (`edits[2]` is the third item), and it ends with "Nothing was changed: fix that item and send all the items again". A call that is wrong as a whole (no items, more than 50, a `why` that is blank, ranges that overlap) is `invalid_input`
 - **Every range is found as the files are before the call.** So the items do not depend on each other, can be in any order, and an item's `startLine` and `endLine` are the lines as you saw them, not as the other items would leave them
 - **The ranges must not overlap.** Two ranges that share a line, an insertion inside another range (lines `a+1` to `b` of the range `a..b`), and two insertions at one place are `invalid_input` (`edits[0] and edits[1] overlap in a.go`). An insertion just before or just after another range is fine
 - The output has `edits`, one entry for each item **in the order given**. Each is as the output of a single `edit` is, but its lines are those of the file **after the whole call**, and its `selection` can be used as it is
@@ -240,7 +246,7 @@ In the MCP response `isError` is `true`, and the body is the following JSON.
 | `count_mismatch` | `replace` found a number of places other than `count` | Read how many each file has, and call `replace` again with the right `count` (or use `look`). If `nearMatches` is there, copy `old` from it |
 | `use_edit` | `replace` was used with a `count` of 1 for a text that is in one place only | Call `edit` as `actual.edit` says (add `why`) |
 | `ignored_file` | `look`, `edit`, `replace` or `new` was used on a file that is not recorded | srwr cannot handle it. Ask the user |
-| `invalid_input` | A required input is missing, has the wrong type, or `why` is empty; `file` is empty or has a NUL; only one of `startLine` and `endLine` is given, or none of them and no `expect`; `selection` is blank; `newText` has a CR; for `look`, `search` is empty, has a line break, or is given with `startLine`, `endLine` or `expect`; for `edit` with `edits`, there are no items or more than 50, ranges overlap, or an item or the call has one of the faults above; for `replace`, `files`, `old` or `count` is missing or empty, a path is given twice, `old` or `new` has a CR; for `new`, `content` is missing or has a CR, or a directory above the file is a file | Fix the input |
+| `invalid_input` | A required input is missing, has the wrong type (the message names the input and the form it wants: `edits must be an array of objects, got string. Pass it as JSON, not as a string that holds JSON`), or `why` is empty; `file` is empty or has a NUL; only one of `startLine` and `endLine` is given, or none of them and no `expect`; `selection` is blank; `newText` has a CR; for `look`, `search` is empty, has a line break, or is given with `startLine`, `endLine` or `expect`; for `edit` with `edits`, there are no items or more than 50, ranges overlap, or an item or the call has one of the faults above; for `replace`, `files`, `old` or `count` is missing or empty, a path is given twice, `old` or `new` has a CR; for `new`, `content` is missing or has a CR, or a directory above the file is a file | Fix the input |
 | `unsupported_file` | CRLF or binary | — |
 | `internal_error` | An I/O error and the like | — |
 

@@ -54,7 +54,7 @@ func List() []Tool {
 				"Or leave out startLine and endLine and pass only expect: srwr finds those consecutive lines (exactly one place is needed; give line numbers if they appear in more than one). " +
 				"To point at a place to insert, use an empty range with endLine = startLine - 1 (just before line startLine; to append to the end of the file, startLine = number of lines + 1). " +
 				"An endLine past the end of the file is cut to the last line (the result has lineCount and a note); a startLine past the end is an error. " +
-					"Only existing files can be selected; create a new file with new. " +
+				"Only existing files can be selected; create a new file with new. " +
 				"why is required: say what you look for or why you look here (the reason, not a rephrasing of what you do), in the language of the conversation with the user.",
 			InputSchema: map[string]any{
 				"type": "object",

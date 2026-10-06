@@ -149,3 +149,68 @@ func TestSearchIsRefused(t *testing.T) {
 		})
 	}
 }
+
+func TestSearchDirectory(t *testing.T) {
+	e := newEnv(t)
+	e.write("a.go", "x\nneedle 1\n")
+	e.write("sub/b.go", "needle 2\nneedle 3\n")
+	e.write("sub/none.go", "nothing\n")
+	e.write(".env", "needle secret\n")
+	e.write("bin.dat", "needle\x00\n")
+	e.write("crlf.txt", "needle\r\n")
+
+	res, err := e.c.Search(SearchInput{File: ".", Search: "needle", Why: "w"})
+	if err != nil {
+		t.Fatalf("err = %+v", err)
+	}
+	var got []string
+	for _, m := range res.Matches {
+		got = append(got, fmt.Sprintf("%s:%d", m.File, m.StartLine))
+	}
+	if want := "a.go:2 sub/b.go:1 sub/b.go:2"; strings.Join(got, " ") != want || res.Count != 3 {
+		t.Errorf("matches = %v, count = %d, want %s", got, res.Count, want)
+	}
+	// Only the files with a match are on the tape: a snapshot and a look per match, and nothing for the other files.
+	files := map[string]int{}
+	for _, ev := range e.events() {
+		if ev.File != "" {
+			files[ev.File]++
+		}
+	}
+	if len(files) != 2 || files["a.go"] != 2 || files["sub/b.go"] != 3 {
+		t.Errorf("tape files = %v", files)
+	}
+	// A subdirectory, with a slash at the end.
+	if res, err = e.c.Search(SearchInput{File: "sub/", Search: "needle", Why: "w"}); err != nil || res.Count != 2 {
+		t.Errorf("sub: %+v %v", res, err)
+	}
+	// Nothing found writes nothing and is not an error.
+	if res, err = e.c.Search(SearchInput{File: ".", Search: "zzz", Why: "w"}); err != nil || res.Count != 0 {
+		t.Errorf("none: %+v %v", res, err)
+	}
+	// A match token works with edit.
+	res, _ = e.c.Search(SearchInput{File: "sub", Search: "needle 3", Why: "w"})
+	if _, err := e.c.Edit(EditInput{Selection: res.Matches[0].Selection, NewText: "done", Why: "w"}); err != nil {
+		t.Errorf("edit: %+v", err)
+	}
+}
+
+func TestSearchDirectoryIsCutAtTwentyMatches(t *testing.T) {
+	e := newEnv(t)
+	e.write("a.txt", strings.Repeat("needle\n", 15))
+	e.write("b.txt", strings.Repeat("needle\n", 15))
+	res, err := e.c.Search(SearchInput{File: ".", Search: "needle", Why: "w"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Count != 30 || len(res.Matches) != maxSearch || res.Matches[19].File != "b.txt" {
+		t.Errorf("count = %d, matches = %d", res.Count, len(res.Matches))
+	}
+}
+
+func TestSearchDirectoryFailureHasNoSearchText(t *testing.T) {
+	e := newEnv(t)
+	_, err := e.c.Search(SearchInput{File: "../x", Search: "secret-needle", Why: "w"})
+	wantCode(t, err, CodeInvalidRange)
+	e.noContentInFailures("secret-needle")
+}

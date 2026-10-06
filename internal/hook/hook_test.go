@@ -370,7 +370,9 @@ func TestOutsideAdvice(t *testing.T) {
 		t.Fatalf("git init: %v\n%s", err, out)
 	}
 	e.write("a.go", "a\nb\n")
-	bash := func(cmd string) []string { return e.advice("Bash", map[string]any{"command": cmd}, map[string]any{"stdout": ""}) }
+	bash := func(cmd string) []string {
+		return e.advice("Bash", map[string]any{"command": cmd}, map[string]any{"stdout": ""})
+	}
 	e.advice("Read", map[string]any{"file_path": "a.go"}, map[string]any{"type": "text"}) // the tape knows a.go
 	if got := bash("ls"); len(got) != 0 {
 		t.Errorf("a command that changed nothing: %q", got)

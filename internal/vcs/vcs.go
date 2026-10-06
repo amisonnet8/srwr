@@ -6,8 +6,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io/fs"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"slices"
+	"sort"
 	"strings"
 	"time"
 )
@@ -118,4 +122,51 @@ func NewFiles(root string) ([]string, error) {
 		}
 	}
 	return files, nil
+}
+
+// MaxListed is how many files ListFiles returns at most.
+const MaxListed = 5000
+
+// ListFiles lists the files below dir (a slash-separated path relative to root; "." for all of it) that git tracks or does not
+// ignore, sorted, as paths relative to root. What is inside .srwr/ is left out. Outside a git work tree (or without git) it walks the
+// directory instead, leaving out the directories whose names begin with a dot. more is how many files there were beyond MaxListed.
+func ListFiles(root, dir string) (files []string, more int) {
+	ctx, cancel := context.WithTimeout(context.Background(), Timeout)
+	defer cancel()
+	if out, err := git(ctx, root, "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", dir, ":(exclude).srwr"); err == nil {
+		for _, f := range strings.Split(out, "\x00") {
+			if f != "" {
+				files = append(files, f)
+			}
+		}
+		sort.Strings(files)
+		files = slices.Compact(files)
+		return capList(files)
+	}
+	base := filepath.Join(root, filepath.FromSlash(dir))
+	_ = filepath.WalkDir(base, func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return nil //nolint:nilerr // what cannot be read is left out
+		}
+		if d.IsDir() {
+			if p != base && strings.HasPrefix(d.Name(), ".") {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if d.Type().IsRegular() {
+			if rel, err := filepath.Rel(root, p); err == nil {
+				files = append(files, filepath.ToSlash(rel))
+			}
+		}
+		return nil
+	})
+	return capList(files)
+}
+
+func capList(files []string) ([]string, int) {
+	if len(files) > MaxListed {
+		return files[:MaxListed], len(files) - MaxListed
+	}
+	return files, 0
 }

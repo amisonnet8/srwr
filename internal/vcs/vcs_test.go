@@ -317,3 +317,38 @@ func TestNewFiles(t *testing.T) {
 		t.Errorf("sub = %v, %v", sub, err)
 	}
 }
+
+func TestListFiles(t *testing.T) {
+	needGit(t)
+	dir := t.TempDir()
+	runGit(t, dir, "init", "-q")
+	write(t, dir, ".gitignore", "skip.txt\n")
+	write(t, dir, "a.go", "a\n")
+	write(t, dir, "sub/b.go", "b\n")
+	write(t, dir, "skip.txt", "x\n")
+	write(t, dir, ".srwr/key", "k\n")
+	runGit(t, dir, "add", "a.go")
+	all, _ := ListFiles(dir, ".")
+	if got := strings.Join(all, " "); got != ".gitignore a.go sub/b.go" {
+		t.Errorf("all = %q", got)
+	}
+	sub, _ := ListFiles(dir, "sub")
+	if got := strings.Join(sub, " "); got != "sub/b.go" {
+		t.Errorf("sub = %q", got)
+	}
+}
+
+func TestListFilesWithoutGit(t *testing.T) {
+	dir := t.TempDir()
+	write(t, dir, "a.go", "a\n")
+	write(t, dir, "sub/b.go", "b\n")
+	write(t, dir, ".hidden/c.go", "c\n")
+	// A temporary directory is not under git, unless the machine's temp directory is in a work tree.
+	if out, err := exec.Command("git", "-C", dir, "rev-parse").CombinedOutput(); err == nil {
+		t.Skipf("under git: %s", out)
+	}
+	all, more := ListFiles(dir, ".")
+	if got := strings.Join(all, " "); got != "a.go sub/b.go" || more != 0 {
+		t.Errorf("all = %q (%d more)", got, more)
+	}
+}

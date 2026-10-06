@@ -176,6 +176,7 @@ func (s *Server) callLook(raw json.RawMessage) toolResult {
 }
 
 type searchMatchOK struct {
+	File      string   `json:"file,omitempty"`
 	Selection string   `json:"selection"`
 	StartLine int      `json:"startLine"`
 	EndLine   int      `json:"endLine"`
@@ -189,6 +190,7 @@ type searchOK struct {
 	Count   int             `json:"count"`
 	Matches []searchMatchOK `json:"matches"`
 	More    int             `json:"more,omitempty"`
+	Note    string          `json:"note,omitempty"`
 }
 
 // callSearch is look with search: the lines of the file that hold a text, each with a token.
@@ -200,9 +202,9 @@ func (s *Server) callSearch(a lookArgs) toolResult {
 	if cerr != nil {
 		return failure(*cerr)
 	}
-	out := searchOK{OK: true, Count: res.Count, Matches: make([]searchMatchOK, len(res.Matches)), More: res.Count - len(res.Matches)}
+	out := searchOK{OK: true, Count: res.Count, Matches: make([]searchMatchOK, len(res.Matches)), More: res.Count - len(res.Matches), Note: res.Note}
 	for i, m := range res.Matches {
-		out.Matches[i] = searchMatchOK{Selection: m.Selection, StartLine: m.StartLine, EndLine: m.EndLine, Lines: m.Lines, Above: m.Above, Below: m.Below}
+		out.Matches[i] = searchMatchOK{File: m.File, Selection: m.Selection, StartLine: m.StartLine, EndLine: m.EndLine, Lines: m.Lines, Above: m.Above, Below: m.Below}
 	}
 	return success(out)
 }

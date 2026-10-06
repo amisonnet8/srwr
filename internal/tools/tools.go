@@ -53,7 +53,8 @@ func List() []Tool {
 				"Line numbers can be wrong, so pass expect too: the lines the range must hold, joined with \\n. If they differ, the look is refused and the message says where those lines are. expect is whole lines: a part of a line is not found. If a place differs from expect only in spaces or tabs, or holds it only as part of a line, the error has it in nearMatches: copy expect from there. When that is one place, the error also has retry: the arguments of the call to make again (add why). " +
 				"Or leave out startLine and endLine and pass only expect: srwr finds those consecutive lines (exactly one place is needed; give line numbers if they appear in more than one). " +
 				"To point at a place to insert, use an empty range with endLine = startLine - 1 (just before line startLine; to append to the end of the file, startLine = number of lines + 1). " +
-				"Only existing files can be selected; create a new file with new. " +
+				"An endLine past the end of the file is cut to the last line (the result has lineCount and a note); a startLine past the end is an error. " +
+					"Only existing files can be selected; create a new file with new. " +
 				"why is required: say what you look for or why you look here (the reason, not a rephrasing of what you do), in the language of the conversation with the user.",
 			InputSchema: map[string]any{
 				"type": "object",
@@ -62,7 +63,7 @@ func List() []Tool {
 					"startLine": map[string]any{"type": "integer", "minimum": 1, "description": "First line (1-based)"},
 					"endLine":   map[string]any{"type": "integer", "minimum": 0, "description": "Last line (inclusive); startLine - 1 for an empty range. Give both startLine and endLine, or neither"},
 					"expect":    map[string]any{"type": "string", "description": "The lines the range must hold, joined with \\n (whole lines, whitespace counts). Without startLine and endLine, the range is where these lines are"},
-					"search":    map[string]any{"type": "string", "description": "Instead of a range: a text to find in the file (plain text, one line, case counts). Returns every line that holds it, up to 20, each with a token. Not with startLine, endLine or expect"},
+					"search":    map[string]any{"type": "string", "description": "Instead of a range: a text to find in the file (plain text, one line, case counts). Returns every line that holds it, up to 20, each with a token (in a directory, 20 in all, each with its file). Not with startLine, endLine or expect"},
 					"why":       map[string]any{"type": "string", "minLength": 1, "pattern": `\S`, "description": whyDescription},
 				},
 				"required": []string{"file", "why"},

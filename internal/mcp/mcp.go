@@ -225,6 +225,7 @@ type editArgs struct {
 	Old       *string         `json:"old"`
 	New       *string         `json:"new"`
 	Edits     *[]editItemArgs `json:"edits"`
+	Brief     *bool           `json:"brief"`
 	Why       *string         `json:"why"`
 }
 
@@ -255,6 +256,24 @@ type editItemOK struct {
 	Above     []string `json:"above"`
 	Below     []string `json:"below"`
 	Hint      string   `json:"hint,omitempty"`
+}
+
+// briefOK is the result of an edit with brief: where the new range is and its token, without the lines.
+type briefOK struct {
+	Selection string `json:"selection"`
+	StartLine int    `json:"startLine"`
+	EndLine   int    `json:"endLine"`
+	Hint      string `json:"hint,omitempty"`
+}
+
+type briefEditsOK struct {
+	OK    bool      `json:"ok"`
+	Edits []briefOK `json:"edits"`
+}
+
+type briefEditOK struct {
+	OK bool `json:"ok"`
+	briefOK
 }
 
 type editOK struct {
@@ -290,6 +309,9 @@ func (s *Server) callEdit(raw json.RawMessage) toolResult {
 	if cerr != nil {
 		return failure(*cerr)
 	}
+	if a.Brief != nil && *a.Brief {
+		return success(briefEditOK{OK: true, briefOK: briefOK{Selection: res.Selection, StartLine: res.StartLine, EndLine: res.EndLine, Hint: res.Hint}})
+	}
 	return success(editOK{OK: true, Selection: res.Selection, StartLine: res.StartLine, EndLine: res.EndLine,
 		Lines: res.Lines, Above: res.Above, Below: res.Below, Hint: res.Hint})
 }
@@ -313,6 +335,13 @@ func (s *Server) callEdits(a editArgs) toolResult {
 	res, cerr := s.Core.Edits(in)
 	if cerr != nil {
 		return failure(*cerr)
+	}
+	if a.Brief != nil && *a.Brief {
+		b := briefEditsOK{OK: true, Edits: make([]briefOK, len(res.Edits))}
+		for i, r := range res.Edits {
+			b.Edits[i] = briefOK{Selection: r.Selection, StartLine: r.StartLine, EndLine: r.EndLine, Hint: r.Hint}
+		}
+		return success(b)
 	}
 	out := editsOK{OK: true, Edits: make([]editItemOK, len(res.Edits))}
 	for i, r := range res.Edits {

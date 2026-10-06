@@ -615,3 +615,22 @@ func TestEditOldWithOneLineNumber(t *testing.T) {
 		t.Error(r)
 	}
 }
+
+func TestEditBrief(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "a.txt"), []byte("a\nb\nc\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	r := serve(t, dir,
+		toolCall(1, "edit", `{"file":"a.txt","expect":"a","newText":"A","brief":true,"why":"w"}`),
+		toolCall(2, "edit", `{"edits":[{"file":"a.txt","expect":"b","newText":"B"},{"file":"a.txt","expect":"c","newText":"C"}],"brief":true,"why":"w"}`),
+		toolCall(3, "edit", `{"file":"a.txt","expect":"zz","newText":"B","brief":true,"why":"w"}`))
+	for _, i := range []int{0, 1} {
+		if !strings.Contains(r[i], "selection") || strings.Contains(r[i], "lines") || strings.Contains(r[i], "above") {
+			t.Errorf("%d: %s", i, r[i])
+		}
+	}
+	if strings.Count(r[1], "startLine") != 2 || !strings.Contains(r[2], "content_not_found") {
+		t.Error(r[1], r[2])
+	}
+}

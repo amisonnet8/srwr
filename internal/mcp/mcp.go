@@ -5,8 +5,10 @@ package mcp
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"reflect"
 	"slices"
 	"strings"
 
@@ -301,7 +303,7 @@ func (s *Server) callEdits(a editArgs) toolResult {
 	for i, item := range *a.Edits {
 		e, msg := editInputOf(item)
 		if msg != "" {
-			return s.rejectEdit(fmt.Sprintf("edits[%d]: %s", i, msg))
+			return s.rejectEdit(fmt.Sprintf("edits[%d]: %s. Nothing was changed: fix that item and send all the items again", i, msg))
 		}
 		in.Edits[i] = e
 	}
@@ -455,9 +457,46 @@ func decodeArgs(raw json.RawMessage, into any) *core.Error {
 		raw = json.RawMessage("{}")
 	}
 	if err := json.Unmarshal(raw, into); err != nil {
-		return &core.Error{Code: core.CodeInvalidInput, Message: "input has the wrong type: " + err.Error()}
+		return &core.Error{Code: core.CodeInvalidInput, Message: typeMessage(err)}
 	}
 	return nil
+}
+
+// typeMessage says what is wrong with an input that does not decode, in the names of the input (not of Go's types).
+func typeMessage(err error) string {
+	var ute *json.UnmarshalTypeError
+	if errors.As(err, &ute) {
+		field := ute.Field
+		if field == "" {
+			field = "the input"
+		}
+		want := "a value of another type"
+		switch k := ute.Type; {
+		case k == nil:
+		case k.Kind() == reflect.Slice && k.Elem().Kind() == reflect.String:
+			want = "an array of strings"
+		case k.Kind() == reflect.Slice:
+			want = "an array of objects"
+		case k.Kind() == reflect.Struct || k.Kind() == reflect.Map:
+			want = "an object"
+		case k.Kind() == reflect.String:
+			want = "a string"
+		case k.Kind() == reflect.Bool:
+			want = "true or false"
+		case k.Kind() >= reflect.Int && k.Kind() <= reflect.Uint64:
+			want = "an integer"
+		}
+		msg := fmt.Sprintf("%s must be %s, got %s.", field, want, ute.Value)
+		if ute.Value == "string" && strings.HasPrefix(want, "an ") && !strings.HasSuffix(want, "integer") {
+			msg += " Pass it as JSON, not as a string that holds JSON"
+		}
+		return msg
+	}
+	var se *json.SyntaxError
+	if errors.As(err, &se) {
+		return "the input is not valid JSON"
+	}
+	return "the input has the wrong type"
 }
 
 func firstMissing(missing map[string]bool, order ...string) string {

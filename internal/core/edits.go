@@ -71,7 +71,7 @@ type step struct {
 
 func (c *Core) doEdits(in EditsInput) (res *EditsResult, bad EditInput, cerr *Error) {
 	if len(in.Edits) == 0 || len(in.Edits) > maxEdits {
-		return nil, EditInput{}, newError(CodeInvalidInput, "edits must hold 1 to %d edits (it holds %d)", maxEdits, len(in.Edits))
+		return nil, EditInput{}, newError(CodeInvalidInput, "edits must hold 1 to %d edits (it holds %d). Nothing was changed", maxEdits, len(in.Edits))
 	}
 	if err := checkWhy(in.Why); err != nil {
 		return nil, EditInput{}, err
@@ -101,7 +101,7 @@ func (c *Core) doEdits(in EditsInput) (res *EditsResult, bad EditInput, cerr *Er
 
 // inItem says in the message of an error which edit of the call it is about.
 func inItem(i int, e *Error) *Error {
-	e.Message = fmt.Sprintf("edits[%d]: %s", i, e.Message)
+	e.Message = fmt.Sprintf("edits[%d]: %s. Nothing was changed: fix that item and send all the items again", i, strings.TrimSuffix(e.Message, "."))
 	return e
 }
 
@@ -140,7 +140,7 @@ func (c *Core) editsIn(tx *session.Tx, items []EditInput, byFile []bool, rels []
 		for k := 1; k < len(group); k++ {
 			if overlaps(group[k-1], group[k]) {
 				x, y := group[k-1].idx, group[k].idx
-				return nil, EditInput{}, newError(CodeInvalidInput, "edits[%d] and edits[%d] overlap in %s: the ranges of one call must be apart (nothing was changed)",
+				return nil, EditInput{}, newError(CodeInvalidInput, "edits[%d] and edits[%d] overlap in %s: the ranges of one call must be apart. Nothing was changed: fix the items and send all of them again",
 					min(x, y), max(x, y), rel)
 			}
 		}

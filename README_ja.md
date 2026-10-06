@@ -1,3 +1,7 @@
+<h1 align="center">⚠️ v0.2.0 までは実験中です。破壊的な変更が入ります ⚠️</h1>
+
+<p align="center"><b>v0.2.0 までの srwr は実験です。ツール・入力・テープの形式・画面は、予告なく変わることがあり、古いテープが読めなくなることもあります。</b></p>
+
 <p align="center">
   <img src="docs/images/banner.svg" alt="srwr：AI に select と replace だけでファイルを編集させ、すべての操作を理由つきで再生する" width="100%">
 </p>

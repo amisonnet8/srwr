@@ -141,6 +141,8 @@ type lookOK struct {
 	StartLine int      `json:"startLine"`
 	EndLine   int      `json:"endLine"`
 	Lines     []string `json:"lines"`
+	LineCount int      `json:"lineCount,omitempty"`
+	Note      string   `json:"note,omitempty"`
 }
 
 func (s *Server) callLook(raw json.RawMessage) toolResult {
@@ -170,7 +172,7 @@ func (s *Server) callLook(raw json.RawMessage) toolResult {
 	if cerr != nil {
 		return failure(*cerr)
 	}
-	return success(lookOK{OK: true, Selection: res.Selection, StartLine: res.StartLine, EndLine: res.EndLine, Lines: res.Lines})
+	return success(lookOK{OK: true, Selection: res.Selection, StartLine: res.StartLine, EndLine: res.EndLine, Lines: res.Lines, LineCount: res.LineCount, Note: res.Note})
 }
 
 type searchMatchOK struct {

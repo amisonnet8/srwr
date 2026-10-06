@@ -497,7 +497,6 @@ func TestSelectErrors(t *testing.T) {
 	}{
 		{"start 0", LookInput{File: "f.txt", StartLine: 0, EndLine: 1, Why: "w"}, CodeInvalidRange},
 		{"start past the end+1", LookInput{File: "f.txt", StartLine: 5, EndLine: 5, Why: "w"}, CodeInvalidRange},
-		{"end past the end", LookInput{File: "f.txt", StartLine: 1, EndLine: 4, Why: "w"}, CodeInvalidRange},
 		{"end before start-1", LookInput{File: "f.txt", StartLine: 3, EndLine: 1, Why: "w"}, CodeInvalidRange},
 		{"negative", LookInput{File: "f.txt", StartLine: -1, EndLine: 1, Why: "w"}, CodeInvalidRange},
 		{"parent directory", LookInput{File: "../f.txt", StartLine: 1, EndLine: 1, Why: "w"}, CodeInvalidRange},
@@ -904,4 +903,28 @@ func TestReplaceReturnsWhatIsThereNow(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestLookCutsEndLinePastTheEnd(t *testing.T) {
+	e := newEnv(t)
+	e.write("f.txt", "1\n2\n3\n")
+	res, err := e.c.Look(LookInput{File: "f.txt", StartLine: 2, EndLine: 40, Why: "w"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.EndLine != 3 || res.LineCount != 3 || !strings.Contains(res.Note, "endLine 40 is past the end of f.txt (3 lines)") || len(res.Lines) != 2 {
+		t.Errorf("%+v", res)
+	}
+	res, err = e.c.Look(LookInput{File: "f.txt", StartLine: 1, EndLine: 3, Why: "w"})
+	if err != nil || res.Note != "" || res.LineCount != 0 {
+		t.Errorf("%+v %v", res, err)
+	}
+	// With expect, the cut range is what is compared.
+	exp := "2\n3"
+	if _, err := e.c.Look(LookInput{File: "f.txt", StartLine: 2, EndLine: 9, Expect: &exp, Why: "w"}); err != nil {
+		t.Error(err)
+	}
+	// startLine past the end stays an error.
+	_, err = e.c.Look(LookInput{File: "f.txt", StartLine: 6, EndLine: 9, Why: "w"})
+	wantCode(t, err, CodeInvalidRange)
 }

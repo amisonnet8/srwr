@@ -5,6 +5,7 @@ package core
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/amisonnet8/srwr/internal/session"
@@ -36,6 +37,10 @@ type LookResult struct {
 	StartLine int
 	EndLine   int
 	Lines     []string
+
+	// Note and LineCount are given when an endLine past the end of the file was cut to the end.
+	Note      string
+	LineCount int
 }
 
 // EditInput is the input of edit: a selection token, or a file with where to edit it. NewText and Why are always given.
@@ -154,6 +159,12 @@ func (c *Core) lookIn(tx *session.Tx, rel string, in LookInput) (*LookResult, er
 		return nil, err
 	}
 
+	// A look only reads, so an endLine past the end of the file is cut to the end (startLine must still be in the file).
+	note := ""
+	if n := len(tape.Lines(t.text)); !in.Locate && in.StartLine >= 1 && in.StartLine <= n+1 && in.EndLine > n {
+		note = fmt.Sprintf("endLine %d is past the end of %s (%d lines): the range ends at line %d", in.EndLine, rel, n, n)
+		in.EndLine = n
+	}
 	start, end, cerr := chooseRange(rel, t.text, in)
 	if cerr != nil {
 		return nil, cerr
@@ -174,7 +185,11 @@ func (c *Core) lookIn(tx *session.Tx, rel string, in LookInput) (*LookResult, er
 	if err != nil {
 		return nil, err
 	}
-	return &LookResult{Selection: sel, StartLine: start, EndLine: end, Lines: rangeLines(t.text, start, end)}, nil
+	res := &LookResult{Selection: sel, StartLine: start, EndLine: end, Lines: rangeLines(t.text, start, end), Note: note}
+	if note != "" {
+		res.LineCount = len(tape.Lines(t.text))
+	}
+	return res, nil
 }
 
 // Edit puts new text in the range a token stands for. A failure is also written to the tape (without the new text).

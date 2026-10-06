@@ -63,7 +63,7 @@ func OutsideAdvice(o core.OutsideChanges) string {
 	if len(parts) == 0 {
 		return ""
 	}
-	return "srwr: this command " + strings.Join(parts, " and ") + ". They are on the tape as changes made outside srwr, with no why. When you write a file yourself, new (a new file) or edit (a change) records why with it; files a tool writes (a generator, a formatter) are fine as they are."
+	return "srwr: this command " + strings.Join(parts, " and ") + ". What changed is on the tape as a change made outside srwr, with no why. When you write a file yourself, new (a new file) or edit (a change) records why with it; files a tool writes (a generator, a formatter) are fine as they are."
 }
 
 // nameList names up to 5 files, and counts the rest.

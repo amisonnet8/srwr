@@ -724,7 +724,8 @@ func TestEditsWithContentMakeAFile(t *testing.T) {
 	if isErr || strings.Count(r[0], "selection") != 2 || strings.Contains(r[0], "b1") {
 		t.Errorf("1: %s %v", r[0], m)
 	}
-	if b, err := os.ReadFile(filepath.Join(dir, "sub", "b.txt")); err != nil || string(b) != "b1\nb2\n" {
+	if b, err := os.ReadFile( //nolint:gosec // a file of the test directory
+		filepath.Join(dir, "sub", "b.txt")); err != nil || string(b) != "b1\nb2\n" {
 		t.Errorf("file = %q %v", b, err)
 	}
 	for i, want := range map[int]string{1: "file and content only", 2: "file_exists", 3: "edits.0.content must be a string"} {

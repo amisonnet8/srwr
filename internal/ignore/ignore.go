@@ -152,3 +152,18 @@ func matchSegs(pat, comps []string) bool {
 	ok, err := path.Match(pat[0], comps[0])
 	return err == nil && ok && matchSegs(pat[1:], comps[1:])
 }
+
+// Compile makes a Matcher of the given patterns (.gitignore syntax, blank lines are skipped), with no built-in patterns. It is for
+// choosing files (the include and exclude of a search), not for leaving them out of the tape.
+func Compile(patterns []string) *Matcher {
+	m := &Matcher{}
+	for _, p := range patterns {
+		if r, ok := parse(p); ok {
+			m.user = append(m.user, r)
+		}
+	}
+	return m
+}
+
+// Empty tells whether the matcher has no pattern at all.
+func (m *Matcher) Empty() bool { return len(m.builtin) == 0 && len(m.user) == 0 }

@@ -109,3 +109,15 @@ func TestLoadErrors(t *testing.T) {
 		t.Error("Load with a directory named .srwrignore = nil error, want an error")
 	}
 }
+
+func TestCompileChoosesFilesWithoutTheBuiltinPatterns(t *testing.T) {
+	m := Compile([]string{"*.go", "", "docs/"})
+	for rel, want := range map[string]bool{"a.go": true, "x/y/b.go": true, "docs/a.md": true, "a.md": false, ".env": false} {
+		if got := m.Match(rel); got != want {
+			t.Errorf("Match(%q) = %v, want %v", rel, got, want)
+		}
+	}
+	if !Compile(nil).Empty() || !Compile([]string{"", "# c"}).Empty() || m.Empty() {
+		t.Error("Empty is wrong")
+	}
+}

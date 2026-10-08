@@ -635,3 +635,40 @@ func TestEditBrief(t *testing.T) {
 		t.Error(r[1], r[2])
 	}
 }
+
+func TestSearchIncludeExcludeOffsetCutAndByFile(t *testing.T) {
+	dir := t.TempDir()
+	long := strings.Repeat("x", 400) + "needle" + strings.Repeat("y", 400)
+	if err := os.WriteFile(filepath.Join(dir, "a.go"), []byte(strings.Repeat("needle\n", 25)+long+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "b.md"), []byte("needle\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	r := serve(t, dir,
+		toolCall(1, "look", `{"file":".","search":"needle","include":["*.go"],"why":"w"}`),
+		toolCall(2, "look", `{"file":".","search":"needle","exclude":["*.go"],"why":"w"}`),
+		toolCall(3, "look", `{"file":".","search":"needle","offset":20,"why":"w"}`),
+		toolCall(4, "look", `{"file":"a.go","expect":"needle","include":["*.go"],"why":"w"}`),
+		toolCall(5, "look", `{"file":".","search":"needle","offset":-1,"why":"w"}`),
+		toolCall(6, "look", `{"file":".","search":"needle","include":"*.go","why":"w"}`))
+	m, _ := body(t, r[0])
+	if m["count"] != float64(26) || m["more"] != float64(6) || m["byFile"] == nil || strings.Contains(r[0], "b.md") {
+		t.Errorf("include: %s", r[0])
+	}
+	if m, _ = body(t, r[1]); m["count"] != float64(1) || m["byFile"] != nil {
+		t.Errorf("exclude: %s", r[1])
+	}
+	m, _ = body(t, r[2])
+	matches, _ := m["matches"].([]any)
+	last, _ := matches[len(matches)-1].(map[string]any)
+	if len(matches) != 7 || m["more"] != nil || m["byFile"] != nil || last["file"] != "b.md" {
+		t.Errorf("offset: %s", r[2])
+	}
+	if !strings.Contains(r[2], `\"cut\":true`) || strings.Contains(r[2], strings.Repeat("x", 300)) {
+		t.Errorf("the long line was not cut: %.300s", r[2])
+	}
+	if !strings.Contains(r[3], "go with search") || !strings.Contains(r[4], "offset must not be negative") || !strings.Contains(r[5], "include must be an array of strings") {
+		t.Error(r[3], r[4], r[5])
+	}
+}

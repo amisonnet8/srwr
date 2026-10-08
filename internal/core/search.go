@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
+	"github.com/amisonnet8/srwr/internal/ignore"
 	"github.com/amisonnet8/srwr/internal/session"
 	"github.com/amisonnet8/srwr/internal/tape"
 	"github.com/amisonnet8/srwr/internal/token"
@@ -17,9 +19,12 @@ const maxSearch = 20
 
 // SearchInput is the input of look with search: the lines of a file that hold a text.
 type SearchInput struct {
-	File   string
-	Search string
-	Why    string
+	File    string
+	Search  string
+	Why     string
+	Include []string // only the files that match one of these patterns (.gitignore syntax); none: all
+	Exclude []string // not the files that match one of these
+	Offset  int      // the matches to skip before the first one returned
 }
 
 // SearchMatch is a line that holds the text: a token for that one line, the line, and the lines around it.
@@ -31,13 +36,96 @@ type SearchMatch struct {
 	Above     []string
 	Below     []string
 	File      string // set when a directory was searched
+	Cut       bool   // a long line was cut to the part around the text
+}
+
+// FileCount is how many lines of a file hold the text.
+type FileCount struct {
+	File  string
+	Count int
 }
 
 // SearchResult is what a search returns: how many lines hold the text, and the first maxSearch of them.
 type SearchResult struct {
 	Count   int
 	Matches []SearchMatch
-	Note    string // when a directory was searched and had too many files to look in all of them
+	Note    string      // when a directory was searched and had too many files to look in all of them
+	ByFile  []FileCount // when a directory was searched and not all matches were returned: the files with the most, up to maxByFile
+}
+
+const (
+	maxByFile  = 20
+	maxLineLen = 200 // a line longer than this (in characters) is cut in the result
+	cutAround  = 80  // the characters kept on each side of the text in a cut line
+)
+
+// filter is the include and exclude of a search.
+type filter struct {
+	include []*ignore.Matcher
+	exclude *ignore.Matcher
+}
+
+func newFilter(in SearchInput) filter {
+	f := filter{exclude: ignore.Compile(in.Exclude)}
+	for _, p := range in.Include {
+		if m := ignore.Compile([]string{p}); !m.Empty() {
+			f.include = append(f.include, m)
+		}
+	}
+	return f
+}
+
+// keeps tells whether a file is searched.
+func (f filter) keeps(rel string) bool {
+	if !f.exclude.Empty() && f.exclude.Match(rel) {
+		return false
+	}
+	if len(f.include) == 0 {
+		return true
+	}
+	for _, m := range f.include {
+		if m.Match(rel) {
+			return true
+		}
+	}
+	return false
+}
+
+// cutLine shortens a line longer than maxLineLen to the part around the first place of text (or to its start, when text is not in it).
+func cutLine(line, text string) (string, bool) {
+	r := []rune(line)
+	if len(r) <= maxLineLen {
+		return line, false
+	}
+	i := strings.Index(line, text)
+	if i < 0 {
+		return string(r[:maxLineLen]) + "…", true // a line around the match: its start
+	}
+	at := len([]rune(line[:i]))
+	start := max(at-cutAround, 0)
+	end := min(at+len([]rune(text))+cutAround, len(r))
+	out := string(r[start:end])
+	if start > 0 {
+		out = "…" + out
+	}
+	if end < len(r) {
+		out += "…"
+	}
+	return out, true
+}
+
+// cutMatch shortens the lines of a match that are long. The token and the tape keep the whole line.
+func cutMatch(m *SearchMatch, text string) {
+	cut := func(lines []string) []string {
+		out := make([]string, len(lines))
+		for i, l := range lines {
+			var c bool
+			out[i], c = cutLine(l, text)
+			m.Cut = m.Cut || c
+		}
+		return out
+	}
+	m.Lines, m.Above, m.Below = cut(m.Lines), cut(m.Above), cut(m.Below)
 }
 
 // maxSearchSize is the biggest file a search of a directory reads.
@@ -62,6 +150,8 @@ func (c *Core) doSearch(in SearchInput) (*SearchResult, *Error) {
 		return nil, newError(CodeInvalidInput, "search must not be empty")
 	case strings.ContainsAny(in.Search, "\r\n"):
 		return nil, newError(CodeInvalidInput, "search is a text inside one line: it must not contain a line break")
+	case in.Offset < 0:
+		return nil, newError(CodeInvalidInput, "offset must not be negative")
 	}
 	dir, rel, cerr := c.searchTarget(in.File)
 	if cerr != nil {
@@ -92,18 +182,22 @@ func (c *Core) searchIn(tx *session.Tx, rel string, in SearchInput) (*SearchResu
 		return nil, err
 	}
 	res := &SearchResult{Matches: []SearchMatch{}}
+	if !newFilter(in).keeps(rel) {
+		return res, nil
+	}
 	for i, line := range tape.Lines(t.text) {
 		if !strings.Contains(line, in.Search) {
 			continue
 		}
 		res.Count++
-		if len(res.Matches) >= maxSearch {
+		if res.Count <= in.Offset || len(res.Matches) >= maxSearch {
 			continue
 		}
 		m, err := c.appendSearchLook(tx, rel, t.text, i+1, line, in.Why)
 		if err != nil {
 			return nil, err
 		}
+		cutMatch(&m, in.Search)
 		res.Matches = append(res.Matches, m)
 	}
 	return res, nil
@@ -133,7 +227,12 @@ func (c *Core) searchDir(tx *session.Tx, dir string, in SearchInput) (*SearchRes
 	if more > 0 {
 		res.Note = fmt.Sprintf("%d files were not searched: %s holds more than %d files. Search a smaller directory", more, dir, vcs.MaxListed)
 	}
+	keep := newFilter(in)
+	counts := map[string]int{}
 	for _, rel := range files {
+		if !keep.keeps(rel) {
+			continue
+		}
 		t, cerr := c.readTarget(rel)
 		if cerr != nil || !t.exists || len(t.text) > maxSearchSize || !strings.Contains(t.text, in.Search) {
 			continue
@@ -144,7 +243,8 @@ func (c *Core) searchDir(tx *session.Tx, dir string, in SearchInput) (*SearchRes
 				continue
 			}
 			res.Count++
-			if len(res.Matches) >= maxSearch {
+			counts[rel]++
+			if res.Count <= in.Offset || len(res.Matches) >= maxSearch {
 				continue
 			}
 			if !observed {
@@ -158,7 +258,22 @@ func (c *Core) searchDir(tx *session.Tx, dir string, in SearchInput) (*SearchRes
 				return nil, err
 			}
 			m.File = rel
+			cutMatch(&m, in.Search)
 			res.Matches = append(res.Matches, m)
+		}
+	}
+	if res.Count > in.Offset+len(res.Matches) {
+		for f, n := range counts {
+			res.ByFile = append(res.ByFile, FileCount{File: f, Count: n})
+		}
+		slices.SortFunc(res.ByFile, func(a, b FileCount) int {
+			if a.Count != b.Count {
+				return b.Count - a.Count
+			}
+			return strings.Compare(a.File, b.File)
+		})
+		if len(res.ByFile) > maxByFile {
+			res.ByFile = res.ByFile[:maxByFile]
 		}
 	}
 	return res, nil

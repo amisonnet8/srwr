@@ -38,3 +38,18 @@ func TestEditToolNamesItsInputs(t *testing.T) {
 		}
 	}
 }
+
+// The inputs of a search of a directory are in the schema of look.
+func TestLookToolNamesTheSearchInputs(t *testing.T) {
+	for _, tl := range List() {
+		if tl.Name != Look {
+			continue
+		}
+		props, _ := tl.InputSchema["properties"].(map[string]any)
+		for _, name := range []string{"search", "include", "exclude", "offset"} {
+			if _, ok := props[name]; !ok {
+				t.Errorf("look has no input %q", name)
+			}
+		}
+	}
+}

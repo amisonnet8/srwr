@@ -224,3 +224,141 @@ func TestSearchDirectoryLeavesOutBigFiles(t *testing.T) {
 		t.Errorf("%+v %v", res, err)
 	}
 }
+
+func matchNames(res *SearchResult) string {
+	var got []string
+	for _, m := range res.Matches {
+		got = append(got, fmt.Sprintf("%s:%d", m.File, m.StartLine))
+	}
+	return strings.Join(got, " ")
+}
+
+func TestSearchIncludeAndExclude(t *testing.T) {
+	e := newEnv(t)
+	e.write("a.go", "needle\n")
+	e.write("a.md", "needle\n")
+	e.write("internal/b.go", "needle\n")
+	e.write("docs/c.md", "needle\n")
+	e.write("docs/sub/d.md", "needle\n")
+	cases := []struct {
+		name             string
+		include, exclude []string
+		want             string
+	}{
+		{"none", nil, nil, "a.go:1 a.md:1 docs/c.md:1 docs/sub/d.md:1 internal/b.go:1"},
+		{"extension at any depth", []string{"*.go"}, nil, "a.go:1 internal/b.go:1"},
+		{"two includes", []string{"*.go", "docs/"}, nil, "a.go:1 docs/c.md:1 docs/sub/d.md:1 internal/b.go:1"},
+		{"anchored with **", []string{"docs/**/*.md"}, nil, "docs/c.md:1 docs/sub/d.md:1"},
+		{"exclude", nil, []string{"docs/"}, "a.go:1 a.md:1 internal/b.go:1"},
+		{"include and exclude", []string{"*.md"}, []string{"docs/sub"}, "a.md:1 docs/c.md:1"},
+		{"blank pattern is none", []string{""}, []string{""}, "a.go:1 a.md:1 docs/c.md:1 docs/sub/d.md:1 internal/b.go:1"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			res, err := e.c.Search(SearchInput{File: ".", Search: "needle", Why: "w", Include: tc.include, Exclude: tc.exclude})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := matchNames(res); got != tc.want {
+				t.Errorf("matches = %s, want %s", got, tc.want)
+			}
+		})
+	}
+	// Files that do not pass are not on the tape.
+	files := map[string]bool{}
+	for _, ev := range e.events() {
+		files[ev.File] = true
+	}
+	// (the earlier cases put every file there; a fresh workspace shows the filter)
+	e2 := newEnv(t)
+	e2.write("a.go", "needle\n")
+	e2.write("a.md", "needle\n")
+	if _, err := e2.c.Search(SearchInput{File: ".", Search: "needle", Why: "w", Include: []string{"*.go"}}); err != nil {
+		t.Fatal(err)
+	}
+	for _, ev := range e2.events() {
+		if ev.File == "a.md" {
+			t.Errorf("a.md is on the tape: %+v", ev)
+		}
+	}
+	// In one file, a filter that does not let it pass leaves no match.
+	res, err := e2.c.Search(SearchInput{File: "a.md", Search: "needle", Why: "w", Include: []string{"*.go"}})
+	if err != nil || res.Count != 0 {
+		t.Errorf("one file: %+v %v", res, err)
+	}
+	_ = files
+}
+
+func TestSearchCutsLongLines(t *testing.T) {
+	e := newEnv(t)
+	long := strings.Repeat("a", 500) + "NEEDLE" + strings.Repeat("b", 500)
+	e.write("f.txt", "short\n"+long+"\n"+strings.Repeat("あ", 300)+"\n")
+	res, err := e.c.Search(SearchInput{File: "f.txt", Search: "NEEDLE", Why: "w"})
+	if err != nil || len(res.Matches) != 1 {
+		t.Fatalf("%+v %v", res, err)
+	}
+	m := res.Matches[0]
+	want := "…" + strings.Repeat("a", cutAround) + "NEEDLE" + strings.Repeat("b", cutAround) + "…"
+	if m.Lines[0] != want || !m.Cut {
+		t.Errorf("line = %q cut = %v", m.Lines[0], m.Cut)
+	}
+	if got := m.Below[0]; len([]rune(got)) != maxLineLen+1 || !strings.HasSuffix(got, "…") {
+		t.Errorf("below not cut to %d characters: %d runes", maxLineLen, len([]rune(got)))
+	}
+	// The token and the tape are of the whole line.
+	if _, err := e.c.Edit(EditInput{Selection: m.Selection, NewText: "x", Why: "w"}); err != nil {
+		t.Errorf("edit: %+v", err)
+	}
+	for _, ev := range e.events() {
+		if ev.Type == tape.TypeEdit && ev.OldText != long {
+			t.Errorf("tape old text = %d chars, want the whole line", len(ev.OldText))
+		}
+	}
+	// A short line is not cut (the line below it is, and cut says so).
+	res, _ = e.c.Search(SearchInput{File: "f.txt", Search: "short", Why: "w"})
+	if res.Matches[0].Lines[0] != "short" || !res.Matches[0].Cut {
+		t.Errorf("short match = %+v", res.Matches[0])
+	}
+}
+
+func TestSearchOffsetAndByFile(t *testing.T) {
+	e := newEnv(t)
+	e.write("a.txt", strings.Repeat("needle\n", 15))
+	e.write("b.txt", strings.Repeat("needle\n", 12))
+	e.write("c.txt", "needle\n")
+	res, err := e.c.Search(SearchInput{File: ".", Search: "needle", Why: "w"})
+	if err != nil || res.Count != 28 || len(res.Matches) != 20 {
+		t.Fatalf("%+v %v", res, err)
+	}
+	if len(res.ByFile) != 3 || res.ByFile[0] != (FileCount{"a.txt", 15}) || res.ByFile[2] != (FileCount{"c.txt", 1}) {
+		t.Errorf("byFile = %+v", res.ByFile)
+	}
+	before := 0
+	for _, ev := range e.events() {
+		if ev.Type == tape.TypeLook {
+			before++
+		}
+	}
+	res, err = e.c.Search(SearchInput{File: ".", Search: "needle", Why: "w", Offset: 20})
+	if err != nil || res.Count != 28 || len(res.Matches) != 8 || res.ByFile != nil {
+		t.Fatalf("%+v %v", res, err)
+	}
+	if got := matchNames(res); got != "b.txt:6 b.txt:7 b.txt:8 b.txt:9 b.txt:10 b.txt:11 b.txt:12 c.txt:1" {
+		t.Errorf("second page = %s", got)
+	}
+	looks := 0
+	for _, ev := range e.events() {
+		if ev.Type == tape.TypeLook {
+			looks++
+		}
+	}
+	if looks-before != 8 {
+		t.Errorf("the second page put %d looks on the tape, want 8", looks-before)
+	}
+	// Past the end: nothing.
+	if res, _ = e.c.Search(SearchInput{File: ".", Search: "needle", Why: "w", Offset: 100}); res.Count != 28 || len(res.Matches) != 0 {
+		t.Errorf("past the end: %+v", res)
+	}
+	_, err = e.c.Search(SearchInput{File: ".", Search: "needle", Why: "w", Offset: -1})
+	wantCode(t, err, CodeInvalidInput)
+}

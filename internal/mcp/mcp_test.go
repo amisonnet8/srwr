@@ -582,6 +582,7 @@ func TestNearMatchesInTheError(t *testing.T) {
 func TestTypeErrorsNameTheInput(t *testing.T) {
 	for _, tc := range []struct{ tool, args, want string }{
 		{"edit", `{"edits":"[{}]","why":"w"}`, "edits must be an array of objects, got string. Pass it as JSON"},
+		{"edit", `{"file":"a","expect":"a","newText":"b","brief":"true","why":"w"}`, "brief must be true or false, got string. Write true or false without quotes"},
 		{"edit", `{"file":"a","startLine":"3","why":"w"}`, "startLine must be an integer, got string."},
 		{"replace", `{"files":"a.go","old":"x","new":"y","count":2,"why":"w"}`, "files must be an array of strings, got string. Pass it as JSON"},
 	} {

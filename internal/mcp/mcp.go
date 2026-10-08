@@ -525,6 +525,9 @@ func typeMessage(err error) string {
 			want = "an integer"
 		}
 		msg := fmt.Sprintf("%s must be %s, got %s.", field, want, ute.Value)
+		if ute.Value == "string" && want == "true or false" {
+			msg += " Write true or false without quotes"
+		}
 		if ute.Value == "string" && strings.HasPrefix(want, "an ") && !strings.HasSuffix(want, "integer") {
 			msg += " Pass it as JSON, not as a string that holds JSON"
 		}

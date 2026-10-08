@@ -14,10 +14,13 @@ func TestEditToolNamesItsInputs(t *testing.T) {
 		}
 	}
 	props, _ := edit.InputSchema["properties"].(map[string]any)
-	for _, name := range []string{"selection", "file", "startLine", "endLine", "expect", "newText", "insert", "old", "new", "edits", "why"} {
+	for _, name := range []string{"selection", "file", "startLine", "endLine", "expect", "newText", "insert", "old", "new", "edits", "brief", "why"} {
 		if _, ok := props[name]; !ok {
 			t.Errorf("edit has no input %q", name)
 		}
+	}
+	if b, _ := props["brief"].(map[string]any); b["type"] != "boolean" {
+		t.Errorf("brief = %v: it must be a boolean", b)
 	}
 	items, _ := props["edits"].(map[string]any)["items"].(map[string]any)
 	iprops, _ := items["properties"].(map[string]any)

@@ -97,6 +97,7 @@ func List() []Tool {
 					"old":       map[string]any{"type": "string", "minLength": 1, "description": "With file, to change a part of the text: the text to replace, in the file in one place only (several lines are fine). Not with selection, expect, newText or insert"},
 					"new":       map[string]any{"type": "string", "description": "With old: the text that takes its place. An empty string deletes old"},
 					"edits":     editsSchema(),
+					"brief":     map[string]any{"type": "boolean", "description": "true: the result has only selection, startLine and endLine for each edit (no lines, above, below). Write true without quotes"},
 					"insert":    map[string]any{"type": "string", "enum": []string{"after", "before", "start", "end"}, "description": "Keep the range (the selection, or the lines of expect) and put newText after (or before) it, instead of replacing it. Not with an empty range. \"start\" or \"end\": with file and newText only (no selection, expect or line numbers), put newText at the top (bottom) of the file. An empty newText puts one empty line"},
 					"why":       map[string]any{"type": "string", "minLength": 1, "pattern": `\S`, "description": whyDescription},
 				},

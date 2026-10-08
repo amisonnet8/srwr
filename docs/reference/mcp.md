@@ -36,6 +36,8 @@ Looks at a range, and returns a **selection token** for editing that range with 
 | `startLine`, `endLine` | Line numbers, 1-based, both inclusive. Give both or neither (with neither, `expect` finds the range) |
 | `expect` | Optional. The lines the range must hold, joined with `\n`. See "Checking the content" below |
 | `search` | Optional, instead of a range. A text to find in the file. See "Searching" below |
+| `include`, `exclude`, `offset` | Optional, with `search`: choose the files, and page through the matches. See "Searching" below |
+| `looks` | Optional, instead of `file`: several files in one call. See "Several files in one call" below |
 | `why` | Why it looks here |
 | `selection` | The selection token. The AI passes it to `edit` as it is ([what the token is](../design/token.md)) |
 | `startLine`, `endLine` in the output | The range that was selected (when `expect` found it, this is where) |
@@ -76,7 +78,24 @@ Looks at a range, and returns a **selection token** for editing that range with 
 - **A directory**: `file` may be a directory (`"."` is the whole workspace) with `search`. Every file below it that git lists (the tracked ones and the new ones it does not ignore; without git, every file in directories whose names do not begin with a dot) is searched, in the order of their paths, and each match has its `file`. Files that are not recorded, not text, or bigger than 1 MiB are left out without a word. At most 5000 files are searched (`note` says when there were more). The 20 matches are 20 in all, and `count` is the number of all lines that hold the text. Only the files that have a match get a snapshot on the tape, besides the looks. `file` that is not a directory or a file that exists is `file_not_found`, as before
 - `search` is plain text (not a regular expression), in one line (a line break is `invalid_input`; so is an empty text), and capital letters and spaces count. A line that holds it more than once is one match
 - Each match is **a `look` of that one line**, with its own `selection` (to pass to `edit` as it is), and `above` and `below` (up to 2 lines of the file each). The result is in line order. `count` is how many lines hold the text. At most 20 matches are returned and put on the tape; `more` is how many lines were left out (it is left out when none). No match is not an error: `matches` is `[]` and nothing is written to the tape
-- With `startLine`, `endLine` or `expect`, the call is `invalid_input`. The text searched for is not written to the tape. The same files are refused as for any `look`
+- **Choosing the files** (`include`, `exclude`): lists of patterns in `.gitignore` syntax (`"*.go"`, `"internal/"`, `"docs/**/*.md"`; a pattern with no `/` matches the name at any depth, case does not matter). A file is searched when it matches one of `include` (or `include` is not given) and none of `exclude`. They work for one file too: a file that does not pass has no match. Blank patterns are ignored
+- **Long lines**: a matching line longer than 200 characters is returned as the 80 characters on each side of the first place of the text, with `…` where it was cut; `above` and `below` lines longer than 200 characters are cut to their first 200. The match then has `cut: true`. The `selection` is still of the whole line, and so is what the tape holds
+- **More than 20 matches**: `offset` skips that many matches (in the order described above) and returns the next 20; `more` is how many are left after those (`count - offset - the matches returned`). The tape gets only the matches returned. When not all matches were returned in a directory, `byFile` lists the files with the most matches, `[{"file", "count"}, …]`, up to 20, so the AI can narrow the search with `include` or `exclude`
+- With `startLine`, `endLine` or `expect`, the call is `invalid_input`; so are `include`, `exclude` or `offset` without `search`, and a negative `offset`. The text searched for is not written to the tape. The same files are refused as for any `look`
+
+### Several files in one call (`looks`)
+
+`looks` holds 1 to 10 items, each a `file` and, if wanted, `startLine` and `endLine` (both, or neither for the whole file). It is given instead of `file`, `startLine`, `endLine`, `expect` and `search`, with one `why`.
+
+```jsonc
+// input
+{ "looks": [ { "file": "a.go" }, { "file": "b.go", "startLine": 10, "endLine": 40 } ], "why": "Read the two files that define the interface" }
+// output
+{ "ok": true, "looks": [ { "file": "a.go", "selection": "sel_…", "startLine": 1, "endLine": 30, "lines": ["…"] }, … ] }
+```
+
+- **All or none**: every item is checked before anything is put on the tape. A bad item (a file that does not exist or is not recorded, a range outside the file, more than 2000 lines in all) is the item's own error with `looks[1]: ` at the start of its message and "Nothing was looked at" at the end. One `failure` is written, about that item. An `endLine` past the end is cut as for a single `look`
+- Each item is a `look` on the tape, with the same `why`, and has its own `selection`. The results are in the order given
 
 ## edit
 
@@ -97,7 +116,7 @@ Changes the range to new text, in one call. An insertion is a change of an empty
 | `old`, `new` | Instead of `expect` and `newText`, to change a part of a line: with `file`, the text `old` that is in the file in one place only, and `new` that takes its place. See below. Not with `selection`, `expect`, `newText` or `insert` |
 | `newText` | The text after the replacement. `""` is a deletion |
 | `insert` | Optional, `"after"` or `"before"`. Keep the range (the token's, or the lines of `expect`) and put `newText` after (before) it, instead of replacing it. An empty `newText` puts one empty line. `"start"` or `"end"`: with `file` and `newText` only, put `newText` at the top (bottom) of the file |
-| `brief` | Optional, `true`. The result has only `selection`, `startLine`, `endLine` (and `hint`): no `lines`, `above`, `below`. For many edits when they need not be read back. It works for `edits` too. The default is as before |
+| `brief` | Optional, `true` (a boolean: no quotes). The result has only `selection`, `startLine`, `endLine` (and `hint`): no `lines`, `above`, `below`. For many edits when they need not be read back. It works for `edits` too. The default is as before |
 | `why` | Why it changes it this way |
 | `selection` in the output | A new token for **the range after the replacement**. To go on fixing the same place, it can be used without calling `look` again |
 | `lines` in the output | The content of the range after the replacement (`[]` for a deletion) |
@@ -144,7 +163,7 @@ Files that cannot be handled: files with line breaks other than LF (CRLF), and b
 
 ### Several edits in one call (`edits`)
 
-`edits` holds 1 to 50 edits that share one `why`. Instead of `selection`, `file`, `startLine`, `endLine`, `expect`, `newText`, `insert`, `old` and `new`, which are then **not** given beside it, each item has them: a `selection`, or a `file` and `expect` (with `startLine` and `endLine` if known), or a `file`, `old` and `new`; a `newText` and, if wanted, an `insert`. It is for the same change in many places that `replace` cannot make (the text differs from place to place).
+`edits` holds 1 to 50 edits that share one `why`. Instead of `selection`, `file`, `startLine`, `endLine`, `expect`, `newText`, `insert`, `old` and `new`, which are then **not** given beside it, each item has them: a `selection`, or a `file` and `expect` (with `startLine` and `endLine` if known), or a `file`, `old` and `new`; a `newText` and, if wanted, an `insert`. An item can also be a `file` and a `content`: it makes that new file (what `new` does), so a new file and the code that uses it go in one call and nothing fails halfway. It is for the same change in many places that `replace` cannot make (the text differs from place to place).
 
 ```jsonc
 // input
@@ -158,6 +177,7 @@ Files that cannot be handled: files with line breaks other than LF (CRLF), and b
 
 - **All or none.** Every range is found first, then every file is written, then the tape. If one item fails, nothing is changed, and the error is the item's own with `edits[2]: ` at the start of its message (`edits[2]` is the third item), and it ends with "Nothing was changed: fix that item and send all the items again". A call that is wrong as a whole (no items, more than 50, a `why` that is blank, ranges that overlap) is `invalid_input`
 - **Every range is found as the files are before the call.** So the items do not depend on each other, can be in any order, and an item's `startLine` and `endLine` are the lines as you saw them, not as the other items would leave them
+- **A `content` item** has `file` and `content` and nothing else (`invalid_input`). The file must not exist (`file_exists`), is not one that is not recorded, and is not made twice in a call. The files are made before any file is changed; if a change then cannot be written, they are removed again. Another item cannot change a file that the same call makes: put all its text in `content`. The result of the item is as the output of `new` is, with `lines` (the content); the tape has a `new` for it, before the `edit`s
 - **The ranges must not overlap.** Two ranges that share a line, an insertion inside another range (lines `a+1` to `b` of the range `a..b`), and two insertions at one place are `invalid_input` (`edits[0] and edits[1] overlap in a.go`). An insertion just before or just after another range is fine
 - The output has `edits`, one entry for each item **in the order given**. Each is as the output of a single `edit` is, but its lines are those of the file **after the whole call**, and its `selection` can be used as it is
 - On the tape there is one `edit` for each item, with the same `why`, the lines as the edits above it have left them (the same events as for separate calls, made from the top of each file down; [tape.md](tape.md#edit)). A failed call is one `failure` about the item that failed. A viewer shows each `edit` as it does for a single call
@@ -246,7 +266,7 @@ In the MCP response `isError` is `true`, and the body is the following JSON.
 | `count_mismatch` | `replace` found a number of places other than `count` | Read how many each file has, and call `replace` again with the right `count` (or use `look`). If `nearMatches` is there, copy `old` from it |
 | `use_edit` | `replace` was used with a `count` of 1 for a text that is in one place only | Call `edit` as `actual.edit` says (add `why`) |
 | `ignored_file` | `look`, `edit`, `replace` or `new` was used on a file that is not recorded | srwr cannot handle it. Ask the user |
-| `invalid_input` | A required input is missing, has the wrong type (the message names the input and the form it wants: `edits must be an array of objects, got string. Pass it as JSON, not as a string that holds JSON`), or `why` is empty; `file` is empty or has a NUL; only one of `startLine` and `endLine` is given, or none of them and no `expect`; `selection` is blank; `newText` has a CR; for `look`, `search` is empty, has a line break, or is given with `startLine`, `endLine` or `expect`; for `edit` with `edits`, there are no items or more than 50, ranges overlap, or an item or the call has one of the faults above; for `replace`, `files`, `old` or `count` is missing or empty, a path is given twice, `old` or `new` has a CR; for `new`, `content` is missing or has a CR, or a directory above the file is a file | Fix the input |
+| `invalid_input` | A required input is missing, has the wrong type (the message names the input and the form it wants: `edits must be an array of objects, got string. Pass it as JSON, not as a string that holds JSON`), or `why` is empty; `file` is empty or has a NUL; only one of `startLine` and `endLine` is given, or none of them and no `expect`; `selection` is blank; `newText` has a CR; for `look`, `search` is empty, has a line break, or is given with `startLine`, `endLine` or `expect`, `include`, `exclude` or `offset` is given without `search`, `offset` is negative, or `looks` holds no item or more than 10, has more than 2000 lines in all, or is given with `file`, `startLine`, `endLine`, `expect` or `search`; for `edit` with `edits`, there are no items or more than 50, ranges overlap, or an item or the call has one of the faults above; for `replace`, `files`, `old` or `count` is missing or empty, a path is given twice, `old` or `new` has a CR; for `new`, `content` is missing or has a CR, or a directory above the file is a file | Fix the input |
 | `unsupported_file` | CRLF or binary | — |
 | `internal_error` | An I/O error and the like | — |
 

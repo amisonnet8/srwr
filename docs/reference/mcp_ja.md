@@ -36,6 +36,8 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 | `startLine`・`endLine` | 1始まり、両端を含む行番号。2つとも渡すか、2つとも渡さない（渡さないときは `expect` が範囲を見つける） |
 | `expect` | 任意。範囲がこの内容であること。行を `\n` でつなぐ。下の「内容の確認」 |
 | `search` | 任意。範囲の代わりに、ファイルから探す文字列。下の「検索」 |
+| `include`・`exclude`・`offset` | 任意。`search` と一緒に、探すファイルを選び、当たりを順に読む。下の「検索」 |
+| `looks` | 任意。`file` の代わりに、複数のファイルを1回で。下の「1回で複数のファイル」 |
 | `why` | なぜここを見るか |
 | `selection` | 範囲トークン。AI はそのまま `edit` に渡す（[範囲トークンとは](../design/token_ja.md)） |
 | 出力の `startLine`・`endLine` | 選んだ範囲（`expect` で見つけたときは、その場所） |
@@ -76,7 +78,24 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 - **ディレクトリ**：`search` のとき、`file` にディレクトリ（`"."` は作業場全体）を渡せる。その下の、git が数えるファイル（追跡中のものと、無視されていない新しいもの。git がなければ、名前が `.` で始まらないディレクトリのすべてのファイル）を、パスの順に探し、当たりごとに `file` が付く。記録しないファイル・テキストでないもの・1 MiB を超えるものは、何も言わずに飛ばす。探すのは5000ファイルまで（超えたら `note` が言う）。20件は全体で20件で、`count` は文字列を含む行の全部の数。当たりのあったファイルだけが、look のほかにテープにスナップショットを書く。存在しないものは今までどおり `file_not_found`
 - `search` はただの文字列（正規表現ではない）で、1行の中のもの（改行を含む・空は `invalid_input`）。大文字小文字と空白は区別する。1行に何度あっても、その行は1件
 - 当たりは、**その1行の `look`** になる。それぞれに `selection`（そのまま `edit` に渡せる）と、`above`・`below`（ファイルの前後それぞれ最大2行）が付く。並びは行の順。`count` は当たった行の数。返す（テープに書く）のは20件まで。載せなかった行の数が `more`（なければ付かない）。当たりがないのはエラーではなく、`matches` が `[]` で、テープには何も書かない
-- `startLine`・`endLine`・`expect` と一緒なら `invalid_input`。探した文字列はテープに書かない。断られるファイルは、ふつうの `look` と同じ
+- **ファイルを選ぶ**（`include`・`exclude`）：`.gitignore` の書き方のパターンの配列（`"*.go"`・`"internal/"`・`"docs/**/*.md"`。`/` のないパターンは、どの深さでも名前に当たる。大文字小文字は区別しない）。`include` のどれかに当たり（`include` がなければ全部）、`exclude` のどれにも当たらないファイルを探す。1つのファイルを渡したときも効き、通らなければ当たりは0件。空のパターンは無視する
+- **長い行**：当たった行が200文字より長いときは、文字列の最初の場所の前後80文字に切って返し、切ったところに `…` を付ける。200文字を超える `above`・`below` の行は、先頭の200文字に切る。そのとき当たりに `cut: true` が付く。`selection` と、テープに書くものは、行全体のまま
+- **20件を超えるとき**：`offset` 件の当たりを（上の順で）飛ばして、次の20件を返す。`more` はその後に残る数（`count - offset - 返した数`）。テープに書くのは返した当たりだけ。ディレクトリで、当たりを全部は返さなかったときは、`byFile` が、当たりの多いファイルを `[{"file", "count"}, …]` の形で20件まで返す。AI は `include`・`exclude` で絞り直せる
+- `startLine`・`endLine`・`expect` と一緒なら `invalid_input`。`search` なしの `include`・`exclude`・`offset`、負の `offset` も同じ。探した文字列はテープに書かない。断られるファイルは、ふつうの `look` と同じ
+
+### 1回で複数のファイル（`looks`）
+
+`looks` は1〜10件の項目を持ち、各項目は `file` と、必要なら `startLine`・`endLine`（2つとも渡す。渡さなければファイル全体）。`file`・`startLine`・`endLine`・`expect`・`search` の代わりに渡し、`why` は1つ。
+
+```jsonc
+// 入力
+{ "looks": [ { "file": "a.go" }, { "file": "b.go", "startLine": 10, "endLine": 40 } ], "why": "インターフェースを定義する2つのファイルを読む" }
+// 出力
+{ "ok": true, "looks": [ { "file": "a.go", "selection": "sel_…", "startLine": 1, "endLine": 30, "lines": ["…"] }, … ] }
+```
+
+- **全部行うか、何も行わないか**：テープに書く前に、全項目を確かめる。悪い項目（存在しない・記録しないファイル、ファイルの外の範囲、合計2000行を超える）は、その項目のエラーで、`message` の頭に `looks[1]: `、末尾に「Nothing was looked at」（英語）が付く。書く `failure` は、その項目についての1件。終わりを越えた `endLine` は、1つの `look` と同じく切る
+- 各項目はテープの `look` になり（`why` は同じ）、それぞれの `selection` を持つ。結果は渡した順
 
 ## edit
 
@@ -97,7 +116,7 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 | `old`・`new` | `expect` と `newText` の代わりに、行の一部を直すとき：`file` と一緒に、ファイルの中にただ1か所ある文字列 `old` と、その代わりの `new`。下を見る。`selection`・`expect`・`newText`・`insert` とは一緒に使えない |
 | `newText` | 置き換え後のテキスト。`""` は削除 |
 | `insert` | 省略可。`"after"` か `"before"`。範囲（トークンの範囲、または `expect` の行）を残し、その後ろ（前）に `newText` を足す。置き換えない。`newText` が空なら空行を1つ足す。`"start"`・`"end"` は、`file` と `newText` だけで、ファイルの先頭（末尾）に `newText` を足す |
-| `brief` | 省略可。`true` で、結果は `selection`・`startLine`・`endLine`（と `hint`）だけ。`lines`・`above`・`below` を返さない。読み返さなくてよい多数の編集のため。`edits` でも使える。既定は今までどおり |
+| `brief` | 省略可。`true`（真偽値。引用符は付けない）で、結果は `selection`・`startLine`・`endLine`（と `hint`）だけ。`lines`・`above`・`below` を返さない。読み返さなくてよい多数の編集のため。`edits` でも使える。既定は今までどおり |
 | `why` | なぜこう変えるか |
 | 出力の `selection` | **置き換え後の範囲**の新しいトークン。同じ箇所を続けて直すときは、`look` し直さずにこれを使える |
 | 出力の `lines` | 置き換え後の範囲の内容（削除なら `[]`） |
@@ -144,7 +163,7 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 
 ### 1回で複数の編集をする（`edits`）
 
-`edits` は、1つの `why` を共有する編集を1〜50件持つ。`selection`・`file`・`startLine`・`endLine`・`expect`・`newText`・`insert`・`old`・`new` は、`edits` の外には**渡さず**、項目ごとに持つ：`selection`、または `file` と `expect`（分かれば `startLine`・`endLine`）、または `file`・`old`・`new`、`newText`、必要なら `insert`。場所ごとに文字列が違って `replace` ではできない、同じ種類の変更をたくさんするためのもの。
+`edits` は、1つの `why` を共有する編集を1〜50件持つ。`selection`・`file`・`startLine`・`endLine`・`expect`・`newText`・`insert`・`old`・`new` は、`edits` の外には**渡さず**、項目ごとに持つ：`selection`、または `file` と `expect`（分かれば `startLine`・`endLine`）、または `file`・`old`・`new`、`newText`、必要なら `insert`。項目は `file` と `content` でもよく、その新しいファイルを作る（`new` と同じ）。新しいファイルと、それを使うコードを1回で書けるので、途中で失敗しない。場所ごとに文字列が違って `replace` ではできない、同じ種類の変更をたくさんするためのもの。
 
 ```jsonc
 // 入力
@@ -158,6 +177,7 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 
 - **全部行うか、何も行わないか。** 先に範囲を全部決め、次にファイルを全部書き、最後にテープに書く。1つでも失敗したら何も変えず、エラーはその項目のもので、`message` の頭に `edits[2]: `（3番目の項目）が付き、末尾は「何も変えていない。その項目を直して、全部の項目を送り直す」（英語）。呼び出し全体の誤り（項目がない・50件を超える・`why` が空白・範囲が重なる）は `invalid_input`
 - **範囲は全部、呼ぶ前のファイルで決める。** だから項目同士は関係せず、順番は自由で、項目の `startLine`・`endLine` は、ほかの項目が変えたあとでなく、AI が見た行番号でよい
+- **`content` の項目**は `file` と `content` だけを持つ（ほかと一緒は `invalid_input`）。ファイルは存在してはならず（`file_exists`）、記録しないファイルでもなく、1回の呼び出しで2度は作れない。ほかのファイルを変えるより前に、作るファイルを全部作る。そのあと変更が書けなければ、作ったファイルは消す。同じ呼び出しで作るファイルを、ほかの項目で直すことはできない（全部の中身を `content` に書く）。項目の結果は `new` の出力と同じ形で、`lines`（中身）が付く。テープには `edit` より前に `new` が書かれる
 - **範囲は重なってはいけない。** 行を共有する2つの範囲、別の範囲（`a..b`）の中への挿入（`a+1` 行目から `b` 行目の前）、同じ場所への2つの挿入は `invalid_input`（`edits[0] and edits[1] overlap in a.go`）。別の範囲のすぐ前・すぐ後ろへの挿入はよい
 - 出力の `edits` は、項目ごとに1つで、**渡した順**。1つ1つは単独の `edit` の出力と同じ形だが、`lines` などは**呼び出し全体のあと**のファイルの行で、`selection` はそのまま使える
 - テープには、項目ごとに `edit` が1つ、同じ `why` で入る。行番号は、上の項目が変えたあとのもの（別々に呼んだときと同じ中身のイベントを、ファイルの上から順に書く。[tape.md](tape.md#edit)）。失敗した呼び出しは、失敗した項目についての `failure` が1つ。ビューアーでは、単独の呼び出しと同じに見える
@@ -246,7 +266,7 @@ MCP の応答では `isError: true` になり、本文は次の JSON。
 | `count_mismatch` | `replace` で見つかった場所の数が `count` と違う | ファイルごとの数を読み、正しい `count` で `replace` し直す（または `look` を使う）。`nearMatches` があれば、そこから `old` を写す |
 | `use_edit` | 文字列が1か所だけにあるのに、`replace` を `count` が 1 で使った | `actual.edit` のとおりに `edit` を呼ぶ（`why` を足す） |
 | `ignored_file` | 記録しないファイルに `look`・`edit`・`replace`・`new` した。 | srwr では扱えない。ユーザーに頼む |
-| `invalid_input` | 必須の入力がない、型が違う（`message` が項目と、期待する形を言う：`edits must be an array of objects, got string. Pass it as JSON, not as a string that holds JSON`）、`why` が空。`file` が空か NUL を含む、`startLine` と `endLine` の片方だけがある、または両方なく `expect` もない、`selection` が空白だけ、`newText` に CR がある。`look` では、`search` が空・改行を含む・`startLine`・`endLine`・`expect` と一緒。`edit` の `edits` では、項目が0件か50件を超える、範囲が重なる、項目や呼び出しに上の誤りがある。`replace` では、`files`・`old`・`count` がない・空、同じパスが2回、`old` か `new` に CR がある。`new` では、`content` がない・CR がある、ファイルの上のディレクトリがファイルになっている | 入力を直す |
+| `invalid_input` | 必須の入力がない、型が違う（`message` が項目と、期待する形を言う：`edits must be an array of objects, got string. Pass it as JSON, not as a string that holds JSON`）、`why` が空。`file` が空か NUL を含む、`startLine` と `endLine` の片方だけがある、または両方なく `expect` もない、`selection` が空白だけ、`newText` に CR がある。`look` では、`search` が空・改行を含む・`startLine`・`endLine`・`expect` と一緒、`search` なしの `include`・`exclude`・`offset`、負の `offset`、`looks` が0件か10件を超える・合計2000行を超える・`file`・`startLine`・`endLine`・`expect`・`search` と一緒。`edit` の `edits` では、項目が0件か50件を超える、範囲が重なる、項目や呼び出しに上の誤りがある。`replace` では、`files`・`old`・`count` がない・空、同じパスが2回、`old` か `new` に CR がある。`new` では、`content` がない・CR がある、ファイルの上のディレクトリがファイルになっている | 入力を直す |
 | `unsupported_file` | CRLF やバイナリ | — |
 | `internal_error` | I/O エラーなど | — |
 

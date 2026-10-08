@@ -163,13 +163,7 @@ func (c *Core) lookIn(tx *session.Tx, rel string, in LookInput) (*LookResult, er
 		return nil, err
 	}
 
-	// A look only reads, so an endLine past the end of the file is cut to the end (startLine must still be in the file).
-	note := ""
-	if n := len(tape.Lines(t.text)); !in.Locate && in.StartLine >= 1 && in.StartLine <= n+1 && in.EndLine > n {
-		note = fmt.Sprintf("endLine %d is past the end of %s (%d lines): the range ends at line %d", in.EndLine, rel, n, n)
-		in.EndLine = n
-	}
-	start, end, cerr := chooseRange(rel, t.text, in)
+	start, end, note, cerr := lookRange(rel, t.text, in)
 	if cerr != nil {
 		return nil, cerr
 	}
@@ -194,6 +188,17 @@ func (c *Core) lookIn(tx *session.Tx, rel string, in LookInput) (*LookResult, er
 		res.LineCount = len(tape.Lines(t.text))
 	}
 	return res, nil
+}
+
+// lookRange finds the lines a look covers. A look only reads, so an endLine past the end of the file is cut to the end (startLine
+// must still be in the file); note says so.
+func lookRange(rel, text string, in LookInput) (start, end int, note string, cerr *Error) {
+	if n := len(tape.Lines(text)); !in.Locate && in.StartLine >= 1 && in.StartLine <= n+1 && in.EndLine > n {
+		note = fmt.Sprintf("endLine %d is past the end of %s (%d lines): the range ends at line %d", in.EndLine, rel, n, n)
+		in.EndLine = n
+	}
+	start, end, cerr = chooseRange(rel, text, in)
+	return start, end, note, cerr
 }
 
 // Edit puts new text in the range a token stands for. A failure is also written to the tape (without the new text).

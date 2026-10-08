@@ -54,6 +54,7 @@ func List() []Tool {
 				"Or leave out startLine and endLine and pass only expect: srwr finds those consecutive lines (exactly one place is needed; give line numbers if they appear in more than one). " +
 				"To point at a place to insert, use an empty range with endLine = startLine - 1 (just before line startLine; to append to the end of the file, startLine = number of lines + 1). " +
 				"An endLine past the end of the file is cut to the last line (the result has lineCount and a note); a startLine past the end is an error. " +
+				"To read several files at once, pass looks instead of file: a list of 1 to 10 items, each with file (and startLine and endLine, or neither for the whole file), up to 2000 lines in all; the result has looks, one result with a token for each item. " +
 				"Only existing files can be selected; create a new file with new. " +
 				"why is required: say what you look for or why you look here (the reason, not a rephrasing of what you do), in the language of the conversation with the user.",
 			InputSchema: map[string]any{
@@ -67,9 +68,15 @@ func List() []Tool {
 					"include":   map[string]any{"type": "array", "items": map[string]any{"type": "string", "minLength": 1}, "description": "With search: search only the files that match one of these patterns (.gitignore syntax: \"*.go\", \"internal/\", \"docs/**/*.md\"; a pattern with no / matches the name at any depth)"},
 					"exclude":   map[string]any{"type": "array", "items": map[string]any{"type": "string", "minLength": 1}, "description": "With search: leave out the files that match one of these patterns (same syntax as include)"},
 					"offset":    map[string]any{"type": "integer", "minimum": 0, "description": "With search: skip this many matches, then return the next 20 (use it when more is more than 0)"},
-					"why":       map[string]any{"type": "string", "minLength": 1, "pattern": `\S`, "description": whyDescription},
+					"looks": map[string]any{"type": "array", "minItems": 1, "maxItems": 10, "description": "Instead of file: several files in one call, sharing the why. Each item has file, and startLine and endLine (both, or neither for the whole file). Up to 10 items and 2000 lines in all. All or none; each item gets a token. Not with file, startLine, endLine, expect or search",
+						"items": map[string]any{"type": "object", "properties": map[string]any{
+							"file":      map[string]any{"type": "string", "minLength": 1, "description": "Path relative to the workspace"},
+							"startLine": map[string]any{"type": "integer", "minimum": 1, "description": "First line (1-based). Give both startLine and endLine, or neither"},
+							"endLine":   map[string]any{"type": "integer", "minimum": 0, "description": "Last line (inclusive)"},
+						}, "required": []string{"file"}}},
+					"why": map[string]any{"type": "string", "minLength": 1, "pattern": `\S`, "description": whyDescription},
 				},
-				"required": []string{"file", "why"},
+				"required": []string{"why"},
 			},
 		},
 		{

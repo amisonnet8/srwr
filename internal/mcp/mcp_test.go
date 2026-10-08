@@ -176,12 +176,13 @@ func TestToolsList(t *testing.T) {
 	// The line numbers are optional: expect can find the range.
 	sel := r.Result.Tools[0].InputSchema
 	if contains(sel.Required, "startLine") || contains(sel.Required, "endLine") || contains(sel.Required, "expect") {
-		t.Errorf("select requires %v: only file and why are required", sel.Required)
+		t.Errorf("select requires %v: only why is required", sel.Required)
 	}
 	if _, ok := sel.Properties["expect"]; !ok {
 		t.Error("select has no expect")
 	}
-	if !contains(r.Result.Tools[0].InputSchema.Required, "file") || !contains(r.Result.Tools[1].InputSchema.Required, "why") {
+	// look takes a file or looks, so only why is required there.
+	if contains(r.Result.Tools[0].InputSchema.Required, "file") || !contains(r.Result.Tools[0].InputSchema.Required, "why") || !contains(r.Result.Tools[1].InputSchema.Required, "why") {
 		t.Error("required lists are wrong")
 	}
 	// edit takes a token or a file: neither alone is required, and the by-file inputs exist.
@@ -670,5 +671,41 @@ func TestSearchIncludeExcludeOffsetCutAndByFile(t *testing.T) {
 	}
 	if !strings.Contains(r[3], "go with search") || !strings.Contains(r[4], "offset must not be negative") || !strings.Contains(r[5], "include must be an array of strings") {
 		t.Error(r[3], r[4], r[5])
+	}
+}
+
+func TestLookWithLooks(t *testing.T) {
+	dir := t.TempDir()
+	for name, text := range map[string]string{"a.txt": "a1\na2\na3\n", "b.txt": "b1\nb2\n"} {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(text), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	r := serve(t, dir,
+		toolCall(1, "look", `{"looks":[{"file":"a.txt","startLine":2,"endLine":3},{"file":"b.txt"}],"why":"w"}`),
+		toolCall(2, "look", `{"looks":[{"file":"a.txt"},{"file":"nope.txt"}],"why":"w"}`),
+		toolCall(3, "look", `{"looks":[{"file":"a.txt","startLine":1}],"why":"w"}`),
+		toolCall(4, "look", `{"looks":[{"file":"a.txt"}],"file":"a.txt","why":"w"}`),
+		toolCall(5, "look", `{"looks":[{"startLine":1,"endLine":1}],"why":"w"}`),
+		toolCall(6, "look", `{"looks":"a.txt","why":"w"}`),
+		toolCall(7, "look", `{"looks":[{"file":"a.txt"}]}`))
+	m, isErr := body(t, r[0])
+	looks, _ := m["looks"].([]any)
+	if isErr || len(looks) != 2 {
+		t.Fatalf("looks: %s", r[0])
+	}
+	first, _ := looks[0].(map[string]any)
+	second, _ := looks[1].(map[string]any)
+	if first["file"] != "a.txt" || first["startLine"] != float64(2) || second["file"] != "b.txt" || second["endLine"] != float64(2) ||
+		first["selection"] == second["selection"] {
+		t.Errorf("looks = %v", looks)
+	}
+	if !strings.Contains(r[1], "looks[1]: ") || !strings.Contains(r[1], "Nothing was looked at") {
+		t.Error(r[1])
+	}
+	for i, want := range map[int]string{2: "looks[0]: give both startLine and endLine", 3: "looks is not given with file", 4: "looks[0]: missing required input: file", 5: "looks must be an array of objects", 6: "missing required input: why"} {
+		if !strings.Contains(r[i], want) {
+			t.Errorf("%d: %s, want %q", i+1, r[i], want)
+		}
 	}
 }

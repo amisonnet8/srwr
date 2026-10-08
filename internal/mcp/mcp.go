@@ -127,15 +127,36 @@ func (s *Server) call(params json.RawMessage) (any, *jsonrpc.Error) {
 }
 
 type lookArgs struct {
-	File      *string   `json:"file"`
-	StartLine *int      `json:"startLine"`
-	EndLine   *int      `json:"endLine"`
-	Expect    *string   `json:"expect"`
-	Search    *string   `json:"search"`
-	Include   *[]string `json:"include"`
-	Exclude   *[]string `json:"exclude"`
-	Offset    *int      `json:"offset"`
-	Why       *string   `json:"why"`
+	File      *string         `json:"file"`
+	StartLine *int            `json:"startLine"`
+	EndLine   *int            `json:"endLine"`
+	Expect    *string         `json:"expect"`
+	Search    *string         `json:"search"`
+	Include   *[]string       `json:"include"`
+	Exclude   *[]string       `json:"exclude"`
+	Offset    *int            `json:"offset"`
+	Looks     *[]lookItemArgs `json:"looks"`
+	Why       *string         `json:"why"`
+}
+
+// lookItemArgs is one of the looks of a look call with looks.
+type lookItemArgs struct {
+	File      *string `json:"file"`
+	StartLine *int    `json:"startLine"`
+	EndLine   *int    `json:"endLine"`
+}
+
+type looksOK struct {
+	OK    bool          `json:"ok"`
+	Looks []looksItemOK `json:"looks"`
+}
+
+type looksItemOK struct {
+	File      string   `json:"file"`
+	Selection string   `json:"selection"`
+	StartLine int      `json:"startLine"`
+	EndLine   int      `json:"endLine"`
+	Lines     []string `json:"lines"`
 }
 
 type lookOK struct {
@@ -153,6 +174,9 @@ func (s *Server) callLook(raw json.RawMessage) toolResult {
 	if err := decodeArgs(raw, &a); err != nil {
 		s.Core.RecordInputFailure(tools.Look, err.Code, err.Message)
 		return failure(*err)
+	}
+	if a.Looks != nil {
+		return s.callLooks(a)
 	}
 	if missing := firstMissing(map[string]bool{"file": a.File == nil, "why": a.Why == nil}, "file", "why"); missing != "" {
 		return s.rejectLook("missing required input: " + missing)
@@ -231,6 +255,39 @@ func (s *Server) callSearch(a lookArgs) toolResult {
 	}
 	for _, f := range res.ByFile {
 		out.ByFile = append(out.ByFile, fileCountOK{File: f.File, Count: f.Count})
+	}
+	return success(out)
+}
+
+// callLooks is look with looks: several files in one call, each with a token.
+func (s *Server) callLooks(a lookArgs) toolResult {
+	switch {
+	case a.Why == nil:
+		return s.rejectLook("missing required input: why")
+	case a.File != nil || a.StartLine != nil || a.EndLine != nil || a.Expect != nil || a.Search != nil || a.Include != nil || a.Exclude != nil || a.Offset != nil:
+		return s.rejectLook("looks is not given with file, startLine, endLine, expect or search: give file (and the lines) in each item of looks")
+	}
+	in := core.LooksInput{Why: *a.Why}
+	for i, it := range *a.Looks {
+		switch {
+		case it.File == nil:
+			return s.rejectLook(fmt.Sprintf("looks[%d]: missing required input: file. Nothing was looked at: fix that item and send all the items again", i))
+		case (it.StartLine == nil) != (it.EndLine == nil):
+			return s.rejectLook(fmt.Sprintf("looks[%d]: give both startLine and endLine, or neither. Nothing was looked at: fix that item and send all the items again", i))
+		}
+		item := core.LooksItem{File: *it.File, HasLines: it.StartLine != nil}
+		if item.HasLines {
+			item.StartLine, item.EndLine = *it.StartLine, *it.EndLine
+		}
+		in.Items = append(in.Items, item)
+	}
+	res, cerr := s.Core.Looks(in)
+	if cerr != nil {
+		return failure(*cerr)
+	}
+	out := looksOK{OK: true, Looks: make([]looksItemOK, len(res.Items))}
+	for i, r := range res.Items {
+		out.Looks[i] = looksItemOK{File: r.File, Selection: r.Selection, StartLine: r.StartLine, EndLine: r.EndLine, Lines: r.Lines}
 	}
 	return success(out)
 }

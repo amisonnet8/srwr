@@ -3,6 +3,7 @@ package core
 import (
 	"errors"
 	"fmt"
+	"os"
 	"slices"
 	"strings"
 
@@ -83,7 +84,13 @@ func (c *Core) doEdits(in EditsInput) (res *EditsResult, bad EditInput, cerr *Er
 		item.Why = in.Why
 		items[i] = item
 		var err *Error
-		if byFile[i], rels[i], err = checkEdit(item); err != nil {
+		if item.Create != nil {
+			byFile[i] = true
+			rels[i], err = checkCreate(item)
+		} else {
+			byFile[i], rels[i], err = checkEdit(item)
+		}
+		if err != nil {
 			return nil, item, inItem(i, err)
 		}
 	}
@@ -99,6 +106,19 @@ func (c *Core) doEdits(in EditsInput) (res *EditsResult, bad EditInput, cerr *Er
 	return res, EditInput{}, nil
 }
 
+// checkCreate checks an item of edits that makes a file: file and content, and nothing else.
+func checkCreate(in EditInput) (rel string, cerr *Error) {
+	switch {
+	case in.File == "":
+		return "", newError(CodeInvalidInput, "content makes a file: give file with it")
+	case in.Selection != "" || in.HasLines || in.Expect != nil || in.Old != nil || in.New != nil || in.NewText != "" || in.Insert != "":
+		return "", newError(CodeInvalidInput, "content makes a new file: give file and content only")
+	case strings.ContainsRune(*in.Create, '\r'):
+		return "", newError(CodeInvalidInput, "content must not contain CR (line breaks are LF only)")
+	}
+	return cleanPath(in.File)
+}
+
 // inItem says in the message of an error which edit of the call it is about.
 func inItem(i int, e *Error) *Error {
 	e.Message = fmt.Sprintf("edits[%d]: %s. Nothing was changed: fix that item and send all the items again", i, strings.TrimSuffix(e.Message, "."))
@@ -110,7 +130,29 @@ func (c *Core) editsIn(tx *session.Tx, items []EditInput, byFile []bool, rels []
 	seen := map[string]*target{}
 	plans := make([]itemPlan, len(items))
 	var files []string // in the order they first appear
+	var creates []int  // the items that make a file
 	for i, item := range items {
+		if item.Create == nil {
+			continue
+		}
+		t, cerr := c.readTarget(rels[i])
+		switch {
+		case cerr != nil:
+			return nil, item, inItem(i, cerr)
+		case t.exists:
+			return nil, item, inItem(i, newError(CodeFileExists, "%s already exists. Use look and edit to change it", rels[i]))
+		}
+		for _, j := range creates {
+			if rels[j] == rels[i] {
+				return nil, item, inItem(i, newError(CodeInvalidInput, "edits[%d] makes %s as well", j, rels[i]))
+			}
+		}
+		creates = append(creates, i)
+	}
+	for i, item := range items {
+		if item.Create != nil {
+			continue
+		}
 		p, err := c.resolve(tx, byFile[i], rels[i], item, seen)
 		if err != nil {
 			var cerr *Error
@@ -167,13 +209,47 @@ func (c *Core) editsIn(tx *session.Tx, items []EditInput, byFile []bool, rels []
 		}
 		finals[rel] = text
 	}
+	// The files to make come first: if one cannot be made, no file is changed. If a change cannot be written after that, they go again.
+	var made []string
+	undo := func() {
+		for _, dest := range made {
+			_ = os.Remove(dest)
+		}
+	}
+	for _, i := range creates {
+		if err := Observe(tx, rels[i], "new", nil); err != nil {
+			undo()
+			return nil, EditInput{}, err
+		}
+		dest, cerr := c.prepareParent(rels[i])
+		if cerr == nil {
+			text := tape.SpliceLines("", 1, 0, tape.Lines(*items[i].Create))
+			if cerr = createFile(dest, text, rels[i]); cerr == nil {
+				made = append(made, dest)
+			}
+		}
+		if cerr != nil {
+			undo()
+			return nil, items[i], inItem(i, cerr)
+		}
+	}
 	for _, rel := range files {
 		if err := writeFile(seen[rel].real, finals[rel]); err != nil {
+			undo()
 			return nil, EditInput{}, err
 		}
 	}
 
 	res := &EditsResult{Edits: make([]EditResult, len(items))}
+	for _, i := range creates {
+		lines := tape.Lines(*items[i].Create)
+		text := tape.SpliceLines("", 1, 0, lines)
+		r, err := appendNew(tx, rels[i], lines, text, why)
+		if err != nil {
+			return nil, EditInput{}, err
+		}
+		res.Edits[i] = EditResult{Selection: r.Selection, StartLine: 1, EndLine: r.EndLine, Lines: lines, Above: []string{}, Below: []string{}}
+	}
 	for _, st := range steps {
 		sel := token.Encode(token.Token{
 			Seq:       uint64(tx.NextSeq()), //nolint:gosec // NextSeq is at least 1

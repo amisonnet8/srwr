@@ -325,6 +325,7 @@ type editItemArgs struct {
 	Insert    *string `json:"insert"`
 	Old       *string `json:"old"`
 	New       *string `json:"new"`
+	Content   *string `json:"content"`
 }
 
 type editsOK struct {
@@ -437,6 +438,25 @@ func (s *Server) callEdits(a editArgs) toolResult {
 
 // editInputOf makes the input of one edit out of its arguments. msg is not empty when the arguments are not an edit.
 func editInputOf(a editItemArgs) (in core.EditInput, msg string) {
+	if a.Content != nil {
+		// An item that makes a file: the checks are the core's.
+		in = core.EditInput{Create: a.Content}
+		if a.File != nil {
+			in.File = *a.File
+		}
+		in.HasLines = a.StartLine != nil || a.EndLine != nil
+		in.Expect, in.Old, in.New = a.Expect, a.Old, a.New
+		if a.Selection != nil {
+			in.Selection = *a.Selection
+		}
+		if a.NewText != nil {
+			in.NewText = *a.NewText
+		}
+		if a.Insert != nil {
+			in.Insert = *a.Insert
+		}
+		return in, ""
+	}
 	hasOld := a.Old != nil || a.New != nil
 	switch {
 	case hasOld && (a.Old == nil || a.New == nil):

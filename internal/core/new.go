@@ -83,6 +83,11 @@ func (c *Core) newIn(tx *session.Tx, rel string, in NewInput) (*NewResult, error
 	if cerr := createFile(dest, text, rel); cerr != nil {
 		return nil, cerr
 	}
+	return appendNew(tx, rel, lines, text, in.Why)
+}
+
+// appendNew puts the new event of a file that has just been made on the tape.
+func appendNew(tx *session.Tx, rel string, lines []string, text, why string) (*NewResult, error) {
 	end := len(lines)
 	sel := token.Encode(token.Token{
 		Seq:       uint64(tx.NextSeq()), //nolint:gosec // NextSeq is at least 1
@@ -94,7 +99,7 @@ func (c *Core) newIn(tx *session.Tx, rel string, in NewInput) (*NewResult, error
 	err := tx.Append(tape.Event{
 		Type: tape.TypeNew, Seq: tx.NextSeq(), File: rel,
 		StartLine: 1, EndLine: 0, OldText: "", NewText: strings.Join(lines, "\n"),
-		NewStartLine: 1, NewEndLine: end, Selection: &sel, Why: &in.Why,
+		NewStartLine: 1, NewEndLine: end, Selection: &sel, Why: &why,
 		FileShaBefore: "", FileShaAfter: tape.Sha(text),
 		Source: tape.SourceMCP,
 	})

@@ -709,3 +709,30 @@ func TestLookWithLooks(t *testing.T) {
 		}
 	}
 }
+
+func TestEditsWithContentMakeAFile(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "a.txt"), []byte("a\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	r := serve(t, dir,
+		toolCall(1, "edit", `{"edits":[{"file":"a.txt","expect":"a","newText":"A"},{"file":"sub/b.txt","content":"b1\nb2"}],"brief":true,"why":"w"}`),
+		toolCall(2, "edit", `{"edits":[{"file":"c.txt","content":"x","newText":"y"}],"why":"w"}`),
+		toolCall(3, "edit", `{"edits":[{"file":"a.txt","content":"x"}],"why":"w"}`),
+		toolCall(4, "edit", `{"edits":[{"file":"d.txt","content":5}],"why":"w"}`))
+	m, isErr := body(t, r[0])
+	if isErr || strings.Count(r[0], "selection") != 2 || strings.Contains(r[0], "b1") {
+		t.Errorf("1: %s %v", r[0], m)
+	}
+	if b, err := os.ReadFile(filepath.Join(dir, "sub", "b.txt")); err != nil || string(b) != "b1\nb2\n" {
+		t.Errorf("file = %q %v", b, err)
+	}
+	for i, want := range map[int]string{1: "file and content only", 2: "file_exists", 3: "edits.0.content must be a string"} {
+		if !strings.Contains(r[i], want) {
+			t.Errorf("%d: %s, want %q", i+1, r[i], want)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(dir, "c.txt")); err == nil {
+		t.Error("c.txt was made")
+	}
+}

@@ -24,7 +24,7 @@ func TestEditToolNamesItsInputs(t *testing.T) {
 	}
 	items, _ := props["edits"].(map[string]any)["items"].(map[string]any)
 	iprops, _ := items["properties"].(map[string]any)
-	for _, name := range []string{"selection", "file", "startLine", "endLine", "expect", "newText", "insert", "old", "new"} {
+	for _, name := range []string{"selection", "file", "startLine", "endLine", "expect", "newText", "insert", "old", "new", "content"} {
 		if _, ok := iprops[name]; !ok {
 			t.Errorf("an item of edits has no input %q", name)
 		}

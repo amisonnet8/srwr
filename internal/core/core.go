@@ -67,6 +67,9 @@ type EditInput struct {
 	OpenStart bool
 	OpenEnd   bool
 
+	// Create, in an item of edits, makes the file File with this content (what new does): nothing else is given with it.
+	Create *string
+
 	// Insert, "after" or "before", keeps the range chosen (by the token, or by File and Expect) and puts NewText after or before it.
 	Insert string
 }

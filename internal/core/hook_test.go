@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/amisonnet8/srwr/internal/tape"
 )
@@ -362,6 +363,7 @@ func TestHookRecordsANewFileThatBashAddedToGit(t *testing.T) {
 func TestHookNewFilesLeaveOutWhatIsNotRecorded(t *testing.T) {
 	e := newEnv(t)
 	e.gitInit()
+	e.startTape()
 	e.write(".srwrignore", "priv*.txt\n")
 	e.write(".gitignore", "built.txt\n")
 	e.write("private.txt", secret)
@@ -390,6 +392,7 @@ func TestHookNewFilesLeaveOutWhatIsNotRecorded(t *testing.T) {
 func TestHookNewFilesStopAtTheLimit(t *testing.T) {
 	e := newEnv(t)
 	e.gitInit()
+	e.startTape()
 	for i := range maxNewFiles + 7 {
 		e.write(filepath.Join("gen", strings.Repeat("a", 1)+strconv.Itoa(1000+i)+".txt"), "x\n")
 	}
@@ -417,5 +420,69 @@ func TestHookNewFilesOutsideGit(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(e.root, ".srwr", "active")); err == nil {
 		t.Error("a tape was made although nothing was found")
+	}
+}
+
+// startTape puts a first event on the tape, so that the files written after this are newer than the tape.
+func (e *env) startTape() {
+	e.t.Helper()
+	e.write("seen.txt", "x\n")
+	e.sel(e.c, "seen.txt", 1, 1)
+}
+
+func (e *env) hookChanges() OutsideChanges {
+	e.t.Helper()
+	_, out, err := e.c.HookChanges(HookRequest{ObserveAll: true})
+	if err != nil {
+		e.t.Fatal(err)
+	}
+	return out
+}
+
+// A file that was there before the last event of the tape (untracked from before, or made by new in an earlier tape) is learned
+// as a snapshot and not told as made by the command; a file written after it is created.
+func TestHookNewFilesTellOnlyWhatIsNewerThanTheTape(t *testing.T) {
+	e := newEnv(t)
+	e.clock.t = time.Now() // the files have real modification times
+	e.gitInit()
+	e.write("old.txt", "old\n")
+	e.write("oldchanged.txt", "1\n")
+	past := time.Now().Add(-time.Hour)
+	for _, f := range []string{"old.txt", "oldchanged.txt"} {
+		if err := os.Chtimes(filepath.Join(e.root, f), past, past); err != nil {
+			t.Fatal(err)
+		}
+	}
+	e.startTape()
+	e.write("fresh.txt", "new\n")
+	out := e.hookChanges()
+	if !reflect.DeepEqual(out.Created, []string{"fresh.txt"}) || len(out.Changed) != 0 {
+		t.Errorf("told %+v, want only fresh.txt created", out)
+	}
+	if got := e.createdFiles(); len(got) != 1 || got["fresh.txt"].File == "" {
+		t.Errorf("created on the tape = %v", got)
+	}
+	if st := tape.Build(e.events()); st.Files["old.txt"] == nil || st.Files["old.txt"].Text != "old\n" {
+		t.Errorf("the tape does not know old.txt: %+v", st.Files)
+	}
+	// A change to a file the tape knows is told when it is new, and kept quiet when the file is older than the tape.
+	e.write("oldchanged.txt", "2\n")
+	if err := os.Chtimes(filepath.Join(e.root, "oldchanged.txt"), past, past); err != nil {
+		t.Fatal(err)
+	}
+	e.write("seen.txt", "y\n")
+	if out := e.hookChanges(); !reflect.DeepEqual(out.Changed, []string{"seen.txt"}) {
+		t.Errorf("changed = %v, want only seen.txt", out.Changed)
+	}
+}
+
+// With nothing on the tape yet, a file is not told as made: there is no time to compare with.
+func TestHookNewFilesWithoutATapeAreOnlyLearned(t *testing.T) {
+	e := newEnv(t)
+	e.gitInit()
+	e.write("a.txt", "a\n")
+	out := e.hookChanges()
+	if len(out.Created) != 0 || len(e.createdFiles()) != 0 || tape.Build(e.events()).Files["a.txt"] == nil {
+		t.Errorf("out = %+v, created = %v", out, e.createdFiles())
 	}
 }

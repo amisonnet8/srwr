@@ -20,6 +20,11 @@ type State struct {
 	// an edit, replace, new, or an external change. A file looked at after its last change has the lines the look showed.
 	LastLook   map[string]int
 	LastChange map[string]int
+	// LastTS is the time (as on the tape) of the last event. HookReads counts the looks the hook recorded, and HookOutside the external
+	// changes it found: the hook advises the agent the first time only.
+	LastTS      string
+	HookReads   int
+	HookOutside int
 }
 
 // NewState returns an empty state.
@@ -39,11 +44,17 @@ func Build(events []Event) *State {
 // Apply adds one event, which must come after those already applied.
 func (s *State) Apply(e Event) {
 	s.LastSeq = max(s.LastSeq, e.Seq)
+	if e.TS != "" {
+		s.LastTS = e.TS
+	}
 	switch e.Type {
 	case TypeSnapshot:
 		s.Files[e.File] = &File{Text: deref(e.Text)}
 	case TypeLook:
 		s.LastLook[e.File] = e.Seq
+		if e.Source == SourceHook {
+			s.HookReads++
+		}
 	case TypeEdit, TypeReplace, TypeNew:
 		s.LastChange[e.File] = e.Seq
 		f := s.Files[e.File]
@@ -56,6 +67,9 @@ func (s *State) Apply(e Event) {
 		s.Edits = append(s.Edits, e)
 	case TypeExternal:
 		s.LastChange[e.File] = e.Seq
+		if e.DetectedBy == "hook" {
+			s.HookOutside++
+		}
 		switch {
 		case e.Deleted:
 			s.Files[e.File] = &File{Deleted: true}

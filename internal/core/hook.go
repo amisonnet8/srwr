@@ -2,8 +2,11 @@ package core
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/amisonnet8/srwr/internal/session"
 	"github.com/amisonnet8/srwr/internal/tape"
@@ -57,22 +60,42 @@ func (c *Core) Hook(req HookRequest) (notes []string, err error) {
 }
 
 // OutsideChanges are the files a Bash command was found to have made (Created) or changed or deleted (Changed), recorded as external.
+// Only files whose modification time is after the last event of the tape are told: the others were there before, and the command
+// did not make them. FirstRead says the tape had no read of the hook before this call, and Earlier that it had told of changes.
 type OutsideChanges struct {
-	Created []string
-	Changed []string
+	Created   []string
+	Changed   []string
+	FirstRead bool
+	Earlier   bool
+}
+
+// madeAfter tells whether a file was written after the last event of the tape (since), with a little room for the coarse
+// clock of a file system. Without a time on the tape, nothing is told.
+func (c *Core) madeAfter(rel string, since time.Time) bool {
+	if since.IsZero() {
+		return false
+	}
+	info, err := os.Lstat(filepath.Join(c.WS.Root(), filepath.FromSlash(rel)))
+	if err != nil {
+		return false
+	}
+	return info.ModTime().After(since.Add(-time.Second))
 }
 
 // HookChanges is Hook that also says which files were found changed outside srwr.
 func (c *Core) HookChanges(req HookRequest) (notes []string, out OutsideChanges, err error) {
 	err = c.WS.Do(func(tx *session.Tx) error {
+		st := tx.State()
+		out.FirstRead, out.Earlier = st.HookReads == 0, st.HookOutside > 0
+		since, _ := time.Parse(time.RFC3339, st.LastTS)
 		if req.ObserveAll {
-			n, changed, err := c.observeAll(tx)
+			n, changed, err := c.observeAll(tx, since)
 			notes = append(notes, n...)
 			out.Changed = changed
 			if err != nil {
 				return err
 			}
-			n, created, err := c.observeNew(tx)
+			n, created, err := c.observeNew(tx, since)
 			notes = append(notes, n...)
 			out.Created = created
 			if err != nil {
@@ -101,7 +124,7 @@ func (c *Core) HookChanges(req HookRequest) (notes []string, out OutsideChanges,
 }
 
 // observeAll reads again every file the tape has content of, and records what changed (external). changed names those.
-func (c *Core) observeAll(tx *session.Tx) (notes, changed []string, err error) {
+func (c *Core) observeAll(tx *session.Tx, since time.Time) (notes, changed []string, err error) {
 	var names []string
 	for name := range tx.State().Files {
 		names = append(names, name)
@@ -124,8 +147,8 @@ func (c *Core) observeAll(tx *session.Tx) (notes, changed []string, err error) {
 		if err := Observe(tx, name, "hook", cur); err != nil {
 			return notes, changed, err
 		}
-		if tx.NextSeq() != before {
-			changed = append(changed, name)
+		if tx.NextSeq() != before && (cur == nil || c.madeAfter(name, since)) {
+			changed = append(changed, name) // told: a file that is gone, or one written after the last event of the tape
 		}
 	}
 	return notes, changed, nil
@@ -141,7 +164,7 @@ const (
 // observeNew records the new files a Bash command made: files git lists as new (untracked, or added to the index) and does not ignore, that the
 // tape has no content of. Outside a git work tree there are none to find, and that is not worth stopping the agent for. Every file goes
 // through readTarget, so the files that are not recorded, binary files and links out of the workspace are left out.
-func (c *Core) observeNew(tx *session.Tx) (notes, created []string, err error) {
+func (c *Core) observeNew(tx *session.Tx, since time.Time) (notes, created []string, err error) {
 	files, verr := vcs.NewFiles(c.WS.Root())
 	if verr != nil {
 		return nil, nil, nil //nolint:nilerr // no git work tree means no list of new files; that must not stop the agent
@@ -159,11 +182,18 @@ func (c *Core) observeNew(tx *session.Tx) (notes, created []string, err error) {
 		if cerr != nil || !t.exists || len(t.text) > maxNewFileSize {
 			continue // not recorded, not a text file, or too big: it is left out
 		}
+		recorded++
+		if !c.madeAfter(name, since) {
+			// It was there before the last event of the tape: the tape only learns of it, and the agent is not told it was made.
+			if err := appendSnapshot(tx, name, t.text); err != nil {
+				return notes, created, err
+			}
+			continue
+		}
 		if err := observeCreated(tx, name, "hook", t.text); err != nil {
 			return notes, created, err
 		}
 		created = append(created, name)
-		recorded++
 	}
 	if over > 0 {
 		notes = append(notes, fmt.Sprintf("%d more new files were not recorded (at most %d new files are recorded for one command)", over, maxNewFiles))

@@ -390,3 +390,51 @@ func TestOutsideAdvice(t *testing.T) {
 		t.Errorf("advice = %q", a)
 	}
 }
+
+// The advice to use look is given once for a tape: the second read (of any file) and a search before it get none.
+func TestLookAdviceIsGivenOnce(t *testing.T) {
+	e := newEnv(t)
+	e.write("a.go", "a\nb\n")
+	e.write("b.go", "c\nd\n")
+	read := func(f string) []string {
+		return e.advice("Read", map[string]any{"file_path": f}, map[string]any{"type": "text"})
+	}
+	if got := read("a.go"); len(got) != 1 || got[0] != LookAdvice {
+		t.Fatalf("the first read: %q", got)
+	}
+	if got := read("b.go"); len(got) != 0 {
+		t.Errorf("the second read: %q", got)
+	}
+	e2 := newEnv(t)
+	e2.write("a.go", "a\nb\n")
+	e2.advice("Grep", map[string]any{"pattern": "a", "output_mode": "content", "path": "a.go"}, map[string]any{"content": "1:a\n"})
+	if got := e2.advice("Read", map[string]any{"file_path": "a.go"}, map[string]any{"type": "text"}); len(got) != 0 {
+		t.Errorf("a read after a search: %q", got)
+	}
+}
+
+// What the outside advice explains is said once; later it is a short line.
+func TestOutsideAdviceIsShortAfterTheFirst(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git is not installed")
+	}
+	e := newEnv(t)
+	if out, err := exec.Command("git", "-C", e.root, "init", "-q").CombinedOutput(); err != nil { //nolint:gosec // git in a temporary directory
+		t.Fatalf("git init: %v\n%s", err, out)
+	}
+	e.write("a.go", "a\n")
+	bash := func() []string {
+		return e.advice("Bash", map[string]any{"command": "go generate"}, map[string]any{"stdout": ""})
+	}
+	e.advice("Read", map[string]any{"file_path": "a.go"}, map[string]any{"type": "text"})
+	e.write("g1.go", "x\n")
+	first := bash()
+	e.write("g2.go", "y\n")
+	second := bash()
+	if len(first) != 1 || !strings.Contains(first[0], "fine as they are") {
+		t.Errorf("first = %q", first)
+	}
+	if len(second) != 1 || second[0] != "srwr: this command created g2.go." {
+		t.Errorf("second = %q", second)
+	}
+}

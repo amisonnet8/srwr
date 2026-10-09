@@ -11,6 +11,11 @@
 /extension/out/
 *.vsix
 
+# Things a person puts in the root for an experiment (tapes, conversation files, checksums): never committed.
+/*.tape.jsonl.gz
+/*.jsonl
+/checksums.txt
+
 # Results of qsoku ui-check (the baselines are committed; the results are not).
 /ui-check-result/
 

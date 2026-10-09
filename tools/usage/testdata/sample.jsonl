@@ -1,0 +1,7 @@
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t1","name":"mcp__srwr__look","input":{"file":".","search":"foo","include":["*.go"],"why":"w"}}]}}
+{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"t1","content":[{"type":"text","text":"{\"ok\":true,\"count\":1}"}]}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t2","name":"mcp__srwr__look","input":{"file":"a.go","why":"w"}},{"type":"tool_use","id":"t3","name":"mcp__srwr__edit","input":{"edits":[{"file":"a.go","old":"a","new":"b"},{"file":"b.go","content":"x","why":"y"}],"why":"w"}}]}}
+{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"t2","content":"{\"ok\":true}"},{"type":"tool_result","tool_use_id":"t3","is_error":true,"content":[{"type":"text","text":"{\"ok\":false,\"error\":{\"code\":\"content_not_found\",\"message\":\"m\"},\"nearMatches\":[],\"retry\":{}}"}]}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t4","name":"Bash","input":{"command":"grep -rn foo ."}},{"type":"tool_use","id":"t5","name":"mcp__srwr__replace","input":{"files":["a.go"],"old":"a","new":"b","count":3,"why":"w"}}]}}
+{"type":"assistant","message":{"content":"plain text"}}
+not json

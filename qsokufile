@@ -90,3 +90,5 @@ shellcheck: (cd //; git ls-files '*.sh' '*.bash' | xargs -r shellcheck)
 # The oldest Vim srwr-view.vim supports (9.0.0784, docs/reference/vim.md): built from source once, then vim-test runs with it.
 # SRWR_VIM_OLDEST_DIR says where to build it (the default is under the user cache; a sandbox that cannot write there can name another).
 vim-oldest: (cd //; sh tools/vim-oldest.sh)
+# qsoku usage [file.jsonl...]: counts how the AI used each form of the srwr tools in Claude Code conversation files (default: *.jsonl in the root); writes ui-check-result/usage/index.html. For judging which features to keep (todo 2101fbfff0).
+usage: (cd //; go run ./tools/usage "$@")

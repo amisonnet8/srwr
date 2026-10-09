@@ -56,6 +56,7 @@
 │   └── embed.go            ← plugin/・autoload/ を srwr に埋め込む（go:embed）
 ├── tools/
 │   ├── dist/               ← 配る物を作る：`qsoku dist`（6つのバイナリ・圧縮・`checksums.txt`・`.vsix`、自分で検査）と `publish-check`（R13）
+│   ├── usage/              ← `qsoku usage`：Claude Code の会話ファイル（.jsonl）から、srwr の道具の引数の形・失敗・ほかの道具への逃げを数える
 │   ├── ui-check/           ← UI の確認の自動化：`run`（qsoku ui-check）・`live`・`accept`・`open`、自動の検証の項目の表（checks.go）、長い理由のテープ（maketape.go）、確認ページ（page.go）（R4〜R6）
 │   └── vim-oldest.sh       ← 最も古い Vim（9.0.0784）をビルドして `vim-test` を動かす（R5）
 ├── docs/images/            ← README の画像（バナーは手書き、デモ・VSCode の絵は `qsoku readme-media` で作る。コミットする）

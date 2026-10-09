@@ -225,7 +225,7 @@ func vscodeSteps(tape, _ string) string {
 	}
 	if tape == "with-failure" {
 		steps = append(steps[:4], "下のバーのすぐ上の、操作一覧の右上にある漏斗のボタンを押す（コマンドパレットの「srwr: Choose Frames to Show」でもよい）。4つの選択肢が出るので、「failure」にチェックを付けて Enter を押す。4コマになり、一覧の上の「Hiding: failure (2)」が消える",
-			"一覧の2行目（赤い丸の failure）を押す。赤い行「✖ select failed (invalid_range)」と、エラー文、why・tool・range・file が読めるか。赤が橙（replace）と見分けられるか。4行目も同じ形か見る",
+			"一覧の2行目（赤い丸の failure）を押す。赤い行「✖ look failed (invalid_range)」と、エラー文、why・tool・range・file が読めるか。赤が橙（edit）と見分けられるか。4行目も同じ形か見る",
 			"漏斗のボタンでもう一度 failure のチェックを外すと、2コマに戻る")
 	}
 	if tape == "live" {

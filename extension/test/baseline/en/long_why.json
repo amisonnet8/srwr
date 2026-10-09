@@ -99,10 +99,22 @@
     "kind": "new"
    },
    {
-    "label": "4  replace  store.go (3 hits)",
-    "description": "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、理由はそれぞれの変更の直前に出る。",
+    "label": "4  edit  store.go:16",
+    "description": "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、3つのコマに同じ理由が出る。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
+   },
+   {
+    "label": "5  edit  store.go:27",
+    "description": "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、3つのコマに同じ理由が出る。",
+    "color": "charts.orange",
+    "kind": "edit"
+   },
+   {
+    "label": "6  edit  store.go:34",
+    "description": "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、3つのコマに同じ理由が出る。",
+    "color": "charts.orange",
+    "kind": "edit"
    }
   ],
   "status": [
@@ -116,7 +128,7 @@
     "visible": true
    },
    {
-    "text": "1/4",
+    "text": "1/6",
     "visible": true
    },
    {
@@ -130,7 +142,7 @@
    "items": [
     {
      "label": "2026-10-03 00:00:00",
-     "description": "4 operations · a.go, store.go",
+     "description": "6 operations · a.go, store.go",
      "detail": "20260101-0000-long-why.tape.jsonl"
     },
     {
@@ -259,10 +271,22 @@
     "kind": "new"
    },
    {
-    "label": "4  replace  store.go (3 hits)",
-    "description": "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、理由はそれぞれの変更の直前に出る。",
+    "label": "4  edit  store.go:16",
+    "description": "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、3つのコマに同じ理由が出る。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
+   },
+   {
+    "label": "5  edit  store.go:27",
+    "description": "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、3つのコマに同じ理由が出る。",
+    "color": "charts.orange",
+    "kind": "edit"
+   },
+   {
+    "label": "6  edit  store.go:34",
+    "description": "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、3つのコマに同じ理由が出る。",
+    "color": "charts.orange",
+    "kind": "edit"
    }
   ],
   "status": [
@@ -275,7 +299,7 @@
     "visible": true
    },
    {
-    "text": "2/4",
+    "text": "2/6",
     "visible": true
    },
    {
@@ -289,7 +313,7 @@
    "items": [
     {
      "label": "2026-10-03 00:00:00",
-     "description": "4 operations · a.go, store.go",
+     "description": "6 operations · a.go, store.go",
      "detail": "20260101-0000-long-why.tape.jsonl"
     },
     {
@@ -551,10 +575,22 @@
     "kind": "new"
    },
    {
-    "label": "4  replace  store.go (3 hits)",
-    "description": "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、理由はそれぞれの変更の直前に出る。",
+    "label": "4  edit  store.go:16",
+    "description": "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、3つのコマに同じ理由が出る。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
+   },
+   {
+    "label": "5  edit  store.go:27",
+    "description": "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、3つのコマに同じ理由が出る。",
+    "color": "charts.orange",
+    "kind": "edit"
+   },
+   {
+    "label": "6  edit  store.go:34",
+    "description": "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、3つのコマに同じ理由が出る。",
+    "color": "charts.orange",
+    "kind": "edit"
    }
   ],
   "status": [
@@ -567,7 +603,7 @@
     "visible": true
    },
    {
-    "text": "3/4",
+    "text": "3/6",
     "visible": true
    },
    {
@@ -581,7 +617,7 @@
    "items": [
     {
      "label": "2026-10-03 00:00:00",
-     "description": "4 operations · a.go, store.go",
+     "description": "6 operations · a.go, store.go",
      "detail": "20260101-0000-long-why.tape.jsonl"
     },
     {
@@ -606,271 +642,13 @@
   "frame": 3,
   "tabs": [
    {
-    "uri": "srwr-replay:/20260101-0000-long-why/diff3/Before ⚠ replace: store.go?diff=3&side=before",
+    "uri": "srwr-replay:/20260101-0000-long-why/store.go",
     "column": 1,
-    "text": "package store\n\nimport (\n\t\"errors\"\n\t\"fmt\"\n)\n\nvar ErrNotFound = errors.New(\"not found\")\n\ntype Store struct {\n\titems map[string]string\n}\n\nfunc (s *Store) Get(id string) (string, error) {\n\tif id == \"\" {\n\n\n\t\treturn \"\", errEmpty\n\t}\n\tv, ok := s.items[id]\n\tif !ok {\n\t\treturn \"\", ErrNotFound\n\t}\n\treturn v, nil\n}\n\nfunc (s *Store) Load(id string) error {\n\tif _, err := s.Get(id); err != nil {\n\n\n\t\treturn fmt.Errorf(\"load: %w\", errEmpty)\n\t}\n\treturn nil\n}\n\nfunc (s *Store) Put(id, v string) error {\n\tif id == \"\" {\n\n\n\t\treturn errEmpty\n\t}\n\ts.items[id] = v\n\treturn nil\n}\n\nfunc (s *Store) Len() int { return len(s.items) }\n",
+    "text": "package store\n\nimport (\n\t\"errors\"\n\t\"fmt\"\n)\n\nvar ErrNotFound = errors.New(\"not found\")\n\ntype Store struct {\n\titems map[string]string\n}\n\nfunc (s *Store) Get(id string) (string, error) {\n\tif id == \"\" {\n◆ エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、3つ\n  のコマに同じ理由が出る。\n\t\treturn \"\", ErrEmpty\n\t}\n\tv, ok := s.items[id]\n\tif !ok {\n\t\treturn \"\", ErrNotFound\n\t}\n\treturn v, nil\n}\n\nfunc (s *Store) Load(id string) error {\n\tif _, err := s.Get(id); err != nil {\n\t\treturn fmt.Errorf(\"load: %w\", errEmpty)\n\t}\n\treturn nil\n}\n\nfunc (s *Store) Put(id, v string) error {\n\tif id == \"\" {\n\t\treturn errEmpty\n\t}\n\ts.items[id] = v\n\treturn nil\n}\n\nfunc (s *Store) Len() int { return len(s.items) }\n",
     "options": {
      "lineNumbers": 0
     },
-    "reveal": 4,
-    "decorations": [
-     {
-      "opts": {
-       "isWholeLine": true,
-       "backgroundColor": "#1d3a5c",
-       "light": {
-        "backgroundColor": "#cfe3fb"
-       }
-      },
-      "ranges": [
-       {
-        "line": 17
-       },
-       {
-        "line": 30
-       },
-       {
-        "line": 39
-       }
-      ]
-     },
-     {
-      "opts": {
-       "isWholeLine": true,
-       "backgroundColor": "#0b61a4",
-       "color": "#ffffff",
-       "fontWeight": "bold"
-      },
-      "ranges": [
-       {
-        "line": 15
-       },
-       {
-        "line": 16
-       },
-       {
-        "line": 28
-       },
-       {
-        "line": 29
-       },
-       {
-        "line": 37
-       },
-       {
-        "line": 38
-       }
-      ]
-     },
-     {
-      "opts": {
-       "before": {
-        "color": {
-         "id": "editorLineNumber.foreground"
-        }
-       }
-      },
-      "ranges": [
-       {
-        "line": 0,
-        "before": " 1  "
-       },
-       {
-        "line": 1,
-        "before": " 2  "
-       },
-       {
-        "line": 2,
-        "before": " 3  "
-       },
-       {
-        "line": 3,
-        "before": " 4  "
-       },
-       {
-        "line": 4,
-        "before": " 5  "
-       },
-       {
-        "line": 5,
-        "before": " 6  "
-       },
-       {
-        "line": 6,
-        "before": " 7  "
-       },
-       {
-        "line": 7,
-        "before": " 8  "
-       },
-       {
-        "line": 8,
-        "before": " 9  "
-       },
-       {
-        "line": 9,
-        "before": "10  "
-       },
-       {
-        "line": 10,
-        "before": "11  "
-       },
-       {
-        "line": 11,
-        "before": "12  "
-       },
-       {
-        "line": 12,
-        "before": "13  "
-       },
-       {
-        "line": 13,
-        "before": "14  "
-       },
-       {
-        "line": 14,
-        "before": "15  "
-       },
-       {
-        "line": 15,
-        "before": "    "
-       },
-       {
-        "line": 16,
-        "before": "    "
-       },
-       {
-        "line": 17,
-        "before": "16  "
-       },
-       {
-        "line": 18,
-        "before": "17  "
-       },
-       {
-        "line": 19,
-        "before": "18  "
-       },
-       {
-        "line": 20,
-        "before": "19  "
-       },
-       {
-        "line": 21,
-        "before": "20  "
-       },
-       {
-        "line": 22,
-        "before": "21  "
-       },
-       {
-        "line": 23,
-        "before": "22  "
-       },
-       {
-        "line": 24,
-        "before": "23  "
-       },
-       {
-        "line": 25,
-        "before": "24  "
-       },
-       {
-        "line": 26,
-        "before": "25  "
-       },
-       {
-        "line": 27,
-        "before": "26  "
-       },
-       {
-        "line": 28,
-        "before": "    "
-       },
-       {
-        "line": 29,
-        "before": "    "
-       },
-       {
-        "line": 30,
-        "before": "27  "
-       },
-       {
-        "line": 31,
-        "before": "28  "
-       },
-       {
-        "line": 32,
-        "before": "29  "
-       },
-       {
-        "line": 33,
-        "before": "30  "
-       },
-       {
-        "line": 34,
-        "before": "31  "
-       },
-       {
-        "line": 35,
-        "before": "32  "
-       },
-       {
-        "line": 36,
-        "before": "33  "
-       },
-       {
-        "line": 37,
-        "before": "    "
-       },
-       {
-        "line": 38,
-        "before": "    "
-       },
-       {
-        "line": 39,
-        "before": "34  "
-       },
-       {
-        "line": 40,
-        "before": "35  "
-       },
-       {
-        "line": 41,
-        "before": "36  "
-       },
-       {
-        "line": 42,
-        "before": "37  "
-       },
-       {
-        "line": 43,
-        "before": "38  "
-       },
-       {
-        "line": 44,
-        "before": "39  "
-       },
-       {
-        "line": 45,
-        "before": "40  "
-       },
-       {
-        "line": 46,
-        "before": "41  "
-       }
-      ]
-     }
-    ]
-   },
-   {
-    "uri": "srwr-replay:/20260101-0000-long-why/diff3/After store.go?diff=3&side=after",
-    "column": 2,
-    "text": "package store\n\nimport (\n\t\"errors\"\n\t\"fmt\"\n)\n\nvar ErrNotFound = errors.New(\"not found\")\n\ntype Store struct {\n\titems map[string]string\n}\n\nfunc (s *Store) Get(id string) (string, error) {\n\tif id == \"\" {\n◆ エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、理\n  由はそれぞれの変更の直前に出る。\n\t\treturn \"\", ErrEmpty\n\t}\n\tv, ok := s.items[id]\n\tif !ok {\n\t\treturn \"\", ErrNotFound\n\t}\n\treturn v, nil\n}\n\nfunc (s *Store) Load(id string) error {\n\tif _, err := s.Get(id); err != nil {\n◆ エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、理\n  由はそれぞれの変更の直前に出る。\n\t\treturn fmt.Errorf(\"load: %w\", ErrEmpty)\n\t}\n\treturn nil\n}\n\nfunc (s *Store) Put(id, v string) error {\n\tif id == \"\" {\n◆ エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、理\n  由はそれぞれの変更の直前に出る。\n\t\treturn ErrEmpty\n\t}\n\ts.items[id] = v\n\treturn nil\n}\n\nfunc (s *Store) Len() int { return len(s.items) }\n",
-    "options": {
-     "lineNumbers": 0
-    },
-    "reveal": 4,
+    "reveal": 18,
     "decorations": [
      {
       "opts": {
@@ -995,78 +773,62 @@
        },
        {
         "line": 28,
-        "before": "    "
-       },
-       {
-        "line": 29,
-        "before": "    "
-       },
-       {
-        "line": 30,
         "before": "27  "
        },
        {
-        "line": 31,
+        "line": 29,
         "before": "28  "
        },
        {
-        "line": 32,
+        "line": 30,
         "before": "29  "
        },
        {
-        "line": 33,
+        "line": 31,
         "before": "30  "
        },
        {
-        "line": 34,
+        "line": 32,
         "before": "31  "
        },
        {
-        "line": 35,
+        "line": 33,
         "before": "32  "
        },
        {
-        "line": 36,
+        "line": 34,
         "before": "33  "
        },
        {
-        "line": 37,
-        "before": "    "
-       },
-       {
-        "line": 38,
-        "before": "    "
-       },
-       {
-        "line": 39,
+        "line": 35,
         "before": "34  "
        },
        {
-        "line": 40,
+        "line": 36,
         "before": "35  "
        },
        {
-        "line": 41,
+        "line": 37,
         "before": "36  "
        },
        {
-        "line": 42,
+        "line": 38,
         "before": "37  "
        },
        {
-        "line": 43,
+        "line": 39,
         "before": "38  "
        },
        {
-        "line": 44,
+        "line": 40,
         "before": "39  "
        },
        {
-        "line": 45,
+        "line": 41,
         "before": "40  "
        },
        {
-        "line": 46,
+        "line": 42,
         "before": "41  "
        }
       ]
@@ -1082,12 +844,6 @@
       "ranges": [
        {
         "line": 17
-       },
-       {
-        "line": 30
-       },
-       {
-        "line": 39
        }
       ]
      },
@@ -1104,18 +860,6 @@
        },
        {
         "line": 16
-       },
-       {
-        "line": 28
-       },
-       {
-        "line": 29
-       },
-       {
-        "line": 37
-       },
-       {
-        "line": 38
        }
       ]
      }
@@ -1142,10 +886,22 @@
     "kind": "new"
    },
    {
-    "label": "4  replace  store.go (3 hits)",
-    "description": "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、理由はそれぞれの変更の直前に出る。",
+    "label": "4  edit  store.go:16",
+    "description": "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、3つのコマに同じ理由が出る。",
     "color": "charts.orange",
-    "kind": "replace"
+    "kind": "edit"
+   },
+   {
+    "label": "5  edit  store.go:27",
+    "description": "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、3つのコマに同じ理由が出る。",
+    "color": "charts.orange",
+    "kind": "edit"
+   },
+   {
+    "label": "6  edit  store.go:34",
+    "description": "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、3つのコマに同じ理由が出る。",
+    "color": "charts.orange",
+    "kind": "edit"
    }
   ],
   "status": [
@@ -1155,11 +911,10 @@
    },
    {
     "text": "Forward $(chevron-right)",
-    "color": "rgba(255, 255, 255, 0.4)",
     "visible": true
    },
    {
-    "text": "4/4",
+    "text": "4/6",
     "visible": true
    },
    {
@@ -1173,7 +928,630 @@
    "items": [
     {
      "label": "2026-10-03 00:00:00",
-     "description": "4 operations · a.go, store.go",
+     "description": "6 operations · a.go, store.go",
+     "detail": "20260101-0000-long-why.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9 operations · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7 operations · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10 operations · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 4,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260101-0000-long-why/store.go",
+    "column": 1,
+    "text": "package store\n\nimport (\n\t\"errors\"\n\t\"fmt\"\n)\n\nvar ErrNotFound = errors.New(\"not found\")\n\ntype Store struct {\n\titems map[string]string\n}\n\nfunc (s *Store) Get(id string) (string, error) {\n\tif id == \"\" {\n\t\treturn \"\", ErrEmpty\n\t}\n\tv, ok := s.items[id]\n\tif !ok {\n\t\treturn \"\", ErrNotFound\n\t}\n\treturn v, nil\n}\n\nfunc (s *Store) Load(id string) error {\n\tif _, err := s.Get(id); err != nil {\n◆ エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、3つ\n  のコマに同じ理由が出る。\n\t\treturn fmt.Errorf(\"load: %w\", ErrEmpty)\n\t}\n\treturn nil\n}\n\nfunc (s *Store) Put(id, v string) error {\n\tif id == \"\" {\n\t\treturn errEmpty\n\t}\n\ts.items[id] = v\n\treturn nil\n}\n\nfunc (s *Store) Len() int { return len(s.items) }\n",
+    "options": {
+     "lineNumbers": 0
+    },
+    "reveal": 29,
+    "decorations": [
+     {
+      "opts": {
+       "before": {
+        "color": {
+         "id": "editorLineNumber.foreground"
+        }
+       }
+      },
+      "ranges": [
+       {
+        "line": 0,
+        "before": " 1  "
+       },
+       {
+        "line": 1,
+        "before": " 2  "
+       },
+       {
+        "line": 2,
+        "before": " 3  "
+       },
+       {
+        "line": 3,
+        "before": " 4  "
+       },
+       {
+        "line": 4,
+        "before": " 5  "
+       },
+       {
+        "line": 5,
+        "before": " 6  "
+       },
+       {
+        "line": 6,
+        "before": " 7  "
+       },
+       {
+        "line": 7,
+        "before": " 8  "
+       },
+       {
+        "line": 8,
+        "before": " 9  "
+       },
+       {
+        "line": 9,
+        "before": "10  "
+       },
+       {
+        "line": 10,
+        "before": "11  "
+       },
+       {
+        "line": 11,
+        "before": "12  "
+       },
+       {
+        "line": 12,
+        "before": "13  "
+       },
+       {
+        "line": 13,
+        "before": "14  "
+       },
+       {
+        "line": 14,
+        "before": "15  "
+       },
+       {
+        "line": 15,
+        "before": "16  "
+       },
+       {
+        "line": 16,
+        "before": "17  "
+       },
+       {
+        "line": 17,
+        "before": "18  "
+       },
+       {
+        "line": 18,
+        "before": "19  "
+       },
+       {
+        "line": 19,
+        "before": "20  "
+       },
+       {
+        "line": 20,
+        "before": "21  "
+       },
+       {
+        "line": 21,
+        "before": "22  "
+       },
+       {
+        "line": 22,
+        "before": "23  "
+       },
+       {
+        "line": 23,
+        "before": "24  "
+       },
+       {
+        "line": 24,
+        "before": "25  "
+       },
+       {
+        "line": 25,
+        "before": "26  "
+       },
+       {
+        "line": 26,
+        "before": "    "
+       },
+       {
+        "line": 27,
+        "before": "    "
+       },
+       {
+        "line": 28,
+        "before": "27  "
+       },
+       {
+        "line": 29,
+        "before": "28  "
+       },
+       {
+        "line": 30,
+        "before": "29  "
+       },
+       {
+        "line": 31,
+        "before": "30  "
+       },
+       {
+        "line": 32,
+        "before": "31  "
+       },
+       {
+        "line": 33,
+        "before": "32  "
+       },
+       {
+        "line": 34,
+        "before": "33  "
+       },
+       {
+        "line": 35,
+        "before": "34  "
+       },
+       {
+        "line": 36,
+        "before": "35  "
+       },
+       {
+        "line": 37,
+        "before": "36  "
+       },
+       {
+        "line": 38,
+        "before": "37  "
+       },
+       {
+        "line": 39,
+        "before": "38  "
+       },
+       {
+        "line": 40,
+        "before": "39  "
+       },
+       {
+        "line": 41,
+        "before": "40  "
+       },
+       {
+        "line": 42,
+        "before": "41  "
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#583c27",
+       "light": {
+        "backgroundColor": "#fde3c8"
+       }
+      },
+      "ranges": [
+       {
+        "line": 28
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#b45f06",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 26
+       },
+       {
+        "line": 27
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  look  a.go:3",
+    "description": "これは折り返しの確認のための、とても長い理由です。幅を超えると何行かに分かれ、2行目からは字下げされて、全文が読めるはずです。さらに続けて、三行目にも届くようにします。",
+    "color": "charts.blue",
+    "kind": "look"
+   },
+   {
+    "label": "2  edit  a.go:3-5",
+    "description": "置き換えの理由も長くします。橙の理由の行が、幅を超えたときに何行かに分かれ、2行目からは字下げされ、全文が読めて、範囲がその直下に見えることを確かめるための文です。",
+    "color": "charts.orange",
+    "kind": "edit"
+   },
+   {
+    "label": "3  new  store.go:1-40",
+    "description": "名前を変える対象のファイルを作る",
+    "color": "charts.orange",
+    "kind": "new"
+   },
+   {
+    "label": "4  edit  store.go:16",
+    "description": "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、3つのコマに同じ理由が出る。",
+    "color": "charts.orange",
+    "kind": "edit"
+   },
+   {
+    "label": "5  edit  store.go:27",
+    "description": "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、3つのコマに同じ理由が出る。",
+    "color": "charts.orange",
+    "kind": "edit"
+   },
+   {
+    "label": "6  edit  store.go:34",
+    "description": "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、3つのコマに同じ理由が出る。",
+    "color": "charts.orange",
+    "kind": "edit"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "visible": true
+   },
+   {
+    "text": "5/6",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260101-0000-long-why",
+  "quickPick": {
+   "placeHolder": "Pick a tape to replay",
+   "items": [
+    {
+     "label": "2026-10-03 00:00:00",
+     "description": "6 operations · a.go, store.go",
+     "detail": "20260101-0000-long-why.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 09:49:46",
+     "description": "9 operations · entry.go, stats.go",
+     "detail": "20260930-0949-external.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:54:08",
+     "description": "7 operations · text.go, parse.go",
+     "detail": "20260930-0054-why-basic.tape.jsonl"
+    },
+    {
+     "label": "2026-09-30 00:53:32",
+     "description": "10 operations · TASK.md, go.mod, period.go, ledger.go, report.go, report_test.go, timesheet_test.go",
+     "detail": "20260930-0053-no-why.tape.jsonl"
+    }
+   ]
+  }
+ },
+ {
+  "frame": 5,
+  "tabs": [
+   {
+    "uri": "srwr-replay:/20260101-0000-long-why/store.go",
+    "column": 1,
+    "text": "package store\n\nimport (\n\t\"errors\"\n\t\"fmt\"\n)\n\nvar ErrNotFound = errors.New(\"not found\")\n\ntype Store struct {\n\titems map[string]string\n}\n\nfunc (s *Store) Get(id string) (string, error) {\n\tif id == \"\" {\n\t\treturn \"\", ErrEmpty\n\t}\n\tv, ok := s.items[id]\n\tif !ok {\n\t\treturn \"\", ErrNotFound\n\t}\n\treturn v, nil\n}\n\nfunc (s *Store) Load(id string) error {\n\tif _, err := s.Get(id); err != nil {\n\t\treturn fmt.Errorf(\"load: %w\", ErrEmpty)\n\t}\n\treturn nil\n}\n\nfunc (s *Store) Put(id, v string) error {\n\tif id == \"\" {\n◆ エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、3つ\n  のコマに同じ理由が出る。\n\t\treturn ErrEmpty\n\t}\n\ts.items[id] = v\n\treturn nil\n}\n\nfunc (s *Store) Len() int { return len(s.items) }\n",
+    "options": {
+     "lineNumbers": 0
+    },
+    "reveal": 36,
+    "decorations": [
+     {
+      "opts": {
+       "before": {
+        "color": {
+         "id": "editorLineNumber.foreground"
+        }
+       }
+      },
+      "ranges": [
+       {
+        "line": 0,
+        "before": " 1  "
+       },
+       {
+        "line": 1,
+        "before": " 2  "
+       },
+       {
+        "line": 2,
+        "before": " 3  "
+       },
+       {
+        "line": 3,
+        "before": " 4  "
+       },
+       {
+        "line": 4,
+        "before": " 5  "
+       },
+       {
+        "line": 5,
+        "before": " 6  "
+       },
+       {
+        "line": 6,
+        "before": " 7  "
+       },
+       {
+        "line": 7,
+        "before": " 8  "
+       },
+       {
+        "line": 8,
+        "before": " 9  "
+       },
+       {
+        "line": 9,
+        "before": "10  "
+       },
+       {
+        "line": 10,
+        "before": "11  "
+       },
+       {
+        "line": 11,
+        "before": "12  "
+       },
+       {
+        "line": 12,
+        "before": "13  "
+       },
+       {
+        "line": 13,
+        "before": "14  "
+       },
+       {
+        "line": 14,
+        "before": "15  "
+       },
+       {
+        "line": 15,
+        "before": "16  "
+       },
+       {
+        "line": 16,
+        "before": "17  "
+       },
+       {
+        "line": 17,
+        "before": "18  "
+       },
+       {
+        "line": 18,
+        "before": "19  "
+       },
+       {
+        "line": 19,
+        "before": "20  "
+       },
+       {
+        "line": 20,
+        "before": "21  "
+       },
+       {
+        "line": 21,
+        "before": "22  "
+       },
+       {
+        "line": 22,
+        "before": "23  "
+       },
+       {
+        "line": 23,
+        "before": "24  "
+       },
+       {
+        "line": 24,
+        "before": "25  "
+       },
+       {
+        "line": 25,
+        "before": "26  "
+       },
+       {
+        "line": 26,
+        "before": "27  "
+       },
+       {
+        "line": 27,
+        "before": "28  "
+       },
+       {
+        "line": 28,
+        "before": "29  "
+       },
+       {
+        "line": 29,
+        "before": "30  "
+       },
+       {
+        "line": 30,
+        "before": "31  "
+       },
+       {
+        "line": 31,
+        "before": "32  "
+       },
+       {
+        "line": 32,
+        "before": "33  "
+       },
+       {
+        "line": 33,
+        "before": "    "
+       },
+       {
+        "line": 34,
+        "before": "    "
+       },
+       {
+        "line": 35,
+        "before": "34  "
+       },
+       {
+        "line": 36,
+        "before": "35  "
+       },
+       {
+        "line": 37,
+        "before": "36  "
+       },
+       {
+        "line": 38,
+        "before": "37  "
+       },
+       {
+        "line": 39,
+        "before": "38  "
+       },
+       {
+        "line": 40,
+        "before": "39  "
+       },
+       {
+        "line": 41,
+        "before": "40  "
+       },
+       {
+        "line": 42,
+        "before": "41  "
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#583c27",
+       "light": {
+        "backgroundColor": "#fde3c8"
+       }
+      },
+      "ranges": [
+       {
+        "line": 35
+       }
+      ]
+     },
+     {
+      "opts": {
+       "isWholeLine": true,
+       "backgroundColor": "#b45f06",
+       "color": "#ffffff",
+       "fontWeight": "bold"
+      },
+      "ranges": [
+       {
+        "line": 33
+       },
+       {
+        "line": 34
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "tree": [
+   {
+    "label": "1  look  a.go:3",
+    "description": "これは折り返しの確認のための、とても長い理由です。幅を超えると何行かに分かれ、2行目からは字下げされて、全文が読めるはずです。さらに続けて、三行目にも届くようにします。",
+    "color": "charts.blue",
+    "kind": "look"
+   },
+   {
+    "label": "2  edit  a.go:3-5",
+    "description": "置き換えの理由も長くします。橙の理由の行が、幅を超えたときに何行かに分かれ、2行目からは字下げされ、全文が読めて、範囲がその直下に見えることを確かめるための文です。",
+    "color": "charts.orange",
+    "kind": "edit"
+   },
+   {
+    "label": "3  new  store.go:1-40",
+    "description": "名前を変える対象のファイルを作る",
+    "color": "charts.orange",
+    "kind": "new"
+   },
+   {
+    "label": "4  edit  store.go:16",
+    "description": "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、3つのコマに同じ理由が出る。",
+    "color": "charts.orange",
+    "kind": "edit"
+   },
+   {
+    "label": "5  edit  store.go:27",
+    "description": "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、3つのコマに同じ理由が出る。",
+    "color": "charts.orange",
+    "kind": "edit"
+   },
+   {
+    "label": "6  edit  store.go:34",
+    "description": "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、3つのコマに同じ理由が出る。",
+    "color": "charts.orange",
+    "kind": "edit"
+   }
+  ],
+  "status": [
+   {
+    "text": "$(chevron-left) Back",
+    "visible": true
+   },
+   {
+    "text": "Forward $(chevron-right)",
+    "color": "rgba(255, 255, 255, 0.4)",
+    "visible": true
+   },
+   {
+    "text": "6/6",
+    "visible": true
+   },
+   {
+    "text": "$(close)",
+    "visible": true
+   }
+  ],
+  "viewDescription": "20260101-0000-long-why",
+  "quickPick": {
+   "placeHolder": "Pick a tape to replay",
+   "items": [
+    {
+     "label": "2026-10-03 00:00:00",
+     "description": "6 operations · a.go, store.go",
      "detail": "20260101-0000-long-why.tape.jsonl"
     },
     {

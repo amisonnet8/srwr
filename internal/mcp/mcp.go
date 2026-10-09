@@ -351,6 +351,9 @@ type briefOK struct {
 	Hint      string `json:"hint,omitempty"`
 }
 
+// briefEditsMin is how many edits in one call make the short result the default (brief: false asks for the long one).
+const briefEditsMin = 6
+
 type briefEditsOK struct {
 	OK    bool      `json:"ok"`
 	Edits []briefOK `json:"edits"`
@@ -421,7 +424,8 @@ func (s *Server) callEdits(a editArgs) toolResult {
 	if cerr != nil {
 		return failure(*cerr)
 	}
-	if a.Brief != nil && *a.Brief {
+	// Many edits are not read back one by one: from briefEditsMin items on, the short form is the default.
+	if brief := len(res.Edits) >= briefEditsMin; (a.Brief == nil && brief) || (a.Brief != nil && *a.Brief) {
 		b := briefEditsOK{OK: true, Edits: make([]briefOK, len(res.Edits))}
 		for i, r := range res.Edits {
 			b.Edits[i] = briefOK{Selection: r.Selection, StartLine: r.StartLine, EndLine: r.EndLine, Hint: r.Hint}

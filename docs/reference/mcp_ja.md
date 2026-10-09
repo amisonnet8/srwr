@@ -116,7 +116,7 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 | `old`・`new` | `expect` と `newText` の代わりに、行の一部を直すとき：`file` と一緒に、ファイルの中にただ1か所ある文字列 `old` と、その代わりの `new`。下を見る。`selection`・`expect`・`newText`・`insert` とは一緒に使えない |
 | `newText` | 置き換え後のテキスト。`""` は削除 |
 | `insert` | 省略可。`"after"` か `"before"`。範囲（トークンの範囲、または `expect` の行）を残し、その後ろ（前）に `newText` を足す。置き換えない。`newText` が空なら空行を1つ足す。`"start"`・`"end"` は、`file` と `newText` だけで、ファイルの先頭（末尾）に `newText` を足す |
-| `brief` | 省略可。`true`（真偽値。引用符は付けない）で、結果は `selection`・`startLine`・`endLine`（と `hint`）だけ。`lines`・`above`・`below` を返さない。読み返さなくてよい多数の編集のため。`edits` でも使える。既定は今までどおり |
+| `brief` | 省略可。`true`（真偽値。引用符は付けない）で、結果は `selection`・`startLine`・`endLine`（と `hint`）だけ。`lines`・`above`・`below` を返さない。読み返さなくてよい多数の編集のため。`edits` でも使える。`edits` が6件以上のときは既定でこの短い形（長い形が要るときは `false`） |
 | `why` | なぜこう変えるか |
 | 出力の `selection` | **置き換え後の範囲**の新しいトークン。同じ箇所を続けて直すときは、`look` し直さずにこれを使える |
 | 出力の `lines` | 置き換え後の範囲の内容（削除なら `[]`） |

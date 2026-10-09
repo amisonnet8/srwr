@@ -3,6 +3,7 @@ package mcp
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -637,6 +638,30 @@ func TestEditOldWithOneLineNumber(t *testing.T) {
 		toolCall(2, "edit", `{"file":"a.txt","startLine":1,"expect":"foo","newText":"x","why":"w"}`))
 	if !strings.Contains(r[0], `\"ok\":true`) || !strings.Contains(r[1], "give both startLine and endLine") {
 		t.Error(r)
+	}
+}
+
+// Six edits or more in one call get the short result unless brief is false.
+func TestEditsBriefDefault(t *testing.T) {
+	run := func(n int, extra string) string {
+		dir := t.TempDir()
+		if err := os.WriteFile(filepath.Join(dir, "a.txt"), []byte("1\n2\n3\n4\n5\n6\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		var parts []string
+		for i := 1; i <= n; i++ {
+			parts = append(parts, fmt.Sprintf(`{"file":"a.txt","expect":"%d","newText":"x%d"}`, i, i))
+		}
+		return serve(t, dir, toolCall(1, "edit", `{"edits":[`+strings.Join(parts, ",")+`],`+extra+`"why":"w"}`))[0]
+	}
+	if r := run(5, ""); !strings.Contains(r, "above") {
+		t.Errorf("5 items: %s", r)
+	}
+	if r := run(6, ""); strings.Contains(r, "above") || strings.Count(r, "selection") != 6 {
+		t.Errorf("6 items: %s", r)
+	}
+	if r := run(6, `"brief":false,`); !strings.Contains(r, "above") {
+		t.Errorf("brief false: %s", r)
 	}
 }
 

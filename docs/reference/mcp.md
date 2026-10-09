@@ -116,7 +116,7 @@ Changes the range to new text, in one call. An insertion is a change of an empty
 | `old`, `new` | Instead of `expect` and `newText`, to change a part of a line: with `file`, the text `old` that is in the file in one place only, and `new` that takes its place. See below. Not with `selection`, `expect`, `newText` or `insert` |
 | `newText` | The text after the replacement. `""` is a deletion |
 | `insert` | Optional, `"after"` or `"before"`. Keep the range (the token's, or the lines of `expect`) and put `newText` after (before) it, instead of replacing it. An empty `newText` puts one empty line. `"start"` or `"end"`: with `file` and `newText` only, put `newText` at the top (bottom) of the file |
-| `brief` | Optional, `true` (a boolean: no quotes). The result has only `selection`, `startLine`, `endLine` (and `hint`): no `lines`, `above`, `below`. For many edits when they need not be read back. It works for `edits` too. The default is as before |
+| `brief` | Optional, `true` (a boolean: no quotes). The result has only `selection`, `startLine`, `endLine` (and `hint`): no `lines`, `above`, `below`. For many edits when they need not be read back. It works for `edits` too, where it is the default for 6 or more items (write `false` for the long result) |
 | `why` | Why it changes it this way |
 | `selection` in the output | A new token for **the range after the replacement**. To go on fixing the same place, it can be used without calling `look` again |
 | `lines` in the output | The content of the range after the replacement (`[]` for a deletion) |

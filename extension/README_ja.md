@@ -27,7 +27,7 @@ go install github.com/amisonnet8/srwr/cmd/srwr@latest
 
 - Linux・macOS・Windows 向けのビルド済みバイナリは [srwr の GitHub Releases](https://github.com/amisonnet8/srwr/releases) にもあります
 - `srwr` を `PATH` に置くか、設定 [`srwr.path`](#-設定) で場所を教えます
-- この版の拡張は、`protocolVersion` が **2** の表示サーバーと話します。合わないときは、どちらかを更新するよう案内が出ます
+- この版の拡張は、`protocolVersion` が **3** の表示サーバーと話します。合わないときは、どちらかを更新するよう案内が出ます
 - そもそも AI にテープを記録させるには、プロジェクトで `srwr init` します。全体は [srwr の README](https://github.com/amisonnet8/srwr/blob/main/README_ja.md#-インストール) を見てください
 
 ## ✨ 機能
@@ -91,7 +91,7 @@ go install github.com/amisonnet8/srwr/cmd/srwr@latest
 | 出るもの | すること |
 |---|---|
 | 「srwr を起動できません … srwr を入れる（go install …@latest）か、設定「srwr.path」に場所を指定してください」 | `srwr` が `PATH` にありません。入れるか、`srwr.path` を設定します（「設定を開く」ボタンがそこへ飛びます） |
-| 「srwr（…）と、この拡張のバージョンが合っていません（拡張は protocolVersion 2）」 | 古いほうの `srwr`（`go install …@latest`）か拡張を更新します |
+| 「srwr（…）と、この拡張のバージョンが合っていません（拡張は protocolVersion 3）」 | 古いほうの `srwr`（`go install …@latest`）か拡張を更新します |
 | 「テープを開く」に何も出ない | 操作が 1 つ以上あるテープだけが出ます。開いたフォルダの `.srwr/tapes/` のものだけです |
 
 ## 🔗 リンク

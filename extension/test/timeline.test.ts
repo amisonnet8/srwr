@@ -63,7 +63,7 @@ test("resolveCommand: setting, then SRWR_PATH, then PATH", () => {
   assert.equal(resolveCommand("srwr", { SRWR_PATH: "/dev/srwr" }), "/dev/srwr");
   assert.equal(resolveCommand("", { SRWR_PATH: " " }), "srwr");
   assert.equal(resolveCommand("srwr", {}), "srwr");
-  assert.equal(PROTOCOL_VERSION, 2);
+  assert.equal(PROTOCOL_VERSION, 3);
 });
 
 // The golden data holds the content of each file at i = -1, 0, 1 ... per frame. contentAt must give the same.

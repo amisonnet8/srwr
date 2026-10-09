@@ -2,10 +2,10 @@
 import * as vscode from "vscode";
 import { pick } from "./lang";
 import { Nav } from "./controls";
-import { bandRows, BANNER_PREFIX, belowBands, insertBanner, insertBands, wrapWhy } from "./lines";
+import { insertBanner, wrapWhy } from "./lines";
 import { OpsSource } from "./sidebar";
 import { Presenter } from "./present";
-import { basename, changedLines, formatRange, Frame, Hidden, hunkLines, hunksOf, isDiff, isReplace, Timeline, splitLines, toneOf } from "./timeline";
+import { basename, changedLines, formatRange, Frame, Hidden, isDiff, Timeline, splitLines, toneOf } from "./timeline";
 
 export const REPLAY_SCHEME = "srwr-replay";
 
@@ -124,15 +124,7 @@ export class ReplaySession implements OpsSource, Nav, vscode.Disposable {
       if (!f) {
         return "";
       }
-      const text = m[2] === "before" ? f.before : f.after;
-      // A replace frame has its why in a band above each block of changed lines, on the right; on the left there are empty rows,
-      // so the lines line up.
-      if (!isReplace(f)) {
-        return text;
-      }
-      const band = subBand(f);
-      const starts = hunksOf(f).map((h) => (m[2] === "before" ? h.beforeStart : h.afterStart));
-      return insertBands(text, starts, m[2] === "before" ? band.map(() => "") : band);
+      return m[2] === "before" ? f.before : f.after;
     }
     const fm = /(?:^|&)failure=(\d+)/.exec(uri.query);
     if (fm) {
@@ -167,7 +159,7 @@ export class ReplaySession implements OpsSource, Nav, vscode.Disposable {
 
   private async render(i: number, g: number): Promise<void> {
     const f = this.timeline.frames[i];
-    if (isDiff(f) || isReplace(f)) {
+    if (isDiff(f)) {
       this.banner = undefined;
       await this.showDiff(f, g);
       if (g === this.gen) {
@@ -229,28 +221,6 @@ export class ReplaySession implements OpsSource, Nav, vscode.Disposable {
       return;
     }
     this.presenter.clear();
-    if (isReplace(f)) {
-      // Bands above each block; the first band goes about 30% from the top, so that the why is read before the change.
-      const rows = subBand(f).length;
-      const hunks = hunksOf(f);
-      const changed = hunkLines(hunks);
-      const sides = [
-        { editor: leftEditor, tone: "look" as const, starts: hunks.map((h) => h.beforeStart), lines: changed.before },
-        { editor: rightEditor, tone: "edit" as const, starts: hunks.map((h) => h.afterStart), lines: changed.after },
-      ];
-      for (const s of sides) {
-        const bands = bandRows(s.starts, rows);
-        this.presenter.paintLines(
-          s.editor,
-          s.tone,
-          s.lines.map((n) => belowBands(s.starts, rows, n)),
-          bands,
-          rows,
-        );
-        revealNearTop(s.editor, bands[0] ?? 1);
-      }
-      return;
-    }
     const changed = changedLines(splitLines(f.before), splitLines(f.after));
     this.presenter.paintLines(leftEditor, "look", changed.before);
     this.presenter.paintLines(rightEditor, "edit", changed.after);
@@ -334,18 +304,9 @@ export function revealNearTop(editor: vscode.TextEditor, line: number): void {
   editor.revealRange(new vscode.Range(p, p), vscode.TextEditorRevealType.AtTop);
 }
 
-// The rows of the band above a sub frame: its why, wrapped. There is always at least one, even when the why is missing.
-export function subBand(f: Frame): string[] {
-  const rows = f.why ? wrapWhy(f.why, WHY_WIDTH) : [];
-  return rows.length > 0 ? rows : [BANNER_PREFIX.trimEnd()];
-}
-
 // The heading of a diff frame (the left tab).
 export function diffTitle(f: Frame): string {
   const name = basename(f.file);
-  if (f.kind === "replace") {
-    return `⚠ replace: ${name}`;
-  }
   if (f.kind === "final") {
     return pick(
       `⚠ Changed after recording (${f.deleted ? "no longer exists" : "diff from current file"}): ${name}`,

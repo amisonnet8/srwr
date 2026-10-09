@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { bandRows, belowBands, insertBanner, insertBands, wrapWhy } from "../src/lines";
+import { insertBanner, wrapWhy } from "../src/lines";
 
 test("wrapWhy: one short row starts with the mark", () => {
   assert.deepEqual(wrapWhy("理由です", 100), ["◆ 理由です"]);
@@ -36,15 +36,4 @@ test("insertBanner: a line outside the text goes to the start or the end", () =>
   assert.equal(insertBanner("a\nb\n", 0, ["R"]), "R\na\nb\n");
   assert.equal(insertBanner("a\nb\n", 99, ["R"]), "a\nb\nR\n");
   assert.equal(insertBanner("", 1, ["R"]), "R\n");
-});
-
-test("insertBands puts the rows above each start; bandRows and belowBands say where things are after", () => {
-  const text = "a\nb\nc\nd\ne\n";
-  const starts = [2, 5];
-  assert.equal(insertBands(text, starts, ["W1", "W2"]), "a\nW1\nW2\nb\nc\nd\nW1\nW2\ne\n");
-  assert.deepEqual(bandRows(starts, 2), [2, 7]); // W1 is at row 2, and the second W1 at row 7
-  assert.deepEqual([1, 2, 3, 4, 5].map((n) => belowBands(starts, 2, n)), [1, 4, 5, 6, 9]);
-  // At the end of the file (an insertion after the last line), and with no bands.
-  assert.equal(insertBands("a\n", [2], ["W"]), "a\nW\n");
-  assert.equal(insertBands("a\nb\n", [], ["W"]), "a\nb\n");
 });

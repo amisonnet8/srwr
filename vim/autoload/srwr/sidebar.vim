@@ -7,8 +7,8 @@ import autoload './timeline.vim'
 # The operation list (left): frames in recorded order, numbered from 1. A colored dot tells the kind.
 
 const WIDTH = 40
-const KIND_LABEL_JA = {look: 'look   ', edit: 'edit   ', replace: 'replace', new: 'new    ', external: '外部変更', final: '録画後', failure: '失敗    '}
-const KIND_LABEL_EN = {look: 'look    ', edit: 'edit    ', replace: 'replace ', new: 'new     ', external: 'external', final: 'final   ', failure: 'failure '}
+const KIND_LABEL_JA = {look: 'look   ', edit: 'edit   ', new: 'new    ', external: '外部変更', final: '録画後', failure: '失敗    '}
+const KIND_LABEL_EN = {look: 'look    ', edit: 'edit    ',  new: 'new     ', external: 'external', final: 'final   ', failure: 'failure '}
 
 def KindLabel(kind: string): string
   return lang.Ja() ? KIND_LABEL_JA[kind] : KIND_LABEL_EN[kind]
@@ -26,11 +26,7 @@ var rowCount = 0
 export def Line(f: dict<any>): string
   const desc = timeline.Why(f)
   # A failure has no file and range to name: the error code stands in their place.
-  var place = f.kind ==# 'failure' ? get(f, 'code', '') : timeline.Basename(f.file) .. ':' .. timeline.FormatRange(f.range)
-  if f.kind ==# 'replace'
-    const hits = get(f, 'hits', 0)
-    place = timeline.Basename(f.file) .. ' (' .. lang.Pick(hits .. (hits == 1 ? ' hit' : ' hits'), hits .. 'か所') .. ')'
-  endif
+  const place = f.kind ==# 'failure' ? get(f, 'code', '') : timeline.Basename(f.file) .. ':' .. timeline.FormatRange(f.range)
   return printf('● %2d %s %s', f.index + 1, KindLabel(f.kind), place) .. (desc !=# '' ? '  ' .. desc : '')
 enddef
 
@@ -59,7 +55,7 @@ enddef
 
 # DotType is the text property type of a frame's dot: select blue, replace orange, external and final purple.
 export def DotType(kind: string): string
-  return kind ==# 'look' ? 'srwr_dot_select' : kind ==# 'edit' || kind ==# 'replace' || kind ==# 'new' ? 'srwr_dot_replace' : kind ==# 'failure' ? 'srwr_dot_failure' : 'srwr_dot_external'
+  return kind ==# 'look' ? 'srwr_dot_select' : kind ==# 'edit' || kind ==# 'new' ? 'srwr_dot_replace' : kind ==# 'failure' ? 'srwr_dot_failure' : 'srwr_dot_external'
 enddef
 
 # Fill writes the frames of tl into the list buffer, and colors the dots.

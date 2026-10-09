@@ -34,7 +34,7 @@ export function loadGolden(name: string): Golden {
 }
 
 // The golden data was written for the tape of version 1, which said select and replace for what are look and edit now.
-const GOLDEN_KINDS: Record<string, string> = { select: "look", replace: "edit", sub: "replace" };
+const GOLDEN_KINDS: Record<string, string> = { select: "look", replace: "edit", sub: "edit" };
 
 export function goldenKind(kind: string): string {
   return GOLDEN_KINDS[kind] ?? kind;

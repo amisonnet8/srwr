@@ -55,12 +55,12 @@ func TestInitialize(t *testing.T) {
 	root := workspace(t, nil, nil)
 	srv := &Server{Root: root, Version: "v-test"}
 	got := exchange(t, srv, initReq(1, map[string]any{}))
-	if want := `{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":2,"serverVersion":"v-test"}}`; got[0] != want {
+	if want := `{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":3,"serverVersion":"v-test"}}`; got[0] != want {
 		t.Errorf("got %s\nwant %s", got[0], want)
 	}
 
 	t.Run("a different protocol version", func(t *testing.T) {
-		got := exchange(t, srv, req(1, "initialize", map[string]any{"client": "vim", "protocolVersion": 3}))
+		got := exchange(t, srv, req(1, "initialize", map[string]any{"client": "vim", "protocolVersion": 2}))
 		if rpc, code := errorOf(t, got[0]); rpc != -32000 || code != "protocol_mismatch" {
 			t.Errorf("got %s", got[0])
 		}

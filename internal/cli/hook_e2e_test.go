@@ -163,7 +163,7 @@ func TestViewServerShowsWhatHookWrote(t *testing.T) {
 	}
 
 	v := startViewer(t, root)
-	v.request("initialize", `{"client":"vim","protocolVersion":2}`)
+	v.request("initialize", `{"client":"vim","protocolVersion":3}`)
 	var list struct {
 		Result struct{ Tapes []struct{ TapeID string } }
 	}

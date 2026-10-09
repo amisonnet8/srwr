@@ -199,10 +199,10 @@ func TestLongWhyTapeIsMadeByTheRealMCP(t *testing.T) {
 			whys = append(whys, *e.Why)
 		}
 	}
-	if got := strings.Join(types, ","); got != "header,snapshot,look,edit,new,replace" {
+	if got := strings.Join(types, ","); got != "header,snapshot,look,edit,new,edit,edit,edit" {
 		t.Errorf("events = %s", got)
 	}
-	if len(whys) != 4 || whys[0] != longSelectWhy || whys[1] != longReplaceWhy || whys[3] != longSubWhy {
+	if len(whys) != 6 || whys[0] != longSelectWhy || whys[1] != longReplaceWhy || whys[3] != longSubWhy || whys[5] != longSubWhy {
 		t.Errorf("whys = %q", whys)
 	}
 	a, err := os.ReadFile(filepath.Join(extra, "a.go")) //nolint:gosec // a path in a temporary directory
@@ -211,7 +211,7 @@ func TestLongWhyTapeIsMadeByTheRealMCP(t *testing.T) {
 	}
 	st, err := os.ReadFile(filepath.Join(extra, "store.go")) //nolint:gosec // a path in a temporary directory
 	if err != nil || strings.Contains(string(st), "errEmpty") || strings.Count(string(st), "ErrEmpty") != 3 {
-		t.Errorf("store.go is not the file as the replace left it: %q %v", st, err)
+		t.Errorf("store.go is not the file as the edits left it: %q %v", st, err)
 	}
 }
 

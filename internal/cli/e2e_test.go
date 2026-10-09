@@ -435,7 +435,7 @@ func TestViewServerShowsWhatMCPWrote(t *testing.T) {
 
 	v := startViewer(t, root)
 	var init struct{ Result struct{ ProtocolVersion int } }
-	if err := json.Unmarshal([]byte(v.request("initialize", `{"client":"vim","protocolVersion":2}`)), &init); err != nil || init.Result.ProtocolVersion != 2 {
+	if err := json.Unmarshal([]byte(v.request("initialize", `{"client":"vim","protocolVersion":3}`)), &init); err != nil || init.Result.ProtocolVersion != 3 {
 		t.Fatalf("initialize: %+v %v", init, err)
 	}
 

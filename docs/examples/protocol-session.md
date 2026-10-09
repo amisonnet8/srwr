@@ -13,8 +13,8 @@ A workspace that has the tape `20261001-0806-1795`, which recorded the work of [
 ## Replay
 
 ```jsonrpc
-→ {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"client":"vim","protocolVersion":2,"options":{"diffFrames":true}}}
-← {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":2,"serverVersion":"(devel)"}}
+→ {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"client":"vim","protocolVersion":3,"options":{"diffFrames":true}}}
+← {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":3,"serverVersion":"(devel)"}}
 → {"jsonrpc":"2.0","id":2,"method":"tapes/list","params":{}}
 ← {"jsonrpc":"2.0","id":2,"result":{"tapes":[{"tapeId":"20261001-0806-1795","startedAt":"2026-10-01T08:06:15.381Z","updatedAt":"2026-10-01T08:06:21.026Z","ops":2,"files":["cmd/main.go"]}]}}
 → {"jsonrpc":"2.0","id":3,"method":"tape/open","params":{"tapeId":"20261001-0806-1795"}}
@@ -38,8 +38,8 @@ The shape of a frame (the fields used for the `why` line and so on) is in [proto
 Opening a tape that does not exist returns a JSON-RPC error. `error.data.code` is the error code of srwr.
 
 ```jsonrpc
-→ {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"client":"vim","protocolVersion":2,"options":{}}}
-← {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":2,"serverVersion":"(devel)"}}
+→ {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"client":"vim","protocolVersion":3,"options":{}}}
+← {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":3,"serverVersion":"(devel)"}}
 → {"jsonrpc":"2.0","id":2,"method":"tape/open","params":{"tapeId":"nothing"}}
 ← {"jsonrpc":"2.0","id":2,"error":{"code":-32000,"message":"no such tape: nothing","data":{"code":"tape_not_found"}}}
 → {"jsonrpc":"2.0","id":3,"method":"shutdown","params":{}}

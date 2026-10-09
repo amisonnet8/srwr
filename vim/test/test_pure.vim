@@ -25,10 +25,10 @@ t.Equal(v:null, timeline.ContentAt(tl, 'c.go', 1), 'no frame touches the file')
 t.Equal('a1', timeline.ContentAt(tl, 'a.go', -1), 'before any frame')
 t.Equal('', timeline.Why(tl.frames[1]), 'a null why is empty')
 t.Equal('select', timeline.Tone({kind: 'look'}), 'tone of a look')
-for k in ['edit', 'replace', 'new', 'external', 'final']
+for k in ['edit', 'new', 'external', 'final']
   t.Equal('replace', timeline.Tone({kind: k}), 'tone ' .. k)
 endfor
-t.True(timeline.IsDiff({kind: 'external'}) && timeline.IsDiff({kind: 'final'}) && !timeline.IsDiff({kind: 'edit'}) && timeline.IsDiff({kind: 'replace'}), 'diff kinds')
+t.True(timeline.IsDiff({kind: 'external'}) && timeline.IsDiff({kind: 'final'}) && !timeline.IsDiff({kind: 'edit'}), 'diff kinds')
 t.Equal('37', timeline.FormatRange({start: 37, end: 37}), 'one line')
 t.Equal('39-41', timeline.FormatRange({start: 39, end: 41}), 'many lines')
 t.Equal('12の前', timeline.FormatRange({start: 12, end: 11}), 'empty range')
@@ -62,8 +62,7 @@ t.Equal(1, replay.BannerAt(-3, 9), 'banner position clamped to the top')
 t.Equal(['  1 ', '  2 ', '    ', '    ', '  3 '], paint.NumberLabels(5, 3, 2), 'labels: why rows are blank, the rest keep the file numbers')
 t.Equal(['  1 ', '    '], paint.NumberLabels(2, 2, 1), 'labels: why row at the end')
 t.Equal(['    ', '  1 '], paint.NumberLabels(2, 1, 1), 'labels: why row at the top')
-t.Equal(['  1 ', '    ', '  2 ', '  3 ', '    ', '  4 '], paint.NumberLabelsAt(6, [2, 5], 1), 'labels: several bands')
-t.Equal(['    ', '    ', '  1 ', '    ', '    ', '  2 '], paint.NumberLabelsAt(6, [1, 4], 2), 'labels: bands of two rows')
+t.Equal(['    ', '    ', '  1 ', '  2 '], paint.NumberLabels(4, 1, 2), 'labels: two why rows at the top')
 t.Equal(5, strchars(paint.NumberLabels(1200, 1, 2)[2]), 'the width grows with the number of file lines')
 
 # --- the operation list ---

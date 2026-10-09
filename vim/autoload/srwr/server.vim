@@ -8,7 +8,7 @@ import autoload './lang.vim'
 # Vim has no promises, so a request takes a callback: Cb(result, err). One of them is v:null.
 # An err is {code: srwr error code (or 'server_exited' ...), message: string}.
 
-export const PROTOCOL_VERSION = 2
+export const PROTOCOL_VERSION = 3
 
 var job: any = v:null
 var nextId = 0

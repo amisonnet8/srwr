@@ -1,5 +1,5 @@
 // The side panel "操作一覧": frames in recorded order, numbered from 1 (the number is the position in the status bar).
-// No indentation for parents. A colored dot tells the kind: select blue, replace orange, changes from outside purple.
+// No indentation for parents. A colored dot tells the kind: look blue, edit orange, changes from outside purple.
 import * as vscode from "vscode";
 import { pick } from "./lang";
 import { basename, formatRange, Frame, Hidden, Timeline } from "./timeline";
@@ -15,12 +15,12 @@ export interface OpsSource {
 }
 
 export function dotColor(f: Frame): string {
-  return f.kind === "look" ? "charts.blue" : f.kind === "edit" || f.kind === "replace" || f.kind === "new" ? "charts.orange" : f.kind === "failure" ? "srwr.failureForeground" : "charts.purple";
+  return f.kind === "look" ? "charts.blue" : f.kind === "edit" || f.kind === "new" ? "charts.orange" : f.kind === "failure" ? "srwr.failureForeground" : "charts.purple";
 }
 
-// The label of a kind: look, edit, replace and new are the names of the four commands; external and final are srwr's own.
+// The label of a kind: look, edit and new are the names of the three commands; external and final are srwr's own.
 function kindLabel(kind: Frame["kind"]): string {
-  return { look: "look", edit: "edit", replace: "replace", new: "new", external: pick("external", "外部変更"), final: pick("final", "録画後"), failure: pick("failure", "失敗") }[kind];
+  return { look: "look", edit: "edit", new: "new", external: pick("external", "外部変更"), final: pick("final", "録画後"), failure: pick("failure", "失敗") }[kind];
 }
 
 // "Hiding: failure (2)" under the heading of the list; "No frames to show" when nothing is there.
@@ -35,10 +35,6 @@ export function hiddenMessage(hidden: Hidden, shown: number): string {
 
 // What a row says where a frame has a file and a range: a failure has the error code instead.
 export function rowPlace(f: Frame): string {
-  if (f.kind === "replace") {
-    const n = f.hits ?? 0;
-    return `${basename(f.file)} (${pick(`${n} ${n === 1 ? "hit" : "hits"}`, `${n}か所`)})`;
-  }
   return f.kind === "failure" ? (f.code ?? "") : `${basename(f.file)}:${formatRange(f.range)}`;
 }
 

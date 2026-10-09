@@ -78,7 +78,7 @@ func TestMCPEndsWhenInputEnds(t *testing.T) {
 
 func TestViewServerEndsWhenInputEnds(t *testing.T) {
 	code, stdout, _ := run([]string{"view-server", "--root", t.TempDir()},
-		`{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"client":"vim","protocolVersion":2}}`+"\n"+
+		`{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"client":"vim","protocolVersion":3}}`+"\n"+
 			`{"jsonrpc":"2.0","id":2,"method":"tapes/list","params":{}}`+"\n")
 	if code != 0 || !strings.Contains(stdout, `"tapes":[]`) {
 		t.Errorf("code = %d, stdout = %q", code, stdout)

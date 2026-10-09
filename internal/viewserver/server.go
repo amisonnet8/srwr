@@ -14,7 +14,7 @@ import (
 )
 
 // ProtocolVersion is the protocolVersion of docs/reference/protocol.md.
-const ProtocolVersion = 2
+const ProtocolVersion = 3
 
 // DefaultPollInterval is how often a live view looks at the tape.
 const DefaultPollInterval = 200 * time.Millisecond

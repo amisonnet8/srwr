@@ -39,7 +39,7 @@ The arguments are a JSON object (`{}` if none).
 
 | Method | Kind | Arguments → result |
 |---|---|---|
-| `initialize` | request | `{client:"vscode"\|"vim", protocolVersion:2, options:{diffFrames}}` → `{serverVersion, protocolVersion:2}`. The default of `options` has `diffFrames` as `true`. Unknown `options` are ignored |
+| `initialize` | request | `{client:"vscode"\|"vim", protocolVersion:3, options:{diffFrames}}` → `{serverVersion, protocolVersion:3}`. The default of `options` has `diffFrames` as `true`. Unknown `options` are ignored |
 | `tapes/list` | request | `{}` → `{tapes:[TapeInfo…]}`. Only tapes that have one or more operations, newest first (by the time the tape started; a tape without a header by its last update). Tapes that cannot be read are not listed |
 | `tape/open` | request | `{tapeId, withText?:false, kinds?}` → `{tapeId, frames:[Frame…], hidden?}`. The frames. If `diffFrames` is true, the **final diff** (`final`), compared with the current file of the workspace, is included at the end. Opening the same `tapeId` again reads it again |
 | `frame/state` | request | `{tapeId, index, file?}` → `{before, after, content}`. The before and after of the frame at `index` (both `""` when `index` is −1). `content` is the content of `file` (the file of that frame if omitted) at the time that frame has finished. `null` for a file no frame has touched |

@@ -13,8 +13,8 @@
 ## リプレイ
 
 ```jsonrpc
-→ {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"client":"vim","protocolVersion":2,"options":{"diffFrames":true}}}
-← {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":2,"serverVersion":"(devel)"}}
+→ {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"client":"vim","protocolVersion":3,"options":{"diffFrames":true}}}
+← {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":3,"serverVersion":"(devel)"}}
 → {"jsonrpc":"2.0","id":2,"method":"tapes/list","params":{}}
 ← {"jsonrpc":"2.0","id":2,"result":{"tapes":[{"tapeId":"20261001-1706-1795","startedAt":"2026-10-01T17:06:15.381+09:00","updatedAt":"2026-10-01T08:06:21.026Z","ops":2,"files":["cmd/main.go"]}]}}
 → {"jsonrpc":"2.0","id":3,"method":"tape/open","params":{"tapeId":"20261001-1706-1795"}}
@@ -38,8 +38,8 @@
 存在しないテープを開くと、JSON-RPC のエラーが返る。`error.data.code` が、srwr のエラーコード。
 
 ```jsonrpc
-→ {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"client":"vim","protocolVersion":2,"options":{}}}
-← {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":2,"serverVersion":"(devel)"}}
+→ {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"client":"vim","protocolVersion":3,"options":{}}}
+← {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":3,"serverVersion":"(devel)"}}
 → {"jsonrpc":"2.0","id":2,"method":"tape/open","params":{"tapeId":"nothing"}}
 ← {"jsonrpc":"2.0","id":2,"error":{"code":-32000,"message":"no such tape: nothing","data":{"code":"tape_not_found"}}}
 → {"jsonrpc":"2.0","id":3,"method":"shutdown","params":{}}

@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-// longWhyTape is the tape qsoku ui-check makes on the spot: a select and a replace with a why too long for one row, made by
+// longWhyTape is the tape qsoku ui-check makes on the spot: a look, an edit and three edits with a why too long for one row, made by
 // the real `srwr mcp` (a hand-written tape would not have the shape of a real one). It is named by a fixed id, so that the
 // screens are the same every time.
 const longWhyTape = "20260101-0000-long-why"
@@ -23,11 +23,11 @@ const (
 	longReplaceWhy = "置き換えの理由も長くします。橙の理由の行が、幅を超えたときに何行かに分かれ、2行目からは字下げされ、全文が読めて、範囲がその直下に見えることを確かめるための文です。"
 )
 
-// longSubWhy is the why of the replace that ends the long-why tape: long enough to be more than one row, since it is shown above
-// each of the three places the replace changed.
-const longSubWhy = "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、理由はそれぞれの変更の直前に出る。"
+// longSubWhy is the why of the edits call that ends the long-why tape: long enough to be more than one row. Its three edits are
+// three frames with this why.
+const longSubWhy = "エラー変数の名前を、公開する変数の命名規則に合わせて ErrEmpty に改める。3か所が離れているので、3つのコマに同じ理由が出る。"
 
-// storeSource is the file the replace of the long-why tape works on: three places of errEmpty, far enough apart that the first
+// storeSource is the file the edits of the long-why tape work on: three places of errEmpty, far enough apart that the first
 // of them is below the top of a window.
 const storeSource = `package store
 
@@ -83,11 +83,15 @@ func makeLongWhyTape(bin, extra string) error {
 		if _, err = c.tool("edit", map[string]any{"selection": token, "newText": mainReplacement, "why": longReplaceWhy}); err != nil {
 			return err
 		}
-		// A file with three places to rename, for a replace frame: the why is shown above each of the places.
+		// A file with three places to rename, and one edits call that renames them: three edit frames with the same long why.
 		if _, err = c.tool("new", map[string]any{"file": "store.go", "content": storeSource, "why": "名前を変える対象のファイルを作る"}); err != nil {
 			return err
 		}
-		_, err = c.tool("replace", map[string]any{"files": []string{"store.go"}, "old": "errEmpty", "new": "ErrEmpty", "count": 3, "why": longSubWhy})
+		_, err = c.tool("edit", map[string]any{"edits": []map[string]any{
+			{"file": "store.go", "old": "\"\", errEmpty", "new": "\"\", ErrEmpty"},
+			{"file": "store.go", "old": "\"load: %w\", errEmpty", "new": "\"load: %w\", ErrEmpty"},
+			{"file": "store.go", "old": "return errEmpty", "new": "return ErrEmpty"},
+		}, "why": longSubWhy})
 		return err
 	})
 }

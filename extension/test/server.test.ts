@@ -117,7 +117,7 @@ test("a server that says the protocol does not match", async () => {
     });`);
   await assert.rejects(
     s.listTapes(),
-    (e: ServerError) => e.code === "protocol_mismatch" && e.message.includes("バージョンが合っていません") && e.message.includes("protocolVersion 2"),
+    (e: ServerError) => e.code === "protocol_mismatch" && e.message.includes("バージョンが合っていません") && e.message.includes("protocolVersion 3"),
   );
 });
 
@@ -148,7 +148,7 @@ test("initialize is sent once, with the client name, protocol version and option
   await s.listTapes();
   const second = await s.listTapes();
   assert.deepEqual(JSON.parse(second[0].tapeId), [
-    ["initialize", { client: "vscode", protocolVersion: 2, options: { diffFrames: true } }],
+    ["initialize", { client: "vscode", protocolVersion: 3, options: { diffFrames: true } }],
     ["tapes/list", {}],
     ["tapes/list", {}],
   ]);

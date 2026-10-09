@@ -83,19 +83,9 @@ export class Presenter implements vscode.Disposable {
   }
 
   // A diff frame: paints the changed lines (1-based). Does not clear; it is called for the left and the right editor.
-  // A replace frame has a band of `rows` rows above each block of changed lines, starting at the rows `bands` (blue on the left,
-  // orange on the right): the bands are painted in the tone, and the file's own line numbers are drawn, since the bands make
-  // the standard ones wrong.
-  paintLines(editor: vscode.TextEditor, tone: Tone, lines: number[], bands: number[] = [], rows = 0): void {
+  paintLines(editor: vscode.TextEditor, tone: Tone, lines: number[]): void {
     this.painted.add(editor);
     this.nativeLineNumbers(editor);
-    if (bands.length > 0 && rows > 0) {
-      editor.setDecorations(
-        this.why[tone],
-        bands.flatMap((at) => Array.from({ length: rows }, (_, k) => lineAt(editor, at + k))),
-      );
-      this.showLineNumbers(editor, bands, rows);
-    }
     editor.setDecorations(
       this.range[tone],
       lines.map((n) => lineAt(editor, n)),

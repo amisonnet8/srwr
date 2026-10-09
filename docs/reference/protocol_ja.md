@@ -39,7 +39,7 @@
 
 | メソッド | 種類 | 引数 → 結果 |
 |---|---|---|
-| `initialize` | 要求 | `{client:"vscode"\|"vim", protocolVersion:2, options:{diffFrames}}` → `{serverVersion, protocolVersion:2}`。`options` の既定は `diffFrames` が `true`。知らない `options` は無視する |
+| `initialize` | 要求 | `{client:"vscode"\|"vim", protocolVersion:3, options:{diffFrames}}` → `{serverVersion, protocolVersion:3}`。`options` の既定は `diffFrames` が `true`。知らない `options` は無視する |
 | `tapes/list` | 要求 | `{}` → `{tapes:[TapeInfo…]}`。操作を1つ以上持つテープだけを、新しい順に（テープを始めた時刻の順。headerのないテープは最後の更新の時刻）。読めないテープは載せない |
 | `tape/open` | 要求 | `{tapeId, withText?:false, kinds?}` → `{tapeId, frames:[Frame…], hidden?}`。コマの列。`diffFrames` が真なら、作業場の今のファイルと比べた**最後の差分**（`final`）を末尾に含む。同じ `tapeId` をもう一度開くと、読み直す |
 | `frame/state` | 要求 | `{tapeId, index, file?}` → `{before, after, content}`。`index` のコマの変更前・変更後（`index` が −1 のときは両方 `""`）。`content` は `file`（省略時はそのコマのファイル）の、そのコマを終えた時点の内容。どのコマも触れていないファイルは `null` |

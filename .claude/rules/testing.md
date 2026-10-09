@@ -70,5 +70,6 @@
 - **`uses: owner/repo@TAG`はタグ名と厳密に一致しないと失敗する。** `v`の有無を見落としやすい。書く前に実際のタグ名を確かめる
 - **Unix 専用の呼び出し（`syscall.Flock` など）は、Windows ではビルドできない。** OS ごとにビルドタグで分け、手元でも `qsoku cross`（`GOOS=windows`・`darwin` で `vet` と `lint`）を通す。手元の Linux だけでは見つからず、CI の Windows で初めて落ちる
 - **手元の機械は JST で、CI は UTC。** 時刻を文字列で比べるテストは、手元でだけ通る。時刻は瞬間（`time.Time.Equal`）で比べる。時刻を扱う変更では、手元でも `TZ=UTC go test ./...` を流す（R3 で、`updatedAt` を `+09:00` の文字列で比べて、CI の3OSで落ちた）。R10.5 から、テープの時刻は UTC で書くので、表示（`srwr tapes`、Vim の一覧、VSCode のテープ選び）が `TZ` に従うことを、`time.Local`・`process.env.TZ`・`$TZ` を替えるテストで確かめる
+- **CI の Go は、`go.mod` の `go 1.27` から最新のパッチになる。配布された golangci-lint のバイナリは古いパッチでビルドされていて、新しいパッチの標準ライブラリの export data を読めないことがある**（2026-10-09、Go 1.27.2 で `could not load export data … version 5 is greater than maximum supported version 4`。手元は 1.27.1 で通っていた）。`golangci-lint-action` に `install-mode: goinstall` を付け、CI の Go で lint を作る。手元では見つからないので、CI が赤になったら、注釈（`api.github.com/repos/…/check-runs/<job>/annotations`）に理由が出る
 - **Windowsには実行ビットの概念がない。** `os.Chmod`後に実行ビットを確かめるテストは、`runtime.GOOS != "windows"`でガードする
 - **時刻に関わるテストは、本物の現在時刻に頼らない。** CLI の「今のセッション」は、テープの最後のイベントから 30 分以内かで決まる。固定した日時でテープを作るテストが、本物の `time.Now` で CLI を動かすと、書いた直後は通り、30 分後の CI で落ちる（`TestWorkflowExample` で起きた）。CLI の時計は `cli.Now` で差し替える

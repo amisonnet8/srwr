@@ -31,6 +31,9 @@ jobs:
         with:
           version: v2.13.2
           install-only: true
+          # Build it with the Go of this job: the released binary is built with go1.27.0 and cannot read the export data
+          # of a newer patch of Go (go1.27.2: "export data version 5 is greater than maximum supported version 4").
+          install-mode: goinstall
       # Go only. The extension has its own job below.
       - name: qsoku go-check
         shell: bash

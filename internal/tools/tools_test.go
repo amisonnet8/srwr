@@ -51,5 +51,9 @@ func TestLookToolNamesTheSearchInputs(t *testing.T) {
 				t.Errorf("look has no input %q", name)
 			}
 		}
+		search, _ := props["search"].(map[string]any)["description"].(string)
+		if !strings.Contains(search, "that one line only") {
+			t.Errorf("search does not say what its selection stands for: %q", search)
+		}
 	}
 }

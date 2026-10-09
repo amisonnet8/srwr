@@ -132,11 +132,47 @@ type lookArgs struct {
 	EndLine   *int            `json:"endLine"`
 	Expect    *string         `json:"expect"`
 	Search    *string         `json:"search"`
-	Include   *[]string       `json:"include"`
-	Exclude   *[]string       `json:"exclude"`
+	Include   *patterns       `json:"include"`
+	Exclude   *patterns       `json:"exclude"`
 	Offset    *int            `json:"offset"`
 	Looks     *[]lookItemArgs `json:"looks"`
 	Why       *string         `json:"why"`
+}
+
+// patterns is a list of patterns for include and exclude. One string is taken as a list of one: the AI often writes it that way, and
+// there is nothing to guess.
+type patterns []string
+
+func (p *patterns) UnmarshalJSON(b []byte) error {
+	var list []string
+	if err := json.Unmarshal(b, &list); err == nil {
+		*p = list
+		return nil
+	}
+	var one string
+	if err := json.Unmarshal(b, &one); err == nil {
+		*p = patterns{one}
+		return nil
+	}
+	// The field name is not known here, so the message names both inputs that take patterns.
+	return &json.UnmarshalTypeError{Value: jsonKind(b), Type: reflect.TypeOf([]string{}), Field: "include or exclude"}
+}
+
+// jsonKind names the kind of a JSON value the way encoding/json does in its type errors.
+func jsonKind(b []byte) string {
+	switch t := bytes.TrimSpace(b); {
+	case len(t) == 0:
+		return "value"
+	case t[0] == '{':
+		return "object"
+	case t[0] == '[':
+		return "array"
+	case t[0] == 't' || t[0] == 'f':
+		return "bool"
+	case t[0] == '"':
+		return "string"
+	}
+	return "number"
 }
 
 // lookItemArgs is one of the looks of a look call with looks.
@@ -236,7 +272,7 @@ func (s *Server) callSearch(a lookArgs) toolResult {
 	}
 	in := core.SearchInput{File: *a.File, Search: *a.Search, Why: *a.Why}
 	if a.Include != nil {
-		in.Include = *a.Include
+		in.Include = []string(*a.Include)
 		for _, p := range in.Include {
 			if strings.HasPrefix(p, "!") {
 				return s.rejectLook(fmt.Sprintf("include %q starts with !, which include does not take. To leave files out, put the pattern in exclude (without the !)", p))
@@ -244,7 +280,7 @@ func (s *Server) callSearch(a lookArgs) toolResult {
 		}
 	}
 	if a.Exclude != nil {
-		in.Exclude = *a.Exclude
+		in.Exclude = []string(*a.Exclude)
 		if len(in.Exclude) > 0 && strings.HasPrefix(in.Exclude[0], "!") {
 			return s.rejectLook(fmt.Sprintf("exclude %q starts with !: a ! pattern takes back an earlier pattern of exclude, so it cannot come first. To leave files out, write the pattern without the !", in.Exclude[0]))
 		}

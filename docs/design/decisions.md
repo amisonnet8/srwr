@@ -50,6 +50,10 @@ The AI wanted to add a line after a line. An empty range could do it, but only w
 
 ### `old` and `new` change a part of a line, apart from `expect`
 
+### What v0.1.12 changed after the first round with many kinds of requests
+
+Four different requests were given to four fresh AIs; all complaints stayed at 30 or below. Two of the four wrote `include` as one string or as broken JSON, and the refusal cost a whole call each time. A refusal teaches nothing when the meaning is clear, so `include` and `exclude` now take one string as a list of one (the schema still says list). The other thing was a `selection` of a search, which stands for the one line that matched, being used as if it were the lines around it; the description of `search` now says so. A count of places for `replace` that may be left out was not added: `byFile` of a search already counts them, and a second way to call `replace` is a bigger cost than one counting call.
+
 ### What v0.1.11 changed before the experiments with many kinds of requests, and why
 
 Experiments 10 and 11 passed with the same small walls left, so they are mended before the next round, or they would hide the new ones. A `look` with no range reads the whole file (up to 2000 lines): `looks` already read whole files, and a single `look` that refused to was the one thing the AI tripped on. `edits` of 6 or more items answer in the short form unless `brief: false`, because nobody reads back that many edits one by one. The advice after a Bash command that made files is given once for a tape; the short line of v0.1.10 still came back at every run of a generator. `include` takes no `!`, and an `exclude` cannot start with one: either would match nothing, and the AI saw only an empty answer. The description of `look` says that `looks` is its argument, since one AI called it a tool of its own. A `why` in an item of `edits` is told to be unused instead of being refused: the AI loses nothing by it.

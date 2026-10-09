@@ -496,6 +496,36 @@ func TestSearchRefusesLoneNegation(t *testing.T) {
 	}
 }
 
+// include and exclude take one string as a list of one; anything that is neither a list of strings nor a string is refused.
+func TestSearchPatternsTakeOneString(t *testing.T) {
+	root := t.TempDir()
+	for name, text := range map[string]string{"a.go": "foo\n", "b.md": "foo\n"} {
+		if err := os.WriteFile(filepath.Join(root, name), []byte(text), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	r := serve(t, root,
+		toolCall(1, "look", `{"file":".","search":"foo","include":"*.go","why":"w"}`),
+		toolCall(2, "look", `{"file":".","search":"foo","exclude":"*.go","why":"w"}`),
+		toolCall(3, "look", `{"file":".","search":"foo","include":["*.go"],"why":"w"}`),
+		toolCall(4, "look", `{"file":".","search":"foo","include":5,"why":"w"}`),
+		toolCall(5, "look", `{"file":".","search":"foo","include":"!*.go","why":"w"}`))
+	for i, want := range []string{"a.go", "b.md", "a.go"} {
+		if !strings.Contains(r[i], `\"count\":1`) || !strings.Contains(r[i], want) {
+			t.Errorf("%d: %s", i, r[i])
+		}
+	}
+	if strings.Contains(r[0], "b.md") || strings.Contains(r[1], "a.go") {
+		t.Errorf("one string did not filter: %s %s", r[0], r[1])
+	}
+	if !strings.Contains(r[3], "invalid_input") || !strings.Contains(r[3], "include or exclude must be an array of strings, got number") {
+		t.Errorf("a number: %s", r[3])
+	}
+	if !strings.Contains(r[4], "starts with !") {
+		t.Errorf("a ! in one string: %s", r[4])
+	}
+}
+
 func TestLookSearch(t *testing.T) {
 	root := t.TempDir()
 	if err := os.WriteFile(filepath.Join(root, "a.go"), []byte("a\nfoo(1)\nb\nfoo(2)\n"), 0o600); err != nil {
@@ -732,7 +762,7 @@ func TestSearchIncludeExcludeOffsetCutAndByFile(t *testing.T) {
 		toolCall(3, "look", `{"file":".","search":"needle","offset":20,"why":"w"}`),
 		toolCall(4, "look", `{"file":"a.go","expect":"needle","include":["*.go"],"why":"w"}`),
 		toolCall(5, "look", `{"file":".","search":"needle","offset":-1,"why":"w"}`),
-		toolCall(6, "look", `{"file":".","search":"needle","include":"*.go","why":"w"}`))
+		toolCall(6, "look", `{"file":".","search":"needle","include":5,"why":"w"}`))
 	m, _ := body(t, r[0])
 	if m["count"] != float64(26) || m["more"] != float64(6) || m["byFile"] == nil || strings.Contains(r[0], "b.md") {
 		t.Errorf("include: %s", r[0])
@@ -749,7 +779,7 @@ func TestSearchIncludeExcludeOffsetCutAndByFile(t *testing.T) {
 	if !strings.Contains(r[2], `\"cut\":true`) || strings.Contains(r[2], strings.Repeat("x", 300)) {
 		t.Errorf("the long line was not cut: %.300s", r[2])
 	}
-	if !strings.Contains(r[3], "go with search") || !strings.Contains(r[4], "offset must not be negative") || !strings.Contains(r[5], "include must be an array of strings") {
+	if !strings.Contains(r[3], "go with search") || !strings.Contains(r[4], "offset must not be negative") || !strings.Contains(r[5], "must be an array of strings") {
 		t.Error(r[3], r[4], r[5])
 	}
 }

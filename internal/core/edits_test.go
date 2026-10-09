@@ -1,8 +1,6 @@
 package core
 
 import (
-	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -177,74 +175,4 @@ func TestEditsOfOneAreLikeEdit(t *testing.T) {
 		a.NewStartLine != b.NewStartLine || a.NewEndLine != b.NewEndLine || a.FileShaBefore != b.FileShaBefore || a.FileShaAfter != b.FileShaAfter {
 		t.Errorf("edit = %+v\nedits = %+v", a, b)
 	}
-}
-
-// An item with content makes a file, in the same call that changes the files that use it.
-func TestEditsMakeFiles(t *testing.T) {
-	e := newEnv(t)
-	e.write("main.txt", "use nothing\nend\n")
-	res, err := e.c.Edits(EditsInput{Why: "w", Edits: []EditInput{
-		{File: "main.txt", Expect: str("use nothing"), NewText: "use extra"},
-		{File: "pkg/extra.txt", Create: str("one\ntwo")},
-	}})
-	if err != nil {
-		t.Fatalf("err = %+v", err)
-	}
-	if e.read("main.txt") != "use extra\nend\n" || e.read("pkg/extra.txt") != "one\ntwo\n" {
-		t.Errorf("files = %q %q", e.read("main.txt"), e.read("pkg/extra.txt"))
-	}
-	if r := res.Edits[1]; r.StartLine != 1 || r.EndLine != 2 || !slices.Equal(r.Lines, []string{"one", "two"}) || r.Selection == "" || res.Edits[0].Selection == "" {
-		t.Errorf("results = %+v", res.Edits)
-	}
-	evs := e.events()
-	if countType(evs, tape.TypeNew) != 1 || countType(evs, tape.TypeEdit) != 1 {
-		t.Errorf("new = %d, edit = %d", countType(evs, tape.TypeNew), countType(evs, tape.TypeEdit))
-	}
-	// The token of the made file works with edit.
-	if _, err := e.c.Edit(EditInput{Selection: res.Edits[1].Selection, NewText: "x", Why: "w"}); err != nil {
-		t.Errorf("edit with the token: %+v", err)
-	}
-	e.checkTape()
-}
-
-func TestEditsMakeFilesAllOrNone(t *testing.T) {
-	e := newEnv(t)
-	e.write("a.txt", "a\n")
-	e.write("have.txt", "have\n")
-	e.write(".env", "x\n")
-	cases := []struct {
-		name  string
-		items []EditInput
-		code  string
-		word  string
-	}{
-		{"the file exists", []EditInput{{File: "a.txt", Expect: str("a"), NewText: "A"}, {File: "have.txt", Create: str("x")}}, CodeFileExists, "edits[1]: "},
-		{"not recorded", []EditInput{{File: ".env", Create: str("x")}, {File: "a.txt", Expect: str("a"), NewText: "A"}}, CodeIgnoredFile, "edits[0]: "},
-		{"outside", []EditInput{{File: "../x.txt", Create: str("x")}}, CodeInvalidRange, "edits[0]: "},
-		{"with other inputs", []EditInput{{File: "n.txt", Create: str("x"), NewText: "y"}}, CodeInvalidInput, "file and content only"},
-		{"with lines", []EditInput{{File: "n.txt", Create: str("x"), HasLines: true, StartLine: 1, EndLine: 1}}, CodeInvalidInput, "file and content only"},
-		{"no file", []EditInput{{Create: str("x")}}, CodeInvalidInput, "give file"},
-		{"CR", []EditInput{{File: "n.txt", Create: str("a\r\n")}}, CodeInvalidInput, "CR"},
-		{"twice", []EditInput{{File: "n.txt", Create: str("x")}, {File: "n.txt", Create: str("y")}}, CodeInvalidInput, "makes n.txt as well"},
-		{"a later item fails", []EditInput{{File: "n.txt", Create: str("x")}, {File: "a.txt", Expect: str("zz"), NewText: "A"}}, CodeContentNotFound, "edits[1]: "},
-		{"edit of a file that is made", []EditInput{{File: "n.txt", Create: str("x")}, {File: "n.txt", Expect: str("x"), NewText: "y"}}, CodeFileNotFound, "edits[1]: "},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			_, err := e.c.Edits(EditsInput{Why: "w", Edits: tc.items})
-			wantCode(t, err, tc.code)
-			if err != nil && !strings.Contains(err.Message, tc.word) {
-				t.Errorf("message = %q, want it to hold %q", err.Message, tc.word)
-			}
-			if e.read("a.txt") != "a\n" || e.read("have.txt") != "have\n" {
-				t.Error("a file was changed")
-			}
-			for _, f := range []string{"n.txt", "x.txt"} {
-				if _, serr := os.Stat(filepath.Join(e.root, f)); serr == nil {
-					t.Errorf("%s was made", f)
-				}
-			}
-		})
-	}
-	e.noSecretOnTape(".env")
 }

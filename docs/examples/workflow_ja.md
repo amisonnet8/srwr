@@ -37,7 +37,7 @@ $ srwr init
   作った   .claude/settings.json hook を登録し、Edit・Write などを禁止しました（厳格モード）
   作った   .gitignore            .srwr/key .srwr/lock .srwr/active .srwr/init-backup/
 
-準備できました。Claude Code を開き直すと、look / edit / replace / new が使えます。
+準備できました。Claude Code を開き直すと、look / edit / new が使えます。
 緩いモード（Edit・Write を禁止しない）にするときは、srwr init --lenient。
 ```
 

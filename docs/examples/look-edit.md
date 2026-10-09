@@ -97,22 +97,13 @@ If `expect` differs from the file only in spaces or tabs (here four spaces were 
 ← {"jsonrpc":"2.0","id":7,"result":{"content":[{"text":"{\"ok\":false,\"error\":{\"code\":\"content_not_found\",\"message\":\"the lines of expect are not in cmd/main.go (7 lines). Check the content, or call look again. Line 5 differs from expect only in spaces or tabs: see nearMatches\",\"nearMatches\":[{\"startLine\":5,\"endLine\":5,\"lines\":[\"\\trun()\"]}],\"retry\":{\"endLine\":5,\"expect\":\"\\trun()\",\"file\":\"cmd/main.go\",\"newText\":\"    run()\\n    wait()\",\"startLine\":5}}}","type":"text"}],"isError":true}}
 ```
 
-## One place is for `edit`
-
-`replace` is for 2 or more places. For a text in one place, the answer is `use_edit`: nothing is changed, and `actual.edit` is the `edit` call that makes the same change (add `why`).
-
-```jsonrpc
-→ {"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"name":"replace","arguments":{"files":["cmd/main.go"],"old":"cleanup()","new":"teardown()","count":1,"why":"Rename cleanup"}}}
-← {"jsonrpc":"2.0","id":8,"result":{"content":[{"text":"{\"ok\":false,\"error\":{\"code\":\"use_edit\",\"message\":\"replace is for 2 or more places, and the text is in one place only (cmd/main.go line 6). Use edit for it: actual.edit is the call to make (add why)\",\"actual\":{\"edit\":{\"file\":\"cmd/main.go\",\"old\":\"cleanup()\",\"new\":\"teardown()\"},\"hits\":[{\"file\":\"cmd/main.go\",\"startLine\":6,\"endLine\":6,\"lines\":[\"\\tcleanup()\"]}]}}}","type":"text"}],"isError":true}}
-```
-
 ## Insert next to lines
 
 To put new lines after (or before) lines without changing them, point at those lines as usual and add `insert: "after"` (or `"before"`). `expect` is checked, so this works however the file has changed. The result is about the new lines.
 
 ```jsonrpc
-→ {"jsonrpc":"2.0","id":9,"method":"tools/call","params":{"name":"edit","arguments":{"file":"cmd/main.go","expect":"\tsetup()","insert":"after","newText":"\tcheck()","why":"Check before run"}}}
-← {"jsonrpc":"2.0","id":9,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_044GA1E48KVH269F6JJ94T8Z\",\"startLine\":5,\"endLine\":5,\"lines\":[\"\\tcheck()\"],\"above\":[\"func main() {\",\"\\tsetup()\"],\"below\":[\"\\trun()\",\"\\tcleanup()\"]}","type":"text"}],"isError":false}}
+→ {"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"name":"edit","arguments":{"file":"cmd/main.go","expect":"\tsetup()","insert":"after","newText":"\tcheck()","why":"Check before run"}}}
+← {"jsonrpc":"2.0","id":8,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_044GA1E48KVH269F6JJ94T8Z\",\"startLine\":5,\"endLine\":5,\"lines\":[\"\\tcheck()\"],\"above\":[\"func main() {\",\"\\tsetup()\"],\"below\":[\"\\trun()\",\"\\tcleanup()\"]}","type":"text"}],"isError":false}}
 ```
 
 The file is now 8 lines; `setup()` is kept and `check()` follows it.
@@ -133,8 +124,8 @@ func main() {
 To find a place, `look` with `search` instead of line numbers returns every line that holds the text (up to 20), each with its own selection token that `edit` takes as it is. The lines are looked at, so each one is on the tape with the `why`; nothing is changed.
 
 ```jsonrpc
-→ {"jsonrpc":"2.0","id":10,"method":"tools/call","params":{"name":"look","arguments":{"file":"cmd/main.go","search":"up()","why":"Find where setup and cleanup are called"}}}
-← {"jsonrpc":"2.0","id":10,"result":{"content":[{"text":"{\"ok\":true,\"count\":2,\"matches\":[{\"selection\":\"sel_045081648KVH3Z5DC93GTFB3\",\"startLine\":4,\"endLine\":4,\"lines\":[\"\\tsetup()\"],\"above\":[\"\",\"func main() {\"],\"below\":[\"\\tcheck()\",\"\\trun()\"]},{\"selection\":\"sel_045GE1Y48KVH3MCC2C6EXB6B\",\"startLine\":7,\"endLine\":7,\"lines\":[\"\\tcleanup()\"],\"above\":[\"\\tcheck()\",\"\\trun()\"],\"below\":[\"}\"]}]}","type":"text"}],"isError":false}}
+→ {"jsonrpc":"2.0","id":9,"method":"tools/call","params":{"name":"look","arguments":{"file":"cmd/main.go","search":"up()","why":"Find where setup and cleanup are called"}}}
+← {"jsonrpc":"2.0","id":9,"result":{"content":[{"text":"{\"ok\":true,\"count\":2,\"matches\":[{\"selection\":\"sel_045081648KVH3Z5DC93GTFB3\",\"startLine\":4,\"endLine\":4,\"lines\":[\"\\tsetup()\"],\"above\":[\"\",\"func main() {\"],\"below\":[\"\\tcheck()\",\"\\trun()\"]},{\"selection\":\"sel_045GE1Y48KVH3MCC2C6EXB6B\",\"startLine\":7,\"endLine\":7,\"lines\":[\"\\tcleanup()\"],\"above\":[\"\\tcheck()\",\"\\trun()\"],\"below\":[\"}\"]}]}","type":"text"}],"isError":false}}
 ```
 
 ## Several edits in one call
@@ -142,8 +133,8 @@ To find a place, `look` with `search` instead of line numbers returns every line
 Edits that share a reason go in one call, with `edits` and one `why`. Each item points at its lines as `edit` does. All the ranges are found as the file is before the call, so the items need no order and none depends on another; they must not overlap. All are made, or none. The result has one entry for each item, in your order, with the line numbers after the call.
 
 ```jsonrpc
-→ {"jsonrpc":"2.0","id":11,"method":"tools/call","params":{"name":"edit","arguments":{"edits":[{"file":"cmd/main.go","expect":"\tsetup()","newText":"\tstart()"},{"file":"cmd/main.go","expect":"\tcleanup()","newText":"\tstop()"},{"file":"cmd/main.go","expect":"\trun()","insert":"after","newText":"\tlog()"}],"why":"Rename the calls and log the run"}}}
-← {"jsonrpc":"2.0","id":11,"result":{"content":[{"text":"{\"ok\":true,\"edits\":[{\"selection\":\"sel_046081648KVH3M6NE7HJW31K\",\"startLine\":4,\"endLine\":4,\"lines\":[\"\\tstart()\"],\"above\":[\"\",\"func main() {\"],\"below\":[\"\\tcheck()\",\"\\trun()\"]},{\"selection\":\"sel_0470G2648KVH257ZXQFSTS3K\",\"startLine\":8,\"endLine\":8,\"lines\":[\"\\tstop()\"],\"above\":[\"\\trun()\",\"\\tlog()\"],\"below\":[\"}\"]},{\"selection\":\"sel_046GE1Y48KVH28BMME71JYMC\",\"startLine\":7,\"endLine\":7,\"lines\":[\"\\tlog()\"],\"above\":[\"\\tcheck()\",\"\\trun()\"],\"below\":[\"\\tstop()\",\"}\"]}]}","type":"text"}],"isError":false}}
+→ {"jsonrpc":"2.0","id":10,"method":"tools/call","params":{"name":"edit","arguments":{"edits":[{"file":"cmd/main.go","expect":"\tsetup()","newText":"\tstart()"},{"file":"cmd/main.go","expect":"\tcleanup()","newText":"\tstop()"},{"file":"cmd/main.go","expect":"\trun()","insert":"after","newText":"\tlog()"}],"why":"Rename the calls and log the run"}}}
+← {"jsonrpc":"2.0","id":10,"result":{"content":[{"text":"{\"ok\":true,\"edits\":[{\"selection\":\"sel_046081648KVH3M6NE7HJW31K\",\"startLine\":4,\"endLine\":4,\"lines\":[\"\\tstart()\"],\"above\":[\"\",\"func main() {\"],\"below\":[\"\\tcheck()\",\"\\trun()\"]},{\"selection\":\"sel_0470G2648KVH257ZXQFSTS3K\",\"startLine\":8,\"endLine\":8,\"lines\":[\"\\tstop()\"],\"above\":[\"\\trun()\",\"\\tlog()\"],\"below\":[\"}\"]},{\"selection\":\"sel_046GE1Y48KVH28BMME71JYMC\",\"startLine\":7,\"endLine\":7,\"lines\":[\"\\tlog()\"],\"above\":[\"\\tcheck()\",\"\\trun()\"],\"below\":[\"\\tstop()\",\"}\"]}]}","type":"text"}],"isError":false}}
 ```
 
 ## A part of a line
@@ -151,8 +142,8 @@ Edits that share a reason go in one call, with `edits` and one `why`. Each item 
 To change a few words, give `file`, `old` and `new` instead of `expect` and `newText`. `old` is a text that is in the file in one place; it need not be whole lines. The range is the lines it touches, and the result is the same as for any edit.
 
 ```jsonrpc
-→ {"jsonrpc":"2.0","id":12,"method":"tools/call","params":{"name":"edit","arguments":{"file":"cmd/main.go","old":"stop()","new":"stop(true)","why":"Stop with a flag"}}}
-← {"jsonrpc":"2.0","id":12,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_047GG2648KVH3FFGG4WYYXPE\",\"startLine\":8,\"endLine\":8,\"lines\":[\"\\tstop(true)\"],\"above\":[\"\\trun()\",\"\\tlog()\"],\"below\":[\"}\"],\"hint\":\"Edits to one file in a row: edit with edits makes them in one call (one why, all or none; the ranges are found as the file is now, so no order is needed).\"}","type":"text"}],"isError":false}}
+→ {"jsonrpc":"2.0","id":11,"method":"tools/call","params":{"name":"edit","arguments":{"file":"cmd/main.go","old":"stop()","new":"stop(true)","why":"Stop with a flag"}}}
+← {"jsonrpc":"2.0","id":11,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_047GG2648KVH3FFGG4WYYXPE\",\"startLine\":8,\"endLine\":8,\"lines\":[\"\\tstop(true)\"],\"above\":[\"\\trun()\",\"\\tlog()\"],\"below\":[\"}\"],\"hint\":\"Edits to one file in a row: edit with edits makes them in one call (one why, all or none; the ranges are found as the file is now, so no order is needed).\"}","type":"text"}],"isError":false}}
 ```
 
 The file is now 9 lines.

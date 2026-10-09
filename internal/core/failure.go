@@ -12,11 +12,10 @@ import (
 // maxFailureMessage is where the message of a failure on the tape is cut.
 const maxFailureMessage = 300
 
-// failedCall is a look, edit, replace or new that gave the client an error, as far as the tape wants to know it.
+// failedCall is a look, edit or new that gave the client an error, as far as the tape wants to know it.
 type failedCall struct {
-	tool      string   // toolLook, toolEdit, toolReplace or toolNew
-	file      string   // look and new: the path as given; "" when there is none
-	files     []string // replace: the paths as given
+	tool      string // toolLook, toolEdit or toolNew
+	file      string // look and new: the path as given; "" when there is none
 	startLine *int
 	endLine   *int
 	selection *string // edit: the token as given
@@ -26,10 +25,9 @@ type failedCall struct {
 
 // Tools a failure is about.
 const (
-	toolLook    = "look"
-	toolEdit    = "edit"
-	toolReplace = "replace"
-	toolNew     = "new"
+	toolLook = "look"
+	toolEdit = "edit"
+	toolNew  = "new"
 )
 
 // recordFailure writes a failure event for a call that failed (docs/reference/tape.md). It never changes the answer the client
@@ -41,7 +39,7 @@ func (c *Core) recordFailure(f failedCall) {
 	})
 }
 
-// RecordInputFailure records a call that was turned away before it reached look, edit, replace or new: a required input is missing, or a
+// RecordInputFailure records a call that was turned away before it reached look, edit or new: a required input is missing, or a
 // value has the wrong type. Nothing of the input but the error is known.
 func (c *Core) RecordInputFailure(tool, code, message string) {
 	c.recordFailure(failedCall{tool: tool, err: &Error{Code: code, Message: message}})
@@ -54,19 +52,8 @@ func (f failedCall) info(tx *session.Tx) *tape.FailureInfo {
 	}
 	var file string
 	given := f.file
-	if f.tool == toolReplace {
-		// The file is told only when there is one, since a failure about several files is about none of them.
-		if len(f.files) == 1 {
-			given = f.files[0]
-		}
-		for _, in := range f.files {
-			if _, perr := cleanPath(in); perr != nil && perr.Code == CodeInvalidRange {
-				info.Message = "A path is absolute or points outside the workspace"
-			}
-		}
-	}
 	switch f.tool {
-	case toolLook, toolReplace, toolNew, toolEdit:
+	case toolLook, toolNew, toolEdit:
 		if given != "" {
 			rel, perr := cleanPath(given)
 			switch {

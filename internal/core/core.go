@@ -1,4 +1,4 @@
-// Package core is what look, edit, replace and new mean: checking a range, correcting line numbers,
+// Package core is what look, edit and new mean: checking a range, correcting line numbers,
 // matching content, noticing changes made outside srwr, and writing the file and the tape.
 // It knows nothing of MCP; srwr mcp and srwr hook both come in through here.
 package core
@@ -72,9 +72,6 @@ type EditInput struct {
 	// HasLines is then true, and the number not given is 0.
 	OpenStart bool
 	OpenEnd   bool
-
-	// Create, in an item of edits, makes the file File with this content (what new does): nothing else is given with it.
-	Create *string
 
 	// Insert, "after" or "before", keeps the range chosen (by the token, or by File and Expect) and puts NewText after or before it.
 	Insert string

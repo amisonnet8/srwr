@@ -41,7 +41,7 @@ func TestInitOutputsInEnglish(t *testing.T) {
   created    .claude/settings.json registered the hook; forbade Edit, Write, etc. (strict mode)
   created    .gitignore            .srwr/key .srwr/lock .srwr/active .srwr/init-backup/
 
-Ready. Reopen Claude Code and look / edit / replace / new are available.
+Ready. Reopen Claude Code and look / edit / new are available.
 For lenient mode (Edit and Write stay allowed), run: srwr init --lenient.
 `
 	root := gitDir(t)

@@ -24,7 +24,7 @@ import (
 const usageEN = `srwr: let an AI edit files with just two commands, select / replace, and record the operations on a tape
 
 Usage:
-  srwr mcp [--root <workspace>]          MCP server (look / edit / replace / new). Started by the AI agent
+  srwr mcp [--root <workspace>]          MCP server (look / edit / new). Started by the AI agent
   srwr hook [--root <workspace>]         Record Claude Code hook events (reads JSON on stdin)
   srwr view-server [--root <workspace>]  View server (started by the editor)
   srwr view [tape] [--live]              Replay in Vim (--root <workspace>)
@@ -37,7 +37,7 @@ Usage:
 const usageJA = `srwr: AI に select / replace の2コマンドだけでファイルを編集させ、操作をテープに記録する
 
 使い方:
-  srwr mcp [--root <作業場>]          MCP サーバー（look / edit / replace / new）。AI のエージェントが起動する
+  srwr mcp [--root <作業場>]          MCP サーバー（look / edit / new）。AI のエージェントが起動する
   srwr hook [--root <作業場>]         Claude Code の hook の記録（標準入力の JSON を読む）
   srwr view-server [--root <作業場>]  表示サーバー（エディタが起動する）
   srwr view [テープ] [--live]         Vim で再生する（--root <作業場>）

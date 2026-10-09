@@ -45,7 +45,7 @@ func TestInitOutputs(t *testing.T) {
   作った   .claude/settings.json hook を登録し、Edit・Write などを禁止しました（厳格モード）
   作った   .gitignore            .srwr/key .srwr/lock .srwr/active .srwr/init-backup/
 
-準備できました。Claude Code を開き直すと、look / edit / replace / new が使えます。
+準備できました。Claude Code を開き直すと、look / edit / new が使えます。
 緩いモード（Edit・Write を禁止しない）にするときは、srwr init --lenient。
 `
 	root := gitDir(t)
@@ -72,7 +72,7 @@ func TestInitOutputs(t *testing.T) {
   変更なし .gitignore
 
 書き換える前の内容は .srwr/init-backup/20261003-171204/ に残しました。
-緩いモードでは、Edit は replace（理由なし）として記録され、Write は external として見えます。
+緩いモードでは、Edit は edit（理由なし）として記録され、Write は external として見えます。
 `
 	if code, out, _ := initOut(t, root, "--lenient"); code != 0 || out != lenient {
 		t.Errorf("lenient: code %d\n%s", code, out)
@@ -89,7 +89,7 @@ func TestInitOutputs(t *testing.T) {
   作った   .gitignore            .srwr/key .srwr/lock .srwr/active .srwr/init-backup/
 
 書き換える前の内容は .srwr/init-backup/20261003-171204/ に残しました。
-準備できました。Claude Code を開き直すと、look / edit / replace / new が使えます。
+準備できました。Claude Code を開き直すと、look / edit / new が使えます。
 `
 	if code, out, _ := initOut(t, existing); code != 0 || out != wantExisting {
 		t.Errorf("existing: code %d\n%s", code, out)

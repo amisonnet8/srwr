@@ -76,10 +76,10 @@ func writeInitReport(w io.Writer, r *setup.Result) {
 			_, _ = fmt.Fprintf(w, lang.Pick("What the files held before is kept in %s/.\n", "書き換える前の内容は %s/ に残しました。\n"), r.Backup)
 		}
 		if r.RegistrationChanged {
-			_, _ = fmt.Fprintln(w, lang.Pick("Ready. Reopen Claude Code and look / edit / replace / new are available.", "準備できました。Claude Code を開き直すと、look / edit / replace / new が使えます。"))
+			_, _ = fmt.Fprintln(w, lang.Pick("Ready. Reopen Claude Code and look / edit / new are available.", "準備できました。Claude Code を開き直すと、look / edit / new が使えます。"))
 		}
 		if r.Lenient {
-			_, _ = fmt.Fprintln(w, lang.Pick("In lenient mode, Edit is recorded as a replace (with no reason) and Write shows up as external.", "緩いモードでは、Edit は replace（理由なし）として記録され、Write は external として見えます。"))
+			_, _ = fmt.Fprintln(w, lang.Pick("In lenient mode, Edit is recorded as an edit (with no reason) and Write shows up as external.", "緩いモードでは、Edit は edit（理由なし）として記録され、Write は external として見えます。"))
 		} else if settingsCreated(r) {
 			_, _ = fmt.Fprintln(w, lang.Pick("For lenient mode (Edit and Write stay allowed), run: srwr init --lenient.", "緩いモード（Edit・Write を禁止しない）にするときは、srwr init --lenient。"))
 		}

@@ -154,7 +154,7 @@ func TestToolsList(t *testing.T) {
 	if err := json.Unmarshal([]byte(got[0]), &r); err != nil {
 		t.Fatal(err)
 	}
-	if len(r.Result.Tools) != 4 || r.Result.Tools[0].Name != "look" || r.Result.Tools[1].Name != "edit" || r.Result.Tools[2].Name != "replace" || r.Result.Tools[3].Name != "new" {
+	if len(r.Result.Tools) != 3 || r.Result.Tools[0].Name != "look" || r.Result.Tools[1].Name != "edit" || r.Result.Tools[2].Name != "new" {
 		t.Fatalf("tools = %+v", r.Result.Tools)
 	}
 	for _, tool := range r.Result.Tools {
@@ -267,37 +267,6 @@ func TestSelectAndReplace(t *testing.T) {
 	}
 }
 
-func TestSub(t *testing.T) {
-	root := t.TempDir()
-	for name, text := range map[string]string{"a.go": "foo\nx\nfoo\n", "b.go": "foo\n"} {
-		if err := os.WriteFile(filepath.Join(root, name), []byte(text), 0o600); err != nil {
-			t.Fatal(err)
-		}
-	}
-	got := serve(t, root, toolCall(1, "replace", `{"files":["a.go","b.go"],"old":"foo","new":"bar & <baz>","count":3,"why":"名前を変える"}`))
-	m, isErr := body(t, got[0])
-	files, _ := m["files"].([]any)
-	if isErr || m["ok"] != true || m["count"] != float64(3) || len(files) != 2 {
-		t.Fatalf("sub = %v %v", m, isErr)
-	}
-	a := files[0].(map[string]any)
-	hits, _ := a["hits"].([]any)
-	if a["file"] != "a.go" || a["count"] != float64(2) || len(hits) != 2 {
-		t.Fatalf("a.go = %v", a)
-	}
-	if _, has := a["selection"]; has {
-		t.Error("replace returns no selection token")
-	}
-	h := hits[0].(map[string]any)
-	if h["startLine"] != float64(1) || h["endLine"] != float64(1) || h["lines"].([]any)[0] != "bar & <baz>" ||
-		len(h["above"].([]any)) != 0 || h["below"].([]any)[0] != "x" {
-		t.Errorf("first hit = %v: before is [] and not null", h)
-	}
-	if b, _ := os.ReadFile(filepath.Join(root, "b.go")); string(b) != "bar & <baz>\n" { //nolint:gosec // a path in a temporary directory
-		t.Errorf("b.go = %q", b)
-	}
-}
-
 func TestNew(t *testing.T) {
 	root := t.TempDir()
 	got := serve(t, root, toolCall(1, "new", `{"file":"pkg/a.go","content":"package pkg\n\nvar X = 1","why":"パッケージを作る"}`))
@@ -355,15 +324,9 @@ func TestToolErrors(t *testing.T) {
 		{"edit with old and a selection", "edit", `{"selection":"sel_x","old":"1","new":"x","why":"w"}`, "invalid_input", nil},
 		{"edit with old that is not there", "edit", `{"file":"a.go","old":"zzz","new":"x","why":"w"}`, "content_not_found", nil},
 		{"edit by file with expect that is not there", "edit", `{"file":"a.go","expect":"zzz","newText":"x","why":"w"}`, "content_not_found", nil},
-		{"sub without count", "replace", `{"files":["a.go"],"old":"1","new":"x","why":"w"}`, "invalid_input", nil},
-		{"sub with files as a string", "replace", `{"files":"a.go","old":"1","new":"x","count":1,"why":"w"}`, "invalid_input", nil},
-		{"sub with count as a string", "replace", `{"files":["a.go"],"old":"1","new":"x","count":"1","why":"w"}`, "invalid_input", nil},
-		{"sub with no files", "replace", `{"files":[],"old":"1","new":"x","count":1,"why":"w"}`, "invalid_input", nil},
 		{"new without content", "new", `{"file":"n.go","why":"w"}`, "invalid_input", nil},
 		{"new with content as a number", "new", `{"file":"n.go","content":1,"why":"w"}`, "invalid_input", nil},
 		{"new on an existing file", "new", `{"file":"a.go","content":"x","why":"w"}`, "file_exists", nil},
-		{"sub of one place", "replace", `{"files":["a.go"],"old":"1","new":"x","count":1,"why":"w"}`, "use_edit", map[string]any{"hits": []any{map[string]any{"file": "a.go", "startLine": float64(1), "endLine": float64(1), "lines": []any{"1"}}}, "edit": map[string]any{"file": "a.go", "old": "1", "new": "x"}}},
-		{"sub with the wrong count", "replace", `{"files":["a.go"],"old":"1","new":"x","count":2,"why":"w"}`, "count_mismatch", map[string]any{"a.go": float64(1)}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -629,7 +592,6 @@ func TestNearMatchesInTheError(t *testing.T) {
 	}{
 		{"look", "look", `{"file":"a.go","expect":"    return 1","why":"w"}`, true},
 		{"edit", "edit", `{"file":"a.go","expect":"    return 1","newText":"x","why":"w"}`, true},
-		{"replace", "replace", `{"files":["a.go"],"old":"  return 1","new":"x","count":2,"why":"w"}`, true},
 		{"part of a line", "edit", `{"file":"a.go","expect":"return 1","newText":"x","why":"w"}`, true},
 		{"nothing near", "look", `{"file":"a.go","expect":"zzz","why":"w"}`, false},
 	} {
@@ -659,7 +621,6 @@ func TestTypeErrorsNameTheInput(t *testing.T) {
 		{"edit", `{"edits":"[{}]","why":"w"}`, "edits must be an array of objects, got string. Pass it as JSON"},
 		{"edit", `{"file":"a","expect":"a","newText":"b","brief":"true","why":"w"}`, "brief must be true or false, got string. Write true or false without quotes"},
 		{"edit", `{"file":"a","startLine":"3","why":"w"}`, "startLine must be an integer, got string."},
-		{"replace", `{"files":"a.go","old":"x","new":"y","count":2,"why":"w"}`, "files must be an array of strings, got string. Pass it as JSON"},
 	} {
 		body := serve(t, t.TempDir(), toolCall(1, tc.tool, tc.args))[0]
 		if !strings.Contains(body, tc.want) || strings.Contains(body, "mcp.") || strings.Contains(body, "[]") {
@@ -820,30 +781,24 @@ func TestLookWithLooks(t *testing.T) {
 	}
 }
 
-func TestEditsWithContentMakeAFile(t *testing.T) {
+func TestEditsWithContentIsTurnedAway(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, "a.txt"), []byte("a\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	r := serve(t, dir,
-		toolCall(1, "edit", `{"edits":[{"file":"a.txt","expect":"a","newText":"A"},{"file":"sub/b.txt","content":"b1\nb2"}],"brief":true,"why":"w"}`),
-		toolCall(2, "edit", `{"edits":[{"file":"c.txt","content":"x","newText":"y"}],"why":"w"}`),
-		toolCall(3, "edit", `{"edits":[{"file":"a.txt","content":"x"}],"why":"w"}`),
-		toolCall(4, "edit", `{"edits":[{"file":"d.txt","content":5}],"why":"w"}`))
-	m, isErr := body(t, r[0])
-	if isErr || strings.Count(r[0], "selection") != 2 || strings.Contains(r[0], "b1") {
-		t.Errorf("1: %s %v", r[0], m)
+		toolCall(1, "edit", `{"edits":[{"file":"a.txt","expect":"a","newText":"A"},{"file":"sub/b.txt","content":"b1\nb2"}],"why":"w"}`),
+		toolCall(2, "edit", `{"edits":[{"file":"d.txt","content":5}],"why":"w"}`))
+	if !strings.Contains(r[0], "content is not an input of edit: make a new file with new") || !strings.Contains(r[0], "edits[1]: ") {
+		t.Errorf("1: %s", r[0])
 	}
-	if b, err := os.ReadFile( //nolint:gosec // a file of the test directory
-		filepath.Join(dir, "sub", "b.txt")); err != nil || string(b) != "b1\nb2\n" {
-		t.Errorf("file = %q %v", b, err)
+	if !strings.Contains(r[1], "edits.0.content must be a string") {
+		t.Errorf("2: %s", r[1])
 	}
-	for i, want := range map[int]string{1: "file and content only", 2: "file_exists", 3: "edits.0.content must be a string"} {
-		if !strings.Contains(r[i], want) {
-			t.Errorf("%d: %s, want %q", i+1, r[i], want)
-		}
+	if b, err := os.ReadFile(filepath.Join(dir, "a.txt")); err != nil || string(b) != "a\n" { //nolint:gosec // a file of the test directory
+		t.Errorf("a.txt = %q %v: nothing is changed", b, err)
 	}
-	if _, err := os.Stat(filepath.Join(dir, "c.txt")); err == nil {
-		t.Error("c.txt was made")
+	if _, err := os.Stat(filepath.Join(dir, "sub", "b.txt")); err == nil {
+		t.Error("sub/b.txt was made")
 	}
 }

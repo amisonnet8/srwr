@@ -118,8 +118,6 @@ func (s *Server) call(params json.RawMessage) (any, *jsonrpc.Error) {
 		return s.callLook(p.Arguments), nil
 	case tools.Edit:
 		return s.callEdit(p.Arguments), nil
-	case tools.Replace:
-		return s.callReplace(p.Arguments), nil
 	case tools.New:
 		return s.callNew(p.Arguments), nil
 	}
@@ -368,8 +366,8 @@ type editItemArgs struct {
 	Insert    *string `json:"insert"`
 	Old       *string `json:"old"`
 	New       *string `json:"new"`
-	Content   *string `json:"content"`
-	Why       *string `json:"why"` // not used: the why of the call is the why of every item
+	Content   *string `json:"content"` // not an input: only to turn it away with the way to make a file
+	Why       *string `json:"why"`     // not used: the why of the call is the why of every item
 }
 
 type editsOK struct {
@@ -503,23 +501,7 @@ func (s *Server) callEdits(a editArgs) toolResult {
 // editInputOf makes the input of one edit out of its arguments. msg is not empty when the arguments are not an edit.
 func editInputOf(a editItemArgs) (in core.EditInput, msg string) {
 	if a.Content != nil {
-		// An item that makes a file: the checks are the core's.
-		in = core.EditInput{Create: a.Content}
-		if a.File != nil {
-			in.File = *a.File
-		}
-		in.HasLines = a.StartLine != nil || a.EndLine != nil
-		in.Expect, in.Old, in.New = a.Expect, a.Old, a.New
-		if a.Selection != nil {
-			in.Selection = *a.Selection
-		}
-		if a.NewText != nil {
-			in.NewText = *a.NewText
-		}
-		if a.Insert != nil {
-			in.Insert = *a.Insert
-		}
-		return in, ""
+		return in, "content is not an input of edit: make a new file with new"
 	}
 	hasOld := a.Old != nil || a.New != nil
 	switch {
@@ -566,62 +548,6 @@ func (s *Server) rejectEdit(message string) toolResult {
 	e := core.Error{Code: core.CodeInvalidInput, Message: message}
 	s.Core.RecordInputFailure(tools.Edit, e.Code, e.Message)
 	return failure(e)
-}
-
-type replaceArgs struct {
-	Files *[]string `json:"files"`
-	Old   *string   `json:"old"`
-	New   *string   `json:"new"`
-	Count *int      `json:"count"`
-	Why   *string   `json:"why"`
-}
-
-type replaceOK struct {
-	OK    bool            `json:"ok"`
-	Count int             `json:"count"`
-	Files []replaceFileOK `json:"files"`
-}
-
-type replaceFileOK struct {
-	File  string         `json:"file"`
-	Count int            `json:"count"`
-	Hits  []replaceHitOK `json:"hits"`
-	More  int            `json:"more,omitempty"`
-}
-
-type replaceHitOK struct {
-	StartLine int      `json:"startLine"`
-	EndLine   int      `json:"endLine"`
-	Lines     []string `json:"lines"`
-	Above     []string `json:"above"`
-	Below     []string `json:"below"`
-}
-
-func (s *Server) callReplace(raw json.RawMessage) toolResult {
-	var a replaceArgs
-	if err := decodeArgs(raw, &a); err != nil {
-		s.Core.RecordInputFailure(tools.Replace, err.Code, err.Message)
-		return failure(*err)
-	}
-	if missing := firstMissing(map[string]bool{"files": a.Files == nil, "old": a.Old == nil, "new": a.New == nil, "count": a.Count == nil, "why": a.Why == nil},
-		"files", "old", "new", "count", "why"); missing != "" {
-		e := core.Error{Code: core.CodeInvalidInput, Message: "missing required input: " + missing}
-		s.Core.RecordInputFailure(tools.Replace, e.Code, e.Message)
-		return failure(e)
-	}
-	res, cerr := s.Core.Replace(core.ReplaceInput{Files: *a.Files, Old: *a.Old, New: *a.New, Count: *a.Count, Why: *a.Why})
-	if cerr != nil {
-		return failure(*cerr)
-	}
-	out := replaceOK{OK: true, Count: res.Count, Files: []replaceFileOK{}}
-	for _, f := range res.Files {
-		file := replaceFileOK{File: f.File, Count: f.Count, Hits: []replaceHitOK{}, More: f.More}
-		for _, h := range f.Hits {
-			file.Hits = append(file.Hits, replaceHitOK{StartLine: h.StartLine, EndLine: h.EndLine, Lines: h.Lines, Above: h.Above, Below: h.Below})
-		}
-		out.Files = append(out.Files, file)
-	}
-	return success(out)
 }
 
 type newArgs struct {

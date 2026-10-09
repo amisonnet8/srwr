@@ -14,7 +14,7 @@ import (
 )
 
 // What srwr hook records (docs/reference/cli.md): what the agent did with its own tools, written to the same tape as
-// look, edit and replace, with no why and no token. Nothing here fails the agent: a file that cannot be recorded is left out
+// look and edit, with no why and no token. Nothing here fails the agent: a file that cannot be recorded is left out
 // and told in the notes.
 
 // Hook range modes.

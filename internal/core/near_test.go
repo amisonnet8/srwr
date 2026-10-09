@@ -122,45 +122,6 @@ func TestNearMatchesOfALook(t *testing.T) {
 	}
 }
 
-func TestNearMatchesOfAReplace(t *testing.T) {
-	e := newEnv(t)
-	e.write("a.go", "x\n\tfoo(\n\t\tbar)\ny\n\tfoo(\n\t\tbar)\n")
-	e.write("b.go", "foo(\nbar)\n")
-	// Two places in a.go differ in tabs; b.go has no indent at all, which is a difference of its own.
-	_, err := e.sub([]string{"a.go", "b.go"}, "  foo(\n    bar)", "n(", 3)
-	wantCode(t, err, CodeCountMismatch)
-	want := []NearMatch{
-		{File: "a.go", StartLine: 2, EndLine: 3, Lines: []string{"\tfoo(", "\t\tbar)"}},
-		{File: "a.go", StartLine: 5, EndLine: 6, Lines: []string{"\tfoo(", "\t\tbar)"}},
-	}
-	if !reflect.DeepEqual(err.NearMatches, want) {
-		t.Errorf("near = %+v, want %+v", err.NearMatches, want)
-	}
-	if !strings.Contains(err.Message, "a.go line 2") || strings.Contains(err.Message, "bar)") {
-		t.Errorf("message = %q", err.Message)
-	}
-	e.noContentInFailures("bar)")
-
-	// A place where old is exactly is not near; a part of a line is found too.
-	e.write("c.go", "foo(1)\nfoo( 2)\n")
-	_, err = e.sub([]string{"c.go"}, "foo(  2", "x", 2)
-	wantCode(t, err, CodeCountMismatch)
-	if len(err.NearMatches) != 1 || err.NearMatches[0].StartLine != 2 {
-		t.Errorf("near = %+v", err.NearMatches)
-	}
-	_, err = e.sub([]string{"c.go"}, "foo(", "x", 3)
-	wantCode(t, err, CodeCountMismatch)
-	if err.NearMatches != nil {
-		t.Errorf("exact places must not be listed as near: %+v", err.NearMatches)
-	}
-
-	// More places than asked for: nothing near is told.
-	_, err = e.sub([]string{"a.go"}, "\tfoo(", "x", 1)
-	if err == nil || err.NearMatches != nil {
-		t.Errorf("err = %+v", err)
-	}
-}
-
 // noContentInFailures fails if a failure on the tape holds any of the texts (a snapshot holds the file, rightly).
 func (e *env) noContentInFailures(texts ...string) {
 	e.t.Helper()

@@ -11,10 +11,9 @@ type Tool struct {
 
 // Names of the tools.
 const (
-	Look    = "look"
-	Edit    = "edit"
-	Replace = "replace"
-	New     = "new"
+	Look = "look"
+	Edit = "edit"
+	New  = "new"
 )
 
 const whyDescription = "The reason, in one sentence, in the language of the conversation with the user. It is for people to read. Empty or blank is not allowed"
@@ -36,7 +35,6 @@ func editsSchema() map[string]any {
 				"insert":    map[string]any{"type": "string", "enum": []string{"after", "before", "start", "end"}, "description": "Keep the range and put newText after (or before) it. \"start\" or \"end\": with file only, put newText at the top (bottom) of the file"},
 				"old":       map[string]any{"type": "string", "minLength": 1, "description": "With file: the text to replace, in one place only"},
 				"new":       map[string]any{"type": "string", "description": "With old: the text that takes its place"},
-				"content":   map[string]any{"type": "string", "description": "Makes the new file named by file, with this content (what new does; the file must not exist). Give file and content only"},
 			},
 		},
 	}
@@ -91,7 +89,7 @@ func List() []Tool {
 				"To put text at the top or the bottom of a file, pass file, newText and insert: \"start\" or \"end\" (no expect or line numbers needed; it works whatever the file has become). To insert at another place that is not next to any lines you can name, give startLine and endLine = startLine - 1 and no expect: this works only if the file has not changed since your last look at it. " +
 				"To change a part of a line (not the whole line), pass file, old and new instead of expect and newText: old is a text that is in the file in one place only (it may have several lines; give startLine and endLine to look in those lines only), and the lines it touches become what they would be with new in its place. " +
 				"To delete, make newText an empty string. " +
-				"To make the same kind of change in several places, or in several files, with one why, pass edits instead of the single-edit inputs: a list of 1 to 50 items, each with selection, or file with expect (and startLine and endLine), or file with old and new, and newText and insert; or file with content, which makes a new file (so a new file and the code that uses it go in one call). " +
+				"To make the same kind of change in several places, or in several files, with one why, pass edits instead of the single-edit inputs: a list of 1 to 50 items, each with selection, or file with expect (and startLine and endLine), or file with old and new, and newText and insert. " +
 				"All the ranges are found as the files are now, before any item is made, so the items do not depend on each other and may come in any order; they must not overlap. If any item fails, nothing is changed and the error says which one (edits[i]): fix it and send all the items again. The result has edits, one result for each item, in the order given. " +
 				"With brief: true the result is only selection, startLine and endLine for each edit (no lines, above, below): use it for many edits when you do not need to read them back. The result has selection (the token of the range after the replacement; use it to go on fixing the same place), lines (the content of the range now) and above and below (up to 2 lines of the file now, just above and just below the new range; they are not the old content), so you can check the edit without reading the file again. " +
 				"With a token, edits elsewhere shift the lines and srwr corrects the line numbers; only an edit that overlaps the range makes the result selection_stale, and then you call look again. " +
@@ -113,26 +111,6 @@ func List() []Tool {
 					"why":       map[string]any{"type": "string", "minLength": 1, "pattern": `\S`, "description": whyDescription},
 				},
 				"required": []string{"why"},
-			},
-		},
-		{
-			Name: Replace,
-			Description: "Replace a text with another in 2 or more places, in one file or several, like a simple sed, and record why. For one place, use edit (or look and edit): replace is refused for it, with where the place is and the edit call to make. " +
-				"old is searched for as plain text (not a regular expression), left to right, places do not overlap. " +
-				"count is how many places you expect in all the files together, 2 or more. If the number found is different, nothing is changed and the error says how many there are in each file (and, in nearMatches, the places that differ from old only in spaces or tabs); this is the check that you changed what you meant. " +
-				"The result has, for each file that changed, count (how many places) and hits, one for each place (places on the same line are one): startLine and endLine (after the change), lines (what they hold now), and above and below (the line above and the line below, as the file is now). There is no selection token; use look and edit for a place you want to go on with. " +
-				"Use look and edit instead when the places must be chosen one by one. " +
-				"why is required: say why you change it, in the language of the conversation with the user.",
-			InputSchema: map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"files": map[string]any{"type": "array", "minItems": 1, "items": map[string]any{"type": "string", "minLength": 1}, "description": "Paths relative to the workspace. Existing files only"},
-					"old":   map[string]any{"type": "string", "minLength": 1, "description": "The text to look for. It may have several lines (LF)"},
-					"new":   map[string]any{"type": "string", "description": "The text to put in its place. An empty string deletes it"},
-					"count": map[string]any{"type": "integer", "minimum": 1, "description": "How many places you expect in all the files together. 2 or more (1 is answered with use_edit)"},
-					"why":   map[string]any{"type": "string", "minLength": 1, "pattern": `\S`, "description": whyDescription},
-				},
-				"required": []string{"files", "old", "new", "count", "why"},
 			},
 		},
 		{

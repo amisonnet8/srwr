@@ -9,7 +9,7 @@ import (
 // maxNear is how many near matches an error lists.
 const maxNear = 5
 
-// NearMatch is a place that differs from what the client asked for only in spaces and tabs: the file (for replace), the lines
+// NearMatch is a place that differs from what the client asked for only in spaces and tabs: the file, the lines
 // as they are, and their numbers.
 type NearMatch struct {
 	File      string   `json:"file,omitempty"`

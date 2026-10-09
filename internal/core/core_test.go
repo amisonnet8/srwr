@@ -931,3 +931,13 @@ func TestLookCutsEndLinePastTheEnd(t *testing.T) {
 	_, err = e.c.Look(LookInput{File: "f.txt", StartLine: 6, EndLine: 9, Why: "w"})
 	wantCode(t, err, CodeInvalidRange)
 }
+
+func (e *env) eventsOf(typ string) []tape.Event {
+	var got []tape.Event
+	for _, ev := range e.events() {
+		if ev.Type == typ {
+			got = append(got, ev)
+		}
+	}
+	return got
+}

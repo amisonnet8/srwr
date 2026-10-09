@@ -97,22 +97,13 @@ func main() {
 ← {"jsonrpc":"2.0","id":7,"result":{"content":[{"text":"{\"ok\":false,\"error\":{\"code\":\"content_not_found\",\"message\":\"the lines of expect are not in cmd/main.go (7 lines). Check the content, or call look again. Line 5 differs from expect only in spaces or tabs: see nearMatches\",\"nearMatches\":[{\"startLine\":5,\"endLine\":5,\"lines\":[\"\\trun()\"]}],\"retry\":{\"endLine\":5,\"expect\":\"\\trun()\",\"file\":\"cmd/main.go\",\"newText\":\"    run()\\n    wait()\",\"startLine\":5}}}","type":"text"}],"isError":true}}
 ```
 
-## 1か所は `edit` で
-
-`replace` は2か所以上のためのもの。1か所の文字列には `use_edit` を返し、何も変えない。`actual.edit` は、同じ変更をする `edit` の呼び出しで、`why` だけを足せばよい。
-
-```jsonrpc
-→ {"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"name":"replace","arguments":{"files":["cmd/main.go"],"old":"cleanup()","new":"teardown()","count":1,"why":"cleanup の名前を替える"}}}
-← {"jsonrpc":"2.0","id":8,"result":{"content":[{"text":"{\"ok\":false,\"error\":{\"code\":\"use_edit\",\"message\":\"replace is for 2 or more places, and the text is in one place only (cmd/main.go line 6). Use edit for it: actual.edit is the call to make (add why)\",\"actual\":{\"edit\":{\"file\":\"cmd/main.go\",\"old\":\"cleanup()\",\"new\":\"teardown()\"},\"hits\":[{\"file\":\"cmd/main.go\",\"startLine\":6,\"endLine\":6,\"lines\":[\"\\tcleanup()\"]}]}}}","type":"text"}],"isError":true}}
-```
-
 ## 行の前後に足す
 
 行を変えずに、その後ろ（前）に行を足すには、いつもと同じに行を指して `insert: "after"`（または `"before"`）を付ける。`expect` を確かめるので、ファイルがどう変わっていても使える。返るのは、足した行のこと。
 
 ```jsonrpc
-→ {"jsonrpc":"2.0","id":9,"method":"tools/call","params":{"name":"edit","arguments":{"file":"cmd/main.go","expect":"\tsetup()","insert":"after","newText":"\tcheck()","why":"run の前に確認する"}}}
-← {"jsonrpc":"2.0","id":9,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_044GA1E48KVH269F6JJ94T8Z\",\"startLine\":5,\"endLine\":5,\"lines\":[\"\\tcheck()\"],\"above\":[\"func main() {\",\"\\tsetup()\"],\"below\":[\"\\trun()\",\"\\tcleanup()\"]}","type":"text"}],"isError":false}}
+→ {"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"name":"edit","arguments":{"file":"cmd/main.go","expect":"\tsetup()","insert":"after","newText":"\tcheck()","why":"run の前に確認する"}}}
+← {"jsonrpc":"2.0","id":8,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_044GA1E48KVH269F6JJ94T8Z\",\"startLine\":5,\"endLine\":5,\"lines\":[\"\\tcheck()\"],\"above\":[\"func main() {\",\"\\tsetup()\"],\"below\":[\"\\trun()\",\"\\tcleanup()\"]}","type":"text"}],"isError":false}}
 ```
 
 ファイルは8行になった。`setup()` はそのままで、その後ろに `check()` が入っている。
@@ -133,8 +124,8 @@ func main() {
 場所を探すには、`look` に行番号の代わりに `search` を渡す。その文字列を含む行を全部（20件まで）、それぞれの範囲トークンつきで返す。トークンは、そのまま `edit` に渡せる。見た行として、`why` つきでテープに1行ずつ残り、ファイルは変わらない。
 
 ```jsonrpc
-→ {"jsonrpc":"2.0","id":10,"method":"tools/call","params":{"name":"look","arguments":{"file":"cmd/main.go","search":"up()","why":"setup と cleanup の呼び出しを探す"}}}
-← {"jsonrpc":"2.0","id":10,"result":{"content":[{"text":"{\"ok\":true,\"count\":2,\"matches\":[{\"selection\":\"sel_045081648KVH3Z5DC93GTFB3\",\"startLine\":4,\"endLine\":4,\"lines\":[\"\\tsetup()\"],\"above\":[\"\",\"func main() {\"],\"below\":[\"\\tcheck()\",\"\\trun()\"]},{\"selection\":\"sel_045GE1Y48KVH3MCC2C6EXB6B\",\"startLine\":7,\"endLine\":7,\"lines\":[\"\\tcleanup()\"],\"above\":[\"\\tcheck()\",\"\\trun()\"],\"below\":[\"}\"]}]}","type":"text"}],"isError":false}}
+→ {"jsonrpc":"2.0","id":9,"method":"tools/call","params":{"name":"look","arguments":{"file":"cmd/main.go","search":"up()","why":"setup と cleanup の呼び出しを探す"}}}
+← {"jsonrpc":"2.0","id":9,"result":{"content":[{"text":"{\"ok\":true,\"count\":2,\"matches\":[{\"selection\":\"sel_045081648KVH3Z5DC93GTFB3\",\"startLine\":4,\"endLine\":4,\"lines\":[\"\\tsetup()\"],\"above\":[\"\",\"func main() {\"],\"below\":[\"\\tcheck()\",\"\\trun()\"]},{\"selection\":\"sel_045GE1Y48KVH3MCC2C6EXB6B\",\"startLine\":7,\"endLine\":7,\"lines\":[\"\\tcleanup()\"],\"above\":[\"\\tcheck()\",\"\\trun()\"],\"below\":[\"}\"]}]}","type":"text"}],"isError":false}}
 ```
 
 ## 1回で複数の編集をする
@@ -142,8 +133,8 @@ func main() {
 同じ理由の編集は、`edits` に並べて、1つの `why` で1回に呼べる。各項目は、`edit` と同じに行を指す。範囲は全部、呼ぶ前のファイルで決めるので、順番は自由で、項目同士は関係しない。重なってはいけない。全部が行われるか、何も行われない。返事は項目ごとに1つで、入力の順、行番号は呼んだあとのもの。
 
 ```jsonrpc
-→ {"jsonrpc":"2.0","id":11,"method":"tools/call","params":{"name":"edit","arguments":{"edits":[{"file":"cmd/main.go","expect":"\tsetup()","newText":"\tstart()"},{"file":"cmd/main.go","expect":"\tcleanup()","newText":"\tstop()"},{"file":"cmd/main.go","expect":"\trun()","insert":"after","newText":"\tlog()"}],"why":"呼び出しの名前を替え、実行をログに残す"}}}
-← {"jsonrpc":"2.0","id":11,"result":{"content":[{"text":"{\"ok\":true,\"edits\":[{\"selection\":\"sel_046081648KVH3M6NE7HJW31K\",\"startLine\":4,\"endLine\":4,\"lines\":[\"\\tstart()\"],\"above\":[\"\",\"func main() {\"],\"below\":[\"\\tcheck()\",\"\\trun()\"]},{\"selection\":\"sel_0470G2648KVH257ZXQFSTS3K\",\"startLine\":8,\"endLine\":8,\"lines\":[\"\\tstop()\"],\"above\":[\"\\trun()\",\"\\tlog()\"],\"below\":[\"}\"]},{\"selection\":\"sel_046GE1Y48KVH28BMME71JYMC\",\"startLine\":7,\"endLine\":7,\"lines\":[\"\\tlog()\"],\"above\":[\"\\tcheck()\",\"\\trun()\"],\"below\":[\"\\tstop()\",\"}\"]}]}","type":"text"}],"isError":false}}
+→ {"jsonrpc":"2.0","id":10,"method":"tools/call","params":{"name":"edit","arguments":{"edits":[{"file":"cmd/main.go","expect":"\tsetup()","newText":"\tstart()"},{"file":"cmd/main.go","expect":"\tcleanup()","newText":"\tstop()"},{"file":"cmd/main.go","expect":"\trun()","insert":"after","newText":"\tlog()"}],"why":"呼び出しの名前を替え、実行をログに残す"}}}
+← {"jsonrpc":"2.0","id":10,"result":{"content":[{"text":"{\"ok\":true,\"edits\":[{\"selection\":\"sel_046081648KVH3M6NE7HJW31K\",\"startLine\":4,\"endLine\":4,\"lines\":[\"\\tstart()\"],\"above\":[\"\",\"func main() {\"],\"below\":[\"\\tcheck()\",\"\\trun()\"]},{\"selection\":\"sel_0470G2648KVH257ZXQFSTS3K\",\"startLine\":8,\"endLine\":8,\"lines\":[\"\\tstop()\"],\"above\":[\"\\trun()\",\"\\tlog()\"],\"below\":[\"}\"]},{\"selection\":\"sel_046GE1Y48KVH28BMME71JYMC\",\"startLine\":7,\"endLine\":7,\"lines\":[\"\\tlog()\"],\"above\":[\"\\tcheck()\",\"\\trun()\"],\"below\":[\"\\tstop()\",\"}\"]}]}","type":"text"}],"isError":false}}
 ```
 
 ## 行の一部を直す
@@ -151,8 +142,8 @@ func main() {
 数語だけを直すときは、`expect` と `newText` の代わりに、`file`・`old`・`new` を渡す。`old` はファイルの中にただ1か所ある文字列で、行全体でなくてよい。範囲は `old` にかかる行で、結果はほかの編集と同じ。
 
 ```jsonrpc
-→ {"jsonrpc":"2.0","id":12,"method":"tools/call","params":{"name":"edit","arguments":{"file":"cmd/main.go","old":"stop()","new":"stop(true)","why":"旗をつけて止める"}}}
-← {"jsonrpc":"2.0","id":12,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_047GG2648KVH3FFGG4WYYXPE\",\"startLine\":8,\"endLine\":8,\"lines\":[\"\\tstop(true)\"],\"above\":[\"\\trun()\",\"\\tlog()\"],\"below\":[\"}\"],\"hint\":\"Edits to one file in a row: edit with edits makes them in one call (one why, all or none; the ranges are found as the file is now, so no order is needed).\"}","type":"text"}],"isError":false}}
+→ {"jsonrpc":"2.0","id":11,"method":"tools/call","params":{"name":"edit","arguments":{"file":"cmd/main.go","old":"stop()","new":"stop(true)","why":"旗をつけて止める"}}}
+← {"jsonrpc":"2.0","id":11,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_047GG2648KVH3FFGG4WYYXPE\",\"startLine\":8,\"endLine\":8,\"lines\":[\"\\tstop(true)\"],\"above\":[\"\\trun()\",\"\\tlog()\"],\"below\":[\"}\"],\"hint\":\"Edits to one file in a row: edit with edits makes them in one call (one why, all or none; the ranges are found as the file is now, so no order is needed).\"}","type":"text"}],"isError":false}}
 ```
 
 ファイルは9行になった。

@@ -51,7 +51,7 @@ const LookAdvice = "srwr: to read part of a file and then edit it, call look (wi
 
 // OutsideAdvice is what the agent is told after a Bash command made or changed files: they are on the tape as changes made outside
 // srwr, with no why. It is calm on purpose: files a tool writes (a generator, a formatter) are fine as they are. It is empty when
-// the command changed nothing. The explanation is given the first time only.
+// the command changed nothing. It is given the first time only for a tape.
 func OutsideAdvice(o core.OutsideChanges) string {
 	var parts []string
 	if s := nameList(o.Created); s != "" {
@@ -63,11 +63,10 @@ func OutsideAdvice(o core.OutsideChanges) string {
 	if len(parts) == 0 {
 		return ""
 	}
-	msg := "srwr: this command " + strings.Join(parts, " and ") + "."
 	if o.Earlier {
-		return msg // the tape has told this before
+		return "" // the tape has told this before: a command that writes files again and again (a generator) is not told every time
 	}
-	return msg + " What changed is on the tape as a change made outside srwr, with no why. When you write a file yourself, new (a new file) or edit (a change) records why with it; files a tool writes (a generator, a formatter) are fine as they are."
+	return "srwr: this command " + strings.Join(parts, " and ") + "." + " What changed is on the tape as a change made outside srwr, with no why. When you write a file yourself, new (a new file) or edit (a change) records why with it; files a tool writes (a generator, a formatter) are fine as they are."
 }
 
 // nameList names up to 5 files, and counts the rest.

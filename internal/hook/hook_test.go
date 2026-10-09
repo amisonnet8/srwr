@@ -413,8 +413,8 @@ func TestLookAdviceIsGivenOnce(t *testing.T) {
 	}
 }
 
-// What the outside advice explains is said once; later it is a short line.
-func TestOutsideAdviceIsShortAfterTheFirst(t *testing.T) {
+// The outside advice is given once for a tape; a command that writes files again (a generator) gets none.
+func TestOutsideAdviceIsOnlyTheFirst(t *testing.T) {
 	if _, err := exec.LookPath("git"); err != nil {
 		t.Skip("git is not installed")
 	}
@@ -434,7 +434,7 @@ func TestOutsideAdviceIsShortAfterTheFirst(t *testing.T) {
 	if len(first) != 1 || !strings.Contains(first[0], "fine as they are") {
 		t.Errorf("first = %q", first)
 	}
-	if len(second) != 1 || second[0] != "srwr: this command created g2.go." {
+	if len(second) != 0 {
 		t.Errorf("second = %q", second)
 	}
 }

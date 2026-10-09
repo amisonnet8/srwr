@@ -35,7 +35,7 @@ When a session ends, its tape is **compressed with gzip** and renamed `<id>.tape
 - Append only. Existing lines are never rewritten or deleted
 - `seq` is a sequence number that starts at 1 within the tape and has no gaps (the `header` has none)
 - `ts` is RFC 3339 **in UTC**, with milliseconds and a trailing `Z` (`2026-09-29T02:20:04.123Z`). Tapes written by older versions have an offset such as `+09:00` (the time zone of the machine then); they are read as the same moments, and an old line is never rewritten
-- A field with no value (`why`, `selection`, `from` and so on) is written as `null`, not left out. The exceptions are the optional fields `source` and `tool` (left out when empty), `hits` (written only for a `replace`) and `deleted` (written only when true)
+- A field with no value (`why`, `selection`, `from` and so on) is written as `null`, not left out. The exceptions are the optional fields `source` and `tool` (left out when empty) and `deleted` (written only when true)
 - One event per line. A last line that does not end with a line break is treated as being in the middle of being written
 - A reader ignores fields it does not know
 - **Until v1, the tape format may change without compatibility.** A tape written by one version is not promised to be read by another. From v1 on, fields may be added, but the meaning of an existing one is not changed
@@ -65,7 +65,7 @@ It also has `vcs` and `tool` (`{"name":"srwr","version":"…"}`).
 
 ### snapshot
 
-The **whole text** of a file. It is recorded when the file is first touched in the session, and when a file that an `external` removed comes back. After that the file is followed by `edit`, `replace`, `new` and `external` events only, which hold just the changed lines. Replay is built by applying them in order from the last `snapshot`.
+The **whole text** of a file. It is recorded when the file is first touched in the session, and when a file that an `external` removed comes back. After that the file is followed by `edit`, `new` and `external` events only, which hold just the changed lines. Replay is built by applying them in order from the last `snapshot`.
 
 ```json
 {"v":2,"seq":1,"ts":"…","type":"snapshot","file":"cmd/app/main.go","fileHash":"a3f09c21","text":"package main\n…","sha":"sha256:…"}
@@ -92,13 +92,6 @@ A `look` recorded by the hook (Read and the like) has a `why` of `null`. It has 
 - An `edit` made by `file` and `expect` instead of a token has `from` of `null` too (its `source` is `mcp`, and it has a `selection` and a `why`)
 - An `edit` recorded by the hook (Edit) has `from`, `selection` and `why` of `null`, `source` of `hook` and `tool` of `Edit`. The range is the whole lines that contain the replaced place
 
-### replace
-
-An event of the `replace` tool ([mcp.md](mcp.md#replace)). It has the same fields as an `edit`, and:
-
-- `source` of `mcp`, `from` of `null`, and `hits`, the number of places it changed in the file
-- **One for each file** that changed, with the same `why`. The range is the whole lines from the first place to the last (so `oldText` holds the lines in between too). `selection` is `null`: `replace` returns no token
-
 ### new
 
 An event of the `new` tool ([mcp.md](mcp.md#new)). It has the same fields as an `edit`, and:
@@ -117,7 +110,7 @@ Recorded when a change to a file made outside srwr is detected. No `snapshot` fo
 - `hunks`: **the lines that changed**, against the content the tape held before (the one `expectedSha` is the hash of). The places come from top to bottom and do not overlap. `startLine` and `endLine` are the lines before, `newText` the lines after (joined with `\n`), and `newStartLine` and `newEndLine` their numbers, as in `edit`. An insertion has `endLine = startLine - 1`; a deletion has an empty `newText` and `newEndLine = newStartLine - 1`. Applying them to the content before gives the content after, which `actualSha` is the hash of. It is replayed as a diff frame (a side-by-side diff)
 - `text`: **the whole text of the file after the change**, written instead of `hunks` when the change cannot be told as lines (only the line break at the end of the file changed) or is too big to compare. When the file was gone it is `null`, `actualSha` is an empty string, and `deleted: true` is added
 - `created`: written (as `true`) when the file is **new**: the tape held no content of it, and a shell command made it. `expectedSha` is an empty string and `hunks` (or `text`) holds the whole file, so it is replayed as a diff frame with an empty left side. Only the hook finds these (see `srwr hook` in [cli.md](cli.md))
-- `detectedBy`: what led to the detection (`look`, `edit`, `replace`, `new`, `hook`; `select` and `sub` in tapes of version 1)
+- `detectedBy`: what led to the detection (`look`, `edit`, `new`, `hook`; `select` and `sub` in tapes of version 1)
 - `author.kind` is always `external` (srwr cannot know who changed it)
 - An `external` of the old forms can be read too: one with the whole `text` and a `snapshot` after it, and one without `text` (then the `snapshot` right after it is shown as the content after the change)
 
@@ -127,17 +120,17 @@ If an `edit` is made with a selection token issued before an `external`, the tok
 
 ### failure
 
-Recorded when a `look`, an `edit`, a `replace` or a `new` fails (the AI gets an error). It is for finding out what mistakes the AI makes. A viewer shows it as a frame only when it is asked to (red; see [vscode.md](vscode.md)); by default it is left out.
+Recorded when a `look`, an `edit` or a `new` fails (the AI gets an error). It is for finding out what mistakes the AI makes. A viewer shows it as a frame only when it is asked to (red; see [vscode.md](vscode.md)); by default it is left out.
 
 ```json
 {"v":2,"seq":7,"ts":"…","type":"failure","tool":"look","file":null,"startLine":3,"endLine":9,"selection":null,"why":"Checking the main function","code":"invalid_range","message":"The path is absolute. Give a path relative to the workspace"}
 {"v":2,"seq":9,"ts":"…","type":"failure","tool":"edit","file":"cmd/app/main.go","startLine":null,"endLine":null,"selection":"sel_0410R3GZE4KV11C6325D32S7","why":"…","code":"selection_stale","message":"an edit overlapped the range after the look. Call look again"}
 ```
 
-- `tool`: `look`, `edit`, `replace` or `new`. `code` and `message` are the error the AI got ([mcp.md](mcp.md))
-- `file`: the path in the workspace, or `null` when it is not known or is left out (for a `replace` it is the file only when one file was given; for a `new` it is the file given). `startLine` and `endLine` are for a `look`, and `selection` (the token that was given) for an `edit`; `why` is what the AI wrote. A value that is not there is `null`
+- `tool`: `look`, `edit` or `new`. `code` and `message` are the error the AI got ([mcp.md](mcp.md))
+- `file`: the path in the workspace, or `null` when it is not known or is left out (for a `new` it is the file given). `startLine` and `endLine` are for a `look`, and `selection` (the token that was given) for an `edit`; `why` is what the AI wrote. A value that is not there is `null`
 - **The real path is left out** when it is an absolute path, a path outside the workspace, or a file that is not recorded: `file` is `null`, and `message` is a sentence without the path (`The path is absolute. Give a path relative to the workspace`, `The path points outside the workspace`, `The file is not recorded`)
-- `newText` of an `edit`, `old` and `new` of a `replace`, `content` of a `new` and `expect` of a `look` are not written. `message` is cut at 300 characters
+- `newText` of an `edit`, `content` of a `new` and `expect` of a `look` are not written. `message` is cut at 300 characters
 - A failure that is found before the call reaches srwr's editing (a required input is missing, a value has the wrong type) is recorded too, with `file` `null`
 
 ## Tapes of version 1
@@ -148,9 +141,11 @@ Tapes written by srwr 0.1.4 and before have `"v":1`, and are read as they are. W
 |---|---|
 | `select` | `look` |
 | `replace` | `edit` |
-| `replace` with `tool` of `sub` | `replace` (the `tool` is dropped) |
+| `replace` with `tool` of `sub` | `edit` (the `tool` is dropped) |
 | `replace` with `tool` of `new` | `new` (the `tool` is dropped) |
-| `tool` of a `failure`: `select`, `replace`, `sub` | `look`, `edit`, `replace` |
+| `tool` of a `failure`: `select`, `replace`, `sub` | `look`, `edit`, `edit` |
+
+The `replace` tool (srwr 0.1.5 to 0.1.12) is gone, and its events (`replace` of version 2, with `hits`) are read as `edit` as well; `hits` is dropped. A `failure` with the `tool` `replace` is read as `edit`.
 
 The version is read from each line, so a tape that went on with version 2 after an update is read right. The lines of an old tape are never rewritten.
 

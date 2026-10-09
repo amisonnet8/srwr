@@ -22,7 +22,7 @@
 │   ├── tape/               ← テープの読み書き（イベントの型、追記、読み込み、テープから作る状態、閉じたテープの圧縮と、生・`.gz` の両方を開く入口 `store.go`）（R1）
 │   ├── token/              ← 範囲トークン（R1）
 │   ├── jsonrpc/            ← 改行区切りの JSON-RPC（mcp と viewserver が共有）（R2）
-│   ├── core/               ← look / edit / replace / new の本体、行番号補正、external の検知（R2）
+│   ├── core/               ← look / edit / new の本体、行番号補正、external の検知（R2）
 │   ├── session/            ← 今のセッションの決定・ロック（flock）・テープの読み足し・鍵（R2）
 │   ├── tools/              ← MCP のツール定義（説明文・入力スキーマ）（R2）
 │   ├── mcp/                ← MCP サーバー（R2）
@@ -74,7 +74,7 @@
 ### Go
 - **`cmd/srwr/main.go` は薄く**：引数を `internal/cli` に渡して終了コードを返すだけ
 - **テープの形式に関わるもの**（イベントの型、JSON のフィールド、追記の決まり）は `internal/tape` に集める。ほかのパッケージがテープの JSON を直接組み立てない
-- **`look` / `edit` / `replace` / `new` の意味**（範囲の検証、行番号補正、内容の照合、external の検知）は `internal/core`。MCP にも hook にも依存しない
+- **`look` / `edit` / `new` の意味**（範囲の検証、行番号補正、内容の照合、external の検知）は `internal/core`。MCP にも hook にも依存しない
 - **見せ方の元になる計算**（コマの列、各コマの文書の状態、差分のコマ、最後の差分）は `internal/timeline`。テープを読むだけで、書かない
 - **入口ごとの変換**（MCP、表示サーバー、hook の入力、コマンドライン）は、それぞれ `internal/mcp`・`internal/viewserver`・`internal/hook`・`internal/cli`。改行区切りの JSON-RPC の読み書きは `internal/jsonrpc` に1つだけ置く
 - **セッションとロック**は `internal/session`。テープに書く入口（`mcp`・`hook`）は、すべてここを通る

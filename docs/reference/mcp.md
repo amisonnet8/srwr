@@ -1,21 +1,20 @@
-# MCP tools (look, edit, replace, new)
+# MCP tools (look, edit, new)
 
 *[日本語](mcp_ja.md) | **English***
 
 **Readers**: people who use srwr. For people who want to know what the AI is made to do and what errors come back.
 
-The AI agent edits files with only **four tools** provided by the MCP server `srwr mcp`.
+The AI agent edits files with only **three tools** provided by the MCP server `srwr mcp`.
 
 | Tool | What it does |
 |---|---|
 | `look` | Looks at a range. A selection token is returned |
 | `edit` | Changes the range of a selection token to new text |
-| `replace` | Replaces a text with another in several files at once, when the number of places is what was expected |
 | `new` | Creates a file that does not exist yet, with its content |
 
-There is no `edit` without `look`. So the tape always holds "look, then change" together. `replace` is for a change that is the same in many places: it asks for the number of places, so the check of what is changed is made by that number. Searching and reading are left to the Read and grep the AI already has (the hook records them; see `srwr hook` in [cli.md](cli.md)).
+There is no `edit` without `look`. So the tape always holds "look, then change" together. The same change in many places is made with `edits` (one `why`, all or none). Searching and reading are left to the Read and grep the AI already has (the hook records them; see `srwr hook` in [cli.md](cli.md)).
 
-All four require a `why` (the reason). It is the heart of what a person sees when replaying the [tape](tape.md).
+All three require a `why` (the reason). It is the heart of what a person sees when replaying the [tape](tape.md).
 
 The descriptions of the tools and the error messages are in English, whatever the language of the screen, because they are for the AI to read.
 
@@ -133,12 +132,12 @@ Changes the range to new text, in one call. An insertion is a change of an empty
 `expect` is required, because it is what makes the call safe: the range is never taken for its line numbers alone. (One case needs no `expect`: an insertion, below.) srwr decides the range in this order:
 
 1. the line numbers as given, if that range holds the lines of `expect`;
-2. those line numbers moved to where the lines are now, following the `edit`, `replace` and `new` made on the file **after its last look** (a `look`, or a read of the hook), if that range holds the lines of `expect`;
+2. those line numbers moved to where the lines are now, following the `edit` and `new` made on the file **after its last look** (a `look`, or a read of the hook), if that range holds the lines of `expect`;
 3. otherwise, the one place where the lines of `expect` are in the file.
 
 Zero places is `content_not_found` (`actual` holds the lines at the given line numbers, if there were any). Two or more places, or 1 and 2 pointing at different places, is `content_ambiguous`, which says where: give line numbers, or more lines in `expect`. So edits to one file can be sent together, in any order, even in parallel: each is found wherever the earlier ones moved it.
 
-An **insertion** (`endLine = startLine - 1`, no `expect`) has no lines to check. It is accepted only if the file has not changed since its last look (no `edit`, `replace`, `new` or `external` after it), and the line numbers are then taken as given. Otherwise it is `content_not_found`: look again, or point at the line next to the place with `expect` and `insert`.
+An **insertion** (`endLine = startLine - 1`, no `expect`) has no lines to check. It is accepted only if the file has not changed since its last look (no `edit`, `new` or `external` after it), and the line numbers are then taken as given. Otherwise it is `content_not_found`: look again, or point at the line next to the place with `expect` and `insert`.
 
 **`insert`** (`"after"` or `"before"`) inserts next to lines without needing them to be unchanged since a look: point at the lines as usual (a token, or `file` and `expect`, which is checked), and they are kept while `newText` goes just after (before) them. The result (`selection`, `startLine`, `endLine`, `lines`, `above`, `below`) is about the new lines, and the tape holds an `edit` of an empty range, as for any insertion. `insert` is `invalid_input` with an empty range (there are no lines to point at), and with an `insert` other than `"after"` and `"before"`. An empty `newText` with `insert` puts **one empty line** (without `insert` it deletes).
 
@@ -164,7 +163,7 @@ Files that cannot be handled: files with line breaks other than LF (CRLF), and b
 
 ### Several edits in one call (`edits`)
 
-`edits` holds 1 to 50 edits that share one `why`. Instead of `selection`, `file`, `startLine`, `endLine`, `expect`, `newText`, `insert`, `old` and `new`, which are then **not** given beside it, each item has them: a `selection`, or a `file` and `expect` (with `startLine` and `endLine` if known), or a `file`, `old` and `new`; a `newText` and, if wanted, an `insert`. An item can also be a `file` and a `content`: it makes that new file (what `new` does), so a new file and the code that uses it go in one call and nothing fails halfway. It is for the same change in many places that `replace` cannot make (the text differs from place to place).
+`edits` holds 1 to 50 edits that share one `why`. Instead of `selection`, `file`, `startLine`, `endLine`, `expect`, `newText`, `insert`, `old` and `new`, which are then **not** given beside it, each item has them: a `selection`, or a `file` and `expect` (with `startLine` and `endLine` if known), or a `file`, `old` and `new`; a `newText` and, if wanted, an `insert`.
 
 ```jsonc
 // input
@@ -179,41 +178,10 @@ Files that cannot be handled: files with line breaks other than LF (CRLF), and b
 - **An item has no `why` of its own.** If one gives a `why`, the call still works; the result has a `note` saying which items' `why` was not used (the `why` of the call goes with every edit).
 - **All or none.** Every range is found first, then every file is written, then the tape. If one item fails, nothing is changed, and the error is the item's own with `edits[2]: ` at the start of its message (`edits[2]` is the third item), and it ends with "Nothing was changed: fix that item and send all the items again". A call that is wrong as a whole (no items, more than 50, a `why` that is blank, ranges that overlap) is `invalid_input`
 - **Every range is found as the files are before the call.** So the items do not depend on each other, can be in any order, and an item's `startLine` and `endLine` are the lines as you saw them, not as the other items would leave them
-- **A `content` item** has `file` and `content` and nothing else (`invalid_input`). The file must not exist (`file_exists`), is not one that is not recorded, and is not made twice in a call. The files are made before any file is changed; if a change then cannot be written, they are removed again. Another item cannot change a file that the same call makes: put all its text in `content`. The result of the item is as the output of `new` is, with `lines` (the content); the tape has a `new` for it, before the `edit`s
+- **`content` is not an input of `edit`.** An item with a `content` is refused (`invalid_input`; make a new file with `new`)
 - **The ranges must not overlap.** Two ranges that share a line, an insertion inside another range (lines `a+1` to `b` of the range `a..b`), and two insertions at one place are `invalid_input` (`edits[0] and edits[1] overlap in a.go`). An insertion just before or just after another range is fine
 - The output has `edits`, one entry for each item **in the order given**. Each is as the output of a single `edit` is, but its lines are those of the file **after the whole call**, and its `selection` can be used as it is
 - On the tape there is one `edit` for each item, with the same `why`, the lines as the edits above it have left them (the same events as for separate calls, made from the top of each file down; [tape.md](tape.md#edit)). A failed call is one `failure` about the item that failed. A viewer shows each `edit` as it does for a single call
-
-## replace
-
-Replaces a text with another in **2 or more places**, in one file or several, like a simple sed, and records why. For one place, use `edit`: `replace` is refused for it (`use_edit`, below). The text is searched for as it is (not a regular expression), from left to right in each file, and places do not overlap. **`count`, the number of places expected in all the files together, is required and is 2 or more: if the number found is different, nothing is changed.**
-
-```jsonc
-// input
-{ "files": ["a.go", "b.go"], "old": "oldName(", "new": "newName(", "count": 3, "why": "Rename the helper to the new naming rule" }
-// output
-{ "ok": true, "count": 3, "files": [
-  { "file": "a.go", "count": 2, "hits": [
-      { "startLine": 12, "endLine": 12, "lines": ["…"], "above": ["…"], "below": ["…"] },
-      { "startLine": 30, "endLine": 31, "lines": ["…", "…"], "above": [], "below": ["…"] } ] },
-  { "file": "b.go", "count": 1, "hits": [ { "startLine": 7, "endLine": 7, "lines": ["…"], "above": ["…"], "below": ["…"] } ] } ] }
-```
-
-| Item | Meaning |
-|---|---|
-| `files` | Paths relative to the workspace. Existing files only. A path is given once |
-| `old` | The text to look for. Not empty. It may have several lines (LF) |
-| `new` | The text to put in its place. `""` deletes it |
-| `count` | How many places you expect in all the files together. 2 or more. A `1` is answered with `use_edit` when the text is in one place |
-| `why` | Why it changes them |
-| `files` in the output | Only the files that changed. `count` is the number of places in the file. `hits` has one entry for each place, as the file is now: `startLine` and `endLine`, `lines` (what they hold), and `above` and `below` (the one line above and the one line below, `[]` if none). Places on the same line are one entry. At most 20 entries are listed for a file, and `more` is how many were left out. **There is no selection token**: to go on with a place, use `look` |
-
-- **One place is for `edit`.** With a `count` of 1 and the text in exactly one place, the error is `use_edit`, and nothing is changed. Its message says where the place is (`a.go line 12`), without any of the file. `actual` has `hits` (`file`, `startLine`, `endLine`, `lines`: where the place is now) and `edit` (`file`, `old`, `new`: the `edit` call that makes the same change, to which only `why` is added)
-- If the number found is not `count` (a `count` of 1 with no place, or with two or more, too), the error is `count_mismatch`. Its message and `actual` say how many places each file has (`{"a.go": 3, "b.go": 1}`), and **no file is changed and nothing but the `failure` is written to the tape**
-- Every file is checked as `look` checks it (not recorded, CRLF, binary, outside the workspace). If one of them cannot be used, nothing is changed
-- A change that cannot be told in lines (it adds or removes the final line break of the file) is `invalid_input`: use `look` and `edit` for it
-- On the tape there is one `replace` for each file that changed, with the same `why` ([tape.md](tape.md#replace); its `selection` is `null`, since no token is returned). A viewer shows each as a diff of the file, with the `why` above it
-- A regular expression is not supported. Use `look` and `edit` when the places must be chosen one by one
 
 ## new
 
@@ -242,7 +210,7 @@ Creates a file that does not exist yet, with its content, and records why.
 
 ## why
 
-- **Required in all four** (`look`, `edit`, `replace` and `new`). Blank is not allowed either (`invalid_input`)
+- **Required in all three** (`look`, `edit` and `new`). Blank is not allowed either (`invalid_input`)
 - In `look` it is "why it looks here", in `edit` "why it changes it this way". Write the reason in one sentence, not a rephrasing of what is being done
 - Write it in **the same language as the conversation with the user** (the descriptions of the tools and the input schema ask for this). It is for people to read
 
@@ -265,10 +233,8 @@ In the MCP response `isError` is `true`, and the body is the following JSON.
 | `content_not_found` | `expect` is not in the file | Check the content, or give line numbers. If `nearMatches` is there, copy `expect` from it |
 | `content_ambiguous` | `expect` (given without line numbers) is in the file in more than one place | Give line numbers, or more lines in `expect` |
 | `file_exists` | `new` was used on a file that already exists | Use `look` and `edit` on it |
-| `count_mismatch` | `replace` found a number of places other than `count` | Read how many each file has, and call `replace` again with the right `count` (or use `look`). If `nearMatches` is there, copy `old` from it |
-| `use_edit` | `replace` was used with a `count` of 1 for a text that is in one place only | Call `edit` as `actual.edit` says (add `why`) |
-| `ignored_file` | `look`, `edit`, `replace` or `new` was used on a file that is not recorded | srwr cannot handle it. Ask the user |
-| `invalid_input` | A required input is missing, has the wrong type (the message names the input and the form it wants: `edits must be an array of objects, got string. Pass it as JSON, not as a string that holds JSON`), or `why` is empty; `file` is empty or has a NUL; only one of `startLine` and `endLine` is given, or none of them and no `expect`; `selection` is blank; `newText` has a CR; for `look`, `search` is empty, has a line break, or is given with `startLine`, `endLine` or `expect`, `include`, `exclude` or `offset` is given without `search`, `offset` is negative, or `looks` holds no item or more than 10, has more than 2000 lines in all, or is given with `file`, `startLine`, `endLine`, `expect` or `search`; for `edit` with `edits`, there are no items or more than 50, ranges overlap, or an item or the call has one of the faults above; for `replace`, `files`, `old` or `count` is missing or empty, a path is given twice, `old` or `new` has a CR; for `new`, `content` is missing or has a CR, or a directory above the file is a file | Fix the input |
+| `ignored_file` | `look`, `edit` or `new` was used on a file that is not recorded | srwr cannot handle it. Ask the user |
+| `invalid_input` | A required input is missing, has the wrong type (the message names the input and the form it wants: `edits must be an array of objects, got string. Pass it as JSON, not as a string that holds JSON`), or `why` is empty; `file` is empty or has a NUL; only one of `startLine` and `endLine` is given, or none of them and no `expect`; `selection` is blank; `newText` has a CR; for `look`, `search` is empty, has a line break, or is given with `startLine`, `endLine` or `expect`, `include`, `exclude` or `offset` is given without `search`, `offset` is negative, or `looks` holds no item or more than 10, has more than 2000 lines in all, or is given with `file`, `startLine`, `endLine`, `expect` or `search`; for `edit` with `edits`, there are no items or more than 50, ranges overlap, or an item or the call has one of the faults above, or an item has a `content`; for `new`, `content` is missing or has a CR, or a directory above the file is a file | Fix the input |
 | `unsupported_file` | CRLF or binary | — |
 | `internal_error` | An I/O error and the like | — |
 
@@ -279,14 +245,12 @@ An error may carry the current content (`actual`). What it holds is decided for 
 | `selection_mismatch` | The current content of the corrected range (an array of lines) |
 | `content_mismatch` | The current content of the range (an array of lines) |
 | `selection_stale` | The current content of the range, corrected up to just before the overlapping edit (kept inside the file) |
-| `count_mismatch` | The number of places in each file (`{"a.go": 3, "b.go": 1}`) |
-| `use_edit` | `{"hits": [{file, startLine, endLine, lines}], "edit": {file, old, new}}`. `edit` is left out when the change cannot be told in lines, or when `old` is in the file in places that overlap |
 | `invalid_range` | `{"lineCount": number of lines}`. None for a path outside the workspace |
 | Others | None |
 
 ### `nearMatches`
 
-When a text is not found, a mistake in spaces and tabs is the likeliest reason. So when `expect` (for `look` and `edit`) or `old` (for `replace`, only if fewer places were found than `count`) is not found but for spaces and tabs, the error has `nearMatches` (next to `actual`, not in it; `actual` is not changed): `[{"file", "startLine", "endLine", "lines"}]`, with the lines as they are in the file (`file` is only for `replace`). To compare, each line has its runs of spaces and tabs folded into one space and its trailing spaces dropped. A place where the text is exactly is not listed. At most 5 are listed, and `nearMatches` is left out if there is none. If there is no such place but `expect` is found as part of whole lines (`foo(` for the line `x := foo(1)`), those lines are listed instead, and the message says `expect` must be whole lines (`Line 12 holds expect only as part of the line: expect must be whole lines. Copy them from nearMatches`); this is for `look` and `edit` only. The message says where (`Line 12 differs from expect only in spaces or tabs: see nearMatches`), without any of the file. **`nearMatches` is not written to the tape**: its lines are the file's.
+When a text is not found, a mistake in spaces and tabs is the likeliest reason. So when `expect` (for `look` and `edit`) is not found but for spaces and tabs, the error has `nearMatches` (next to `actual`, not in it; `actual` is not changed): `[{"file", "startLine", "endLine", "lines"}]`, with the lines as they are in the file (`file` is the file). To compare, each line has its runs of spaces and tabs folded into one space and its trailing spaces dropped. A place where the text is exactly is not listed. At most 5 are listed, and `nearMatches` is left out if there is none. If there is no such place but `expect` is found as part of whole lines (`foo(` for the line `x := foo(1)`), those lines are listed instead, and the message says `expect` must be whole lines (`Line 12 holds expect only as part of the line: expect must be whole lines. Copy them from nearMatches`); this is for `look` and `edit` only. The message says where (`Line 12 differs from expect only in spaces or tabs: see nearMatches`), without any of the file. **`nearMatches` is not written to the tape**: its lines are the file's.
 
 ### `retry`
 
@@ -318,7 +282,7 @@ These are the mistakes seen when an AI used the tools. Each is an ordinary error
 - **The line numbers of a new `look` are the numbers of the file now.** srwr corrects the token it has already issued when another edit moves the lines, but not the `startLine` and `endLine` of a new `look`. After other edits, read the file again, or check the returned `lines` (and, after a `edit`, `above` and `below`). Better: pass `expect` with the lines you mean, and a wrong number is refused instead of selecting the wrong place.
 - **Make a new file with `new`.** `look` on a file that does not exist gives `file_not_found`. A file made with a shell command is recorded too, as an [`external`](tape.md#external) with `created: true`, but without a `why`.
 - **To change the same place again, use the new token that `edit` returned.** The token you used is spent: using it again gives `selection_stale`.
-- **For the same change in many places, use `replace` with `count`**, not many `look` and `edit`. A wrong `count` is refused with the number each file has.
+- **For the same change in many places, use `edits`** (one `old` and `new` for each place), not many `look` and `edit`.
 - **Read the error.** `invalid_range` returns `lineCount` (the number of lines of the file), which is enough to correct the numbers.
 
 ## Related

@@ -63,7 +63,7 @@ VSCode で見るなら、拡張 **srwr-view** も入れます（拡張は `srwr`
 
 ## 🧭 使い方
 
-1. **プロジェクトを準備する**（最初に 1 回）。[Claude Code](https://claude.com/claude-code) に `srwr` を登録し、既定では Edit・Write の道具を禁止して、すべての変更が `look`・`edit`・`replace`・`new` を通るようにします。
+1. **プロジェクトを準備する**（最初に 1 回）。[Claude Code](https://claude.com/claude-code) に `srwr` を登録し、既定では Edit・Write の道具を禁止して、すべての変更が `look`・`edit`・`new` を通るようにします。
 
    ```bash
    cd your-project
@@ -83,7 +83,7 @@ VSCode で見るなら、拡張 **srwr-view** も入れます（拡張は `srwr`
    既存の設定は残り、2 回目は何も変えません。詳しくは [docs/reference/cli_ja.md](docs/reference/cli_ja.md)。
    </details>
 
-2. **AI に作業させる。** `look`・`edit`・`replace`・`new` はすべて、`.srwr/tapes/` のテープに載ります。
+2. **AI に作業させる。** `look`・`edit`・`new` はすべて、`.srwr/tapes/` のテープに載ります。
 
    <details>
    <summary>テープはどんな形？</summary>

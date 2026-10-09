@@ -63,14 +63,14 @@ It shows the same information as VSCode ([vscode.md](vscode.md)), in the same or
 
 ### 2. Colors
 
-The same as [vscode.md](vscode.md). **look is blue, and what changes a file (edit, replace, new) is orange.** The reason line is a dark color with white bold text, and the range is the lighter version of the same color. The highlight groups are defined with `highlight default`, so they can be overridden in your `vimrc`.
+The same as [vscode.md](vscode.md). **look is blue, and what changes a file (edit, new) is orange.** The reason line is a dark color with white bold text, and the range is the lighter version of the same color. The highlight groups are defined with `highlight default`, so they can be overridden in your `vimrc`.
 
 | Group | Used for | dark | light |
 |---|---|---|---|
 | `SrwrWhySelect` | The reason line of a look | `#0b61a4`, white bold | the same |
-| `SrwrWhyReplace` | The reason line of an edit (and a replace, a new) | `#b45f06`, white bold | the same |
+| `SrwrWhyReplace` | The reason line of an edit (and a new) | `#b45f06`, white bold | the same |
 | `SrwrSelect` | The range of a look, the before (left) of a diff | `#1d3a5c` | `#cfe3fb` |
-| `SrwrReplace` | The range of an edit (and a replace, a new), the after (right) of a diff | `#583c27` | `#fde3c8` |
+| `SrwrReplace` | The range of an edit (and a new), the after (right) of a diff | `#583c27` | `#fde3c8` |
 | `SrwrCurrent` | The current frame in the operation list | `#3a3d41` | `#e4e6f1` |
 | `SrwrDotSelect`, `SrwrDotReplace` | The dots in the operation list (blue, orange) | `#4aa3ff`, `#f0883e` | `#0b61a4`, `#b45f06` |
 | `SrwrDotExternal` | The dots in the operation list (external change, final) | `#b180d7` | `#652d90` |
@@ -101,18 +101,13 @@ The same as [vscode.md](vscode.md). **look is blue, and what changes a file (edi
 - Moving between the blocks of changes is done with Vim's `]c` and `[c`
 - The unchanged lines are folded. The fold text is `+-- 17 lines: …` (`行` in Japanese)
 
-### 4b. Frames of replace
-
-- One frame for each file a `replace` changed, shown like an external change: two windows side by side, before on the left and after on the right, only the changed lines painted (blue and orange). **The `why` is in a band above each block of changed lines** (a block is changed lines that follow each other; one unchanged line between them makes two blocks): the same number of rows on both sides, the `why` on the right (white bold on orange, wrapped to the width of the window and centered in it), empty rows on blue on the left. Every block has the whole `why`, so it is read right above the change wherever the change is in the file. The file's own line numbers are drawn at the left of each row, and the band rows have none. The first band goes about 30% from the top of the window
-- The heading of the left status line is "Before  ⚠ replace: main.go". In the operation list a row reads `● n replace file (N hits)` with an orange dot
-
 ### 4c. Frames of new
 
 - A file made by `new` is shown like a `edit` frame, in one window: the whole file painted orange, the `why` in the orange rows above it. In the operation list a row reads `● n new     file:range` with an orange dot
 
 ### 5. The operation list
 - The frames are listed **in the order recorded, 1, 2, 3…** (the number is the same as the position in the status line). There is no indenting by parent and child
-- Each row: `● number kind file:range  why` (the range is `37`, `39-41`, or `before 12` for an empty range; the same order as the list of VSCode: dot, number, kind, file name). The color of the dot tells them apart (look = blue, edit, replace and new = orange, external and final = purple). An external change is `external`, and the final diff is `final`
+- Each row: `● number kind file:range  why` (the range is `37`, `39-41`, or `before 12` for an empty range; the same order as the list of VSCode: dot, number, kind, file name). The color of the dot tells them apart (look = blue, edit and new = orange, external and final = purple). An external change is `external`, and the final diff is `final`
 - `<CR>` moves to that frame. The row of the current frame is painted
 
 ### 6. The status line and keys
@@ -131,7 +126,7 @@ The same as [vscode.md](vscode.md). **look is blue, and what changes a file (edi
 - In the operation list a failure row has a red dot (`SrwrDotFailure`), the kind `failure`, and the error code in the place of `file:range`
 
 ### 6c. Which frames to show
-- The kinds **look, edit, external and failure** can each be turned on or off. At the start, look, edit and external are on and **failure is off**. `final` follows external, and `replace` and `new` follow edit
+- The kinds **look, edit, external and failure** can each be turned on or off. At the start, look, edit and external are on and **failure is off**. `final` follows external, and `new` follows edit
 - Keys (only inside the buffers of srwr): `tl` look, `te` edit, `tx` external, `tf` failure. `:SrwrToggle {kind}` does the same. In these buffers `t` followed by `l`, `e`, `x` or `f` is taken by srwr
 - A change opens the tape again with the chosen kinds ([protocol.md](protocol.md)) and moves to the frame nearest to the current one (by the order recorded); in live it follows the newest again
 - The numbers are 1, 2, 3… of what is shown. The right end of the status line says what is left out: `hidden: failure (2)`; in live the count follows the frames that arrive. A kind that is off is not in the list or in stepping, and "L: Back to LIVE (N new)" **counts only the kinds that are shown**. When nothing is shown, the replay buffer says "No frames to show"

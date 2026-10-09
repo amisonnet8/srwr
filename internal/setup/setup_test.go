@@ -101,7 +101,6 @@ const wantStrictSettings = `{
     "allow": [
       "mcp__srwr__look",
       "mcp__srwr__edit",
-      "mcp__srwr__replace",
       "mcp__srwr__new"
     ],
     "deny": [
@@ -193,7 +192,7 @@ func TestKeepsWhatIsThere(t *testing.T) {
 		t.Errorf("the order of the keys changed:\n%s", mcp)
 	}
 	s := read(t, root, ".claude/settings.json")
-	for _, want := range []string{`"model": "opus"`, `"Bash(rm:*)"`, `"ask"`, `"other hook"`, `"Stop": []`, `"A": "<b>&"`, `"srwr hook"`, `"NotebookEdit"`, `"mcp__srwr__replace"`} {
+	for _, want := range []string{`"model": "opus"`, `"Bash(rm:*)"`, `"ask"`, `"other hook"`, `"Stop": []`, `"A": "<b>&"`, `"srwr hook"`, `"NotebookEdit"`, `"mcp__srwr__new"`} {
 		if !strings.Contains(s, want) {
 			t.Errorf("settings.json lacks %s:\n%s", want, s)
 		}
@@ -294,8 +293,8 @@ func TestSrwrNotOnPath(t *testing.T) {
 	}
 }
 
-// A workspace set up by srwr 0.1.4 allows select and sub, which are gone. Init takes those away and allows the new names;
-// the permissions of replace and new stay (they are still tools), and what the user has added stays too.
+// A workspace set up by srwr 0.1.4 allows select and sub, and one set up by 0.1.12 allows replace; those tools are gone. Init
+// takes those away and allows the new names; the permission of new stays (it is still a tool), and what the user has added stays too.
 func TestRetiredPermissionsAreTakenAway(t *testing.T) {
 	root := ws(t, true, map[string]string{
 		".claude/settings.json": `{"permissions":{"allow":["Read","mcp__srwr__select","mcp__srwr__replace","mcp__srwr__sub","mcp__srwr__new"],"deny":["Edit","Write","MultiEdit","NotebookEdit"]},"enabledMcpjsonServers":["srwr"],"hooks":{"PostToolUse":[{"matcher":"Read|Bash|Grep|Edit","hooks":[{"type":"command","command":"srwr hook"}]}]}}`,
@@ -303,12 +302,12 @@ func TestRetiredPermissionsAreTakenAway(t *testing.T) {
 	})
 	run(t, root, false)
 	s := read(t, root, ".claude/settings.json")
-	for _, gone := range []string{"mcp__srwr__select", "mcp__srwr__sub"} {
+	for _, gone := range []string{"mcp__srwr__select", "mcp__srwr__sub", "mcp__srwr__replace"} {
 		if strings.Contains(s, gone) {
 			t.Errorf("%s is still allowed:\n%s", gone, s)
 		}
 	}
-	for _, want := range []string{`"Read"`, "mcp__srwr__look", "mcp__srwr__edit", "mcp__srwr__replace", "mcp__srwr__new"} {
+	for _, want := range []string{`"Read"`, "mcp__srwr__look", "mcp__srwr__edit", "mcp__srwr__new"} {
 		if strings.Count(s, want) != 1 {
 			t.Errorf("%s must be there once:\n%s", want, s)
 		}

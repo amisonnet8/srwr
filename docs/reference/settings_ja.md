@@ -48,8 +48,8 @@ srwr が出す文言は**英語が既定**で、日本語にも切り替えら�
 
 | グループ | 使うところ |
 |---|---|
-| `SrwrWhySelect`・`SrwrWhyReplace` | look・edit（replace・new）の理由の行 |
-| `SrwrSelect`・`SrwrReplace` | look・edit（replace・new）の範囲、差分の前（左）・後（右） |
+| `SrwrWhySelect`・`SrwrWhyReplace` | look・edit（new）の理由の行 |
+| `SrwrSelect`・`SrwrReplace` | look・edit（new）の範囲、差分の前（左）・後（右） |
 | `SrwrCurrent` | 操作一覧の今のコマ |
 | `SrwrDotSelect`・`SrwrDotReplace`・`SrwrDotExternal` | 操作一覧の丸（青・橙・紫） |
 | `SrwrDim` | 使えないボタン（戻る・進む） |
@@ -90,7 +90,7 @@ srwr が出す文言は**英語が既定**で、日本語にも切り替えら�
   "hooks": { "PostToolUse": [ { "matcher": "Read|Bash|Grep|Edit", "hooks": [ { "type": "command", "command": "srwr hook" } ] } ] },
   "enabledMcpjsonServers": ["srwr"],
   "permissions": {
-    "allow": ["mcp__srwr__look", "mcp__srwr__edit", "mcp__srwr__replace", "mcp__srwr__new"],
+    "allow": ["mcp__srwr__look", "mcp__srwr__edit", "mcp__srwr__new"],
     "deny": ["Edit", "Write", "MultiEdit", "NotebookEdit"]
   }
 }

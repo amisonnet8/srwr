@@ -1,19 +1,18 @@
-# MCP ツール（look・edit・replace・new）
+# MCP ツール（look・edit・new）
 
 *[English](mcp.md) | **日本語***
 
 **読者**：srwr を使う人。AI エージェントに何をさせ、どんなエラーが返るかを知りたい人。
 
-AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つのツール**だけでファイルを編集する。
+AI エージェントは、MCP サーバー `srwr mcp` が提供する **3つのツール**だけでファイルを編集する。
 
 | ツール | やること |
 |---|---|
 | `look` | 範囲を見る。範囲トークンが返る |
 | `edit` | 範囲トークンの範囲を、新しいテキストに置き換える |
-| `replace` | 複数のファイルで、文字列を別の文字列に一度に置き換える。場所の数が見込みどおりのときだけ |
 | `new` | まだないファイルを、内容つきで作る |
 
-`look` を経ない `edit` はない。そのため、テープには「見る → 変える」が必ず揃って残る。`replace` は、同じ変更を何か所もするときのもので、場所の数を渡させる。何を変えたかの確かめは、その数で行う。検索や読み取りは、AI がもともと持っている Read・grep に任せる（hook が記録する。[cli.md](cli_ja.md) の `srwr hook`）。
+`look` を経ない `edit` はない。そのため、テープには「見る → 変える」が必ず揃って残る。同じ変更を何か所もするときは `edits`（1つの `why`、全部成功か何も変えない）を使う。検索や読み取りは、AI がもともと持っている Read・grep に任せる（hook が記録する。[cli.md](cli_ja.md) の `srwr hook`）。
 
 3つとも `why`（理由）が必須。人が [テープ](tape_ja.md) を再生するときの中心になる。
 
@@ -133,12 +132,12 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 `expect` は必須。範囲を行番号だけで決めないための確かめだから（`expect` が要らないのは、下の挿入だけ）。srwr は次の順で範囲を決める。
 
 1. 渡された行番号の範囲が、`expect` の行を持っていれば、それ
-2. その行番号を、**ファイルの最後の look**（`look` か、hook の読み取り）のあとにそのファイルへ行われた `edit`・`replace`・`new` で、今の行へずらした範囲が、`expect` の行を持っていれば、それ
+2. その行番号を、**ファイルの最後の look**（`look` か、hook の読み取り）のあとにそのファイルへ行われた `edit`・`new` で、今の行へずらした範囲が、`expect` の行を持っていれば、それ
 3. どちらでもなければ、ファイルの中で `expect` の行がある、ただ1か所
 
 0か所なら `content_not_found`（行番号があれば、`actual` にその行を付ける）。2か所以上、または 1 と 2 が別の場所を指すときは `content_ambiguous`（場所を知らせる。行番号か、`expect` の行を増やす）。だから、同じファイルへの edit を、順不同で、並列でもまとめて送れる。先の編集で行がずれても、それぞれが見つかる。
 
-**挿入**（`endLine = startLine - 1`、`expect` なし）は、確かめる行がない。ファイルが最後の look のあと変わっていない（`edit`・`replace`・`new`・`external` が後にない）ときだけ受け付け、行番号をそのまま使う。そうでなければ `content_not_found`。`look` し直すか、置きたい場所の隣の行を `expect` と `insert` で指す。
+**挿入**（`endLine = startLine - 1`、`expect` なし）は、確かめる行がない。ファイルが最後の look のあと変わっていない（`edit`・`new`・`external` が後にない）ときだけ受け付け、行番号をそのまま使う。そうでなければ `content_not_found`。`look` し直すか、置きたい場所の隣の行を `expect` と `insert` で指す。
 
 **`insert`**（`"after"` か `"before"`）は、最後の look のあとファイルが変わっていても、行の隣に挿入できる。いつもと同じに行を指す（トークン、または `file` と `expect`。`expect` は確かめる）と、その行は残り、`newText` がその直後（直前）に入る。返事（`selection`・`startLine`・`endLine`・`lines`・`above`・`below`）は足した行のことで、テープには、ほかの挿入と同じく空範囲の `edit` が入る。`insert` が `invalid_input` になるのは、範囲が空のとき（指す行がない）と、`"after"`・`"before"` 以外のとき。`insert` つきで `newText` が空なら、**空行を1つ**足す（`insert` がなければ削除）。
 
@@ -164,7 +163,7 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 
 ### 1回で複数の編集をする（`edits`）
 
-`edits` は、1つの `why` を共有する編集を1〜50件持つ。`selection`・`file`・`startLine`・`endLine`・`expect`・`newText`・`insert`・`old`・`new` は、`edits` の外には**渡さず**、項目ごとに持つ：`selection`、または `file` と `expect`（分かれば `startLine`・`endLine`）、または `file`・`old`・`new`、`newText`、必要なら `insert`。項目は `file` と `content` でもよく、その新しいファイルを作る（`new` と同じ）。新しいファイルと、それを使うコードを1回で書けるので、途中で失敗しない。場所ごとに文字列が違って `replace` ではできない、同じ種類の変更をたくさんするためのもの。
+`edits` は、1つの `why` を共有する編集を1〜50件持つ。`selection`・`file`・`startLine`・`endLine`・`expect`・`newText`・`insert`・`old`・`new` は、`edits` の外には**渡さず**、項目ごとに持つ：`selection`、または `file` と `expect`（分かれば `startLine`・`endLine`）、または `file`・`old`・`new`、`newText`、必要なら `insert`。
 
 ```jsonc
 // 入力
@@ -179,41 +178,10 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 - **項目に `why` はない。** 項目が `why` を渡しても呼び出しは通り、結果の `note` が、どの項目の `why` を使わなかったかを言う（呼び出しの `why` が全部の編集に付く）
 - **全部行うか、何も行わないか。** 先に範囲を全部決め、次にファイルを全部書き、最後にテープに書く。1つでも失敗したら何も変えず、エラーはその項目のもので、`message` の頭に `edits[2]: `（3番目の項目）が付き、末尾は「何も変えていない。その項目を直して、全部の項目を送り直す」（英語）。呼び出し全体の誤り（項目がない・50件を超える・`why` が空白・範囲が重なる）は `invalid_input`
 - **範囲は全部、呼ぶ前のファイルで決める。** だから項目同士は関係せず、順番は自由で、項目の `startLine`・`endLine` は、ほかの項目が変えたあとでなく、AI が見た行番号でよい
-- **`content` の項目**は `file` と `content` だけを持つ（ほかと一緒は `invalid_input`）。ファイルは存在してはならず（`file_exists`）、記録しないファイルでもなく、1回の呼び出しで2度は作れない。ほかのファイルを変えるより前に、作るファイルを全部作る。そのあと変更が書けなければ、作ったファイルは消す。同じ呼び出しで作るファイルを、ほかの項目で直すことはできない（全部の中身を `content` に書く）。項目の結果は `new` の出力と同じ形で、`lines`（中身）が付く。テープには `edit` より前に `new` が書かれる
+- **`content` は `edit` の入力ではない。** `content` のある項目は断られる（`invalid_input`。新しいファイルは `new` で作る）
 - **範囲は重なってはいけない。** 行を共有する2つの範囲、別の範囲（`a..b`）の中への挿入（`a+1` 行目から `b` 行目の前）、同じ場所への2つの挿入は `invalid_input`（`edits[0] and edits[1] overlap in a.go`）。別の範囲のすぐ前・すぐ後ろへの挿入はよい
 - 出力の `edits` は、項目ごとに1つで、**渡した順**。1つ1つは単独の `edit` の出力と同じ形だが、`lines` などは**呼び出し全体のあと**のファイルの行で、`selection` はそのまま使える
 - テープには、項目ごとに `edit` が1つ、同じ `why` で入る。行番号は、上の項目が変えたあとのもの（別々に呼んだときと同じ中身のイベントを、ファイルの上から順に書く。[tape.md](tape.md#edit)）。失敗した呼び出しは、失敗した項目についての `failure` が1つ。ビューアーでは、単独の呼び出しと同じに見える
-
-## replace
-
-**2か所以上**で、1つのファイルでも複数のファイルでも、文字列を別の文字列に一度に置き換える（簡単な sed のようなもの）。理由も記録する。1か所なら `edit` を使う（`replace` は断られる。`use_edit`、下）。文字列は、そのままの文字として探す（正規表現ではない）。各ファイルを左から探し、場所は重ならない。**全部のファイルでの場所の数 `count` は必須で、2以上。見つかった数が違えば、何も変えない。**
-
-```jsonc
-// 入力
-{ "files": ["a.go", "b.go"], "old": "oldName(", "new": "newName(", "count": 3, "why": "新しい命名規則に合わせて、ヘルパーの名前を変える" }
-// 出力
-{ "ok": true, "count": 3, "files": [
-  { "file": "a.go", "count": 2, "hits": [
-      { "startLine": 12, "endLine": 12, "lines": ["…"], "above": ["…"], "below": ["…"] },
-      { "startLine": 30, "endLine": 31, "lines": ["…", "…"], "above": [], "below": ["…"] } ] },
-  { "file": "b.go", "count": 1, "hits": [ { "startLine": 7, "endLine": 7, "lines": ["…"], "above": ["…"], "below": ["…"] } ] } ] }
-```
-
-| 項目 | 意味 |
-|---|---|
-| `files` | 作業場からの相対パス。既存のファイルだけ。同じパスは1回だけ |
-| `old` | 探す文字列。空は不可。複数行（LF）でもよい |
-| `new` | 置き換える文字列。`""` は削除 |
-| `count` | 全部のファイルを合わせた、場所の数の見込み。2以上。文字列が1か所だけにあるとき、`1` は `use_edit` で返される |
-| `why` | なぜこう変えるか |
-| 出力の `files` | 変わったファイルだけ。`count` はそのファイルの場所の数。`hits` は場所ごとに1件で、ファイルの今の状態の：`startLine`・`endLine`、`lines`（その行の内容）、`above`・`below`（直前・直後の1行。なければ `[]`）。同じ行にある場所は1件。1ファイルにつき20件まで載せ、`more` が載せなかった件数。**範囲トークンは返さない**：続けて直すときは `look` を使う |
-
-- **1か所は `edit` で行う。** `count` が 1 で、文字列がちょうど1か所にあるとき、エラーは `use_edit` で、何も変えない。メッセージは場所（`a.go line 12`）だけを言い、ファイルの中身は入れない。`actual` に、`hits`（`file`・`startLine`・`endLine`・`lines`：その場所の今の位置）と、`edit`（`file`・`old`・`new`：同じ変更をする `edit` の呼び出し。足すのは `why` だけ）が付く
-- 見つかった数が `count` と違えば（`count` が 1 で、0か所や2か所以上のときも）`count_mismatch`。メッセージと `actual` が、ファイルごとの場所の数を言う（`{"a.go": 3, "b.go": 1}`）。**どのファイルも変えず、テープには `failure` しか書かない**
-- どのファイルも、`look` と同じ検査をする（記録しない・CRLF・バイナリ・作業場の外）。1つでも使えなければ、何も変えない
-- 行で表せない変更（ファイルの最後の改行を足す・消す）は `invalid_input`。`look` と `edit` で行う
-- テープには、変わったファイルごとに `replace` を1つ、同じ `why` で書く（[tape.md](tape_ja.md#replace)。トークンを返さないので `selection` は `null`）。ビューワーは、それぞれをファイルの差分として、上に `why` を付けて見せる
-- 正規表現は使えない。場所を1つずつ選びたいときは `look` と `edit` を使う
 
 ## new
 
@@ -242,7 +210,7 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 
 ## why
 
-- `look`・`edit`・`replace`・`new` の**4つとも必須**。空白だけも不可（`invalid_input`）
+- `look`・`edit`・`new` の**3つとも必須**。空白だけも不可（`invalid_input`）
 - `look` は「なぜここを見るか」、`edit` は「なぜこう変えるか」。「何をしているか」の言い換えではなく、理由を1文で書く
 - **ユーザーとの会話と同じ言語**で書く（ツールの説明文と入力スキーマで求めている）。人が読むためのもの
 
@@ -265,10 +233,8 @@ MCP の応答では `isError: true` になり、本文は次の JSON。
 | `content_not_found` | `expect` がファイルにない | 内容を確認する。または行番号を付ける。`nearMatches` があれば、そこから `expect` を写す |
 | `content_ambiguous` | `expect`（行番号なし）がファイルの2か所以上にある | 行番号を付ける。または `expect` の行を増やす |
 | `file_exists` | `new` で、既にあるファイルを作ろうとした | 変えるなら `look` と `edit` を使う |
-| `count_mismatch` | `replace` で見つかった場所の数が `count` と違う | ファイルごとの数を読み、正しい `count` で `replace` し直す（または `look` を使う）。`nearMatches` があれば、そこから `old` を写す |
-| `use_edit` | 文字列が1か所だけにあるのに、`replace` を `count` が 1 で使った | `actual.edit` のとおりに `edit` を呼ぶ（`why` を足す） |
-| `ignored_file` | 記録しないファイルに `look`・`edit`・`replace`・`new` した。 | srwr では扱えない。ユーザーに頼む |
-| `invalid_input` | 必須の入力がない、型が違う（`message` が項目と、期待する形を言う：`edits must be an array of objects, got string. Pass it as JSON, not as a string that holds JSON`）、`why` が空。`file` が空か NUL を含む、`startLine` と `endLine` の片方だけがある、または両方なく `expect` もない、`selection` が空白だけ、`newText` に CR がある。`look` では、`search` が空・改行を含む・`startLine`・`endLine`・`expect` と一緒、`search` なしの `include`・`exclude`・`offset`、負の `offset`、`looks` が0件か10件を超える・合計2000行を超える・`file`・`startLine`・`endLine`・`expect`・`search` と一緒。`edit` の `edits` では、項目が0件か50件を超える、範囲が重なる、項目や呼び出しに上の誤りがある。`replace` では、`files`・`old`・`count` がない・空、同じパスが2回、`old` か `new` に CR がある。`new` では、`content` がない・CR がある、ファイルの上のディレクトリがファイルになっている | 入力を直す |
+| `ignored_file` | 記録しないファイルに `look`・`edit`・`new` した。 | srwr では扱えない。ユーザーに頼む |
+| `invalid_input` | 必須の入力がない、型が違う（`message` が項目と、期待する形を言う：`edits must be an array of objects, got string. Pass it as JSON, not as a string that holds JSON`）、`why` が空。`file` が空か NUL を含む、`startLine` と `endLine` の片方だけがある、または両方なく `expect` もない、`selection` が空白だけ、`newText` に CR がある。`look` では、`search` が空・改行を含む・`startLine`・`endLine`・`expect` と一緒、`search` なしの `include`・`exclude`・`offset`、負の `offset`、`looks` が0件か10件を超える・合計2000行を超える・`file`・`startLine`・`endLine`・`expect`・`search` と一緒。`edit` の `edits` では、項目が0件か50件を超える、範囲が重なる、項目や呼び出しに上の誤りがある、項目に `content` がある。`new` では、`content` がない・CR がある、ファイルの上のディレクトリがファイルになっている | 入力を直す |
 | `unsupported_file` | CRLF やバイナリ | — |
 | `internal_error` | I/O エラーなど | — |
 
@@ -279,14 +245,12 @@ MCP の応答では `isError: true` になり、本文は次の JSON。
 | `selection_mismatch` | 補正後の範囲の現在の内容（行の配列） |
 | `content_mismatch` | 範囲の現在の内容（行の配列） |
 | `selection_stale` | 重なった編集の直前まで補正した範囲の、現在の内容（ファイルの範囲内に収める） |
-| `count_mismatch` | ファイルごとの場所の数（`{"a.go": 3, "b.go": 1}`） |
-| `use_edit` | `{"hits": [{file, startLine, endLine, lines}], "edit": {file, old, new}}`。行で表せない変更と、`old` が重なる場所にあるときは `edit` を付けない |
 | `invalid_range` | `{"lineCount": 行数}`。作業場の外のパスのときはなし |
 | ほか | なし |
 
 ### `nearMatches`
 
-文字列が見つからないとき、いちばんありそうな原因は、空白（スペース・タブ）の取り違えである。そこで、`expect`（`look`・`edit`）や `old`（`replace`。見つかった数が `count` より少ないときだけ）が、空白を除けば見つかるとき、エラーに `nearMatches` が付く（`actual` の中でなく隣。`actual` の形は変えない）：`[{"file", "startLine", "endLine", "lines"}]`。`lines` はファイルの今の行のままで、`file` は `replace` のときだけ。比べるときは、各行の空白（スペース・タブ）の連続を1つのスペースにし、行末の空白を削る。文字列がそのまま見つかる場所は入れない。5件まで。なければ `nearMatches` 自体を出さない。空白だけ違う場所がなくても、`expect` が行の一部として見つかる（行 `x := foo(1)` に対する `foo(`）ときは、その行を入れ、`message` は「`expect` は行全体で書く」と言う（`Line 12 holds expect only as part of the line: expect must be whole lines. Copy them from nearMatches`）。これは `look`・`edit` だけ。`message` は場所だけを言い（`Line 12 differs from expect only in spaces or tabs: see nearMatches`）、ファイルの中身は入れない。**`nearMatches` はテープに書かない**（行はファイルの中身のため）。
+文字列が見つからないとき、いちばんありそうな原因は、空白（スペース・タブ）の取り違えである。そこで、`expect`（`look`・`edit`）が、空白を除けば見つかるとき、エラーに `nearMatches` が付く（`actual` の中でなく隣。`actual` の形は変えない）：`[{"file", "startLine", "endLine", "lines"}]`。`lines` はファイルの今の行のままで、`file` はそのファイル。比べるときは、各行の空白（スペース・タブ）の連続を1つのスペースにし、行末の空白を削る。文字列がそのまま見つかる場所は入れない。5件まで。なければ `nearMatches` 自体を出さない。空白だけ違う場所がなくても、`expect` が行の一部として見つかる（行 `x := foo(1)` に対する `foo(`）ときは、その行を入れ、`message` は「`expect` は行全体で書く」と言う（`Line 12 holds expect only as part of the line: expect must be whole lines. Copy them from nearMatches`）。これは `look`・`edit` だけ。`message` は場所だけを言い（`Line 12 differs from expect only in spaces or tabs: see nearMatches`）、ファイルの中身は入れない。**`nearMatches` はテープに書かない**（行はファイルの中身のため）。
 
 ### `retry`
 
@@ -318,7 +282,7 @@ AI がこれらのツールを使って実際に犯したミス。どれも、�
 - **新しい `look` の行番号は、今のファイルの行番号で渡す。** ほかの編集で行がずれたとき、すでに発行したトークンは srwr が補正するが、新しい `look` の `startLine`・`endLine` は補正しない。ほかの編集のあとは、ファイルを読み直すか、返ってきた `lines`（`edit` のあとは `above`・`below` も）で確かめる。もっと良いのは、`expect` に狙った行を渡すこと。番号が違えば、違う場所を選ばずに断られる。
 - **新しいファイルは `new` で作る。** 存在しないファイルへの `look` は `file_not_found` になる。シェルのコマンドで作ったファイルも記録されるが、`created: true` の [`external`](tape_ja.md#external) で、`why` はない。
 - **同じ場所を続けて直すときは、`edit` が返した新しいトークンを使う。** 使ったトークンは使い切りで、もう一度使うと `selection_stale` になる。
-- **同じ変更を何か所もするときは、`look` と `edit` を何度も使わず、`count` つきの `replace` を使う。** `count` が違えば、ファイルごとの数を言って断られる。
+- **同じ変更を何か所もするときは、`look` と `edit` を何度も使わず、`edits`（場所ごとに `old` と `new`）を使う。**
 - **エラーを読む。** `invalid_range` は `lineCount`（ファイルの行数）を返すので、番号を直すにはそれで足りる。
 
 ## 関連

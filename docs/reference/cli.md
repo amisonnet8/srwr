@@ -8,7 +8,7 @@
 
 | Command | Used by | Role |
 |---|---|---|
-| `srwr mcp` | The AI (an MCP client) | The MCP server (stdio). Provides [`look` / `edit` / `replace` / `new`](mcp.md) |
+| `srwr mcp` | The AI (an MCP client) | The MCP server (stdio). Provides [`look` / `edit` / `new`](mcp.md) |
 | `srwr hook` | The hook of Claude Code | Records Read, Bash, Grep and Edit on the same [tape](tape.md) as `srwr mcp` |
 | `srwr view-server` | The editors (the VSCode extension, the Vim script) | The view server. People do not use it directly ([protocol.md](protocol.md)) |
 | `srwr view [tape]` | People | Replays in Vim ([vim.md](vim.md)) |
@@ -54,7 +54,7 @@ The directory where srwr is used is called the **workspace**. srwr makes the fol
 
 ## srwr mcp
 
-The MCP server the AI uses. It is started by the AI agent (the MCP client). The workspace is `--root <workspace>` (the current directory if omitted). There are four tools, `look`, `edit`, `replace` and `new` ([mcp.md](mcp.md)). Several may be started in the same workspace. They write to the same session (the same tape), and a selection token issued by one can be used by another ([tape.md](tape.md)).
+The MCP server the AI uses. It is started by the AI agent (the MCP client). The workspace is `--root <workspace>` (the current directory if omitted). There are three tools, `look`, `edit` and `new` ([mcp.md](mcp.md)). Several may be started in the same workspace. They write to the same session (the same tape), and a selection token issued by one can be used by another ([tape.md](tape.md)).
 
 ## srwr hook
 
@@ -122,10 +122,10 @@ Sets up the workspace for srwr. It gives the same result however many times it r
 |---|---|
 | `.srwr/` | Makes the directory and the key |
 | `.mcp.json` | Registers `srwr mcp` (existing servers are kept and this is added; if `srwr` is already there, it is left alone) |
-| `.claude/settings.json` | Registers the hook, the setting that lets Claude Code use the tools without asking (`enabledMcpjsonServers`, and the permission of `look`, `edit`, `replace` and `new`), and in strict mode the ban on Edit/Write (existing content is kept and this is added) |
+| `.claude/settings.json` | Registers the hook, the setting that lets Claude Code use the tools without asking (`enabledMcpjsonServers`, and the permission of `look`, `edit` and `new`), and in strict mode the ban on Edit/Write (existing content is kept and this is added) |
 | `.gitignore` | Adds `.srwr/key`, `.srwr/lock`, `.srwr/active` and `.srwr/init-backup/` (when under git). Tapes (`.srwr/tapes/`) are not ignored, so that they can be shared |
 
-- **After srwr is updated to a version with new tools, run `srwr init` again** in each workspace: it adds the permission of the new names to `permissions.allow`, and takes away the permissions of the tools that are gone (`select` and `sub`, which became `look` and `replace`). Without it, Claude Code asks every time, or does not use them
+- **After srwr is updated to a version with new tools, run `srwr init` again** in each workspace: it adds the permission of the new names to `permissions.allow`, and takes away the permissions of the tools that are gone (`select` and `sub`, which became `look` and `edit`; and `replace`, which is gone). Without it, Claude Code asks every time, or does not use them
 - It does not break existing files. The order of keys and the other settings, servers and hooks are kept as they are. The format is tidied to JSON with a 2-space indent
 - What a file held before the rewrite is kept in `.srwr/init-backup/<date and time>/` (only when there is a file to change)
 - If a file cannot be read as JSON (or the shape of an object or array is wrong), nothing is rewritten and it stops with exit code 1
@@ -142,7 +142,7 @@ Workspace: /home/me/project
   created    .claude/settings.json registered the hook; forbade Edit, Write, etc. (strict mode)
   created    .gitignore            .srwr/key .srwr/lock .srwr/active .srwr/init-backup/
 
-Ready. Reopen Claude Code and look / edit / replace / new are available.
+Ready. Reopen Claude Code and look / edit / new are available.
 For lenient mode (Edit and Write stay allowed), run: srwr init --lenient.
 ```
 

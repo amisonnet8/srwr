@@ -63,7 +63,7 @@ To view in VSCode, install the extension **srwr-view** as well (it does not cont
 
 ## 🧭 How to use it
 
-1. **Set up your project** (once). This registers `srwr` for [Claude Code](https://claude.com/claude-code) and, by default, forbids its Edit and Write tools so that every change goes through `look`, `edit`, `replace` and `new`:
+1. **Set up your project** (once). This registers `srwr` for [Claude Code](https://claude.com/claude-code) and, by default, forbids its Edit and Write tools so that every change goes through `look`, `edit` and `new`:
 
    ```bash
    cd your-project
@@ -83,7 +83,7 @@ To view in VSCode, install the extension **srwr-view** as well (it does not cont
    Existing settings are kept, and running it again changes nothing. Details: [docs/reference/cli.md](docs/reference/cli.md).
    </details>
 
-2. **Let the AI work.** Every `look`, `edit`, `replace` and `new` goes on a tape in `.srwr/tapes/`:
+2. **Let the AI work.** Every `look`, `edit` and `new` goes on a tape in `.srwr/tapes/`:
 
    <details>
    <summary>What does a tape look like?</summary>

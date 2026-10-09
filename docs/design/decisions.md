@@ -24,7 +24,7 @@ A `look` that only returns content looks to the AI like a call with "cost and no
 
 The same experiment showed that a token makes edits slow to send: each needs a `look` before it, calls cannot go in parallel, and several places in one file had to be changed from the bottom up. So `edit` also takes `file` and `expect` (the lines the range holds). `expect` is required (an insertion excepted) because a call must never write to a place only because a line number says so; it is the same check as `look`'s `expect`. The range is found in the order of the line numbers as given, the line numbers moved by the changes after the file's last look, and the one place where `expect` is: the first two follow what the AI saw, and the last is a net for when that does not hold. When the first two point at different places the call is `content_ambiguous`, not a guess. An insertion has nothing to check, so it is accepted only when the file has not changed since a look. The flow "look, then edit with the token" stays the first way to edit, in the descriptions and the examples.
 
-### `replace` is for 2 or more places; one place is for `edit`
+### `replace` is for 2 or more places; one place is for `edit` (gone in v0.1.13)
 
 In one experiment 69 of 74 calls of the old `sub` changed one place only: it was the shortest way, and it left no range on the tape, so "look, then change" was not recorded. Now `replace` with a `count` of 1 for a text that is in one place is refused (`use_edit`), and the answer holds where the place is and the `edit` call that makes the same change, so going to `edit` costs one call and no thinking. The check is `count`, not a rule about the tool, so a `count` of 1 for a text in several places is still the usual `count_mismatch`. The result is one entry for each place (the lines as they are, one line around), not the whole stretch from the first place to the last, and has no token: the AI went on to a place with `look` anyway, and a long result costs it every time.
 
@@ -50,6 +50,10 @@ The AI wanted to add a line after a line. An empty range could do it, but only w
 
 ### `old` and `new` change a part of a line, apart from `expect`
 
+### What v0.1.13 took out, and why
+
+Three rounds of requests (12 AIs) were given on purpose to tempt the two least used features, and every complaint stayed at 30 or below. `replace` was used 0 times in 12: where the same text is in many places, the AI chose `edits` with an `old` and a `new` for each place, because the places had different surroundings and `edits` is all-or-none as well. An `edits` item with `content` (a new file and the code that uses it in one call) was not used either, even by the request made for it (a new file and its test): two `new` calls were simpler, and the build did not fail between them. Both could be done by something else that was used, so both are gone, instead of being kept and described. This made the tape and the screens smaller too: the `replace` event is read as an `edit`, the frame that showed a diff with a band for the reason is gone from VSCode and Vim, and `hits` and `hunks` are no longer sent (`protocolVersion` 3). The old tapes are read as before; only their `replace` frames look like edits. An `edits` item with `content` is refused with the way to do it (`new`). The 2 rounds that follow count for the end of this phase.
+
 ### What v0.1.12 changed after the first round with many kinds of requests
 
 Four different requests were given to four fresh AIs; all complaints stayed at 30 or below. Two of the four wrote `include` as one string or as broken JSON, and the refusal cost a whole call each time. A refusal teaches nothing when the meaning is clear, so `include` and `exclude` now take one string as a list of one (the schema still says list). The other thing was a `selection` of a search, which stands for the one line that matched, being used as if it were the lines around it; the description of `search` now says so. A count of places for `replace` that may be left out was not added: `byFile` of a search already counts them, and a second way to call `replace` is a bigger cost than one counting call.
@@ -72,7 +76,7 @@ In an experiment, the AI copied whole long lines (table rows) into `expect` to c
 
 When a range is given by line numbers, it drifts as edits pile up. This is why the Edit of Claude Code takes the `old_string` form. In srwr the token carries the `seq` at the time it was issued, and srwr corrects the numbers automatically from the later edit history. Then it checks the hash of the content, and edits nothing if it does not match ([token.md](token.md)).
 
-### Four tools only (look, edit, replace, new)
+### Three tools only (look, edit, new; replace and sub were taken out)
 
 There are no commands for moving a cursor, fetching or searching. Searching and reading are left to the Read and grep the AI already has. srwr's responsibility is only "to record the moment a file really changes, and the range being looked at just before". This keeps visualization simple, and also helps the AI use the tool well, because an LLM tends to choose wrongly when there are many similar tools.
 

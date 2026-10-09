@@ -27,7 +27,7 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 
 ### 1. Colors
 
-**look is blue, and what changes a file (edit, replace, new, external change) is orange.** The reason line is a dark color with white bold text, and the range is the lighter version of the same color.
+**look is blue, and what changes a file (edit, new, external change) is orange.** The reason line is a dark color with white bold text, and the range is the lighter version of the same color.
 
 | Part | look (blue) | edit and the others that change a file (orange) |
 |---|---|---|
@@ -35,7 +35,7 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 | Range | Dark theme `#1d3a5c` / light theme `#cfe3fb` | Dark theme `#583c27` / light theme `#fde3c8` |
 
 - The color of the reason line is the same in both themes (to keep the white bold text readable). Only the range changes with the theme
-- A **failure** (a `look`, `edit`, `replace` or `new` that gave the AI an error) is **red**: the reason line `#d50000` (white bold, the same in both themes), and the dot in the operation list `srwr.failureForeground` (a color of the extension: dark `#ff3b30`, light `#d50000`). Red and orange are told apart by the mark `✖` and the word `failure` as well
+- A **failure** (a `look`, `edit` or `new` that gave the AI an error) is **red**: the reason line `#d50000` (white bold, the same in both themes), and the dot in the operation list `srwr.failureForeground` (a color of the extension: dark `#ff3b30`, light `#d50000`). Red and orange are told apart by the mark `✖` and the word `failure` as well
 - For an external change (a change made outside srwr), only the dot in the operation list is **purple** (`charts.purple`). The color of the range follows how diffs are shown (3 below)
 
 ### 2. Frames of look and edit
@@ -44,7 +44,7 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 - **A reason (`why`) line is actually inserted just before the range.** White bold text on a blue or orange background. A long reason is wrapped into several lines at the width (a display width of 100) and shown in full. From the second line it is indented. A frame whose `why` is `null` shows no reason line (only the color of the range)
 - The lines of the range are painted in the lighter color (an empty range is not painted)
 - It is replaced each time the frame changes, and the reason line is always only that of the current frame
-- A replace shows **the content after the rewrite, in orange from the start** (there is no red → green motion)
+- An edit shows **the content after the rewrite, in orange from the start** (there is no red → green motion)
 - **Line numbers**: inserting the reason line makes the standard line numbers wrong. So in a frame that has a reason line the standard numbers are turned off, and **the real file's own numbers** are shown at the left edge of the text (blank for the reason line). Frames without a reason line and diff frames use the standard line numbers
 
 ### 3. Diff frames (external change, final diff)
@@ -59,14 +59,6 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 - When it goes back to an ordinary frame, the editor on the right is closed. **Tabs do not pile up when you move back and forth**
 - One frame per change. If there is no change, none is shown
 
-### 3a. Frames of replace
-
-- `replace` changes a text in several files at once. It is **one frame for each file that changed** (a `replace` on the tape), shown like an `external` frame: **two editors, left and right**, before on the left, after on the right, only the changed lines painted (blue on the left, orange on the right). However many places a file has, it is one frame
-- **The `why` is in a band above each block of changed lines** (a block is changed lines that follow each other; one unchanged line between them makes two blocks), the same number of rows on both sides so that the lines line up. VSCode has no band between the tab and the editors, so each document has the rows in it: on the right the `why` (white bold on orange, wrapped like any `why`), on the left empty rows on blue. Every block has the whole `why`, so it is read right above the change wherever the change is in the file. The file's own line numbers are drawn, and the band rows have none. The first band goes about 30% from the top of each editor
-- The text of the band is aligned left (the extension cannot know the width of an editor, so it cannot center it; Vim centers it in the window)
-- The left tab is "Before ⚠ replace: main.go", the right tab "After main.go"
-- In the operation list a row reads `number  replace  file (N hits)` (`N か所` in the Japanese UI), with an orange dot and the `why` as the description. A frame of `replace` is turned on and off with `edit` (see 8 below)
-
 ### 3a2. Frames of new
 
 - `new` creates a file (a `new` on the tape, [mcp.md](mcp.md#new)). It is shown like an `edit` frame, **in one editor**: the whole file painted orange, the `why` in the orange line above it. There is no left and right: the left side would be empty
@@ -80,7 +72,7 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 ### 4. The operation list (the left panel)
 
 - "srwr" at the left edge → "Operations". The frames are listed **in the order recorded, 1, 2, 3… from the top**. The number is the same as the position in the bottom bar (5/7). There is no indenting by parent and child
-- Each row: `number  kind  file:range` (a `replace` frame has `file (N hits)` in place of `file:range`) (`37`, `39-41`; an empty range reads `before 12`), with the `why` as the description. The color of the dot at the front tells them apart: look = blue, edit, replace and new = orange, external and final = purple. The kinds are written `look`, `edit`, `replace`, `new`, `external`, `final` and `failure` (in the Japanese UI: `look`, `edit`, `replace`, `new`, `外部変更`, `録画後` and `失敗`). A failure row is a **red** dot, and its place is the error code (`invalid_range`) instead of `file:range`
+- Each row: `number  kind  file:range` (`37`, `39-41`; an empty range reads `before 12`), with the `why` as the description. The color of the dot at the front tells them apart: look = blue, edit and new = orange, external and final = purple. The kinds are written `look`, `edit`, `new`, `external`, `final` and `failure` (in the Japanese UI: `look`, `edit`, `new`, `外部変更`, `録画後` and `失敗`). A failure row is a **red** dot, and its place is the error code (`invalid_range`) instead of `file:range`
 - Clicking moves to that frame. The row of the current frame is selected
 - The ☓ at the top right closes the tape (or the live view)
 
@@ -100,7 +92,7 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 
 ### 8. Which frames to show
 
-- The kinds **look, edit, external and failure** can each be turned on or off. At the start, look, edit and external are on and **failure is off**. `final` (the diff after the recording) follows external, and `replace` and `new` follow edit
+- The kinds **look, edit, external and failure** can each be turned on or off. At the start, look, edit and external are on and **failure is off**. `final` (the diff after the recording) follows external, and `new` follows edit
 - The **funnel button** at the top right of the operation list (and the command `srwr: Choose Frames to Show`) opens a multi-select list with the four kinds. Applying it opens the tape again with the chosen kinds ([protocol.md](protocol.md)) and moves to the frame nearest to the current one (by the order recorded). In live, it opens again and follows the newest
 - The numbers are 1, 2, 3… of what is shown, so the number on the list is still the position in the bottom bar
 - Under the heading of the list it says what is left out: `Hiding: failure (2)`. In live the count follows the frames that arrive

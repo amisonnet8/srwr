@@ -25,10 +25,6 @@
 - **コマの移動は1つずつ順に処理し、古い移動は飛ばす**（`ReplaySession.goto`）。移動のたびに世代番号を増やすだけだと、古い移動が、新しい移動の後始末のあとで右のエディタを開いてしまう。右のタブを閉じるかは、フラグでなく、毎回タブを調べて決める（R4 で見つけた。`view.test.ts` の「quick successive steps」）
 - 画面の更新を待つテストは、`sleep` でなく、`activate` が返す `settled()`（ライブの描画が追いついたら解決する）か、`until(条件)` で待つ
 
-## 差分のコマの帯（replace）
-
-- `replace` のコマの `why` の帯は、サーバーが渡す `hunks` の各まとまりの直前に入れる（`lines.ts` の `insertBands`・`bandRows`・`belowBands`）。左は空の行、右は `why`。帯の行には実ファイルの行番号を付けず（`showLineNumbers`）、変更行の番号は上の帯の行数だけずらす。`hunks` を送らないサーバーは、先頭に1つのまとまりとして扱う（`hunksOf`）
-
 ## 表示する種類（R15）
 
 - look・edit・external・failure を ON/OFF できる（`docs/reference/vscode.md` 8）。**絞るのは表示サーバー**（`tape/open`・`live/start` の `kinds`）。拡張は、渡されたコマを描くだけ。切り替えは、選んだ種類でテープを開き直し、`seq` が一番近いコマへ移る（`nearestBySeq`）。ライブは開き直して最新を追う

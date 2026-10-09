@@ -35,7 +35,7 @@
 - 追記のみ。既存の行を書き換えたり消したりしない
 - `seq` はテープ内で1から始まる連番で、欠番がない（`header` は持たない）
 - `ts` は RFC 3339 の **UTC** で、ミリ秒まで、末尾は `Z`（`2026-09-29T02:20:04.123Z`）。古い版が書いたテープには `+09:00` のようなオフセット（そのときの機械の時間帯）が付いている。同じ瞬間として読み、古い行を書き換えることはしない
-- 値のないフィールド（`why`・`selection`・`from` など）は、省略せず `null`。例外は、任意の `source`・`tool`（空なら書かない）、`hits`（`replace` のときだけ書く）と `deleted`（真のときだけ書く）
+- 値のないフィールド（`why`・`selection`・`from` など）は、省略せず `null`。例外は、任意の `source`・`tool`（空なら書かない）と `deleted`（真のときだけ書く）
 - 1イベント1行。改行で終わっていない最後の行は、書き込み途中として扱う
 - 読む側は、知らないフィールドを無視する
 - **v1 までは、テープの形式を互換なしで変えることがある。** ある版が書いたテープを別の版が読めることは、約束しない。v1 からは、フィールドは足せるが、既存の意味は変えない
@@ -65,7 +65,7 @@
 
 ### snapshot
 
-ファイルの**全文**。そのセッションでそのファイルに初めて触れたときと、`external` で消えたファイルが戻ったときに記録する。それ以後は、変わった行だけを持つ `edit`・`replace`・`new` と `external` で追う。再生は、最後の `snapshot` から、それらを順に適用して作る。
+ファイルの**全文**。そのセッションでそのファイルに初めて触れたときと、`external` で消えたファイルが戻ったときに記録する。それ以後は、変わった行だけを持つ `edit`・`new` と `external` で追う。再生は、最後の `snapshot` から、それらを順に適用して作る。
 
 ```json
 {"v":2,"seq":1,"ts":"…","type":"snapshot","file":"cmd/app/main.go","fileHash":"a3f09c21","text":"package main\n…","sha":"sha256:…"}
@@ -92,13 +92,6 @@ hook が記録した `look`（Read など）は、`why` が `null`。`source`（
 - トークンでなく `file` と `expect` で行った `edit` も、`from` は `null`（`source` は `mcp`で、`selection` と `why` は持つ）
 - hook が記録した `edit`（Edit）は、`from`・`selection`・`why` が `null` で、`source` が `hook`、`tool` が `Edit`。範囲は置換位置を含む行全体
 
-### replace
-
-`replace` ツール（[mcp.md](mcp_ja.md#replace)）が書くイベント。フィールドは `edit` と同じで、次の点が決まっている。
-
-- `source` が `mcp`、`from` が `null`。ファイルの中で変えた場所の数 `hits` を持つ
-- 変わったファイルごとに**1つ**で、`why` は同じ。範囲は、最初の場所から最後の場所までの行全体（間の行も `oldText` に入る）。`selection` は `null`（`replace` はトークンを返さない）
-
 ### new
 
 `new` ツール（[mcp.md](mcp_ja.md#new)）が書くイベント。フィールドは `edit` と同じで、次の点が決まっている。
@@ -117,7 +110,7 @@ srwr の外でファイルが変わったことを検知したとき。`snapshot
 - `hunks`：**変わった行**。テープが直前に持っていた内容（`expectedSha` のハッシュの内容）に対するもの。箇所は上から順で、重ならない。`startLine`・`endLine` は変更前の行、`newText` は変更後の行（`\n` でつなぐ）、`newStartLine`・`newEndLine` はその行番号で、`edit` と同じ。挿入は `endLine = startLine - 1`、削除は `newText` が空で `newEndLine = newStartLine - 1`。変更前の内容に当てると、変更後の内容（`actualSha` のハッシュ）になる。差分のコマ（左右に並べた diff）として再生する
 - `text`：**変更後のファイル全文**。行で表せない変更（ファイル末尾の改行だけが変わった）や、比べるには大きすぎる変更のとき、`hunks` の代わりに書く。ファイルが消えていたときは `null`、`actualSha` は空文字列で、`deleted: true` が付く
 - `created`：ファイルが**新しい**とき（テープがその内容を持たず、シェルのコマンドが作った）に `true` で書く。`expectedSha` は空文字列で、`hunks`（または `text`）がファイル全体を持つので、左が空の差分のコマとして再生する。見つけるのは hook だけ（[cli_ja.md](cli_ja.md) の `srwr hook`）
-- `detectedBy`：検知のきっかけ（`look`・`edit`・`replace`・`new`・`hook`。バージョン 1 のテープでは `select`・`sub`）
+- `detectedBy`：検知のきっかけ（`look`・`edit`・`new`・`hook`。バージョン 1 のテープでは `select`・`sub`）
 - `author.kind` は `external` 固定（誰が変えたかは srwr には分からない）
 - 古い形式の `external` も読める：全文の `text` を持ち直後に `snapshot` が続くもの、`text` のないもの（そのときは、直後の `snapshot` を変更後の内容として見せる）
 
@@ -127,17 +120,17 @@ srwr の外でファイルが変わったことを検知したとき。`snapshot
 
 ### failure
 
-`look`・`edit`・`replace`・`new` が失敗したとき（AI がエラーを受け取ったとき）に記録する。AI がどんなミスをするかを知るためのもの。ビューワーは、頼まれたときだけコマとして出す（赤。[vscode_ja.md](vscode_ja.md)）。ふだんは出さない。
+`look`・`edit`・`new` が失敗したとき（AI がエラーを受け取ったとき）に記録する。AI がどんなミスをするかを知るためのもの。ビューワーは、頼まれたときだけコマとして出す（赤。[vscode_ja.md](vscode_ja.md)）。ふだんは出さない。
 
 ```json
 {"v":2,"seq":7,"ts":"…","type":"failure","tool":"look","file":null,"startLine":3,"endLine":9,"selection":null,"why":"main 関数を確認する","code":"invalid_range","message":"The path is absolute. Give a path relative to the workspace"}
 {"v":2,"seq":9,"ts":"…","type":"failure","tool":"edit","file":"cmd/app/main.go","startLine":null,"endLine":null,"selection":"sel_0410R3GZE4KV11C6325D32S7","why":"…","code":"selection_stale","message":"an edit overlapped the range after the look. Call look again"}
 ```
 
-- `tool`：`look`・`edit`・`replace`・`new`。`code` と `message` は、AI が受け取ったエラー（[mcp_ja.md](mcp_ja.md)）
-- `file`：作業場の中のパス。分からないときと、伏せるときは `null`（`replace` は、ファイルを1つだけ渡したときだけそのファイル。`new` は渡したファイル）。`startLine`・`endLine` は `look` のとき、`selection`（渡されたトークン）は `edit` のとき。`why` は AI が書いたもの。値がないものは `null`
+- `tool`：`look`・`edit`・`new`。`code` と `message` は、AI が受け取ったエラー（[mcp_ja.md](mcp_ja.md)）
+- `file`：作業場の中のパス。分からないときと、伏せるときは `null`（`new` は渡したファイル）。`startLine`・`endLine` は `look` のとき、`selection`（渡されたトークン）は `edit` のとき。`why` は AI が書いたもの。値がないものは `null`
 - **実際のパスは伏せる**：絶対パス、作業場の外を指すパス、記録しないファイルのとき、`file` は `null` で、`message` はパスを含まない文にする（`The path is absolute. Give a path relative to the workspace`、`The path points outside the workspace`、`The file is not recorded`）
-- `edit` の `newText`、`replace` の `old` と `new`、`new` の `content`、`look` の `expect` は書かない。`message` は 300 文字で切る
+- `edit` の `newText`、`new` の `content`、`look` の `expect` は書かない。`message` は 300 文字で切る
 - srwr の編集に届く前に見つかる失敗（必須の入力がない、値の型が違う）も記録する。`file` は `null`
 
 ## バージョン 1 のテープ
@@ -148,9 +141,11 @@ srwr 0.1.4 までが書いたテープは `"v":1` で、そのまま読める。
 |---|---|
 | `select` | `look` |
 | `replace` | `edit` |
-| `tool` が `sub` の `replace` | `replace`（`tool` は外す） |
+| `tool` が `sub` の `replace` | `edit`（`tool` は外す） |
 | `tool` が `new` の `replace` | `new`（`tool` は外す） |
-| `failure` の `tool`：`select`・`replace`・`sub` | `look`・`edit`・`replace` |
+| `failure` の `tool`：`select`・`replace`・`sub` | `look`・`edit`・`edit` |
+
+`replace` ツール（srwr 0.1.5〜0.1.12）はなくなり、そのイベント（版 2 の `replace`、`hits` つき）も `edit` として読む。`hits` は捨てる。`tool` が `replace` の `failure` は `edit` として読む。
 
 版は1行ごとに読むので、更新のあとに版 2 で書き続けたテープも正しく読める。古いテープの行は書き換えない。
 

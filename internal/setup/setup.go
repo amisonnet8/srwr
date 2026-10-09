@@ -79,10 +79,10 @@ const (
 
 var (
 	forbidden = []string{"Edit", "Write", "MultiEdit", "NotebookEdit"}
-	allowed   = []string{"mcp__srwr__look", "mcp__srwr__edit", "mcp__srwr__replace", "mcp__srwr__new"}
-	// retired are the permissions of tools that no longer exist (select and sub of version 0.1.4 and before). replace and new are
-	// still tools, so their permissions stay.
-	retired     = []string{"mcp__srwr__select", "mcp__srwr__sub"}
+	allowed   = []string{"mcp__srwr__look", "mcp__srwr__edit", "mcp__srwr__new"}
+	// retired are the permissions of tools that no longer exist (select and sub of version 0.1.4 and before, replace of 0.1.12 and
+	// before).
+	retired     = []string{"mcp__srwr__select", "mcp__srwr__sub", "mcp__srwr__replace"}
 	ignoreLines = []string{".srwr/key", ".srwr/lock", ".srwr/active", ".srwr/init-backup/"}
 )
 

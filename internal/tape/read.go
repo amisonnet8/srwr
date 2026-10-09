@@ -42,11 +42,14 @@ func parseLine(line []byte) (Event, bool) {
 		return Event{}, false
 	}
 	typ, _ := getString(m, "type")
-	// Version 1 had select and replace only. A replace of version 1 is an edit, unless its tool says it was made by sub or new.
+	// Version 1 had select and replace only. A replace of version 1 is an edit, unless its tool says it was made by new (sub is an edit too).
 	v, _ := getInt(m, "v")
 	oldTool, _ := getString(m, "tool")
 	if v < 2 {
 		typ = fromVersion1(typ, oldTool)
+	}
+	if typ == "replace" {
+		typ = TypeEdit // the replace tool is gone: its events (version 2) read as edits
 	}
 	e := Event{Type: typ}
 	e.TS, _ = getString(m, "ts")
@@ -73,6 +76,9 @@ func parseLine(line []byte) (Event, bool) {
 		if v < 2 {
 			f.Tool = toolFromVersion1(oldTool)
 		}
+		if f.Tool == "replace" {
+			f.Tool = TypeEdit
+		}
 		f.Code, _ = getString(m, "code")
 		f.Message, _ = getString(m, "message")
 		if has(m, "startLine") {
@@ -98,7 +104,7 @@ func parseLine(line []byte) (Event, bool) {
 		e.Text = &text
 		e.FileHash, _ = getString(m, "fileHash")
 		e.Sha, _ = getString(m, "sha")
-	case TypeLook, TypeEdit, TypeReplace, TypeNew:
+	case TypeLook, TypeEdit, TypeNew:
 		if !getRange(m, &e) {
 			return Event{}, false
 		}
@@ -106,7 +112,7 @@ func parseLine(line []byte) (Event, bool) {
 		e.Selection = getNullableString(m, "selection")
 		e.Source, _ = getString(m, "source")
 		e.HookTool = oldTool
-		if v < 2 && (typ == TypeReplace || typ == TypeNew) {
+		if v < 2 && (oldTool == "sub" || oldTool == "new") {
 			e.HookTool = "" // the tool of version 1 said which kind it was
 		}
 		if Changes(typ) {
@@ -119,7 +125,6 @@ func parseLine(line []byte) (Event, bool) {
 			e.NewEndLine, _ = getInt(m, "newEndLine")
 			e.FileShaBefore, _ = getString(m, "fileShaBefore")
 			e.FileShaAfter, _ = getString(m, "fileShaAfter")
-			e.Hits, _ = getInt(m, "hits")
 		}
 	case TypeExternal:
 		e.Author = getAuthor(m)
@@ -149,8 +154,6 @@ func fromVersion1(typ, tool string) string {
 		return TypeLook
 	case "replace":
 		switch tool {
-		case "sub":
-			return TypeReplace
 		case "new":
 			return TypeNew
 		}
@@ -164,10 +167,8 @@ func toolFromVersion1(tool string) string {
 	switch tool {
 	case "select":
 		return TypeLook
-	case "replace":
+	case "replace", "sub":
 		return TypeEdit
-	case "sub":
-		return TypeReplace
 	}
 	return tool
 }

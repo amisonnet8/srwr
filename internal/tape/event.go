@@ -11,7 +11,6 @@ const (
 	TypeSnapshot = "snapshot"
 	TypeLook     = "look"
 	TypeEdit     = "edit"
-	TypeReplace  = "replace"
 	TypeNew      = "new"
 	TypeExternal = "external"
 	TypeFailure  = "failure"
@@ -24,7 +23,7 @@ const (
 )
 
 // Version is the tape format version written in every event ("v"). Version 1 had select and replace (sub and new were a replace
-// with a tool); Parse reads it as look, edit, replace and new.
+// with a tool), and version 2 had a replace tool too; Parse reads them as look, edit and new.
 const Version = 2
 
 // Author says who made a change.
@@ -44,9 +43,9 @@ type ToolInfo struct {
 //	header:   Session, StartedAt, Author, VCS, Tool
 //	snapshot: Seq, TS, File, FileHash, Text (never nil), Sha
 //	look:     Seq, TS, File, StartLine, EndLine, Why, Selection, Source, HookTool
-//	edit, replace, new:
+//	edit, new:
 //	          Seq, TS, File, From, StartLine, EndLine, OldText, NewText, NewStartLine, NewEndLine,
-//	          Selection, Why, FileShaBefore, FileShaAfter, Source, HookTool, Hits
+//	          Selection, Why, FileShaBefore, FileShaAfter, Source, HookTool
 //	failure:  Seq, TS, Failure
 //	external: Seq, TS, File, Author, DetectedBy, ExpectedSha, ActualSha, Hunks or Text (both nil when unknown), Created, Deleted
 //
@@ -97,7 +96,6 @@ type Event struct {
 	NewEndLine    int
 	FileShaBefore string
 	FileShaAfter  string
-	Hits          int // replace only: how many places it changed in the file
 
 	// external
 	DetectedBy  string
@@ -107,7 +105,7 @@ type Event struct {
 	Created     bool // a new file: the tape held nothing of it, and Hunks (or Text) is the whole file
 }
 
-// FailureInfo is what a failure event holds: a look, edit, replace or new that gave the AI an error. A value that is not there is nil
+// FailureInfo is what a failure event holds: a look, edit or new that gave the AI an error. A value that is not there is nil
 // (null on the tape). File is nil when it is not known or is left out, since the real path of an absolute path is not written.
 type FailureInfo struct {
 	Tool      string
@@ -120,8 +118,8 @@ type FailureInfo struct {
 	Message   string
 }
 
-// Changes reports whether the event of this type changes a file: edit, replace and new.
-func Changes(typ string) bool { return typ == TypeEdit || typ == TypeReplace || typ == TypeNew }
+// Changes reports whether the event of this type changes a file: edit and new.
+func Changes(typ string) bool { return typ == TypeEdit || typ == TypeNew }
 
 // Str returns a pointer to s, for the nullable fields.
 func Str(s string) *string { return &s }

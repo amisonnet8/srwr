@@ -1,7 +1,7 @@
 package timeline
 
 // Kinds is the set of kinds of frames a client wants: look, edit, external and failure. The frames of the final diff
-// (final) follow external, and those of replace and new follow edit.
+// (final) follow external, and those of new follow edit.
 type Kinds map[string]bool
 
 // AllKinds are the names a client may ask for.
@@ -28,12 +28,12 @@ func NewKinds(names []string) (Kinds, string) {
 	return k, ""
 }
 
-// group is the kind a person turns on and off for a kind of frame: final goes with external, replace and new with edit.
+// group is the kind a person turns on and off for a kind of frame: final goes with external, new with edit.
 func group(kind string) string {
 	switch kind {
 	case KindFinal:
 		return KindExternal
-	case KindReplace, KindNew:
+	case KindNew:
 		return KindEdit
 	}
 	return kind

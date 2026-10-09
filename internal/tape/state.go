@@ -14,10 +14,10 @@ type State struct {
 	LastSeq int
 	// Files holds every file the tape has a snapshot of.
 	Files map[string]*File
-	// Edits lists the edit, replace and new events in order, for line number correction.
+	// Edits lists the edit and new events in order, for line number correction.
 	Edits []Event
 	// LastLook is the seq of the last look of each file. LastChange is the seq of the last event that moved lines of a file:
-	// an edit, replace, new, or an external change. A file looked at after its last change has the lines the look showed.
+	// an edit, new, or an external change. A file looked at after its last change has the lines the look showed.
 	LastLook   map[string]int
 	LastChange map[string]int
 	// LastTS is the time (as on the tape) of the last event. HookReads counts the looks the hook recorded, and HookOutside the external
@@ -55,7 +55,7 @@ func (s *State) Apply(e Event) {
 		if e.Source == SourceHook {
 			s.HookReads++
 		}
-	case TypeEdit, TypeReplace, TypeNew:
+	case TypeEdit, TypeNew:
 		s.LastChange[e.File] = e.Seq
 		f := s.Files[e.File]
 		if f == nil {
@@ -89,7 +89,7 @@ func (s *State) text(file string) string {
 	return ""
 }
 
-// NewLines returns the lines a replace wrote. NewText is the lines joined by "\n", which cannot say
+// NewLines returns the lines an edit wrote. NewText is the lines joined by "\n", which cannot say
 // by itself whether it ends in a blank line, so the count comes from newStartLine and newEndLine.
 // A tape without those, or whose count does not fit NewText (an old one that ends the text with
 // a newline), is read the way mcp.md counts the lines of newText.

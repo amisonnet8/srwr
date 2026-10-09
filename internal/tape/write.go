@@ -36,7 +36,7 @@ func Marshal(e Event) ([]byte, error) {
 			{"startLine", e.StartLine}, {"endLine", e.EndLine}, {"why", e.Why}, {"selection", e.Selection},
 		}
 		fs = appendSource(fs, e)
-	case TypeEdit, TypeReplace, TypeNew:
+	case TypeEdit, TypeNew:
 		fs = []field{
 			{"seq", e.Seq}, {"ts", e.TS}, {"type", e.Type}, {"file", e.File}, {"from", e.From},
 			{"startLine", e.StartLine}, {"endLine", e.EndLine}, {"oldText", e.OldText}, {"newText", e.NewText},
@@ -44,9 +44,6 @@ func Marshal(e Event) ([]byte, error) {
 			{"fileShaBefore", e.FileShaBefore}, {"fileShaAfter", e.FileShaAfter},
 		}
 		fs = appendSource(fs, e)
-		if e.Hits > 0 {
-			fs = append(fs, field{"hits", e.Hits})
-		}
 	case TypeFailure:
 		if e.Failure == nil {
 			return nil, fmt.Errorf("failure event %d has no failure", e.Seq)

@@ -483,7 +483,7 @@ func TestFailureRoundTrips(t *testing.T) {
 	}
 }
 
-// A tape of version 1 says select and replace; sub and new were a replace with a tool. Parse reads them as look, edit, replace and new,
+// A tape of version 1 says select and replace; sub and new were a replace with a tool. Parse reads them (and the replace of version 2) as look, edit and new,
 // by the "v" of each line, so that a tape that went on with version 2 is read right too.
 func TestParseVersion1(t *testing.T) {
 	rng := `"file":"a.go","startLine":1,"endLine":1,`
@@ -504,9 +504,9 @@ func TestParseVersion1(t *testing.T) {
 		t.Fatalf("events = %d, skipped = %d", len(res.Events), res.Skipped)
 	}
 	want := []struct{ typ, hookTool, tool string }{
-		{TypeLook, "", ""}, {TypeEdit, "", ""}, {TypeReplace, "", ""}, {TypeNew, "", ""}, {TypeEdit, "Edit", ""},
-		{TypeReplace, "", ""}, {TypeLook, "Read", ""},
-		{TypeFailure, "", TypeReplace}, {TypeFailure, "", TypeEdit}, {TypeFailure, "", TypeReplace}, {TypeLook, "", ""},
+		{TypeLook, "", ""}, {TypeEdit, "", ""}, {TypeEdit, "", ""}, {TypeNew, "", ""}, {TypeEdit, "Edit", ""},
+		{TypeEdit, "", ""}, {TypeLook, "Read", ""},
+		{TypeFailure, "", TypeEdit}, {TypeFailure, "", TypeEdit}, {TypeFailure, "", TypeEdit}, {TypeLook, "", ""},
 	}
 	for i, w := range want {
 		e := res.Events[i]

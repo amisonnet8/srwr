@@ -237,9 +237,17 @@ func (s *Server) callSearch(a lookArgs) toolResult {
 	in := core.SearchInput{File: *a.File, Search: *a.Search, Why: *a.Why}
 	if a.Include != nil {
 		in.Include = *a.Include
+		for _, p := range in.Include {
+			if strings.HasPrefix(p, "!") {
+				return s.rejectLook(fmt.Sprintf("include %q starts with !, which include does not take. To leave files out, put the pattern in exclude (without the !)", p))
+			}
+		}
 	}
 	if a.Exclude != nil {
 		in.Exclude = *a.Exclude
+		if len(in.Exclude) > 0 && strings.HasPrefix(in.Exclude[0], "!") {
+			return s.rejectLook(fmt.Sprintf("exclude %q starts with !: a ! pattern takes back an earlier pattern of exclude, so it cannot come first. To leave files out, write the pattern without the !", in.Exclude[0]))
+		}
 	}
 	if a.Offset != nil {
 		in.Offset = *a.Offset
@@ -325,11 +333,27 @@ type editItemArgs struct {
 	Old       *string `json:"old"`
 	New       *string `json:"new"`
 	Content   *string `json:"content"`
+	Why       *string `json:"why"` // not used: the why of the call is the why of every item
 }
 
 type editsOK struct {
 	OK    bool         `json:"ok"`
 	Edits []editItemOK `json:"edits"`
+	Note  string       `json:"note,omitempty"`
+}
+
+// itemWhyNote says which items of edits gave a why of their own, which is not used. It is empty when none did.
+func itemWhyNote(items []editItemArgs) string {
+	var idx []string
+	for i, it := range items {
+		if it.Why != nil {
+			idx = append(idx, fmt.Sprintf("%d", i))
+		}
+	}
+	if len(idx) == 0 {
+		return ""
+	}
+	return fmt.Sprintf("why in edits[%s] was not used: the why of the call is the why of every edit", strings.Join(idx, "], edits["))
 }
 
 // editItemOK is the result of one of the edits of a call with edits.
@@ -357,6 +381,7 @@ const briefEditsMin = 6
 type briefEditsOK struct {
 	OK    bool      `json:"ok"`
 	Edits []briefOK `json:"edits"`
+	Note  string    `json:"note,omitempty"`
 }
 
 type briefEditOK struct {
@@ -426,13 +451,13 @@ func (s *Server) callEdits(a editArgs) toolResult {
 	}
 	// Many edits are not read back one by one: from briefEditsMin items on, the short form is the default.
 	if brief := len(res.Edits) >= briefEditsMin; (a.Brief == nil && brief) || (a.Brief != nil && *a.Brief) {
-		b := briefEditsOK{OK: true, Edits: make([]briefOK, len(res.Edits))}
+		b := briefEditsOK{OK: true, Edits: make([]briefOK, len(res.Edits)), Note: itemWhyNote(*a.Edits)}
 		for i, r := range res.Edits {
 			b.Edits[i] = briefOK{Selection: r.Selection, StartLine: r.StartLine, EndLine: r.EndLine, Hint: r.Hint}
 		}
 		return success(b)
 	}
-	out := editsOK{OK: true, Edits: make([]editItemOK, len(res.Edits))}
+	out := editsOK{OK: true, Edits: make([]editItemOK, len(res.Edits)), Note: itemWhyNote(*a.Edits)}
 	for i, r := range res.Edits {
 		out.Edits[i] = editItemOK{Selection: r.Selection, StartLine: r.StartLine, EndLine: r.EndLine, Lines: r.Lines, Above: r.Above, Below: r.Below, Hint: r.Hint}
 	}

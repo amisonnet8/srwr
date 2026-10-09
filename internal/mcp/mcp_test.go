@@ -475,6 +475,27 @@ func TestLookWholeFile(t *testing.T) {
 	}
 }
 
+// include takes no !, and an exclude cannot start with one: both would match nothing, and the AI would not know why.
+func TestSearchRefusesLoneNegation(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "a.go"), []byte("foo\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	r := serve(t, root,
+		toolCall(1, "look", `{"file":".","search":"foo","include":["!*_test.go"],"why":"w"}`),
+		toolCall(2, "look", `{"file":".","search":"foo","exclude":["!*_test.go"],"why":"w"}`),
+		toolCall(3, "look", `{"file":".","search":"foo","exclude":["*.go","!a.go"],"why":"w"}`))
+	if !strings.Contains(r[0], "invalid_input") || !strings.Contains(r[0], "put the pattern in exclude") {
+		t.Errorf("include: %s", r[0])
+	}
+	if !strings.Contains(r[1], "invalid_input") || !strings.Contains(r[1], "cannot come first") {
+		t.Errorf("exclude: %s", r[1])
+	}
+	if strings.Contains(r[2], "invalid_input") || !strings.Contains(r[2], `\"count\":1`) {
+		t.Errorf("exclude with a taken-back pattern: %s", r[2])
+	}
+}
+
 func TestLookSearch(t *testing.T) {
 	root := t.TempDir()
 	if err := os.WriteFile(filepath.Join(root, "a.go"), []byte("a\nfoo(1)\nb\nfoo(2)\n"), 0o600); err != nil {
@@ -642,6 +663,18 @@ func TestEditOldWithOneLineNumber(t *testing.T) {
 }
 
 // Six edits or more in one call get the short result unless brief is false.
+// An item of edits that gives a why is told it is not used (the call still works).
+func TestEditsItemWhyIsNotUsed(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "a.txt"), []byte("a\nb\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	r := serve(t, dir, toolCall(1, "edit", `{"edits":[{"file":"a.txt","expect":"a","newText":"A","why":"x"},{"file":"a.txt","expect":"b","newText":"B"}],"why":"w"}`))[0]
+	if !strings.Contains(r, `\"ok\":true`) || !strings.Contains(r, "why in edits[0] was not used") {
+		t.Error(r)
+	}
+}
+
 func TestEditsBriefDefault(t *testing.T) {
 	run := func(n int, extra string) string {
 		dir := t.TempDir()

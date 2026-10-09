@@ -33,7 +33,7 @@ Looks at a range, and returns a **selection token** for editing that range with 
 | Item | Meaning |
 |---|---|
 | `file` | A path relative to the workspace. Existing files only (make a new file with `new`) |
-| `startLine`, `endLine` | Line numbers, 1-based, both inclusive. Give both or neither (with neither, `expect` finds the range) |
+| `startLine`, `endLine` | Line numbers, 1-based, both inclusive. Give both or neither (with neither, `expect` finds the range; with no `expect` either, the whole file is read, the first 2000 lines of a longer one, and the result has a `note`) |
 | `expect` | Optional. The lines the range must hold, joined with `\n`. See "Checking the content" below |
 | `search` | Optional, instead of a range. A text to find in the file. See "Searching" below |
 | `include`, `exclude`, `offset` | Optional, with `search`: choose the files, and page through the matches. See "Searching" below |
@@ -58,7 +58,7 @@ Looks at a range, and returns a **selection token** for editing that range with 
 | `startLine`, `endLine` and `expect` | It passes only when the range holds exactly the lines of `expect`. Otherwise `content_mismatch`. This catches line numbers that have moved |
 | `expect` only | srwr looks for the consecutive lines of `expect` in the file. Exactly one place: that is the range. None: `content_not_found`. Two or more: `content_ambiguous` |
 
-- With neither line numbers nor `expect`, or with only one of `startLine` and `endLine`, the call is `invalid_input`. So is an `expect` of `""` without line numbers (a place to insert is pointed at with line numbers)
+- With only one of `startLine` and `endLine`, the call is `invalid_input`. With neither line numbers nor `expect`, the whole file is read. So is an `expect` of `""` without line numbers (a place to insert is pointed at with line numbers)
 - `content_mismatch` says where the same lines are in the file (up to 5 places), which is usually the fix. `content_ambiguous` says where they are (up to 10 places): add line numbers, or more lines to `expect`
 - `expect` is not written to the tape
 

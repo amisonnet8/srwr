@@ -336,7 +336,6 @@ func TestToolErrors(t *testing.T) {
 		{"file as a number", "look", `{"file":3,"startLine":1,"endLine":1,"why":"w"}`, "invalid_input", nil},
 		{"only startLine", "look", `{"file":"a.go","startLine":1,"why":"w"}`, "invalid_input", nil},
 		{"only endLine", "look", `{"file":"a.go","endLine":1,"why":"w"}`, "invalid_input", nil},
-		{"no lines and no expect", "look", `{"file":"a.go","why":"w"}`, "invalid_input", nil},
 		{"expect as a number", "look", `{"file":"a.go","expect":1,"why":"w"}`, "invalid_input", nil},
 		{"expect that is not in the file", "look", `{"file":"a.go","expect":"zzz","why":"w"}`, "content_not_found", nil},
 		{"expect that is in the file, in other lines", "look", `{"file":"a.go","startLine":1,"endLine":1,"expect":"2","why":"w"}`, "content_mismatch", []string{"1"}},
@@ -452,6 +451,29 @@ func TestEditInsert(t *testing.T) {
 }
 
 // look with search returns every line that holds the text, each with a token; it is refused with a range or expect.
+// A look with no range reads the whole file; a long file is cut at 2000 lines, with a note.
+func TestLookWholeFile(t *testing.T) {
+	root := t.TempDir()
+	long := strings.Repeat("x\n", 2001)
+	for name, text := range map[string]string{"a.go": "a\nb\n", "long.txt": long, "empty.txt": ""} {
+		if err := os.WriteFile(filepath.Join(root, name), []byte(text), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	m, isErr := body(t, serve(t, root, toolCall(1, "look", `{"file":"a.go","why":"w"}`))[0])
+	if isErr || m["startLine"] != float64(1) || m["endLine"] != float64(2) || len(m["lines"].([]any)) != 2 {
+		t.Errorf("short file: %v", m)
+	}
+	m, isErr = body(t, serve(t, root, toolCall(1, "look", `{"file":"long.txt","why":"w"}`))[0])
+	if isErr || m["endLine"] != float64(2000) || m["lineCount"] != float64(2001) || m["note"] == nil {
+		t.Errorf("long file: %v", m["note"])
+	}
+	m, isErr = body(t, serve(t, root, toolCall(1, "look", `{"file":"empty.txt","why":"w"}`))[0])
+	if isErr {
+		t.Errorf("empty file: %v", m)
+	}
+}
+
 func TestLookSearch(t *testing.T) {
 	root := t.TempDir()
 	if err := os.WriteFile(filepath.Join(root, "a.go"), []byte("a\nfoo(1)\nb\nfoo(2)\n"), 0o600); err != nil {

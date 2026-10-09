@@ -29,7 +29,13 @@ type LookInput struct {
 	// and EndLine are then not used. Its content never goes on the tape.
 	Expect *string
 	Locate bool
+
+	// Whole reads the whole file (the first maxWholeLook lines of a longer one): no range is given.
+	Whole bool
 }
+
+// maxWholeLook is how many lines a look without a range returns.
+const maxWholeLook = 2000
 
 // LookResult is what look returns: a token for the range and the lines in it.
 type LookResult struct {
@@ -129,7 +135,7 @@ func (c *Core) Look(in LookInput) (*LookResult, *Error) {
 	res, cerr := c.doLook(in)
 	if cerr != nil {
 		f := failedCall{tool: toolLook, file: in.File, why: &in.Why, err: cerr}
-		if !in.Locate {
+		if !in.Locate && !in.Whole {
 			f.startLine, f.endLine = &in.StartLine, &in.EndLine
 		}
 		c.recordFailure(f)
@@ -196,7 +202,17 @@ func (c *Core) lookIn(tx *session.Tx, rel string, in LookInput) (*LookResult, er
 // lookRange finds the lines a look covers. A look only reads, so an endLine past the end of the file is cut to the end (startLine
 // must still be in the file); note says so.
 func lookRange(rel, text string, in LookInput) (start, end int, note string, cerr *Error) {
-	if n := len(tape.Lines(text)); !in.Locate && in.StartLine >= 1 && in.StartLine <= n+1 && in.EndLine > n {
+	n := len(tape.Lines(text))
+	if in.Whole {
+		in.StartLine, in.EndLine = 1, n
+		if n > maxWholeLook {
+			in.EndLine = maxWholeLook
+			note = fmt.Sprintf("%s has %d lines: lines 1 to %d are returned. Give startLine and endLine for the rest", rel, n, maxWholeLook)
+		}
+		start, end, cerr = chooseRange(rel, text, in)
+		return start, end, note, cerr
+	}
+	if !in.Locate && in.StartLine >= 1 && in.StartLine <= n+1 && in.EndLine > n {
 		note = fmt.Sprintf("endLine %d is past the end of %s (%d lines): the range ends at line %d", in.EndLine, rel, n, n)
 		in.EndLine = n
 	}

@@ -47,12 +47,12 @@ func List() []Tool {
 	return []Tool{
 		{
 			Name: Look,
-			Description: "Look at a range you want to read or edit. Looks at lines startLine to endLine of the file (1-based, both inclusive) and returns " +
+			Description: "Look at a range you want to read or edit. To read several files at once, use the looks argument of this tool (it is an argument of look, not a tool of its own). Looks at lines startLine to endLine of the file (1-based, both inclusive) and returns " +
 				"a selection token for editing that range with edit (selection) and the current content of the range (lines). " +
 				"The result also has startLine and endLine (the range that was selected). " +
 				"Pass the token to edit as it is (no line numbers or content needed). " +
 				"Line numbers can be wrong, so pass expect too: the lines the range must hold, joined with \\n. If they differ, the look is refused and the message says where those lines are. expect is whole lines: a part of a line is not found. If a place differs from expect only in spaces or tabs, or holds it only as part of a line, the error has it in nearMatches: copy expect from there. When that is one place, the error also has retry: the arguments of the call to make again (add why). " +
-				"Or leave out startLine and endLine and pass only expect: srwr finds those consecutive lines (exactly one place is needed; give line numbers if they appear in more than one). " +
+				"With no startLine, endLine or expect, the whole file is read (the first 2000 lines of a longer one; the result has a note). Or pass only expect, without startLine and endLine: srwr finds those consecutive lines (exactly one place is needed; give line numbers if they appear in more than one). " +
 				"To point at a place to insert, use an empty range with endLine = startLine - 1 (just before line startLine; to append to the end of the file, startLine = number of lines + 1). " +
 				"An endLine past the end of the file is cut to the last line (the result has lineCount and a note); a startLine past the end is an error. " +
 				"To read several files at once, pass looks instead of file: a list of 1 to 10 items, each with file (and startLine and endLine, or neither for the whole file), up to 2000 lines in all; the result has looks, one result with a token for each item. " +
@@ -62,7 +62,7 @@ func List() []Tool {
 				"type": "object",
 				"properties": map[string]any{
 					"file":      map[string]any{"type": "string", "minLength": 1, "description": "Path relative to the workspace"},
-					"startLine": map[string]any{"type": "integer", "minimum": 1, "description": "First line (1-based)"},
+					"startLine": map[string]any{"type": "integer", "minimum": 1, "description": "First line (1-based). Give both startLine and endLine, or neither (then the whole file is read)"},
 					"endLine":   map[string]any{"type": "integer", "minimum": 0, "description": "Last line (inclusive); startLine - 1 for an empty range. Give both startLine and endLine, or neither"},
 					"expect":    map[string]any{"type": "string", "description": "The lines the range must hold, joined with \\n (whole lines, whitespace counts). Without startLine and endLine, the range is where these lines are"},
 					"search":    map[string]any{"type": "string", "description": "Instead of a range: a text to find in the file (plain text, one line, case counts). Returns every line that holds it, up to 20, each with a token (in a directory, 20 in all, each with its file). A line longer than 200 characters is cut to the part around the text (cut: true; the token is of the whole line) Not with startLine, endLine or expect"},

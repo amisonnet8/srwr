@@ -33,7 +33,7 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 | 項目 | 意味 |
 |---|---|
 | `file` | 作業場からの相対パス。既存のファイルだけ（新しいファイルは `new` で作る） |
-| `startLine`・`endLine` | 1始まり、両端を含む行番号。2つとも渡すか、2つとも渡さない（渡さないときは `expect` が範囲を見つける） |
+| `startLine`・`endLine` | 1始まり、両端を含む行番号。2つとも渡すか、2つとも渡さない（渡さないときは `expect` が範囲を見つける。`expect` もなければファイル全体を返す。2000行を超えるファイルは先頭の2000行で、結果に `note` が付く） |
 | `expect` | 任意。範囲がこの内容であること。行を `\n` でつなぐ。下の「内容の確認」 |
 | `search` | 任意。範囲の代わりに、ファイルから探す文字列。下の「検索」 |
 | `include`・`exclude`・`offset` | 任意。`search` と一緒に、探すファイルを選び、当たりを順に読む。下の「検索」 |
@@ -58,7 +58,7 @@ AI エージェントは、MCP サーバー `srwr mcp` が提供する **4つの
 | `startLine`・`endLine` と `expect` | 範囲が `expect` の行とまったく同じときだけ通る。違えば `content_mismatch`。行番号がずれたことに気づける |
 | `expect` だけ | `expect` の連続した行を、ファイルから探す。ちょうど1か所なら、そこが範囲。なければ `content_not_found`、2か所以上なら `content_ambiguous` |
 
-- 行番号も `expect` もないとき、`startLine` と `endLine` の片方だけのときは、`invalid_input`。行番号なしで `expect` が `""` のときもそう（挿入位置は、行番号で指す）
+- 行番号も `expect` もないときはファイル全体を読む。`startLine` と `endLine` の片方だけのときは、`invalid_input`。行番号なしで `expect` が `""` のときもそう（挿入位置は、行番号で指す）
 - `content_mismatch` は、同じ行がファイルのどこにあるかを言う（最大5か所）。たいていは、それが直し方になる。`content_ambiguous` は、当たった場所を言う（最大10か所）。行番号を付けるか、`expect` の行を増やす
 - `expect` はテープに書かない
 

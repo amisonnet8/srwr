@@ -191,11 +191,10 @@ func (s *Server) callLook(raw json.RawMessage) toolResult {
 	switch {
 	case (a.StartLine == nil) != (a.EndLine == nil):
 		return s.rejectLook("give both startLine and endLine, or neither")
-	case a.StartLine == nil && a.Expect == nil:
-		return s.rejectLook("missing required input: startLine and endLine (or expect, to find the range by its content)")
 	}
-	in := core.LookInput{File: *a.File, Why: *a.Why, Expect: a.Expect, Locate: a.StartLine == nil}
-	if !in.Locate {
+	// With no range at all, the whole file is read.
+	in := core.LookInput{File: *a.File, Why: *a.Why, Expect: a.Expect, Locate: a.StartLine == nil && a.Expect != nil, Whole: a.StartLine == nil && a.Expect == nil}
+	if a.StartLine != nil {
 		in.StartLine, in.EndLine = *a.StartLine, *a.EndLine
 	}
 	res, cerr := s.Core.Look(in)

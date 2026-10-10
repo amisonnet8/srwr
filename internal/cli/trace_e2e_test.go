@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/amisonnet8/srwr/internal/tape"
 )
 
 // traceWorkspace makes a git work tree where the real srwr mcp changes a.go and makes b.go, a person adds a line to c.go, and all
@@ -160,4 +162,96 @@ func TestTracePlainDiffAndNothing(t *testing.T) {
 	if code != 0 || !strings.Contains(out, "No diff found") {
 		t.Errorf("no diff: exit %d\n%s", code, out)
 	}
+}
+
+// Stage condition: --as-tape writes the operations of a commit as one tape that the display server opens, whose last content of
+// a file is the file as the commit has it; the same input makes the same tape; and srwr trace does not count that tape as a source.
+func TestTraceAsTape(t *testing.T) {
+	root, show := traceWorkspace(t)
+	before := tapes(t, root)
+
+	out, code := runTraceBinary(t, root, show, []string{"SRWR_LANG="}, "--as-tape")
+	if code != 0 {
+		t.Fatalf("exit %d: %s", code, out)
+	}
+	i := strings.Index(out, "→ srwr view ")
+	if i < 0 {
+		t.Fatalf("no tape named in the output:\n%s", out)
+	}
+	id := strings.TrimSpace(out[i+len("→ srwr view "):])
+	after := tapes(t, root)
+	if len(after) != len(before)+1 {
+		t.Fatalf("tapes before %v, after %v", before, after)
+	}
+	path := filepath.Join(root, ".srwr", "tapes", id+".tape.jsonl")
+	events := readTape(t, path)
+	if h := events[0]; h.Type != "header" || h.Author == nil || h.Author.Kind != "derived" {
+		t.Errorf("header = %+v", h)
+	}
+	checkSeqs(t, events)
+	last := map[string]string{}
+	for _, e := range events[1:] {
+		if e.File == "c.go" {
+			t.Errorf("a file that no tape wrote is in the cut: %+v", e)
+		}
+		if e.Selection != nil {
+			t.Errorf("a token is kept: %+v", e)
+		}
+	}
+	// Replay the cut: the files are the ones the commit holds.
+	st := buildState(events[1:])
+	for _, f := range []string{"a.go", "b.go"} {
+		last[f] = st[f]
+		if strings.TrimSpace(last[f]) != strings.TrimSpace(read(t, root, f)) {
+			t.Errorf("%s replayed = %q, file = %q", f, last[f], read(t, root, f))
+		}
+	}
+
+	// The display server opens it.
+	v := startViewer(t, root)
+	v.request("initialize", `{"client":"vim","protocolVersion":3}`)
+	var opened struct {
+		Result struct {
+			Frames []struct{ Kind, File, Why string }
+		}
+	}
+	line := v.request("tape/open", `{"tapeId":"`+id+`"}`)
+	if err := json.Unmarshal([]byte(line), &opened); err != nil || len(opened.Result.Frames) == 0 {
+		t.Fatalf("tape/open: %v\n%s", err, line)
+	}
+	sawWhy := false
+	for _, f := range opened.Result.Frames {
+		if strings.Contains(f.Why, "one に出力を足すため") {
+			sawWhy = true
+		}
+	}
+	if !sawWhy {
+		t.Errorf("no frame with the why:\n%s", line)
+	}
+
+	// The same input makes the same tape, and does not make a second one.
+	b1, _ := os.ReadFile(path) //nolint:gosec // a path in a temporary directory
+	out2, code := runTraceBinary(t, root, show, []string{"SRWR_LANG="}, "--as-tape")
+	if code != 0 || !strings.Contains(out2, id) {
+		t.Fatalf("again: exit %d\n%s", code, out2)
+	}
+	b2, _ := os.ReadFile(path) //nolint:gosec // a path in a temporary directory
+	if !bytes.Equal(b1, b2) || len(tapes(t, root)) != len(after) {
+		t.Errorf("the second run changed or added a tape (%d vs %d bytes, %d tapes)", len(b1), len(b2), len(tapes(t, root)))
+	}
+	// The text output does not count the cut as the writer of the lines.
+	again, _ := runTraceBinary(t, root, show, []string{"SRWR_LANG="})
+	if !strings.Contains(again, "one に出力を足すため") || strings.Contains(again, id+" #") {
+		t.Errorf("the cut counts as a source:\n%s", again)
+	}
+}
+
+// buildState replays events of one tape and returns the text of each file.
+func buildState(events []tape.Event) map[string]string {
+	st := tape.Build(events)
+	out := map[string]string{}
+	for name, f := range st.Files {
+		out[name] = f.Text
+	}
+	return out
 }

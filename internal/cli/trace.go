@@ -1,7 +1,9 @@
 package cli
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -11,6 +13,7 @@ import (
 
 	"github.com/amisonnet8/srwr/internal/lang"
 	"github.com/amisonnet8/srwr/internal/session"
+	"github.com/amisonnet8/srwr/internal/tape"
 	"github.com/amisonnet8/srwr/internal/trace"
 )
 
@@ -24,6 +27,7 @@ func runTrace(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	only := fs.String("tape", "", lang.Pick("look only at this tape", "このテープだけを見る"))
 	mark := fs.Bool("mark", false, lang.Pick("print the text as it is, with the why of each hunk after its @@ line", "テキストをそのまま出し、各 hunk の @@ の行の次に理由を足す"))
 	asJSON := fs.Bool("json", false, lang.Pick("print JSON", "JSON で出す"))
+	asTape := fs.Bool("as-tape", false, lang.Pick("write the operations found of each commit as one tape that can be replayed", "結びついた操作を、コミットごとに再生できる1本のテープとして書く"))
 	if err := fs.Parse(reorder(args)); err != nil {
 		return 2
 	}
@@ -31,8 +35,8 @@ func runTrace(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		_, _ = fmt.Fprintf(stderr, lang.Pick("srwr trace: unexpected argument %q\n", "srwr trace: 余分な引数 %q\n"), fs.Arg(1))
 		return 2
 	}
-	if *mark && *asJSON {
-		_, _ = fmt.Fprint(stderr, lang.Pick("srwr trace: --mark and --json cannot be used together\n", "srwr trace: --mark と --json は一緒に使えません\n"))
+	if n := countTrue(*mark, *asJSON, *asTape); n > 1 {
+		_, _ = fmt.Fprint(stderr, lang.Pick("srwr trace: --mark, --json and --as-tape cannot be used together\n", "srwr trace: --mark、--json、--as-tape は一緒に使えません\n"))
 		return 2
 	}
 	if info, err := os.Stat(*root); err != nil || !info.IsDir() {
@@ -55,7 +59,9 @@ func runTrace(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		_, _ = fmt.Fprintf(stderr, "srwr trace: %v\n", err)
 		return 1
 	}
-	ops := trace.Collect(filepath.Dir(ws.TapePath("x")), *only)
+	tapeDir := filepath.Dir(ws.TapePath("x"))
+	srcs := trace.Load(tapeDir, *only)
+	ops := trace.OpsOf(srcs)
 	text := string(in)
 	commits := trace.ParseDiff(text)
 	r := traceResult{ops: ops}
@@ -66,6 +72,14 @@ func runTrace(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 				continue // a deleted file, and what srwr keeps for itself
 			}
 			tc.files = append(tc.files, tracedFile{path: f.Path, diff: f, segs: trace.Attribute(ops, f)})
+		}
+		if *asTape {
+			id, err := writeCut(tapeDir, srcs, tc, text)
+			if err != nil {
+				_, _ = fmt.Fprintf(stderr, "srwr trace: %v\n", err)
+				return 1
+			}
+			tc.tapeID = id
 		}
 		r.commits = append(r.commits, tc)
 	}
@@ -88,7 +102,87 @@ type tracedFile struct {
 
 type tracedCommit struct {
 	trace.Commit
-	files []tracedFile
+	files  []tracedFile
+	tapeID string // the tape --as-tape wrote, or ""
+}
+
+func countTrue(bs ...bool) int {
+	n := 0
+	for _, b := range bs {
+		if b {
+			n++
+		}
+	}
+	return n
+}
+
+// writeCut writes the tape of the operations that wrote the lines of the commit, and returns its ID ("" when no operation did).
+// A tape of the same ID that is not one of --as-tape's own is never replaced.
+func writeCut(dir string, srcs []trace.Source, c tracedCommit, text string) (string, error) {
+	var found []*trace.Op
+	seen := map[*trace.Op]bool{}
+	for _, f := range c.files {
+		for _, s := range f.segs {
+			if s.Op != nil && !seen[s.Op] {
+				seen[s.Op] = true
+				found = append(found, s.Op)
+			}
+		}
+	}
+	key := c.SHA
+	if key == "" {
+		key = text
+	}
+	cut, ok := trace.Slice(srcs, found, key, Version())
+	if !ok {
+		return "", nil
+	}
+	if path, exists := tape.Find(dir, cut.ID); exists {
+		b, err := tape.ReadFile(path)
+		if err != nil {
+			return "", err
+		}
+		derived := false
+		for _, e := range tape.Parse(b).Events {
+			if e.Type == tape.TypeHeader {
+				derived = e.Author != nil && e.Author.Kind == trace.DerivedKind
+				break
+			}
+		}
+		if !derived || strings.HasSuffix(path, ".gz") {
+			return "", fmt.Errorf(lang.Pick("a tape %s already exists and was not made by srwr trace", "テープ %s はすでにあり、srwr trace が作ったものではありません"), cut.ID)
+		}
+	}
+	var buf bytes.Buffer
+	for _, e := range cut.Events {
+		line, err := tape.Marshal(e)
+		if err != nil {
+			return "", err
+		}
+		buf.Write(line)
+	}
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return "", err
+	}
+	tmp, err := os.CreateTemp(dir, ".trace-*.tmp")
+	if err != nil {
+		return "", err
+	}
+	_, werr := tmp.Write(buf.Bytes())
+	cerr := tmp.Close()
+	if werr != nil || cerr != nil {
+		_ = os.Remove(tmp.Name())
+		return "", errors.Join(werr, cerr)
+	}
+	if err := os.Chmod(tmp.Name(), 0o600); err != nil {
+		_ = os.Remove(tmp.Name())
+		return "", err
+	}
+	if err := os.Rename(tmp.Name(), filepath.Join(dir, tape.FileName(cut.ID))); err != nil {
+		_ = os.Remove(tmp.Name())
+		return "", err
+	}
+	return cut.ID, nil
 }
 
 type traceResult struct {
@@ -165,6 +259,9 @@ func writeTrace(w io.Writer, r traceResult, noTapes bool) {
 			}
 		}
 		_, _ = fmt.Fprintf(w, "  %s\n", summary(files, added, fromTape))
+		if c.tapeID != "" {
+			_, _ = fmt.Fprintf(w, "  → %s%s\n", lang.Pick("srwr view ", "再生：srwr view "), c.tapeID)
+		}
 	}
 }
 

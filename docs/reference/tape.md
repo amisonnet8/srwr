@@ -63,6 +63,8 @@ It also has `vcs` and `tool` (`{"name":"srwr","version":"…"}`).
 - When the workspace is not under git, or git cannot be used (not installed, refused, or not finished in 5 seconds), it is `null`. The AI's work is not stopped
 - Neither the branch name nor the URL of the remote is written (tapes are shared). A reader ignores items of `vcs` it does not know
 
+**A tape cut from other tapes**: `srwr trace --as-tape` writes the operations that made the lines of a commit as one tape, with `author` `{"kind":"derived","name":"srwr trace"}`. Everything else is the same as a tape written in a session: the replay does not change, and `srwr trace` does not count such a tape as the writer of a line (it holds the operations of other tapes). For each file the tape has a `snapshot` of the file as it was before the first of the operations, then every `look`, `edit`, `new` and `external` of that file up to the last of them (the lines of an `edit` count on the edits before it, so the ones between cannot be left out). `seq` starts again from 1, and `selection` and `from` are `null`: the tokens belong to the tape they came from. The ID is the time of the first event and the first 4 characters of the commit, so the same commit gives the same tape. The last diff of a replay is against the file as it is now, so later work shows as a difference.
+
 ### snapshot
 
 The **whole text** of a file. It is recorded when the file is first touched in the session, and when a file that an `external` removed comes back. After that the file is followed by `edit`, `new` and `external` events only, which hold just the changed lines. Replay is built by applying them in order from the last `snapshot`.

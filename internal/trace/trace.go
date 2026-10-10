@@ -9,25 +9,37 @@ import (
 	"github.com/amisonnet8/srwr/internal/tape"
 )
 
-// Op is one edit or new of a tape: the lines it wrote and why.
-type Op struct {
-	Tape  string
-	Seq   int
-	Type  string // "edit" or "new"
-	File  string
-	Time  time.Time
-	Why   string
-	Lines []string
+// Source is one tape: its header and all its events, in order.
+type Source struct {
+	ID     string
+	Header tape.Event
+	Events []tape.Event
 }
 
-// Collect reads the tapes of dir (only, when non-empty) and returns their edits and news, oldest first. A tape that cannot be
-// read is skipped.
-func Collect(dir, only string) []Op {
+// DerivedKind is the author.kind of a tape that srwr trace --as-tape made: it holds operations of other tapes, so it is not
+// a source of operations itself.
+const DerivedKind = "derived"
+
+// Op is one edit or new of a tape: the lines it wrote and why. Source and Index say where it is: Sources[Source].Events[Index].
+type Op struct {
+	Tape   string
+	Seq    int
+	Type   string // "edit" or "new"
+	File   string
+	Time   time.Time
+	Why    string
+	Lines  []string
+	Source int
+	Index  int
+}
+
+// Load reads the tapes of dir (only, when non-empty). A tape that cannot be read, and a tape made by --as-tape, is skipped.
+func Load(dir, only string) []Source {
 	ids := tape.IDs(dir)
 	if only != "" {
 		ids = []string{only}
 	}
-	var ops []Op
+	var out []Source
 	for _, id := range ids {
 		path, ok := tape.Find(dir, id)
 		if !ok {
@@ -37,11 +49,31 @@ func Collect(dir, only string) []Op {
 		if err != nil {
 			continue
 		}
-		for _, e := range tape.Parse(b).Events {
+		src := Source{ID: id, Events: tape.Parse(b).Events}
+		derived := false
+		for _, e := range src.Events {
+			if e.Type == tape.TypeHeader {
+				src.Header = e
+				derived = e.Author != nil && e.Author.Kind == DerivedKind
+				break
+			}
+		}
+		if !derived {
+			out = append(out, src)
+		}
+	}
+	return out
+}
+
+// OpsOf returns the edits and news of the sources, oldest first.
+func OpsOf(srcs []Source) []Op {
+	var ops []Op
+	for si, src := range srcs {
+		for i, e := range src.Events {
 			if (e.Type != tape.TypeEdit && e.Type != tape.TypeNew) || e.File == "" {
 				continue
 			}
-			op := Op{Tape: id, Seq: e.Seq, Type: e.Type, File: filepath.ToSlash(e.File), Lines: tape.Lines(e.NewText)}
+			op := Op{Tape: src.ID, Seq: e.Seq, Type: e.Type, File: filepath.ToSlash(e.File), Lines: tape.Lines(e.NewText), Source: si, Index: i}
 			if e.Why != nil {
 				op.Why = *e.Why
 			}
@@ -60,6 +92,9 @@ func Collect(dir, only string) []Op {
 	})
 	return ops
 }
+
+// Collect reads the tapes of dir (only, when non-empty) and returns their edits and news, oldest first.
+func Collect(dir, only string) []Op { return OpsOf(Load(dir, only)) }
 
 // Segment is added lines From..To (line numbers in the new file) that Op wrote, or that no operation did (Op is nil).
 type Segment struct {

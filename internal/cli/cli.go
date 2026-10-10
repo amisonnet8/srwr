@@ -30,7 +30,7 @@ Usage:
   srwr view [tape] [--live]              Replay in Vim (--root <workspace>)
   srwr init [--lenient]                  Set up a workspace for srwr (--lenient: do not forbid Edit and Write; --root <workspace>)
   srwr tapes [new|prune|path]            List and tidy tapes (--root <workspace>)
-  srwr trace [--mark] [file]             Find the tape operations (and why) behind the lines a diff adds (git show | srwr trace)
+  srwr trace [--mark|--as-tape] [file]   Find the tape operations (and why) behind the lines a diff adds (git show | srwr trace)
   srwr --version                         Version
   srwr --help                            This help
 `
@@ -44,7 +44,7 @@ const usageJA = `srwr: AI に select / replace の2コマンドだけでファ�
   srwr view [テープ] [--live]         Vim で再生する（--root <作業場>）
   srwr init [--lenient]               作業場を srwr 用に準備する（--lenient：Edit・Write を禁止しない。--root <作業場>）
   srwr tapes [new|prune|path]         テープの一覧・整理（--root <作業場>）
-  srwr trace [--mark] [file]             差分（git show など）の追加行を作ったテープの操作と理由を引く（git show | srwr trace）
+  srwr trace [--mark|--as-tape] [file]   差分（git show など）の追加行を作ったテープの操作と理由を引く（git show | srwr trace）
   srwr --version                      バージョン
   srwr --help                         この説明
 `

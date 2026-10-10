@@ -206,7 +206,7 @@ An example of the output (the time zone is `Asia/Tokyo`; the date and time in a 
 ## srwr trace
 
 ```
-srwr trace [--root <workspace>] [--tape <id>] [--mark] [--json] [<file>]
+srwr trace [--root <workspace>] [--tape <id>] [--mark] [--json] [--as-tape] [<file>]
 git show HEAD | srwr trace
 git log -p -5 | srwr trace --mark
 ```
@@ -217,7 +217,9 @@ Gives the lines a commit adds back to the operations on the tapes that wrote the
 - **What it cannot tell**: lines that no tape holds (written by a person, by a tool outside srwr, in a file that is not recorded, or on a tape that was deleted) are counted as `not on a tape`. A line that was moved or changed after srwr wrote it is not found. This is not `git blame`: it tells which operation wrote an added line of the diff, not who last touched a line.
 - **Default output**: for each commit (when the text has `commit <sha>` lines), each file, the lines of the new file, the operation (the kind, the tape ID, `#seq`, the time in the time zone of the machine) and its `why`. At the end of a commit, how many added lines came from tapes. A tape ID can be replayed with `srwr view <tape>`.
 - **`--mark`**: prints the text as it is, and puts `# why: …  (<tape ID> #<seq>)` after the `@@` line of each hunk for the operations that wrote its lines.
-- **`--json`**: the same as the default output, for a program. `--mark` and `--json` do not go together.
+- **`--json`**: the same as the default output, for a program.
+- **`--as-tape`**: writes the operations found for each commit as one tape in `.srwr/tapes/` that can be replayed (`srwr view <ID>`, or the list of the editor), and names it under the commit. The tape holds, for each file, everything between the first and the last of those operations ([tape.md](tape.md)). The same text makes the same tape. A tape of the same ID that this command did not make is never replaced.
+- `--mark`, `--json` and `--as-tape` do not go together.
 - Files under `.srwr/` and deleted files are not listed.
 
 ## Files that are not recorded

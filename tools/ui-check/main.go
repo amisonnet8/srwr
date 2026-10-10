@@ -63,6 +63,12 @@ func run(args []string, out io.Writer) error {
 				return err
 			}
 			return runReadme(root, out)
+		case "trace-try":
+			root, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+			return runTraceTry(root, out)
 		case "accept":
 			root, err := os.Getwd()
 			if err != nil {

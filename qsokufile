@@ -66,6 +66,10 @@ readme-media: (cd //; qsoku bin && go run ./tools/ui-check readme)
 # qsoku ui-open <vscode|vim> <why-basic|external|no-why|live>
 ui-open: (cd //; qsoku bin && { [ "$1" != vscode ] || qsoku ext-build; } && go run ./tools/ui-check open "$@")
 
+# qsoku trace-try: makes a git work tree where the real srwr mcp changes files, commits it, runs srwr trace --as-tape on git show,
+# and opens the cut tape in Vim (a person looks at the replay)
+trace-try: (cd //; qsoku bin && go run ./tools/ui-check trace-try)
+
 # Vim client tests (vim/test/test_*.vim) in a headless Vim. Each test ends with
 # qall! on success or cquit on failure. -c 'cquit 2' and </dev/null keep a test that
 # errors halfway from waiting for input in Ex mode. The tests talk to the real display server, so bin/srwr is built first.

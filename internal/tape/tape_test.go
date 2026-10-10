@@ -519,3 +519,24 @@ func TestParseVersion1(t *testing.T) {
 		}
 	}
 }
+
+func TestHeaderTitleIsWrittenOnlyWhenThereIsOne(t *testing.T) {
+	plain, err := Marshal(Event{Type: TypeHeader, Session: "a1b2", StartedAt: "2026-10-10T00:00:00.000Z", Author: &Author{Kind: "ai", Name: "claude"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(plain), "title") || strings.Contains(string(plain), `"why"`) {
+		t.Errorf("a header with no title: %s", plain)
+	}
+	titled, err := Marshal(Event{Type: TypeHeader, Session: "a1b2", StartedAt: "2026-10-10T00:00:00.000Z", Title: "docs first", Why: Str("wording")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	res := Parse(titled)
+	if len(res.Events) != 1 || res.Events[0].Title != "docs first" || res.Events[0].Why == nil || *res.Events[0].Why != "wording" {
+		t.Errorf("read back = %+v (%s)", res.Events, titled)
+	}
+	if got := Parse(plain).Events[0]; got.Title != "" || got.Why != nil {
+		t.Errorf("plain header read as %+v", got)
+	}
+}

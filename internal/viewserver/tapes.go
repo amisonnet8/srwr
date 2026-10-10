@@ -19,6 +19,9 @@ type tapeInfo struct {
 	UpdatedAt string   `json:"updatedAt"`
 	Ops       int      `json:"ops"`
 	Files     []string `json:"files"`
+	// Title and Why are the ones the AI gave with the session tool: the header of the tape has them, or the entry does not.
+	Title string `json:"title,omitempty"`
+	Why   string `json:"why,omitempty"`
 }
 
 // listEntry remembers what was made of a tape, so that a tape that has not changed is not read again.
@@ -76,14 +79,17 @@ func (c *conn) info(id string) *tapeInfo {
 		res := tape.Parse(data)
 		b := timeline.Build(res.Events)
 		if b.Ops() > 0 {
-			started := ""
+			started, title, why := "", "", ""
 			for _, e := range res.Events {
 				if e.Type == tape.TypeHeader {
-					started = e.StartedAt
+					started, title = e.StartedAt, e.Title
+					if e.Why != nil {
+						why = *e.Why
+					}
 					break
 				}
 			}
-			info = &tapeInfo{TapeID: id, StartedAt: started, UpdatedAt: tape.FormatTS(st.ModTime()), Ops: b.Ops(), Files: append([]string{}, b.Files()...)}
+			info = &tapeInfo{TapeID: id, StartedAt: started, UpdatedAt: tape.FormatTS(st.ModTime()), Ops: b.Ops(), Files: append([]string{}, b.Files()...), Title: title, Why: why}
 		}
 	}
 	c.cache[id] = listEntry{size: st.Size(), mod: st.ModTime(), info: info}

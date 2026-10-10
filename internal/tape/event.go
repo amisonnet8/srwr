@@ -40,7 +40,7 @@ type ToolInfo struct {
 
 // Event is one line of a tape. Which fields are used depends on Type:
 //
-//	header:   Session, StartedAt, Author, VCS, Tool
+//	header:   Session, StartedAt, Author, VCS, Tool, and Title and Why when the AI started the session with the session tool
 //	snapshot: Seq, TS, File, FileHash, Text (never nil), Sha
 //	look:     Seq, TS, File, StartLine, EndLine, Why, Selection, Source, HookTool
 //	edit, new:
@@ -64,6 +64,7 @@ type Event struct {
 	StartedAt string
 	VCS       json.RawMessage // null, or {"type":"git","head":…,"dirty":…} (internal/vcs)
 	Tool      *ToolInfo
+	Title     string // header only: the title the AI gave with the session tool; "" when there is none (then Why is nil too)
 
 	// Author is also set on external events.
 	Author *Author

@@ -141,7 +141,7 @@ The same as [vscode.md](vscode.md). **look is blue, and what changes a file (edi
 - To close: `q` in the operation list on the left, or `:SrwrClose` from anywhere (it is written in the status line too)
 
 ### 8. The tape list
-- The buffer `srwr://tapes`. Newest first (by the time the tape started), with the columns `Started`, `Updated`, `Ops`, `Files` and `Tape` (the tape ID), the times in the time zone of the machine (`2026-10-03 17:12`). With no tape it says "No tapes (in .srwr/tapes/ of this workspace)". `<CR>` opens one. `q` closes it
+- The buffer `srwr://tapes`. Newest first (by the time the tape started), with the columns `Started`, `Updated`, `Ops`, `Files` and `Tape` (the tape ID), the times in the time zone of the machine (`2026-10-03 17:12`). With no tape it says "No tapes (in .srwr/tapes/ of this workspace)". `<CR>` opens one. `q` closes it. When a tape has a title (the AI gave one with the [`session`](mcp.md#session) tool), a column `Title` is added at the end, and the tape has its title there; a list with no titled tape has no such column
 
 ## How it works (for those who build)
 

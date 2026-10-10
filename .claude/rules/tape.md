@@ -15,6 +15,7 @@ srwr には、形式の約束が2つある。
 - **先に `docs/reference/` の該当文書を直し、読む側と書く側を同じ変更の中で直す。** プロトコルなら、サーバー・VSCode・Vim の3つを一緒に直す
 - 実装側で勝手にフィールドを足したり、名前を変えたりしない。名前の付け方は `.claude/rules/naming.md`
 - **v1 までは、テープの形式の互換を保証しない**（q 7e8928bce7。実験の段階で、利用者がいない）。形式を変えるとき、古い版・古いテープとの互換は考えなくてよい。`v` も上げなくてよい。ただし、形式の変更は重要な判断なので、聞いてから行う。プロトコル（エディタとの約束）の `protocolVersion` は、拡張と表示サーバーが食い違うと利用者が困るので、意味を変えたら上げる
+- **v0.1.15：header に `title`・`why`**（`session` ツールで始めたテープだけ。値がなければ項目ごと書かない。読み手は今までどおり読める。`v`・`protocolVersion` は変えない）。`TapeInfo` に `title`・`why`（足すだけ）。
 - **v0.1.15：`srwr trace --as-tape` が、ほかのテープの操作を切り出した派生テープを書く。** header の `author.kind` が `derived`（形式の項目は増えない）。読み手は今までどおり読める。`srwr trace` はこれを元とは数えない。
 - **v0.1.13：`replace` ツールをなくした。** 版 2 の `replace` のイベントも `edit` として読む（`tape.Parse`。`hits` は捨てる。`failure` の `tool: replace` も `edit`）。golden の `replace`・`sub` は版 1 の名前で、もともと `edit` と読み替えている。
 - **版 2（v0.1.5）**：イベントの名前を、ツールの名前に揃えた（`select`→`look`、`replace`→`edit`、`tool` が `sub`／`new` の `replace`→`replace`／`new`）。**版 1 のテープも読める**（約束。`docs/reference/tape.md`）。読み替えは `tape.Parse`（`internal/tape/read.go`）の**1か所**で、行ごとの `v` を見る（更新のあとに同じテープへ版 2 で書き足されるため）。fixture・golden・固定テープは版 1 のまま。golden を比べるテストは、`select`→`look`・`replace`→`edit`・`sub`→`replace` と読み替えて比べる。書き換えない

@@ -363,3 +363,29 @@ func TestTapesNewWarnsWhenTheTapeCannotBeCompressed(t *testing.T) {
 		t.Error("the session is still open")
 	}
 }
+
+// A tape the AI started with the session tool has its title on a line of its own under its row; the others have none.
+func TestTapesListShowsTheTitleOfASession(t *testing.T) {
+	root := t.TempDir()
+	write(t, root, "a.txt", "1\n2\n")
+	makeTape(t, root, time.Now().Add(-time.Hour), "a.txt")
+	ws, err := session.Open(root, session.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := ws.StartSession("ドキュメントを先に直す", "言い回しを決める"); err != nil {
+		t.Fatal(err)
+	}
+	makeTape(t, root, time.Now(), "a.txt") // the first operation of the titled session
+	code, out, _ := tapesOut(t, root)
+	if code != 0 {
+		t.Fatal(code, out)
+	}
+	lines := strings.Split(strings.TrimRight(out, "\n"), "\n")
+	if len(lines) != 6 || lines[2] != "    ドキュメントを先に直す" {
+		t.Errorf("the title is not under its row:\n%s", out)
+	}
+	if strings.Contains(out, "言い回しを決める") {
+		t.Errorf("the why is shown in the list:\n%s", out)
+	}
+}

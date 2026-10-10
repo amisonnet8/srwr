@@ -155,6 +155,41 @@ func (w *Workspace) EndSession() (string, error) {
 	return closed, nil
 }
 
+// StartSession ends the current session and starts the next one now, with a title and a why in the header of its tape. The tape
+// is made at once (the next write by any process goes to it), so what the AI said stays even if nothing is written after it.
+// A current tape with no operation yet (only a header, from an earlier StartSession) is removed rather than closed: it holds
+// nothing to replay. It returns the ID of the new tape and the ID of the tape that was closed, or "". A tape that could not
+// be compressed does not stop it: compressing only saves space.
+func (w *Workspace) StartSession(title, why string) (id, closed string, err error) {
+	err = w.Do(func(tx *Tx) error {
+		if tx.tc.exists {
+			old := tx.tc.id
+			if tx.tc.state.LastSeq == 0 && !tx.tc.closed {
+				if rerr := os.Remove(w.TapePath(old)); rerr != nil && !errors.Is(rerr, os.ErrNotExist) {
+					return rerr
+				}
+			} else {
+				closed = old
+				if !tx.tc.closed {
+					_ = w.closeTape(old)
+				}
+			}
+		}
+		newTape, nerr := w.newID(w.opts.Now())
+		if nerr != nil {
+			return nerr
+		}
+		w.cache = &tapeCache{id: newTape, state: tape.NewState()}
+		tx.tc = w.cache
+		if cerr := tx.createTape(w.TapePath(newTape), title, &why); cerr != nil {
+			return cerr
+		}
+		id = newTape
+		return nil
+	})
+	return id, closed, err
+}
+
 // CompressError says that a session was closed but its tape could not be compressed; the plain tape is still there.
 type CompressError struct {
 	ID  string
@@ -379,7 +414,7 @@ func (t *Tx) Append(e tape.Event) error {
 	path := t.w.TapePath(t.tc.id)
 
 	if !t.tc.exists {
-		if err := t.createTape(path); err != nil {
+		if err := t.createTape(path, "", nil); err != nil {
 			return err
 		}
 	}
@@ -403,7 +438,7 @@ func (t *Tx) Append(e tape.Event) error {
 }
 
 // createTape writes the header of a new tape and makes it the current one.
-func (t *Tx) createTape(path string) error {
+func (t *Tx) createTape(path, title string, why *string) error {
 	header := tape.Event{
 		Type:      tape.TypeHeader,
 		Session:   t.tc.id[strings.LastIndexByte(t.tc.id, '-')+1:],
@@ -411,6 +446,8 @@ func (t *Tx) createTape(path string) error {
 		Author:    t.w.author.Load(),
 		VCS:       t.w.opts.VCS(t.w.root),
 		Tool:      &tape.ToolInfo{Name: "srwr", Version: t.w.opts.Version},
+		Title:     title,
+		Why:       why,
 	}
 	line, err := tape.Marshal(header)
 	if err != nil {

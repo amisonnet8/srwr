@@ -52,7 +52,7 @@ The arguments are a JSON object (`{}` if none).
 
 **`tapeId`**: the file name of the tape without `.tape.jsonl` (for example `20260929-0237-1359`). Only the characters `0-9 A-Z a-z - _ .` are accepted and it must not start with `.`; anything else (such as `/`) gives `invalid_params`.
 
-**TapeInfo**: `{tapeId, startedAt, updatedAt, ops, files}`. `startedAt` is the value of the header (`""` if there is no header), `updatedAt` is the last update time of the tape's file (RFC 3339 in UTC with milliseconds, ending in `Z`), `ops` is the number of `look`, `edit` and `external`, and `files` are the files touched (in the order first touched). `startedAt` of a tape written by an older version may have an offset such as `+09:00`; it is the same moment. A client shows these times in the time zone of the machine.
+**TapeInfo**: `{tapeId, startedAt, updatedAt, ops, files, title?, why?}`. `startedAt` is the value of the header (`""` if there is no header), `updatedAt` is the last update time of the tape's file (RFC 3339 in UTC with milliseconds, ending in `Z`), `ops` is the number of `look`, `edit` and `external`, and `files` are the files touched (in the order first touched). `title` and `why` are the ones the AI gave with the [`session`](mcp.md#session) tool, in the header of the tape; they are absent (not `""`) for a tape without them, and a client that does not know them ignores them. `startedAt` of a tape written by an older version may have an offset such as `+09:00`; it is the same moment. A client shows these times in the time zone of the machine.
 
 ## Frames
 

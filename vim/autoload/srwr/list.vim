@@ -7,8 +7,15 @@ import autoload './lang.vim'
 
 const HEADER_JA = '開始時刻          更新時刻            操作  ファイル  テープ'
 
-export def Header(): string
-  return lang.Ja() ? HEADER_JA : printf('%-16s  %-16s  %4s  %8s  %s', 'Started', 'Updated', 'Ops', 'Files', 'Tape')
+# Header is the first row. The title column is named only when a tape of the list has a title (a list of tapes with none is as it was).
+export def Header(withTitle: bool = false): string
+  const base = lang.Ja() ? HEADER_JA : printf('%-16s  %-16s  %4s  %8s  %s', 'Started', 'Updated', 'Ops', 'Files', 'Tape')
+  if !withTitle
+    return base
+  endif
+  # The last column of the base is the tape ID, 18 characters wide (20261010-0931-e0tq).
+  const last = lang.Pick('Tape', 'テープ')
+  return base .. repeat(' ', 18 - strdisplaywidth(last)) .. '  ' .. lang.Pick('Title', '題')
 enddef
 
 def NoOpen(_id: string)
@@ -48,7 +55,12 @@ enddef
 
 # Line is one row of the list.
 export def Line(t: dict<any>): string
-  return printf('%-16s  %-16s  %4d  %8d  %s', Time(get(t, 'startedAt', '')), Time(get(t, 'updatedAt', '')), t.ops, len(t.files), t.tapeId)
+  const row = printf('%-16s  %-16s  %4d  %8d  %s', Time(get(t, 'startedAt', '')), Time(get(t, 'updatedAt', '')), t.ops, len(t.files), t.tapeId)
+  const title = get(t, 'title', '')
+  if type(title) != v:t_string || title ==# ''
+    return row
+  endif
+  return printf('%s  %s', row, title)
 enddef
 
 # Show opens the list in a new tab. Open(tapeId) is called for <CR> on a row.
@@ -60,7 +72,7 @@ export def Show(tapes: list<dict<any>>, Open: func(string))
   buf.SetupReadonly()
   setlocal nonumber cursorline
   silent keepalt file srwr://tapes
-  buf.SetLines(listBuf, empty(tapes) ? [lang.Pick('No tapes (in .srwr/tapes/ of this workspace)', 'テープがありません（この作業場の .srwr/tapes/）')] : [Header()] + mapnew(tapes, (_, t) => Line(t)))
+  buf.SetLines(listBuf, empty(tapes) ? [lang.Pick('No tapes (in .srwr/tapes/ of this workspace)', 'テープがありません（この作業場の .srwr/tapes/）')] : [Header(!empty(filter(copy(tapes), (_, t) => get(t, 'title', '') !=# '')))] + mapnew(tapes, (_, t) => Line(t)))
   nnoremap <buffer><silent><nowait> <CR> <ScriptCmd>Enter()<CR>
   nnoremap <buffer><silent><nowait> q <ScriptCmd>Close()<CR>
   if !empty(tapes)

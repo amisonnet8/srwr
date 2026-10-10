@@ -101,7 +101,8 @@ const wantStrictSettings = `{
     "allow": [
       "mcp__srwr__look",
       "mcp__srwr__edit",
-      "mcp__srwr__new"
+      "mcp__srwr__new",
+      "mcp__srwr__session"
     ],
     "deny": [
       "Edit",

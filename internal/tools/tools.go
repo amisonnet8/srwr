@@ -1,4 +1,4 @@
-// Package tools defines the MCP tools, look, edit, replace and new: their names, the text the AI reads
+// Package tools defines the MCP tools, look, edit, new and session: their names, the text the AI reads
 // and the schema of their input. What they do is in internal/core.
 package tools
 
@@ -11,9 +11,10 @@ type Tool struct {
 
 // Names of the tools.
 const (
-	Look = "look"
-	Edit = "edit"
-	New  = "new"
+	Look    = "look"
+	Edit    = "edit"
+	New     = "new"
+	Session = "session"
 )
 
 const whyDescription = "The reason, in one sentence, in the language of the conversation with the user. It is for people to read. Empty or blank is not allowed"
@@ -127,6 +128,20 @@ func List() []Tool {
 					"why":     map[string]any{"type": "string", "minLength": 1, "pattern": `\S`, "description": whyDescription},
 				},
 				"required": []string{"file", "content", "why"},
+			},
+		},
+		{
+			Name: Session,
+			Description: "Optional. Start a new tape (a new session) with a title, when you begin work that is a different unit from what you did before (for example docs first, then the code). " +
+				"The tape you were writing is closed, and everything you do next, and what other agents do in this workspace, goes to the new one. " +
+				"If you never call it, srwr starts a new tape on its own after 30 minutes without an operation. Call it at the start of a unit of work, not in the middle of one.",
+			InputSchema: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"title": map[string]any{"type": "string", "minLength": 1, "maxLength": 80, "pattern": `\S`, "description": "A short name of the work, one line, at most 80 characters, in the language of the conversation with the user"},
+					"why":   map[string]any{"type": "string", "minLength": 1, "pattern": `\S`, "description": whyDescription},
+				},
+				"required": []string{"title", "why"},
 			},
 		},
 	}

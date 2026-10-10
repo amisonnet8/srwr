@@ -739,3 +739,103 @@ func TestAClosedTapeIsNotAppendedTo(t *testing.T) {
 		t.Errorf("the closed tape has %d events, want 2", n)
 	}
 }
+
+func TestStartSessionClosesTheTapeAndWritesTheTitle(t *testing.T) {
+	root := t.TempDir()
+	c := newClock()
+	w := open(t, root, c)
+	var first string
+	if err := w.Do(func(tx *Tx) error { first = tx.TapeID(); return tx.Append(selectEvent(1)) }); err != nil {
+		t.Fatal(err)
+	}
+	c.t = c.t.Add(time.Minute)
+	id, closed, err := w.StartSession("docs first", "to settle the wording")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if closed != first || id == first || !idRe.MatchString(id) {
+		t.Fatalf("id = %q, closed = %q, first = %q", id, closed, first)
+	}
+	// The old tape is closed (compressed) and the new one is made at once, with the title in its header.
+	if _, err := os.Stat(w.TapePath(first)); !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("the closed tape is still plain: %v", err)
+	}
+	res := readTape(t, w, id)
+	if len(res.Events) != 1 || res.Events[0].Type != tape.TypeHeader || res.Events[0].Title != "docs first" || res.Events[0].Why == nil || *res.Events[0].Why != "to settle the wording" {
+		t.Fatalf("new tape = %+v", res.Events)
+	}
+	// The next write of any process goes to the new tape, from seq 1.
+	w2 := open(t, root, c)
+	if err := w2.Do(func(tx *Tx) error {
+		if tx.TapeID() != id || tx.NextSeq() != 1 {
+			t.Errorf("TapeID = %q, NextSeq = %d", tx.TapeID(), tx.NextSeq())
+		}
+		return tx.Append(selectEvent(1))
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if got := readTape(t, w, id); len(got.Events) != 2 {
+		t.Errorf("events = %d, want header and look", len(got.Events))
+	}
+}
+
+func TestStartSessionRemovesATapeWithNoOperation(t *testing.T) {
+	root := t.TempDir()
+	w := open(t, root, newClock())
+	a, closed, err := w.StartSession("one", "x")
+	if err != nil || closed != "" {
+		t.Fatalf("a = %q closed = %q err = %v", a, closed, err)
+	}
+	b, closed, err := w.StartSession("two", "y")
+	if err != nil || closed != "" || a == b {
+		t.Fatalf("b = %q closed = %q err = %v", b, closed, err)
+	}
+	if _, found := tape.Find(filepath.Dir(w.TapePath(a)), a); found {
+		t.Errorf("the tape with no operation was kept")
+	}
+	if ids := tape.IDs(filepath.Dir(w.TapePath(a))); !slices.Equal(ids, []string{b}) {
+		t.Errorf("tapes = %v, want only %s", ids, b)
+	}
+}
+
+func TestATapeWithoutATitleHasNoTitleInItsHeader(t *testing.T) {
+	root := t.TempDir()
+	w := open(t, root, newClock())
+	var id string
+	if err := w.Do(func(tx *Tx) error { id = tx.TapeID(); return tx.Append(selectEvent(1)) }); err != nil {
+		t.Fatal(err)
+	}
+	b, err := os.ReadFile(w.TapePath(id))
+	if err != nil {
+		t.Fatal(err)
+	}
+	first := strings.SplitN(string(b), "\n", 2)[0]
+	if strings.Contains(first, `"title"`) || strings.Contains(first, `"why"`) {
+		t.Errorf("header = %s", first)
+	}
+}
+
+func TestStartSessionOfTwoProcessesKeepsOneCurrentTape(t *testing.T) {
+	root := t.TempDir()
+	c := newClock()
+	var wg sync.WaitGroup
+	for i := range 4 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			w := open(t, root, c)
+			if _, _, err := w.StartSession("t", "w"); err != nil {
+				t.Errorf("%d: %v", i, err)
+			}
+		}()
+	}
+	wg.Wait()
+	w := open(t, root, c)
+	cur, ok := w.Current()
+	if !ok {
+		t.Fatal("no current session")
+	}
+	if ids := tape.IDs(filepath.Dir(w.TapePath(cur))); len(ids) != 1 || ids[0] != cur {
+		t.Errorf("tapes = %v, current = %s", ids, cur)
+	}
+}

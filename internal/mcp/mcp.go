@@ -118,6 +118,8 @@ func (s *Server) call(params json.RawMessage) (any, *jsonrpc.Error) {
 		return s.callLook(p.Arguments), nil
 	case tools.Edit:
 		return s.callEdit(p.Arguments), nil
+	case tools.Session:
+		return s.callSession(p.Arguments), nil
 	case tools.New:
 		return s.callNew(p.Arguments), nil
 	}
@@ -582,6 +584,36 @@ func (s *Server) callNew(raw json.RawMessage) toolResult {
 		return failure(*cerr)
 	}
 	return success(newOK{OK: true, Selection: res.Selection, StartLine: res.StartLine, EndLine: res.EndLine})
+}
+
+type sessionArgs struct {
+	Title *string `json:"title"`
+	Why   *string `json:"why"`
+}
+
+type sessionOK struct {
+	OK     bool    `json:"ok"`
+	TapeID string  `json:"tapeId"`
+	Closed *string `json:"closed"`
+}
+
+func (s *Server) callSession(raw json.RawMessage) toolResult {
+	var a sessionArgs
+	if err := decodeArgs(raw, &a); err != nil {
+		return failure(*err)
+	}
+	if missing := firstMissing(map[string]bool{"title": a.Title == nil, "why": a.Why == nil}, "title", "why"); missing != "" {
+		return failure(core.Error{Code: core.CodeInvalidInput, Message: "missing required input: " + missing})
+	}
+	res, cerr := s.Core.Session(core.SessionInput{Title: *a.Title, Why: *a.Why})
+	if cerr != nil {
+		return failure(*cerr)
+	}
+	out := sessionOK{OK: true, TapeID: res.TapeID}
+	if res.Closed != "" {
+		out.Closed = &res.Closed
+	}
+	return success(out)
 }
 
 // decodeArgs reads the arguments of a call. A value of the wrong type is invalid_input, like a missing one.

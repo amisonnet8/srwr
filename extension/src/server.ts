@@ -12,6 +12,9 @@ export interface TapeInfo {
   updatedAt?: string;
   ops: number;
   files: string[];
+  // The title and why the AI gave with the session tool (the header of the tape). Absent for a tape without them.
+  title?: string;
+  why?: string;
 }
 
 // What the display parts use to reach the server. Tests replace it with a fake (test/fakeserver.ts).

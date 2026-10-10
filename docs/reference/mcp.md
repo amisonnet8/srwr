@@ -11,10 +11,11 @@ The AI agent edits files with only **three tools** provided by the MCP server `s
 | `look` | Looks at a range. A selection token is returned |
 | `edit` | Changes the range of a selection token to new text |
 | `new` | Creates a file that does not exist yet, with its content |
+| `session` | Optional. Starts a new tape with a title (see [session](#session)). It does not edit anything |
 
 There is no `edit` without `look`. So the tape always holds "look, then change" together. The same change in many places is made with `edits` (one `why`, all or none). Searching and reading are left to the Read and grep the AI already has (the hook records them; see `srwr hook` in [cli.md](cli.md)).
 
-All three require a `why` (the reason). It is the heart of what a person sees when replaying the [tape](tape.md).
+`look`, `edit` and `new` require a `why`; so does `session` (the reason). It is the heart of what a person sees when replaying the [tape](tape.md).
 
 The descriptions of the tools and the error messages are in English, whatever the language of the screen, because they are for the AI to read.
 
@@ -208,9 +209,32 @@ Creates a file that does not exist yet, with its content, and records why.
 - On the tape it is one `new` ([tape.md](tape.md#new)). A viewer shows it as the whole file, painted like an `edit`, with the `why` above it
 - Making a file with a shell command still works; it is then recorded as an [`external`](tape.md#external) with `created: true`, with no `why`
 
+## session
+
+Starts a new tape (a new [session](tape.md#file-name-and-session)) with a title, when the AI begins work that is a different unit from what it did before (for example "docs first", then "the code"). The AI never has to call it: without it a new tape starts after 30 minutes without an operation, as before.
+
+```jsonc
+// input
+{ "title": "Write the docs first", "why": "Settle the wording before the code changes" }
+// output
+{ "ok": true, "tapeId": "20261010-0931-e0tq", "closed": "20261010-0812-k3m9" }
+```
+
+| Item | Meaning |
+|---|---|
+| `title` | A short name of the work. One line, at most 80 characters, not blank (`invalid_input`) |
+| `why` | Why the work is started as a new unit. Required |
+| `tapeId` in the output | The tape that is written now. It is made at once, with the title and why in its `header` |
+| `closed` in the output | The tape that was closed (it is [compressed](tape.md#a-closed-tape-is-compressed)), or `null` when there was none or it had no operation yet |
+
+- It works on the **whole workspace**, like `srwr tapes new`: what other agents and hooks write next goes to the new tape too. Selection tokens issued before it can no longer be used (they belong to the tape that was closed)
+- A tape that had no operation (only a title from an earlier `session`) is removed, not closed
+- The title is for the list of tapes (`srwr tapes`, the list in Vim, the tape picker in VSCode). A replay does not change
+- It touches no file of the workspace, and a refusal is not written to the tape
+
 ## why
 
-- **Required in all three** (`look`, `edit` and `new`). Blank is not allowed either (`invalid_input`)
+- **Required in `look`, `edit`, `new` and `session`**. Blank is not allowed either (`invalid_input`)
 - In `look` it is "why it looks here", in `edit` "why it changes it this way". Write the reason in one sentence, not a rephrasing of what is being done
 - Write it in **the same language as the conversation with the user** (the descriptions of the tools and the input schema ask for this). It is for people to read
 

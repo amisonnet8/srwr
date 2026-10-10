@@ -70,6 +70,10 @@ ui-open: (cd //; qsoku bin && { [ "$1" != vscode ] || qsoku ext-build; } && go r
 # and opens the cut tape in Vim (a person looks at the replay)
 trace-try: (cd //; qsoku bin && go run ./tools/ui-check trace-try)
 
+# qsoku session-try: the real srwr mcp works in three sessions (two started with the session tool and a title); shows srwr tapes
+# and opens the list of tapes in Vim (a person looks at the titles)
+session-try: (cd //; qsoku bin && go run ./tools/ui-check session-try)
+
 # Vim client tests (vim/test/test_*.vim) in a headless Vim. Each test ends with
 # qall! on success or cquit on failure. -c 'cquit 2' and </dev/null keep a test that
 # errors halfway from waiting for input in Ex mode. The tests talk to the real display server, so bin/srwr is built first.

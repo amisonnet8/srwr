@@ -28,6 +28,7 @@ type tapeRow struct {
 	events  int
 	files   int
 	size    int64
+	title   string // the title the AI gave with the session tool, "" when none
 }
 
 // runTapes is srwr tapes [new | prune (--keep N | --older-than 30d) | path <id> | check [<id>]] [--root <dir>].
@@ -132,6 +133,7 @@ func tapeRows(ws *session.Workspace) ([]tapeRow, error) {
 		row.files = len(st.Files)
 		for _, ev := range res.Events {
 			if ev.Type == tape.TypeHeader {
+				row.title = ev.Title
 				row.started, _ = time.Parse(time.RFC3339, ev.StartedAt)
 				continue
 			}
@@ -181,6 +183,9 @@ func tapesList(ws *session.Workspace, stdout, stderr io.Writer) int {
 			line += lang.Pick("  <- current session", "  ← 今のセッション")
 		}
 		_, _ = fmt.Fprintln(stdout, line)
+		if r.title != "" {
+			_, _ = fmt.Fprintln(stdout, "    "+r.title)
+		}
 	}
 	_, _ = fmt.Fprintf(stdout, lang.Pick("\n%s (%s in all). Replay one with srwr view <tape>; share one with srwr tapes path <tape>.\n", "\n%s（合計 %s）。再生は srwr view <テープ>、共有は srwr tapes path <テープ>。\n"), count(len(rows)), strings.TrimSpace(kb(total)))
 	return 0

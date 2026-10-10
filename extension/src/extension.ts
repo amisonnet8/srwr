@@ -105,7 +105,7 @@ export function activate(context: vscode.ExtensionContext, createServer: ServerF
       return;
     }
     const items = tapes.map((t) => ({
-      label: startedLabel(t),
+      label: startedLabel(t) + (t.title ? `  ${t.title}` : ""),
       description: `${pick(`${t.ops} ${t.ops === 1 ? "operation" : "operations"}`, `${t.ops}操作`)} · ${t.files.join(", ")}`,
       detail: t.tapeId + TAPE_SUFFIX,
       tape: t,

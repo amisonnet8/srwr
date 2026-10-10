@@ -59,6 +59,8 @@ func parseLine(line []byte) (Event, bool) {
 		e.StartedAt, _ = getString(m, "startedAt")
 		e.Author = getAuthor(m)
 		e.VCS = m["vcs"]
+		e.Title, _ = getString(m, "title")
+		e.Why = getNullableString(m, "why")
 		var tool ToolInfo
 		if json.Unmarshal(m["tool"], &tool) == nil && tool != (ToolInfo{}) {
 			e.Tool = &tool

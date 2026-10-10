@@ -154,7 +154,7 @@ func TestToolsList(t *testing.T) {
 	if err := json.Unmarshal([]byte(got[0]), &r); err != nil {
 		t.Fatal(err)
 	}
-	if len(r.Result.Tools) != 3 || r.Result.Tools[0].Name != "look" || r.Result.Tools[1].Name != "edit" || r.Result.Tools[2].Name != "new" {
+	if len(r.Result.Tools) != 4 || r.Result.Tools[0].Name != "look" || r.Result.Tools[1].Name != "edit" || r.Result.Tools[2].Name != "new" || r.Result.Tools[3].Name != "session" {
 		t.Fatalf("tools = %+v", r.Result.Tools)
 	}
 	for _, tool := range r.Result.Tools {
@@ -818,5 +818,57 @@ func TestEditCutsAboveBelow(t *testing.T) {
 	m, _ = body(t, serve(t, root, toolCall(1, "edit", `{"file":"h.md","newText":"- more","insert":"end","brief":true,"why":"w"}`))[0])
 	if _, has := m["cut"]; has {
 		t.Errorf("brief has cut: %v", m)
+	}
+}
+
+func TestSessionStartsATitledTape(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "a.go"), []byte("package a\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	got := serve(t, root,
+		toolCall(1, "look", `{"file":"a.go","startLine":1,"endLine":1,"why":"read"}`),
+		toolCall(2, "session", `{"title":"docs first","why":"settle the wording"}`),
+		toolCall(3, "look", `{"file":"a.go","startLine":1,"endLine":1,"why":"read again"}`),
+	)
+	sess, isErr := body(t, got[1])
+	if isErr || sess["ok"] != true || sess["tapeId"] == "" || sess["closed"] == nil {
+		t.Fatalf("session = %v (error %v)", sess, isErr)
+	}
+	ids := tape.IDs(filepath.Join(root, ".srwr", "tapes"))
+	if len(ids) != 2 {
+		t.Fatalf("tapes = %v, want 2", ids)
+	}
+	data, err := tape.ReadAll(filepath.Join(root, ".srwr", "tapes"), sess["tapeId"].(string))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ev := tape.Parse(data).Events
+	if len(ev) != 3 || ev[0].Title != "docs first" || ev[1].Type != tape.TypeSnapshot || ev[1].Seq != 1 || ev[2].Type != tape.TypeLook {
+		t.Errorf("the new tape = %+v", ev)
+	}
+}
+
+func TestSessionInputIsChecked(t *testing.T) {
+	long := strings.Repeat("あ", 81)
+	for name, args := range map[string]string{
+		"no title":    `{"why":"w"}`,
+		"no why":      `{"title":"t"}`,
+		"blank title": `{"title":"  ","why":"w"}`,
+		"blank why":   `{"title":"t","why":" "}`,
+		"two lines":   `{"title":"a\nb","why":"w"}`,
+		"too long":    `{"title":"` + long + `","why":"w"}`,
+		"wrong type":  `{"title":3,"why":"w"}`,
+	} {
+		root := t.TempDir()
+		got := serve(t, root, toolCall(1, "session", args))
+		b, isErr := body(t, got[0])
+		errInfo, _ := b["error"].(map[string]any)
+		if !isErr || errInfo["code"] != "invalid_input" {
+			t.Errorf("%s: %v (error %v)", name, b, isErr)
+		}
+		if ids := tape.IDs(filepath.Join(root, ".srwr", "tapes")); len(ids) != 0 {
+			t.Errorf("%s: a tape was made: %v", name, ids)
+		}
 	}
 }

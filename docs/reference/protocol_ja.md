@@ -52,7 +52,7 @@
 
 **`tapeId`**：テープのファイル名から `.tape.jsonl` を除いたもの（例：`20260929-0237-1359`）。使える文字は `0-9 A-Z a-z - _ .` だけで、`.` で始まってはいけない。それ以外（`/` など）は `invalid_params`。
 
-**TapeInfo**：`{tapeId, startedAt, updatedAt, ops, files}`。`startedAt` は header の値（header がなければ `""`）、`updatedAt` はテープのファイルの最終更新時刻（UTC の RFC 3339、ミリ秒まで、末尾は `Z`）、`ops` は `look`・`edit`・`external` の数、`files` は触れたファイル（初めて触れた順）。古い版が書いたテープの `startedAt` には `+09:00` のようなオフセットが付いていることがある（同じ瞬間）。クライアントは、これらの時刻をその機械の時間帯で見せる。
+**TapeInfo**：`{tapeId, startedAt, updatedAt, ops, files, title?, why?}`。`startedAt` は header の値（header がなければ `""`）、`updatedAt` はテープのファイルの最終更新時刻（UTC の RFC 3339、ミリ秒まで、末尾は `Z`）、`ops` は `look`・`edit`・`external` の数、`files` は触れたファイル（初めて触れた順）。`title`・`why` は、AI が [`session`](mcp_ja.md#session) ツールで付けたもの（テープの header にある）。付いていないテープでは無い（`""` でなく項目ごと）。知らないクライアントは無視する。古い版が書いたテープの `startedAt` には `+09:00` のようなオフセットが付いていることがある（同じ瞬間）。クライアントは、これらの時刻をその機械の時間帯で見せる。
 
 ## コマ（Frame）
 

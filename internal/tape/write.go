@@ -25,6 +25,10 @@ func Marshal(e Event) ([]byte, error) {
 	switch e.Type {
 	case TypeHeader:
 		fs = []field{{"type", e.Type}, {"session", e.Session}, {"startedAt", e.StartedAt}, {"author", e.Author}, {"vcs", e.VCS}, {"tool", e.Tool}}
+		if e.Title != "" {
+			fs = append(fs, field{"title", e.Title})
+			fs = append(fs, field{"why", e.Why})
+		}
 	case TypeSnapshot:
 		if e.Text == nil {
 			return nil, fmt.Errorf("snapshot of %s has no text", e.File)

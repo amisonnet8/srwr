@@ -122,6 +122,16 @@ test("quick pick: placeholder and items", async () => {
   assert.deepEqual(state.quickPick?.items[0], { label: "2026-09-30 00:54:08", description: "7操作 · text.go, parse.go", detail: `${WHY}.tape.jsonl` });
 });
 
+test("quick pick: a tape the AI titled shows the title after the time; the others are as they were", async () => {
+  const server = serverWithTapes();
+  server.tapes[1].title = "docs first";
+  server.tapes[1].why = "wording";
+  const a = await openTape(server, WHY);
+  assert.equal(state.quickPick?.items[0].label, "2026-09-30 00:54:08");
+  assert.equal(state.quickPick?.items[1].label, "2026-09-30 00:54:08  docs first");
+  assert.equal(a.screen().viewDescription, WHY);
+});
+
 test("the list: numbered from 1, kinds, dots and a click goes to the frame", async () => {
   const a = await openTape(serverWithTapes(), EXT);
   const tree = a.screen().tree;

@@ -103,6 +103,7 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 ### 7. The tape picker
 
 - "Open a tape" shows the tapes that have one or more operations, newest first (the start time with seconds in the time zone of the machine, then the number of operations and the files, and the tape file name below). Choosing one shows it from the first frame
+- A tape the AI started with the [`session`](mcp.md#session) tool has its title after the time (`2026-10-10 09:31:02  Write the docs first`). A tape without one is shown as before
 
 ## Commands and settings
 

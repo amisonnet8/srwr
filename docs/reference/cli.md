@@ -55,7 +55,7 @@ The directory where srwr is used is called the **workspace**. srwr makes the fol
 
 ## srwr mcp
 
-The MCP server the AI uses. It is started by the AI agent (the MCP client). The workspace is `--root <workspace>` (the current directory if omitted). There are three tools, `look`, `edit` and `new` ([mcp.md](mcp.md)). Several may be started in the same workspace. They write to the same session (the same tape), and a selection token issued by one can be used by another ([tape.md](tape.md)).
+The MCP server the AI uses. It is started by the AI agent (the MCP client). The workspace is `--root <workspace>` (the current directory if omitted). There are three tools for work, `look`, `edit` and `new`, and an optional `session` that starts a titled tape ([mcp.md](mcp.md)). Several may be started in the same workspace. They write to the same session (the same tape), and a selection token issued by one can be used by another ([tape.md](tape.md)).
 
 ## srwr hook
 
@@ -165,7 +165,7 @@ srwr tapes [new | prune (--keep N | --older-than 30d) | path <tape ID> | check [
 
 | Command | Content |
 |---|---|
-| `srwr tapes` | A list (tape ID, start, last update, number of events, number of files, size, whether it is the current session). Newest first (by the time the tape started). Times are in the time zone of the machine |
+| `srwr tapes` | A list (tape ID, start, last update, number of events, number of files, size, whether it is the current session). A tape the AI started with the [`session`](mcp.md#session) tool has its title on a line of its own under its row. Newest first (by the time the tape started). Times are in the time zone of the machine |
 | `srwr tapes new` | Closes the current session, and the next write starts a new session. The tape is [compressed](tape.md#a-closed-tape-is-compressed); if that fails, the tape stays as it was and a warning is printed. Selection tokens issued before the closing can no longer be used |
 | `srwr tapes prune --keep N` / `--older-than 30d` | Deletes old tapes, compressed or not. `--keep N` keeps the newest N. `--older-than` takes the form `30d` or `12h`. It does not ask for confirmation, and prints each deleted tape on a line. **It does not delete the tape of the current session** |
 | `srwr tapes path <id>` | Prints the path of a tape, `.tape.jsonl` or `.tape.jsonl.gz` (used when sharing) |

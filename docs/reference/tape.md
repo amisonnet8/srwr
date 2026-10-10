@@ -17,6 +17,7 @@ The current session is the one `.srwr/active` (the current tape ID) of the works
 1. There is no current session (no `.srwr/active`, or the tape it points to is missing)
 2. A set time (30 minutes by default) has passed since the last event of the current session
 3. The user ran `srwr tapes new`
+4. The AI called the [`session`](mcp.md#session) tool (the new tape is made at once, with its title)
 
 `srwr hook` also writes to the same session (the same tape) as `srwr mcp`.
 
@@ -51,6 +52,12 @@ One line at the top of the tape.
 ```
 
 It also has `vcs` and `tool` (`{"name":"srwr","version":"…"}`).
+
+A tape that the AI started with the [`session`](mcp.md#session) tool also has `title` (one line, at most 80 characters) and `why`. A tape started any other way has neither (they are left out, not `null`). They are for the lists of tapes, and are written only in the header: a tape is not retitled afterwards.
+
+```json
+{"v":2,"type":"header","session":"a1b2","startedAt":"…","author":{…},"vcs":null,"tool":{…},"title":"Write the docs first","why":"Settle the wording before the code changes"}
+```
 
 `vcs` is the state of git when the tape was made (when the first record of the session was written). It is not rewritten even if the state changes later.
 

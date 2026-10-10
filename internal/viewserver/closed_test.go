@@ -1,6 +1,7 @@
 package viewserver
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -98,3 +99,28 @@ func TestLiveReadsTheEndOfATapeThatWasClosed(t *testing.T) {
 }
 
 func chtimes(path string, t time.Time) error { return os.Chtimes(path, t, t) }
+
+// tapes/list says the title and why the AI gave with the session tool, and has neither for a tape without them.
+func TestTapesListHasTheTitleOfASession(t *testing.T) {
+	titled := smallTape("2026-10-02T10:00:00.000Z")
+	titled[0] = `{"v":2,"type":"header","session":"s","startedAt":"2026-10-02T10:00:00.000Z","title":"docs first","why":"wording"}`
+	root := workspace(t, map[string][]string{
+		"20261001-1000-aaaa": smallTape("2026-10-01T10:00:00.000Z"),
+		"20261002-1000-bbbb": titled,
+	}, map[string]string{"a.go": "1\ntwo\n3\n"})
+	got := exchange(t, &Server{Root: root}, initReq(1, nil), req(2, "tapes/list", map[string]any{}))
+	var r struct {
+		Result struct {
+			Tapes []struct{ TapeID, Title, Why string }
+		}
+	}
+	if err := json.Unmarshal([]byte(got[1]), &r); err != nil {
+		t.Fatal(err)
+	}
+	if len(r.Result.Tapes) != 2 || r.Result.Tapes[0].TapeID != "20261002-1000-bbbb" || r.Result.Tapes[0].Title != "docs first" || r.Result.Tapes[0].Why != "wording" {
+		t.Errorf("tapes = %+v", r.Result.Tapes)
+	}
+	if strings.Contains(got[1], `"title":""`) || strings.Count(got[1], `"title"`) != 1 {
+		t.Errorf("a tape without a title has the key: %s", got[1])
+	}
+}

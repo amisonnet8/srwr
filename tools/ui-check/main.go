@@ -69,6 +69,12 @@ func run(args []string, out io.Writer) error {
 				return err
 			}
 			return runTraceTry(root, out)
+		case "session-try":
+			root, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+			return runSessionTry(root, out)
 		case "accept":
 			root, err := os.Getwd()
 			if err != nil {

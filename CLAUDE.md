@@ -6,7 +6,7 @@
 
 **srwr** は、AIエージェントに2つのコマンド（`select` / `replace`）だけでファイルを編集させ、その操作を**テープ**に記録し、エディタ（VSCode と Vim）で**コマ送りで再生**する道具。`why`（理由）と選択範囲のコードを一緒に見せて、人間がAIの作業を理解できるようにする。
 
-- 部品：Go の単一バイナリ `srwr`（`mcp`・`hook`・`view-server`・`view`・`init`・`tapes`）、VSCode 拡張 **srwr-view**（TypeScript）、Vim スクリプト **srwr-view.vim**（Vim9 script。バイナリに埋め込む）
+- 部品：Go の単一バイナリ `srwr`（`mcp`・`hook`・`view-server`・`view`・`init`・`tapes`・`trace`）、VSCode 拡張 **srwr-view**（TypeScript）、Vim スクリプト **srwr-view.vim**（Vim9 script。バイナリに埋め込む）
 - **このリポジトリは作り直し。** 前のリポジトリのコードは持ち込まず、確定した文書・デザイン・正解データを手がかりに、一から作る（`dev/roadmap.md`）
 
 ### 最初に読むもの

@@ -14,6 +14,7 @@
 | `srwr view [tape]` | People | Replays in Vim ([vim.md](vim.md)) |
 | `srwr init` | People | Sets up a workspace for srwr |
 | `srwr tapes` | People | Lists and tidies tapes |
+| `srwr trace [file]` | People | Finds the tape operations (and their why) behind the lines a diff adds |
 
 `srwr --version` shows the version and `srwr --help` shows the usage.
 
@@ -201,6 +202,23 @@ An example of the output (the time zone is `Asia/Tokyo`; the date and time in a 
 
 2 tapes (26.5 KB in all). Replay one with srwr view <tape>; share one with srwr tapes path <tape>.
 ```
+
+## srwr trace
+
+```
+srwr trace [--root <workspace>] [--tape <id>] [--mark] [--json] [<file>]
+git show HEAD | srwr trace
+git log -p -5 | srwr trace --mark
+```
+
+Gives the lines a commit adds back to the operations on the tapes that wrote them, and their `why`. It reads a text (the file, or the standard input) that holds unified diffs: the output of `git show`, `git diff` or `git log -p`, or any other diff. **srwr does not run git, and git does not know srwr**: the only thing between them is the text. Like `mtqg format`, anything that has the diff in it will do. It only reads: no lock, and no `.srwr/` is made.
+
+- **How a line is found**: the added lines of each hunk are matched, by what the lines say, against the lines the `edit`s and `new`s of the tapes wrote (all tapes of the workspace, or the one of `--tape`). A run of added lines is given to the operation that wrote the longest stretch of it; the rest is looked for again on each side. When two operations wrote the same lines, the later one is told. **A single short line (`}`) is not believed by itself**; it has to be part of a stretch of two lines or more, or be a line of 12 characters or more.
+- **What it cannot tell**: lines that no tape holds (written by a person, by a tool outside srwr, in a file that is not recorded, or on a tape that was deleted) are counted as `not on a tape`. A line that was moved or changed after srwr wrote it is not found. This is not `git blame`: it tells which operation wrote an added line of the diff, not who last touched a line.
+- **Default output**: for each commit (when the text has `commit <sha>` lines), each file, the lines of the new file, the operation (the kind, the tape ID, `#seq`, the time in the time zone of the machine) and its `why`. At the end of a commit, how many added lines came from tapes. A tape ID can be replayed with `srwr view <tape>`.
+- **`--mark`**: prints the text as it is, and puts `# why: …  (<tape ID> #<seq>)` after the `@@` line of each hunk for the operations that wrote its lines.
+- **`--json`**: the same as the default output, for a program. `--mark` and `--json` do not go together.
+- Files under `.srwr/` and deleted files are not listed.
 
 ## Files that are not recorded
 

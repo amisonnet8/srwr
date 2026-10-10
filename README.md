@@ -108,7 +108,7 @@ A whole round with every command, from `srwr init` to tidying up the tapes, is i
 |---|---|
 | **Vim** | `srwr view` (pick a tape from the list), or `srwr view <tape>`. `]]` forward, `[[` back, `q` to close. `srwr view --live` follows a tape being written |
 | **VSCode** | Install the extension, then *srwr* at the left edge → *Operations* → *Open a tape* or *Start live view* |
-| **Terminal** | `srwr tapes` lists the tapes of the project |
+| **Terminal** | `srwr tapes` lists the tapes of the project. `git show HEAD \| srwr trace` tells which operations (and which `why`) wrote the lines of a commit |
 
 <p align="center">
   <img alt="srwr-view in VSCode: an orange reason line above the replaced lines, the operations list on the left, the bottom bar" src="docs/images/vscode_dark.svg" width="900">

@@ -98,7 +98,7 @@ func reorder(args []string) []string {
 		a := args[i]
 		if strings.HasPrefix(a, "-") {
 			flags = append(flags, a)
-			if !strings.Contains(a, "=") && i+1 < len(args) && (a == "--root" || a == "-root" || a == "--keep" || a == "-keep" || a == "--older-than" || a == "-older-than") {
+			if !strings.Contains(a, "=") && i+1 < len(args) && (a == "--root" || a == "-root" || a == "--keep" || a == "-keep" || a == "--older-than" || a == "-older-than" || a == "--tape" || a == "-tape") {
 				i++
 				flags = append(flags, args[i])
 			}

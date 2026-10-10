@@ -108,7 +108,7 @@ VSCode で見るなら、拡張 **srwr-view** も入れます（拡張は `srwr`
 |---|---|
 | **Vim** | `srwr view`（一覧から選ぶ）か `srwr view <テープ>`。`]]` で進み、`[[` で戻り、`q` で閉じます。`srwr view --live` は書かれているテープを追いかけます |
 | **VSCode** | 拡張を入れ、左端の *srwr* →*操作一覧* →*テープを開く* か *ライブ視聴を開始* |
-| **ターミナル** | `srwr tapes` でプロジェクトのテープを一覧します |
+| **ターミナル** | `srwr tapes` でプロジェクトのテープを一覧します。`git show HEAD \| srwr trace` で、コミットの行を書いた操作と `why` を引けます |
 
 <p align="center">
   <img alt="VSCode の srwr-view：置き換えた行の上に橙の理由の行、左に操作一覧、下にバー" src="docs/images/vscode_dark.svg" width="900">

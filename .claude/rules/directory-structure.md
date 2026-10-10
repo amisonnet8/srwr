@@ -26,6 +26,7 @@
 │   ├── session/            ← 今のセッションの決定・ロック（flock）・テープの読み足し・鍵（R2）
 │   ├── tools/              ← MCP のツール定義（説明文・入力スキーマ）（R2）
 │   ├── mcp/                ← MCP サーバー（R2）
+│   ├── trace/              ← `srwr trace`：差分のテキストを読み、追加行を作ったテープの操作（edit・new と why）に結びつける。git は動かさず、テープも書かない（v0.1.15）
 │   ├── timeline/           ← コマの列・文書の状態・差分のコマ・最後の差分（R3）
 │   ├── viewserver/         ← 表示サーバー（メソッド、ライブの見張り）（R3）
 │   ├── hook/               ← `srwr hook`：hook の JSON と Bash の読み取り・Grep の出力を読んで `core.HookRequest` を作る（R7）

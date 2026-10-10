@@ -1,7 +1,3 @@
-<h1 align="center">⚠️ Experimental until v0.2.0: breaking changes will happen ⚠️</h1>
-
-<p align="center"><b>Until v0.2.0, srwr is an experiment. Tools, inputs, the tape format and the screens may change without notice, and old tapes may stop working.</b></p>
-
 <p align="center">
   <img src="docs/images/banner.svg" alt="srwr: Search, rewrite, say why, replay. AI agents read, search and rewrite files with a reason for every step" width="100%">
 </p>
@@ -55,6 +51,8 @@
 - 🕒 **Times that make sense**: tapes keep UTC, and screens show your own time zone
 - 🌍 **English and Japanese**: English by default; `SRWR_LANG=ja` for Japanese
 
+> **Status.** srwr is 0.x: tool inputs, the tape format and the screens may still change before 1.0. The tapes written so far (format versions 1 and 2) are all read.
+
 ## 🚀 Install
 
 You need the `srwr` binary first. It is what the AI talks to, and what the editors start to read tapes.
@@ -84,7 +82,7 @@ To view in VSCode, install the extension **srwr-view** as well (it does not cont
    | `.srwr/` | The directory for tapes, and the key |
    | `.mcp.json` | Registers `srwr mcp`, the MCP server the AI uses |
    | `.claude/settings.json` | The hook that records what the AI reads, and the ban on Edit/Write (`srwr init --lenient` keeps them allowed) |
-   | `.gitignore` | Ignores the key and the lock, not the tapes |
+   | `.gitignore` | Ignores the key, the lock, the pointer to the current session and the backups, not the tapes |
 
    Existing settings are kept, and running it again changes nothing. Details: [docs/reference/cli.md](docs/reference/cli.md).
    </details>
@@ -94,7 +92,7 @@ To view in VSCode, install the extension **srwr-view** as well (it does not cont
    <details>
    <summary>What does a tape look like?</summary>
 
-   A tape is a JSONL file, one event per line. This is a `look` (the AI looks at lines 9 to 11) and the `edit` that follows:
+   A tape is a JSONL file, one event per line. This is a `look` (the AI looks at lines 9 to 11) and the `edit` that follows (shortened: `ts` is left out and the texts are cut):
 
    ```json
    {"v":2,"seq":2,"type":"look","file":"main.go","startLine":9,"endLine":11,"why":"greet is what main prints: check what it does when the name is empty","selection":"sel_041061E48KVH3K24RN324MN2","source":"mcp"}

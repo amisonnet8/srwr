@@ -37,6 +37,7 @@ go install github.com/amisonnet8/srwr/cmd/srwr@latest
 - ⏮️ **Frame by frame**: *Back* and *Forward* in the bottom bar. No autoplay, so you read each reason
 - 📡 **Live view**: follow a tape while the AI is still writing it; step back and a *Back to LIVE (N new)* button counts what you missed
 - 📜 **A flat list of operations** on the left, numbered from 1, with a colored dot for the kind
+- 🧯 **Choose what you see**: the funnel button turns look, edit, outside changes and failures on and off (failures are hidden at first; a failed call is shown in red)
 - 🌍 **English and Japanese**: it follows the display language of VSCode
 - 🔒 **Read-only**: the extension never writes a tape or a file, and never reads the key
 
@@ -59,6 +60,7 @@ Open the command palette with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> (<kb
 | srwr: Start Live View | `srwr.liveStart` | Follow the tape of the current session as it is written |
 | srwr: Stop Live View | `srwr.liveStop` | Stop following |
 | srwr: Back to LIVE | `srwr.liveLatest` | After stepping back in live view, jump to the newest frame and follow again |
+| srwr: Choose Frames to Show | `srwr.chooseKinds` | Choose which kinds of frames are listed: look, edit, outside changes, failures (the funnel button) |
 
 ## 🔧 Settings
 

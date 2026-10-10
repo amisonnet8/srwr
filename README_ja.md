@@ -1,7 +1,3 @@
-<h1 align="center">⚠️ v0.2.0 までは実験中です。破壊的な変更が入ります ⚠️</h1>
-
-<p align="center"><b>v0.2.0 までの srwr は実験です。ツール・入力・テープの形式・画面は、予告なく変わることがあり、古いテープが読めなくなることもあります。</b></p>
-
 <p align="center">
   <img src="docs/images/banner.svg" alt="srwr：Search, rewrite, say why, replay。AI エージェントが、一つ一つの操作に理由を添えて、ファイルを読み・検索し・書き換える" width="100%">
 </p>
@@ -55,6 +51,8 @@
 - 🕒 **わかりやすい時刻**：テープは UTC で持ち、画面ではあなたの時間帯で見せます
 - 🌍 **英語と日本語**：既定は英語。`SRWR_LANG=ja` で日本語
 
+> **状態**：srwr は 0.x です。1.0 までは、ツールの入力・テープの形式・画面が変わることがあります。これまでに書かれたテープ（形式の版 1・2）は、すべて読めます。
+
 ## 🚀 インストール
 
 先に `srwr` のバイナリが要ります。AI が話しかける相手であり、エディタがテープを読むために起動するものです。
@@ -84,7 +82,7 @@ VSCode で見るなら、拡張 **srwr-view** も入れます（拡張は `srwr`
    | `.srwr/` | テープを置くディレクトリと、鍵 |
    | `.mcp.json` | AI が使う MCP サーバー `srwr mcp` の登録 |
    | `.claude/settings.json` | AI が読んだものを記録する hook と、Edit・Write の禁止（`srwr init --lenient` なら禁止しない） |
-   | `.gitignore` | 鍵とロックを無視する（テープは無視しない） |
+   | `.gitignore` | 鍵・ロック・今のセッションの印・バックアップを無視する（テープは無視しない） |
 
    既存の設定は残り、2 回目は何も変えません。詳しくは [docs/reference/cli_ja.md](docs/reference/cli_ja.md)。
    </details>
@@ -94,7 +92,7 @@ VSCode で見るなら、拡張 **srwr-view** も入れます（拡張は `srwr`
    <details>
    <summary>テープはどんな形？</summary>
 
-   テープは JSONL のファイルで、1 行が 1 つの出来事です。次は、AI が 9〜11 行目を見た `look` と、そのあとの `edit` です。
+   テープは JSONL のファイルで、1 行が 1 つの出来事です。次は、AI が 9〜11 行目を見た `look` と、そのあとの `edit` です（短くしてあります。`ts` は省き、本文は切ってあります）。
 
    ```json
    {"v":2,"seq":2,"type":"look","file":"main.go","startLine":9,"endLine":11,"why":"greet is what main prints: check what it does when the name is empty","selection":"sel_041061E48KVH3K24RN324MN2","source":"mcp"}

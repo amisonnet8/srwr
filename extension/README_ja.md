@@ -37,6 +37,7 @@ go install github.com/amisonnet8/srwr/cmd/srwr@latest
 - ⏮️ **コマ送り**：下のバーの「戻る」「進む」。自動再生はないので、理由を 1 つずつ読めます
 - 📡 **ライブ**：AI が書いている最中のテープを追いかけます。戻ると「LIVE に戻る（新着 N）」が、見逃した数を数えます
 - 📜 **平らな操作一覧**：左に、1 から数えた番号と、種類を表す色の丸
+- 🧯 **見るものを選ぶ**：漏斗のボタンで、look・edit・外からの変更・失敗を出し入れします（失敗は初めは隠れていて、失敗した呼び出しは赤で出ます）
 - 🌍 **英語と日本語**：VSCode の表示言語に従います
 - 🔒 **読むだけ**：テープもファイルも書かず、鍵も読みません
 
@@ -59,6 +60,7 @@ go install github.com/amisonnet8/srwr/cmd/srwr@latest
 | srwr: Start Live View | `srwr.liveStart` | 今のセッションのテープを、書かれるそばから追う |
 | srwr: Stop Live View | `srwr.liveStop` | 追うのをやめる |
 | srwr: Back to LIVE | `srwr.liveLatest` | ライブで戻ったあと、最新のコマへ飛んで追い直す |
+| srwr: Choose Frames to Show | `srwr.chooseKinds` | 一覧に出す種類（look・edit・外からの変更・失敗）を選ぶ（漏斗のボタン） |
 
 ## 🔧 設定
 

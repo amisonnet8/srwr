@@ -28,8 +28,8 @@ func NewKinds(names []string) (Kinds, string) {
 	return k, ""
 }
 
-// group is the kind a person turns on and off for a kind of frame: final goes with external, new with edit.
-func group(kind string) string {
+// Group is the kind a person turns on and off for a kind of frame: final goes with external, new with edit.
+func Group(kind string) string {
 	switch kind {
 	case KindFinal:
 		return KindExternal
@@ -41,7 +41,7 @@ func group(kind string) string {
 
 // Shows says whether a frame of this kind is sent.
 func (k Kinds) Shows(kind string) bool {
-	return k[group(kind)]
+	return k[Group(kind)]
 }
 
 // Hidden counts, for each kind that is left out, how many frames were. final counts as external. A kind with none is not in it.
@@ -58,7 +58,7 @@ func Filter(frames []Frame, k Kinds) (shown []Frame, orig []int, hidden Hidden) 
 			orig = append(orig, i)
 			continue
 		}
-		hidden[group(f.Kind)]++
+		hidden[Group(f.Kind)]++
 	}
 	return shown, orig, hidden
 }

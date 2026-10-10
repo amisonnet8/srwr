@@ -15,7 +15,7 @@
 - **Wrapping width of the reason**: VSCode uses a fixed display width of 100; Vim uses the width of the window
 - **The choice of which frames to show is not saved.** It is kept while the editor runs; a new start shows look, edit and external. The kind `look` cannot tell the AI's own `look`s from those the hook recorded (the ones without a `why`)
 - **A failure frame shows a range only for a `look`** (and, in the tape, for an `edit` that pointed by `file` and line numbers). The viewers print `-` for the others
-- **Live follows the tape with the newest update time.** A tape that `srwr trace --as-tape` writes while live is open is the newest, so live moves to it
+- **Live follows the tape with the newest update time.** A tape that `srwr trace --as-tape` writes is passed over (it is a derived tape, not a recording), but a new session's tape is the newest, so live moves to it
 - **A tape cut by `srwr trace --as-tape` has no lineage** (`selection` and `from` are `null`), and its last diff is against the file as it is now, so work after the commit shows as a difference
 - **VSCode uses the first folder of the workspace** (one view server per window)
 

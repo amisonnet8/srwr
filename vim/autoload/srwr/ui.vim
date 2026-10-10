@@ -23,9 +23,9 @@ export def Kinds(): list<string>
   return copy(kinds)
 enddef
 
-# TapeId accepts a tape id or a path to a .tape.jsonl file.
+# TapeId accepts a tape id or a path to a .tape.jsonl or .tape.jsonl.gz file.
 export def TapeId(arg: string): string
-  return substitute(fnamemodify(trim(arg), ':t'), '\.tape\.jsonl$', '', '')
+  return substitute(fnamemodify(trim(arg), ':t'), '\.tape\.jsonl\%(\.gz\)\=$', '', '')
 enddef
 
 # ShowList lists the tapes of the workspace; <CR> opens one.
@@ -49,7 +49,13 @@ enddef
 def OpenTape(tape: string, root: string, seq: number)
   server.Request('tape/open', {tapeId: tape, withText: true, kinds: kinds}, (res, err2) => {
     if err2 != v:null
-      Warn(err2.code ==# 'tape_not_found' ? lang.Pick('Tape not found: ', 'テープが見つからない: ') .. tape : err2.message)
+      if err2.code ==# 'tape_not_found'
+        Warn(lang.Pick('Tape not found: ', 'テープが見つからない: ') .. tape)
+      elseif err2.code ==# 'tape_unreadable'
+        Warn(lang.Pick('Cannot read the tape: ', 'テープを読めない: ') .. tape)
+      else
+        Warn(err2.message)
+      endif
       return
     endif
     live.Close()

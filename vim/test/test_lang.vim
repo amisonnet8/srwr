@@ -36,7 +36,7 @@ t.Equal('⚠ Changed outside srwr (deleted): stats.go', diff.Label({kind: 'exter
 t.Equal('⚠ Changed after recording (diff from current file): stats.go', diff.Label({kind: 'final', file: 'stats.go'}), 'final heading')
 t.Equal('⚠ Changed after recording (no longer exists): stats.go', diff.Label({kind: 'final', file: 'stats.go', deleted: true}), 'final, gone')
 t.Equal('Started           Updated            Ops     Files  Tape', list.Header(), 'heading of the list')
-t.Equal('●  3 external stats.go:1-3', sidebar.Line({index: 2, kind: 'external', file: 'stats.go', range: {start: 1, end: 3}, why: v:null}), 'a kind in the list')
+t.Equal('●  3 external stats.go:1-3  File changed outside srwr', sidebar.Line({index: 2, kind: 'external', file: 'stats.go', range: {start: 1, end: 3}, why: v:null}), 'a kind in the list')
 t.Equal('●  1 look     a.go:1', sidebar.Line({index: 0, kind: 'look', file: 'a.go', range: {start: 1, end: 1}, why: v:null}), 'look is as wide as external')
 
 # --- Japanese ---

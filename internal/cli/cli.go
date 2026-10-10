@@ -21,30 +21,32 @@ import (
 	"github.com/amisonnet8/srwr/internal/viewserver"
 )
 
-const usageEN = `srwr: let an AI edit files with just two commands, select / replace, and record the operations on a tape
+const usageEN = `srwr: let an AI agent edit files with a reason for every step, and record the steps on a tape to replay
 
 Usage:
-  srwr mcp [--root <workspace>]          MCP server (look / edit / new). Started by the AI agent
+  srwr mcp [--root <workspace>]          MCP server (look / edit / new, and session). Started by the AI agent
   srwr hook [--root <workspace>]         Record Claude Code hook events (reads JSON on stdin)
   srwr view-server [--root <workspace>]  View server (started by the editor)
   srwr view [tape] [--live]              Replay in Vim (--root <workspace>)
   srwr init [--lenient]                  Set up a workspace for srwr (--lenient: do not forbid Edit and Write; --root <workspace>)
-  srwr tapes [new|prune|path]            List and tidy tapes (--root <workspace>)
-  srwr trace [--mark|--as-tape] [file]   Find the tape operations (and why) behind the lines a diff adds (git show | srwr trace)
+  srwr tapes [new|prune|check|path]      List, end, tidy and check tapes (--root <workspace>)
+  srwr trace [--mark|--json|--as-tape] [--tape <id>] [--root <workspace>] [file]
+                                         Find the tape operations (and why) behind the lines a diff adds (pipe git show into it)
   srwr --version                         Version
   srwr --help                            This help
 `
 
-const usageJA = `srwr: AI に select / replace の2コマンドだけでファイルを編集させ、操作をテープに記録する
+const usageJA = `srwr: AI のエージェントに、理由を添えてファイルを編集させ、その操作をテープに記録して再生する
 
 使い方:
-  srwr mcp [--root <作業場>]          MCP サーバー（look / edit / new）。AI のエージェントが起動する
+  srwr mcp [--root <作業場>]          MCP サーバー（look / edit / new と session）。AI のエージェントが起動する
   srwr hook [--root <作業場>]         Claude Code の hook の記録（標準入力の JSON を読む）
   srwr view-server [--root <作業場>]  表示サーバー（エディタが起動する）
   srwr view [テープ] [--live]         Vim で再生する（--root <作業場>）
   srwr init [--lenient]               作業場を srwr 用に準備する（--lenient：Edit・Write を禁止しない。--root <作業場>）
-  srwr tapes [new|prune|path]         テープの一覧・整理（--root <作業場>）
-  srwr trace [--mark|--as-tape] [file]   差分（git show など）の追加行を作ったテープの操作と理由を引く（git show | srwr trace）
+  srwr tapes [new|prune|check|path]   テープの一覧・終了・整理・検査（--root <作業場>）
+  srwr trace [--mark|--json|--as-tape] [--tape <ID>] [--root <作業場>] [file]
+                                      差分（git show など）の追加行を作ったテープの操作と理由を引く（git show をパイプで渡す）
   srwr --version                      バージョン
   srwr --help                         この説明
 `

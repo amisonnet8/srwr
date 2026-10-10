@@ -44,7 +44,7 @@
 | `tape/open` | 要求 | `{tapeId, withText?:false, kinds?}` → `{tapeId, frames:[Frame…], hidden?}`。コマの列。`diffFrames` が真なら、作業場の今のファイルと比べた**最後の差分**（`final`）を末尾に含む。同じ `tapeId` をもう一度開くと、読み直す |
 | `frame/state` | 要求 | `{tapeId, index, file?}` → `{before, after, content}`。`index` のコマの変更前・変更後（`index` が −1 のときは両方 `""`）。`content` は `file`（省略時はそのコマのファイル）の、そのコマを終えた時点の内容。どのコマも触れていないファイルは `null` |
 | `tape/close` | 要求 | `{tapeId}` → `{}` |
-| `live/start` | 要求 | `{withText?:false, kinds?}` → `{tapeId:string\|null, frames:[Frame…], hidden?}`。今のテープ（更新時刻が最新のもの。`srwr trace --as-tape` が書いたばかりのテープも数える）の、**ここまでのコマ**（クライアントは表示せず、一覧に載せるだけ）。返事のあと、見張りが始まる。もう一度呼ぶと、見張りをやり直す |
+| `live/start` | 要求 | `{withText?:false, kinds?}` → `{tapeId:string\|null, frames:[Frame…], hidden?}`。今のテープ（更新時刻が最新のもの。`srwr trace --as-tape` が書いた派生テープは飛ばす）の、**ここまでのコマ**（クライアントは表示せず、一覧に載せるだけ）。返事のあと、見張りが始まる。もう一度呼ぶと、見張りをやり直す |
 | `live/hidden` | 通知（サーバー→クライアント） | `{tapeId, hidden}`。クライアントが頼んでいない種類のコマが届いたので、隠したコマの数が変わった。`hidden` は、そのテープの全体の数で、増えた分ではない。ライブが別のテープに移ったときも、そのテープが何かを隠していれば、そのテープのコマのあとに送る（何も隠さないテープでは送らないので、クライアントは `tapeId` が替わったとき、自分で数を戻す） |
 | `live/frame` | 通知（サーバー→クライアント） | `{tapeId, frame:Frame}`。追記されたコマ。`tapeId` が今までと違う（別のテープに移った）ときは、クライアントは列を作り直す。そのテープのコマは先頭から送る |
 | `live/stop` | 要求 | `{}` → `{}`。見張りをやめる |
@@ -52,7 +52,7 @@
 
 **`tapeId`**：テープのファイル名から `.tape.jsonl`（または `.tape.jsonl.gz`）を除いたもの（例：`20260929-0237-1359`）。サーバーは、どちらの形のテープも読む（ライブがそのテープにいるときも）。使える文字は `0-9 A-Z a-z - _ .` だけで、`.` で始まってはいけない。それ以外（`/` など）は `invalid_params`。
 
-**TapeInfo**：`{tapeId, startedAt, updatedAt, ops, files, title?, why?}`。`startedAt` は header の値（header がなければ `""`）、`updatedAt` はテープのファイルの最終更新時刻（UTC の RFC 3339、ミリ秒まで、末尾は `Z`）、`ops` は `look`・`edit`・`new`・`external` の数（`failure` は数えない）、`files` は触れたファイル（初めて触れた順）。`title`・`why` は、AI が [`session`](mcp_ja.md#session) ツールで付けたもの（テープの header にある）。付いていないテープでは無い（`""` でなく項目ごと）。知らないクライアントは無視する。古い版が書いたテープの `startedAt` には `+09:00` のようなオフセットが付いていることがある（同じ瞬間）。クライアントは、これらの時刻をその機械の時間帯で見せる。`srwr trace --as-tape` が切り出したテープ（派生テープ）を、ほかと見分ける項目はない。
+**TapeInfo**：`{tapeId, file, startedAt, updatedAt, ops, files, title?, why?}`。`file` はテープのファイルの名前（`<tapeId>.tape.jsonl`、閉じて圧縮したテープは `<tapeId>.tape.jsonl.gz`）。`startedAt` は header の値（header がなければ `""`）、`updatedAt` はテープのファイルの最終更新時刻（UTC の RFC 3339、ミリ秒まで、末尾は `Z`）、`ops` は `look`・`edit`・`new`・`external` の数（`failure` は数えない）、`files` は触れたファイル（初めて触れた順）。`title`・`why` は、AI が [`session`](mcp_ja.md#session) ツールで付けたもの（テープの header にある）。付いていないテープでは無い（`""` でなく項目ごと）。知らないクライアントは無視する。古い版が書いたテープの `startedAt` には `+09:00` のようなオフセットが付いていることがある（同じ瞬間）。クライアントは、これらの時刻をその機械の時間帯で見せる。`srwr trace --as-tape` が切り出したテープ（派生テープ）を、ほかと見分ける項目はない。ただしライブは、派生テープには移らない（追うのは、いちばん新しい記録で、派生テープではない）。
 
 ## コマ（Frame）
 

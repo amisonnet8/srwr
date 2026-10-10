@@ -107,7 +107,7 @@ export function activate(context: vscode.ExtensionContext, createServer: ServerF
     const items = tapes.map((t) => ({
       label: startedLabel(t) + (t.title ? `  ${t.title}` : ""),
       description: `${pick(`${t.ops} ${t.ops === 1 ? "operation" : "operations"}`, `${t.ops}操作`)} · ${t.files.join(", ")}`,
-      detail: t.tapeId + TAPE_SUFFIX,
+      detail: t.file ?? t.tapeId + TAPE_SUFFIX,
       tape: t,
     }));
     const chosen = await vscode.window.showQuickPick(items, { placeHolder: pick("Pick a tape to replay", "再生するテープを選ぶ") });
@@ -236,5 +236,5 @@ function shownMessage(e: unknown): string {
 
 // The heading of a tape in the picker: "2026-09-29 18:37:12", in the time zone of the machine. Without a header, the name of the tape file.
 function startedLabel(t: TapeInfo): string {
-  return (t.startedAt && localStamp(t.startedAt)) || t.tapeId + TAPE_SUFFIX;
+  return (t.startedAt && localStamp(t.startedAt)) || (t.file ?? t.tapeId + TAPE_SUFFIX);
 }

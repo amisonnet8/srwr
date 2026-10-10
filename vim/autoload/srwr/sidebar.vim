@@ -24,7 +24,10 @@ var rowCount = 0
 
 # Line is the text of one frame, in the order of the VSCode list (dot, number, kind, file): "●  5 edit    text.go:37  why".
 export def Line(f: dict<any>): string
-  const desc = timeline.Why(f)
+  var desc = timeline.Why(f)
+  if desc ==# '' && f.kind ==# 'external'
+    desc = lang.Pick('File changed outside srwr', 'srwr の外でファイルが変わった')
+  endif
   # A failure has no file and range to name: the error code stands in their place.
   const place = f.kind ==# 'failure' ? get(f, 'code', '') : timeline.Basename(f.file) .. ':' .. timeline.FormatRange(f.range)
   return printf('● %2d %s %s', f.index + 1, KindLabel(f.kind), place) .. (desc !=# '' ? '  ' .. desc : '')

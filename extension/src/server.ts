@@ -8,6 +8,8 @@ export const PROTOCOL_VERSION = 3;
 
 export interface TapeInfo {
   tapeId: string;
+  // The name of the tape file (`….tape.jsonl`, or `….tape.jsonl.gz` once closed). A server that does not say it: tapeId + ".tape.jsonl".
+  file?: string;
   startedAt: string;
   updatedAt?: string;
   ops: number;

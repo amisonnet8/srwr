@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io/fs"
 	"os"
+	"path/filepath"
 	"sort"
 	"time"
 
@@ -14,7 +15,9 @@ import (
 
 // tapeInfo is an entry of tapes/list.
 type tapeInfo struct {
-	TapeID    string   `json:"tapeId"`
+	TapeID string `json:"tapeId"`
+	// File is the name of the tape file: <id>.tape.jsonl, or <id>.tape.jsonl.gz for a tape that was closed and compressed.
+	File      string   `json:"file"`
 	StartedAt string   `json:"startedAt"`
 	UpdatedAt string   `json:"updatedAt"`
 	Ops       int      `json:"ops"`
@@ -89,7 +92,7 @@ func (c *conn) info(id string) *tapeInfo {
 					break
 				}
 			}
-			info = &tapeInfo{TapeID: id, StartedAt: started, UpdatedAt: tape.FormatTS(st.ModTime()), Ops: b.Ops(), Files: append([]string{}, b.Files()...), Title: title, Why: why}
+			info = &tapeInfo{TapeID: id, File: filepath.Base(path), StartedAt: started, UpdatedAt: tape.FormatTS(st.ModTime()), Ops: b.Ops(), Files: append([]string{}, b.Files()...), Title: title, Why: why}
 		}
 	}
 	c.cache[id] = listEntry{size: st.Size(), mod: st.ModTime(), info: info}

@@ -200,3 +200,48 @@ func TestLiveWithFailureShown(t *testing.T) {
 	in.close()
 	out.wait()
 }
+
+// A new that is left out is counted with edit, as in a recording (the groups are what a person turns on and off), not under "new".
+func TestLiveHiddenCountsNewAsEdit(t *testing.T) {
+	root := workspace(t, map[string][]string{"20261001-1000-aaaa": baseTape()}, nil)
+	in, out := pipe(t, &Server{Root: root, PollInterval: fast})
+	in.send(initReq(1, nil))
+	out.next()
+	in.send(req(2, "live/start", map[string]any{"kinds": []string{"look"}}))
+	var res struct{ Hidden map[string]int }
+	resultOf(t, out.next(), &res)
+	appendTo(t, root, "20261001-1000-aaaa",
+		`{"v":2,"seq":3,"ts":"2026-10-01T08:00:01.000Z","type":"new","file":"b.go","from":null,"startLine":1,"endLine":0,"oldText":"","newText":"x","newStartLine":1,"newEndLine":1,"selection":"sel_x","why":"w","fileShaBefore":null,"fileShaAfter":"0"}`+"\n")
+	var h struct {
+		Method string
+		Params struct{ Hidden map[string]int }
+	}
+	if err := json.Unmarshal([]byte(out.next()), &h); err != nil || h.Method != "live/hidden" {
+		t.Fatalf("live/hidden = %+v (%v)", h, err)
+	}
+	if h.Params.Hidden["edit"] != 1 || h.Params.Hidden["new"] != 0 {
+		t.Errorf("hidden = %v, want edit 1 and no new", h.Params.Hidden)
+	}
+	in.close()
+	out.wait()
+}
+
+// A derived tape (srwr trace --as-tape) is written last, but the live view stays on the recording in progress.
+func TestLiveSkipsADerivedTape(t *testing.T) {
+	derived := append([]string{`{"v":2,"type":"header","session":"d","startedAt":"2026-10-01T09:00:00.000Z","author":{"kind":"derived","name":"srwr trace"}}`}, baseTape()[1:]...)
+	root := workspace(t, map[string][]string{"20261001-1000-aaaa": baseTape()}, nil)
+	in, out := pipe(t, &Server{Root: root, PollInterval: fast})
+	in.send(initReq(1, nil))
+	out.next()
+	res := startLive(t, in, out, 2, map[string]any{})
+	if res.TapeID == nil || *res.TapeID != "20261001-1000-aaaa" {
+		t.Fatalf("live/start = %+v", res)
+	}
+	appendTo(t, root, "20261001-1100-bbbb", strings.Join(derived, "\n")+"\n")
+	appendTo(t, root, "20261001-1000-aaaa", selectLine(3)+"\n")
+	if f := parseLive(t, out.next()); f.Params.TapeID != "20261001-1000-aaaa" || f.Params.Frame.Index != 1 {
+		t.Errorf("notification = %+v, want frame 1 of the recording", f)
+	}
+	in.close()
+	out.wait()
+}

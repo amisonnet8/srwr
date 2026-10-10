@@ -16,7 +16,7 @@ A workspace that has the tape `20261001-0806-1795`, which recorded the work of [
 → {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"client":"vim","protocolVersion":3,"options":{"diffFrames":true}}}
 ← {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":3,"serverVersion":"(devel)"}}
 → {"jsonrpc":"2.0","id":2,"method":"tapes/list","params":{}}
-← {"jsonrpc":"2.0","id":2,"result":{"tapes":[{"tapeId":"20261001-0806-1795","startedAt":"2026-10-01T08:06:15.381Z","updatedAt":"2026-10-01T08:06:21.026Z","ops":2,"files":["cmd/main.go"]}]}}
+← {"jsonrpc":"2.0","id":2,"result":{"tapes":[{"tapeId":"20261001-0806-1795","file":"20261001-0806-1795.tape.jsonl","startedAt":"2026-10-01T08:06:15.381Z","updatedAt":"2026-10-01T08:06:21.026Z","ops":2,"files":["cmd/main.go"]}]}}
 → {"jsonrpc":"2.0","id":3,"method":"tape/open","params":{"tapeId":"20261001-0806-1795"}}
 ← {"jsonrpc":"2.0","id":3,"result":{"frames":[{"index":0,"kind":"look","seq":2,"ts":1790841975381,"file":"cmd/main.go","range":{"start":3,"end":5},"why":"Check whether a call to initialization can be added to main","selection":"sel_041061E48KVH3K24RN324MN2","from":null,"parent":null},{"index":1,"kind":"edit","seq":3,"ts":1790841975384,"file":"cmd/main.go","range":{"start":3,"end":6},"oldRange":{"start":3,"end":5},"why":"run needs the settings loaded first, so call setup","selection":"sel_041G61P48KVH3AYWAY6Q99GP","from":"sel_041061E48KVH3K24RN324MN2","parent":0}],"tapeId":"20261001-0806-1795"}}
 → {"jsonrpc":"2.0","id":4,"method":"frame/state","params":{"tapeId":"20261001-0806-1795","index":1}}

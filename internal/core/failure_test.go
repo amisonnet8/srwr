@@ -149,3 +149,15 @@ func TestFailureMessageIsCut(t *testing.T) {
 		t.Errorf("message has %d characters", len([]rune(m)))
 	}
 }
+
+// A failure of the call as a whole (no items) has no selection: the tape says null, not an empty string.
+func TestEditsFailureOfTheWholeCallHasNoSelection(t *testing.T) {
+	e := newEnv(t)
+	if _, err := e.c.Edits(EditsInput{Why: "w"}); err == nil {
+		t.Fatal("no items was accepted")
+	}
+	got := e.failures()
+	if len(got) != 1 || got[0].Selection != nil || got[0].File != nil || got[0].StartLine != nil || got[0].Code != CodeInvalidInput {
+		t.Errorf("failures = %+v", got)
+	}
+}

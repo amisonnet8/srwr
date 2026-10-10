@@ -162,7 +162,7 @@ func TestUsageNamesRootForEverySubcommand(t *testing.T) {
 	for _, lang := range []string{"", "ja"} {
 		t.Setenv("SRWR_LANG", lang)
 		_, out, _ := run([]string{"--help"}, "")
-		for _, cmd := range []string{"srwr mcp", "srwr hook", "srwr view-server", "srwr view ", "srwr init", "srwr tapes"} {
+		for _, cmd := range []string{"srwr mcp", "srwr hook", "srwr view-server", "srwr view ", "srwr init", "srwr tapes", "srwr trace"} {
 			found := false
 			for _, line := range strings.Split(out, "\n") {
 				if strings.Contains(line, cmd) {
@@ -174,6 +174,24 @@ func TestUsageNamesRootForEverySubcommand(t *testing.T) {
 			}
 			if !found {
 				t.Errorf("SRWR_LANG=%q: no usage line for %q", lang, cmd)
+			}
+		}
+	}
+}
+
+// The usage does not count the tools (it once said "two commands, select / replace"), and names every subcommand and option.
+func TestUsageIsCurrent(t *testing.T) {
+	for _, lang := range []string{"", "ja"} {
+		t.Setenv("SRWR_LANG", lang)
+		_, out, _ := run([]string{"--help"}, "")
+		for _, bad := range []string{"select", "replace", "two commands", "2コマンド"} {
+			if strings.Contains(out, bad) {
+				t.Errorf("SRWR_LANG=%q: the usage still says %q", lang, bad)
+			}
+		}
+		for _, want := range []string{"session", "check", "--json", "--as-tape", "--tape", "--live", "--lenient"} {
+			if !strings.Contains(out, want) {
+				t.Errorf("SRWR_LANG=%q: the usage does not say %q", lang, want)
 			}
 		}
 	}

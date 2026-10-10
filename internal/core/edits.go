@@ -40,9 +40,10 @@ func (c *Core) Edits(in EditsInput) (*EditsResult, *Error) {
 // editFailure is what the tape knows of a failed edit: the item that failed (an empty one when the call as a whole did).
 func editFailure(item EditInput, why string, cerr *Error) failedCall {
 	f := failedCall{tool: toolEdit, why: &why, err: cerr}
-	if item.Selection != "" || item.File == "" {
+	switch {
+	case item.Selection != "":
 		f.selection = &item.Selection
-	} else {
+	case item.File != "":
 		f.file = item.File
 		if item.HasLines {
 			f.startLine, f.endLine = &item.StartLine, &item.EndLine

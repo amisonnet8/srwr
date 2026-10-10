@@ -67,7 +67,8 @@ t.Equal(5, strchars(paint.NumberLabels(1200, 1, 2)[2]), 'the width grows with th
 
 # --- the operation list ---
 t.Equal('●  5 edit    text.go:37  幅ちょうどの', sidebar.Line({index: 4, kind: 'edit', file: 'src/text.go', range: {start: 37, end: 37}, why: '幅ちょうどの'}), 'row with why')
-t.Equal('●  6 外部変更 stats.go:1-126', sidebar.Line({index: 5, kind: 'external', file: 'stats.go', range: {start: 1, end: 126}, why: v:null}), 'row without why')
+t.Equal('●  6 外部変更 stats.go:1-126  srwr の外でファイルが変わった', sidebar.Line({index: 5, kind: 'external', file: 'stats.go', range: {start: 1, end: 126}, why: v:null}), 'external without why says what it is')
+t.Equal('●  1 edit    a.go:1', sidebar.Line({index: 0, kind: 'edit', file: 'a.go', range: {start: 1, end: 1}, why: v:null}), 'an edit without why')
 t.Equal('srwr_dot_external', sidebar.DotType('final'), 'final is purple')
 t.Equal('srwr_dot_select', sidebar.DotType('look'), 'look is blue')
 
@@ -80,6 +81,7 @@ t.Equal('2026-09-30 00:54  2026-09-30 01:00     7         2  20260930-0054-why-b
 # --- commands and settings ---
 t.Equal('x', ui.TapeId('x'), 'tape id')
 t.Equal('20260930-0054-why-basic', ui.TapeId('.srwr/tapes/20260930-0054-why-basic.tape.jsonl'), 'tape path')
+t.Equal('20260930-0054-why-basic', ui.TapeId('.srwr/tapes/20260930-0054-why-basic.tape.jsonl.gz'), 'a compressed tape path')
 t.Equal('', ui.TapeId('  '), 'no tape')
 t.Equal(t.Root() .. '/bin/srwr', config.Path(), 'path from g:srwr_path')
 unlet g:srwr_path

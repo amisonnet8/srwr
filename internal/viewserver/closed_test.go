@@ -50,6 +50,11 @@ func TestAClosedTapeIsShownLikeAPlainOne(t *testing.T) {
 	}
 	want := exchange(t, &Server{Root: plain}, reqs...)
 	got := exchange(t, &Server{Root: closed}, reqs...)
+	// The one thing that tells them apart is the name of the file, which the list says as it is.
+	if !strings.Contains(got[1], `"file":"20261001-1000-aaaa.tape.jsonl.gz"`) || !strings.Contains(want[1], `"file":"20261001-1000-aaaa.tape.jsonl"`) {
+		t.Errorf("file names: closed %s, plain %s", got[1], want[1])
+	}
+	got[1] = strings.ReplaceAll(got[1], ".tape.jsonl.gz", ".tape.jsonl")
 	for i := range want {
 		if got[i] != want[i] {
 			t.Errorf("response %d differs:\n closed %s\n plain  %s", i+1, got[i], want[i])

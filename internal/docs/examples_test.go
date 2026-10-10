@@ -225,8 +225,14 @@ func checkHookExample(t *testing.T, path string) {
 	goBlocks := codeBlocks(t, path, "go")
 	hookBlocks := codeBlocks(t, path, "hook")
 	tapeBlocks := codeBlocks(t, path, "jsonl")
-	if len(goBlocks) != 2 || len(hookBlocks) != 1 || len(tapeBlocks) != 1 {
-		t.Fatalf("found %d go blocks, %d hook blocks and %d jsonl blocks", len(goBlocks), len(hookBlocks), len(tapeBlocks))
+	var saidBlocks [][]string // the ```json blocks (codeBlocks matches by prefix, so the jsonl one comes along)
+	for _, b := range codeBlocks(t, path, "json") {
+		if len(b) == 1 && strings.HasPrefix(b[0], `{"hookSpecificOutput"`) {
+			saidBlocks = append(saidBlocks, b)
+		}
+	}
+	if len(goBlocks) != 2 || len(hookBlocks) != 1 || len(tapeBlocks) != 1 || len(saidBlocks) != 1 || len(saidBlocks[0]) != 1 {
+		t.Fatalf("found %d go blocks, %d hook blocks, %d jsonl blocks and %d json blocks", len(goBlocks), len(hookBlocks), len(tapeBlocks), len(saidBlocks))
 	}
 	root := t.TempDir()
 	if real, err := filepath.EvalSymlinks(root); err == nil {
@@ -246,6 +252,7 @@ func checkHookExample(t *testing.T, path string) {
 	ws.SetAuthor(tape.Author{Kind: "ai", Name: "claude"})
 	c := &core.Core{WS: ws}
 	calls := 0
+	var advised []string // what the hook said back, for each call (empty: nothing)
 	for _, line := range hookBlocks[0] {
 		if !strings.HasPrefix(line, "→ ") {
 			continue
@@ -270,13 +277,26 @@ func checkHookExample(t *testing.T, path string) {
 				t.Fatal(err)
 			}
 		}
-		if _, err := hook.Run(strings.NewReader(in), c); err != nil {
+		_, advice, err := hook.RunWithAdvice(strings.NewReader(in), c)
+		if err != nil {
 			t.Fatal(err)
 		}
+		advised = append(advised, strings.Join(advice, "\n"))
 		calls++
 	}
 	if calls != 3 {
 		t.Fatalf("the document shows %d calls", calls)
+	}
+	// The advice is given after the first read only, and it is the JSON the document shows (what srwr hook writes to standard output).
+	if advised[0] != hook.LookAdvice || advised[1] != "" || advised[2] != "" {
+		t.Errorf("advice of the three calls = %q", advised)
+	}
+	said, err := json.Marshal(map[string]any{"hookSpecificOutput": map[string]any{"hookEventName": "PostToolUse", "additionalContext": advised[0]}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(said) != saidBlocks[0][0] {
+		t.Errorf("the document says the hook writes\n%s\nbut it writes\n%s", saidBlocks[0][0], said)
 	}
 
 	active, err := os.ReadFile(filepath.Join(root, ".srwr", "active")) //nolint:gosec // a path in a temporary directory

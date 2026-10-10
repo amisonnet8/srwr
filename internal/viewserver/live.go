@@ -1,6 +1,8 @@
 package viewserver
 
 import (
+	"bufio"
+	"encoding/json"
 	"os"
 	"strings"
 	"sync"
@@ -9,6 +11,7 @@ import (
 	"github.com/amisonnet8/srwr/internal/jsonrpc"
 	"github.com/amisonnet8/srwr/internal/tape"
 	"github.com/amisonnet8/srwr/internal/timeline"
+	"github.com/amisonnet8/srwr/internal/trace"
 )
 
 // liveWatcher follows the newest tape and sends the frames that are added to it. It is one
@@ -113,7 +116,8 @@ func (w *liveWatcher) run() {
 	}
 }
 
-// newestTape returns the tape that was written most recently.
+// newestTape returns the tape that was written most recently. A derived tape (srwr trace --as-tape cut it out of other tapes) is
+// not a recording in progress, so it is passed over.
 func (s *Server) newestTape() (string, bool) {
 	best, bestID := int64(0), ""
 	for _, id := range s.tapeIDs() { // newest name first, so on a tie the later name wins
@@ -126,10 +130,33 @@ func (s *Server) newestTape() (string, bool) {
 			continue
 		}
 		if m := st.ModTime().UnixNano(); bestID == "" || m > best {
+			if isDerived(path) {
+				continue
+			}
 			best, bestID = m, id
 		}
 	}
 	return bestID, bestID != ""
+}
+
+// isDerived says whether the header of a plain tape file names a derived tape. A compressed tape is a closed session, never
+// derived (srwr trace --as-tape does not compress).
+func isDerived(path string) bool {
+	if strings.HasSuffix(path, ".gz") {
+		return false
+	}
+	f, err := os.Open(path)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+	line, _ := bufio.NewReader(f).ReadBytes('\n')
+	var h struct {
+		Author *struct {
+			Kind string `json:"kind"`
+		} `json:"author"`
+	}
+	return json.Unmarshal(line, &h) == nil && h.Author != nil && h.Author.Kind == trace.DerivedKind
 }
 
 // tick looks at the tape once. A write error ends the watching.
@@ -188,7 +215,7 @@ func (w *liveWatcher) tick() error {
 // offer sends a frame if the client asked for its kind, numbered after the ones sent. Otherwise it only counts it.
 func (w *liveWatcher) offer(f timeline.Frame) error {
 	if !w.kinds.Shows(f.Kind) {
-		w.hidden[f.Kind]++
+		w.hidden[timeline.Group(f.Kind)]++
 		return nil
 	}
 	f.Index = w.shown

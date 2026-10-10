@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 188" width="1000" font-family="Menlo,Consolas,monospace" font-size="14">
+<rect width="1000" height="188" rx="6" fill="#1e1e1e"/>
+<text x="16" y="30" fill="#808080" xml:space="preserve">  Pick a tape to replay</text>
+<rect x="8" y="36" width="984" height="22" fill="#264f78"/>
+<text x="16" y="52" fill="#d4d4d4" xml:space="preserve">&gt; 2026-10-10 09:31:02  Add member to mtqg: docs first, then the code    14 operations · list.go, main.go, mtqg.md</text>
+<text x="16" y="74" fill="#808080" xml:space="preserve">                       20261010-0931-e0tq.tape.jsonl</text>
+<text x="16" y="96" fill="#d4d4d4" xml:space="preserve">  2026-10-10 08:12:40  Fix the date format of the list                  9 operations · render.go, render_test.go</text>
+<text x="16" y="118" fill="#808080" xml:space="preserve">                       20261010-0812-k3m9.tape.jsonl</text>
+<text x="16" y="140" fill="#d4d4d4" xml:space="preserve">  2026-10-09 17:40:11                                                   6 operations · timeline.go</text>
+<text x="16" y="162" fill="#808080" xml:space="preserve">                       20261009-1740-p0xz.tape.jsonl</text>
+</svg>

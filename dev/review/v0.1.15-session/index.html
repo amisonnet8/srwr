@@ -1,0 +1,74 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>v0.1.15 セッション管理のサンプル</title>
+<style>body{font-family:system-ui,sans-serif;margin:24px auto;max-width:1040px;padding:0 16px;line-height:1.6}h2{margin-top:32px;font-size:1.05em}svg{width:100%;height:auto;margin:4px 0}code{background:#8881;padding:1px 4px;border-radius:3px}li{margin:4px 0}</style>
+<h1>v0.1.15：セッション管理（題の付いたテープ）</h1><ul>
+<li>作るもの：MCP の新しいツール <code>session {title, why}</code>。AI が「別の作業を始める」とき、題と理由を付けて新しいテープを始める。呼ばなければ今のまま（30分で自動で区切る）。ツールは4つになる。</li>
+<li>題と理由は、新しいテープの header に書く（今のテープに後から付けない）。題なしのテープは今と同じ。区切りは作業場全体に効く。</li>
+<li>見せるのは**一覧だけ**：<code>srwr tapes</code>・Vim のテープ一覧・VSCode のテープ選び。再生の画面（コマ・ステータス行・バー）は変えない。プロトコルは TapeInfo に <code>title</code>・<code>why</code> を足すだけ（<code>protocolVersion</code> 3 のまま）。</li>
+<li>題のないテープは、3つとも今と同じ見た目（基準は変わらない）。</li>
+</ul>
+<h2>1. srwr tapes（題のある行の下に1行）</h2><h3>dark</h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 232" width="1000" font-family="Menlo,Consolas,monospace" font-size="14">
+<rect width="1000" height="232" rx="6" fill="#1e1e1e"/>
+<text x="16" y="30" fill="#808080" xml:space="preserve">$ srwr tapes</text>
+<text x="16" y="52" fill="#d4d4d4" xml:space="preserve">  Tape                Started          Last update      Events    Files     Size</text>
+<text x="16" y="74" fill="#4fc1ff" xml:space="preserve">  20261010-0931-e0tq  2026-10-10 09:31  2026-10-10 10:42  14        3          8.2 KB  &lt;- current session</text>
+<text x="16" y="96" fill="#c586c0" xml:space="preserve">    Add member to mtqg: docs first, then the code</text>
+<text x="16" y="118" fill="#d4d4d4" xml:space="preserve">  20261010-0812-k3m9  2026-10-10 08:12  2026-10-10 08:55  9         2          5.1 KB</text>
+<text x="16" y="140" fill="#c586c0" xml:space="preserve">    Fix the date format of the list</text>
+<text x="16" y="162" fill="#d4d4d4" xml:space="preserve">  20261009-1740-p0xz  2026-10-09 17:40  2026-10-09 18:20  6         1          2.4 KB</text>
+<text x="16" y="184" fill="#d4d4d4" xml:space="preserve"></text>
+<text x="16" y="206" fill="#808080" xml:space="preserve">3 tapes (15.7 KB in all). Replay one with srwr view &lt;tape&gt;; share one with srwr tapes path &lt;tape&gt;.</text>
+</svg>
+<h3>light</h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 232" width="1000" font-family="Menlo,Consolas,monospace" font-size="14">
+<rect width="1000" height="232" rx="6" fill="#ffffff"/>
+<text x="16" y="30" fill="#6e7781" xml:space="preserve">$ srwr tapes</text>
+<text x="16" y="52" fill="#1f2328" xml:space="preserve">  Tape                Started          Last update      Events    Files     Size</text>
+<text x="16" y="74" fill="#0b61a4" xml:space="preserve">  20261010-0931-e0tq  2026-10-10 09:31  2026-10-10 10:42  14        3          8.2 KB  &lt;- current session</text>
+<text x="16" y="96" fill="#8250df" xml:space="preserve">    Add member to mtqg: docs first, then the code</text>
+<text x="16" y="118" fill="#1f2328" xml:space="preserve">  20261010-0812-k3m9  2026-10-10 08:12  2026-10-10 08:55  9         2          5.1 KB</text>
+<text x="16" y="140" fill="#8250df" xml:space="preserve">    Fix the date format of the list</text>
+<text x="16" y="162" fill="#1f2328" xml:space="preserve">  20261009-1740-p0xz  2026-10-09 17:40  2026-10-09 18:20  6         1          2.4 KB</text>
+<text x="16" y="184" fill="#1f2328" xml:space="preserve"></text>
+<text x="16" y="206" fill="#6e7781" xml:space="preserve">3 tapes (15.7 KB in all). Replay one with srwr view &lt;tape&gt;; share one with srwr tapes path &lt;tape&gt;.</text>
+</svg>
+
+<h2>2. Vim のテープ一覧（最後の列に題）</h2><h3>dark</h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 122" width="1000" font-family="Menlo,Consolas,monospace" font-size="14">
+<rect width="1000" height="122" rx="6" fill="#1e1e1e"/>
+<text x="16" y="30" fill="#4ec9b0" xml:space="preserve">Started           Updated           Ops  Files  Tape                Title</text>
+<rect x="8" y="36" width="984" height="22" fill="#264f78"/>
+<text x="16" y="52" fill="#d4d4d4" xml:space="preserve">2026-10-10 09:31  2026-10-10 10:42    14      3  20261010-0931-e0tq  Add member to mtqg: docs first, then the code</text>
+<text x="16" y="74" fill="#d4d4d4" xml:space="preserve">2026-10-10 08:12  2026-10-10 08:55     9      2  20261010-0812-k3m9  Fix the date format of the list</text>
+<text x="16" y="96" fill="#d4d4d4" xml:space="preserve">2026-10-09 17:40  2026-10-09 18:20     6      1  20261009-1740-p0xz</text>
+</svg>
+<h3>light</h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 122" width="1000" font-family="Menlo,Consolas,monospace" font-size="14">
+<rect width="1000" height="122" rx="6" fill="#ffffff"/>
+<text x="16" y="30" fill="#116329" xml:space="preserve">Started           Updated           Ops  Files  Tape                Title</text>
+<rect x="8" y="36" width="984" height="22" fill="#cfe3ff"/>
+<text x="16" y="52" fill="#1f2328" xml:space="preserve">2026-10-10 09:31  2026-10-10 10:42    14      3  20261010-0931-e0tq  Add member to mtqg: docs first, then the code</text>
+<text x="16" y="74" fill="#1f2328" xml:space="preserve">2026-10-10 08:12  2026-10-10 08:55     9      2  20261010-0812-k3m9  Fix the date format of the list</text>
+<text x="16" y="96" fill="#1f2328" xml:space="preserve">2026-10-09 17:40  2026-10-09 18:20     6      1  20261009-1740-p0xz</text>
+</svg>
+
+<h2>3. VSCode のテープ選び（見出しに題）</h2><h3>dark</h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 188" width="1000" font-family="Menlo,Consolas,monospace" font-size="14">
+<rect width="1000" height="188" rx="6" fill="#1e1e1e"/>
+<text x="16" y="30" fill="#808080" xml:space="preserve">  Pick a tape to replay</text>
+<rect x="8" y="36" width="984" height="22" fill="#264f78"/>
+<text x="16" y="52" fill="#d4d4d4" xml:space="preserve">&gt; 2026-10-10 09:31:02  Add member to mtqg: docs first, then the code    14 operations · list.go, main.go, mtqg.md</text>
+<text x="16" y="74" fill="#808080" xml:space="preserve">                       20261010-0931-e0tq.tape.jsonl</text>
+<text x="16" y="96" fill="#d4d4d4" xml:space="preserve">  2026-10-10 08:12:40  Fix the date format of the list                  9 operations · render.go, render_test.go</text>
+<text x="16" y="118" fill="#808080" xml:space="preserve">                       20261010-0812-k3m9.tape.jsonl</text>
+<text x="16" y="140" fill="#d4d4d4" xml:space="preserve">  2026-10-09 17:40:11                                                   6 operations · timeline.go</text>
+<text x="16" y="162" fill="#808080" xml:space="preserve">                       20261009-1740-p0xz.tape.jsonl</text>
+</svg>
+<h3>light</h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 188" width="1000" font-family="Menlo,Consolas,monospace" font-size="14">
+<rect width="1000" height="188" rx="6" fill="#ffffff"/>
+<text x="16" y="30" fill="#6e7781" xml:space="preserve">  Pick a tape to replay</text>
+<rect x="8" y="36" width="984" height="22" fill="#cfe3ff"/>
+<text x="16" y="52" fill="#1f2328" xml:space="preserve">&gt; 2026-10-10 09:31:02  Add member to mtqg: docs first, then the code    14 operations · list.go, main.go, mtqg.md</text>
+<text x="16" y="74" fill="#6e7781" xml:space="preserve">                       20261010-0931-e0tq.tape.jsonl</text>
+<text x="16" y="96" fill="#1f2328" xml:space="preserve">  2026-10-10 08:12:40  Fix the date format of the list                  9 operations · render.go, render_test.go</text>
+<text x="16" y="118" fill="#6e7781" xml:space="preserve">                       20261010-0812-k3m9.tape.jsonl</text>
+<text x="16" y="140" fill="#1f2328" xml:space="preserve">  2026-10-09 17:40:11                                                   6 operations · timeline.go</text>
+<text x="16" y="162" fill="#6e7781" xml:space="preserve">                       20261009-1740-p0xz.tape.jsonl</text>
+</svg>
+

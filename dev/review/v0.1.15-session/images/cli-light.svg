@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 232" width="1000" font-family="Menlo,Consolas,monospace" font-size="14">
+<rect width="1000" height="232" rx="6" fill="#ffffff"/>
+<text x="16" y="30" fill="#6e7781" xml:space="preserve">$ srwr tapes</text>
+<text x="16" y="52" fill="#1f2328" xml:space="preserve">  Tape                Started          Last update      Events    Files     Size</text>
+<text x="16" y="74" fill="#0b61a4" xml:space="preserve">  20261010-0931-e0tq  2026-10-10 09:31  2026-10-10 10:42  14        3          8.2 KB  &lt;- current session</text>
+<text x="16" y="96" fill="#8250df" xml:space="preserve">    Add member to mtqg: docs first, then the code</text>
+<text x="16" y="118" fill="#1f2328" xml:space="preserve">  20261010-0812-k3m9  2026-10-10 08:12  2026-10-10 08:55  9         2          5.1 KB</text>
+<text x="16" y="140" fill="#8250df" xml:space="preserve">    Fix the date format of the list</text>
+<text x="16" y="162" fill="#1f2328" xml:space="preserve">  20261009-1740-p0xz  2026-10-09 17:40  2026-10-09 18:20  6         1          2.4 KB</text>
+<text x="16" y="184" fill="#1f2328" xml:space="preserve"></text>
+<text x="16" y="206" fill="#6e7781" xml:space="preserve">3 tapes (15.7 KB in all). Replay one with srwr view &lt;tape&gt;; share one with srwr tapes path &lt;tape&gt;.</text>
+</svg>

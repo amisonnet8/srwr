@@ -802,3 +802,21 @@ func TestEditsWithContentIsTurnedAway(t *testing.T) {
 		t.Error("sub/b.txt was made")
 	}
 }
+
+// A long line next to an edit is cut in above and below (cut: true); lines is not.
+func TestEditCutsAboveBelow(t *testing.T) {
+	root := t.TempDir()
+	long := strings.Repeat("x", 300)
+	if err := os.WriteFile(filepath.Join(root, "h.md"), []byte("# h\n"+long+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	m, isErr := body(t, serve(t, root, toolCall(1, "edit", `{"file":"h.md","newText":"- new","insert":"end","why":"w"}`))[0])
+	above, _ := m["above"].([]any)
+	if isErr || m["cut"] != true || len(above) != 2 || len([]rune(above[1].(string))) != 201 {
+		t.Fatalf("got %v", m)
+	}
+	m, _ = body(t, serve(t, root, toolCall(1, "edit", `{"file":"h.md","newText":"- more","insert":"end","brief":true,"why":"w"}`))[0])
+	if _, has := m["cut"]; has {
+		t.Errorf("brief has cut: %v", m)
+	}
+}

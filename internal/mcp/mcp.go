@@ -398,6 +398,7 @@ type editItemOK struct {
 	Lines     []string `json:"lines"`
 	Above     []string `json:"above"`
 	Below     []string `json:"below"`
+	Cut       bool     `json:"cut,omitempty"`
 	Hint      string   `json:"hint,omitempty"`
 }
 
@@ -431,6 +432,7 @@ type editOK struct {
 	Lines     []string `json:"lines"`
 	Above     []string `json:"above"`
 	Below     []string `json:"below"`
+	Cut       bool     `json:"cut,omitempty"`
 	Hint      string   `json:"hint,omitempty"`
 }
 
@@ -460,7 +462,7 @@ func (s *Server) callEdit(raw json.RawMessage) toolResult {
 		return success(briefEditOK{OK: true, briefOK: briefOK{Selection: res.Selection, StartLine: res.StartLine, EndLine: res.EndLine, Hint: res.Hint}})
 	}
 	return success(editOK{OK: true, Selection: res.Selection, StartLine: res.StartLine, EndLine: res.EndLine,
-		Lines: res.Lines, Above: res.Above, Below: res.Below, Hint: res.Hint})
+		Lines: res.Lines, Above: res.Above, Below: res.Below, Cut: res.Cut, Hint: res.Hint})
 }
 
 // callEdits is edit with edits: several edits in one call, with one why.
@@ -493,7 +495,7 @@ func (s *Server) callEdits(a editArgs) toolResult {
 	}
 	out := editsOK{OK: true, Edits: make([]editItemOK, len(res.Edits)), Note: itemWhyNote(*a.Edits)}
 	for i, r := range res.Edits {
-		out.Edits[i] = editItemOK{Selection: r.Selection, StartLine: r.StartLine, EndLine: r.EndLine, Lines: r.Lines, Above: r.Above, Below: r.Below, Hint: r.Hint}
+		out.Edits[i] = editItemOK{Selection: r.Selection, StartLine: r.StartLine, EndLine: r.EndLine, Lines: r.Lines, Above: r.Above, Below: r.Below, Cut: r.Cut, Hint: r.Hint}
 	}
 	return success(out)
 }

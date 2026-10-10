@@ -48,7 +48,7 @@ func TestEditsHint(t *testing.T) {
 }
 
 func TestTouchHint(t *testing.T) {
-	file := "func a() {\n}\nfunc b() {\n}\n\nvar x = 1\n"
+	file := "func a() {\n}\nfunc b() {\n}\n\nvar x = 1\n\t{\"a\", 1},\n"
 	cases := []struct {
 		name string
 		in   EditInput
@@ -59,6 +59,8 @@ func TestTouchHint(t *testing.T) {
 		{"one line is not a block", EditInput{Expect: str("}"), StartLine: 2, EndLine: 2, HasLines: true, NewText: "var y = 2", Insert: "after"}, nil},
 		{"another indentation", EditInput{Expect: str("}"), StartLine: 2, EndLine: 2, HasLines: true, NewText: "\tx()\n\ty()", Insert: "after"}, nil},
 		{"only below touches", EditInput{Expect: str("var x = 1"), NewText: "\nvar y = 2\nvar z = 3", Insert: "before"}, []string{"touch the line below"}},
+		{"elements of a table are one shape", EditInput{Expect: str("\t{\"a\", 1},"), NewText: "\t{\"b\", 2},\n\t{\"c\", 3},", Insert: "after"}, nil},
+		{"a function after a } is not one shape", EditInput{Expect: str("}"), StartLine: 4, EndLine: 4, HasLines: true, NewText: "func n() {\n}", Insert: "after"}, []string{"touch the line above"}},
 		{"a replacement is not an insertion", EditInput{Expect: str("}"), NewText: "}\n}"}, nil},
 	}
 	for _, c := range cases {
@@ -94,5 +96,31 @@ func TestTouchHintInEdits(t *testing.T) {
 	}
 	if !strings.Contains(res.Edits[0].Hint, "touch the line above") {
 		t.Errorf("hint = %q", res.Edits[0].Hint)
+	}
+}
+
+func TestEditCutsLongContext(t *testing.T) {
+	long := strings.Repeat("x", 300)
+	e := newEnv(t)
+	e.write("h.md", "# h\n"+long+"\n"+long+"\n")
+	res, err := e.c.Edits(EditsInput{Why: "w", Edits: []EditInput{{File: "h.md", NewText: "- new", Insert: "end"}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	r := res.Edits[0]
+	if !r.Cut || len(r.Above) != 2 || len([]rune(r.Above[0])) != maxLineLen+1 || !strings.HasSuffix(r.Above[0], "…") {
+		t.Errorf("above = %q, cut = %v", r.Above, r.Cut)
+	}
+	if len(r.Lines) != 1 || r.Lines[0] != "- new" {
+		t.Errorf("lines = %q", r.Lines)
+	}
+	// A single edit of a line that is long itself: lines are not cut; short context is not cut.
+	e.write("g.md", "a\n"+long+"\nb\n")
+	one, err := e.c.Edit(EditInput{File: "g.md", Expect: str(long), NewText: long + "y", Why: "w"})
+	if err != nil {
+		t.Fatalf("err = %+v", err)
+	}
+	if one.Cut || len(one.Lines[0]) != 301 {
+		t.Errorf("cut = %v, lines = %d", one.Cut, len(one.Lines[0]))
 	}
 }

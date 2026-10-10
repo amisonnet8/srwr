@@ -197,9 +197,9 @@ func (c *Core) editsIn(tx *session.Tx, items []EditInput, byFile []bool, rels []
 		res.Edits[st.idx] = EditResult{
 			Selection: sel, StartLine: st.a, EndLine: st.newEnd,
 			Lines: rangeLines(final, st.a, st.newEnd),
-			Above: rangeLines(final, st.a-contextLines, st.a-1),
-			Below: rangeLines(final, st.newEnd+1, st.newEnd+contextLines),
 		}
+		res.Edits[st.idx].Above, res.Edits[st.idx].Below, res.Edits[st.idx].Cut = cutContext(
+			rangeLines(final, st.a-contextLines, st.a-1), rangeLines(final, st.newEnd+1, st.newEnd+contextLines))
 		if st.b < st.a {
 			res.Edits[st.idx].Hint = touchHint(final, st.a, st.newEnd)
 		}

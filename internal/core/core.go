@@ -88,6 +88,9 @@ type EditResult struct {
 	Lines     []string
 	Above     []string
 	Below     []string
+	// Cut is true when a line of Above or Below was longer than maxLineLen and was cut to its first maxLineLen characters. Lines
+	// is never cut.
+	Cut bool
 
 	// Hint, when there is one, tells the client of edits: it is given when the edit follows an edit of the same file with nothing
 	// between them on the tape. It is not on the tape.
@@ -476,13 +479,36 @@ func (c *Core) writeEdit(tx *session.Tx, rel string, t target, a, b int, newText
 	res := &EditResult{
 		Selection: sel, StartLine: a, EndLine: newEnd,
 		Lines: rangeLines(newText, a, newEnd),
-		Above: rangeLines(newText, a-contextLines, a-1),
-		Below: rangeLines(newText, newEnd+1, newEnd+contextLines),
 	}
+	res.Above, res.Below, res.Cut = cutContext(rangeLines(newText, a-contextLines, a-1), rangeLines(newText, newEnd+1, newEnd+contextLines))
 	if b < a {
 		res.Hint = touchHint(newText, a, newEnd)
 	}
 	return res, nil
+}
+
+// sameShape tells whether two lines begin with the same character and end with the same character (not counting the spaces and
+// tabs around them): the elements of a table (`{"a", 1},` and `{"b", 2},`, `| a | b |`) are lines of one shape, so lines put
+// among them are not a block of their own and need no empty line.
+func sameShape(x, y string) bool {
+	x, y = strings.TrimSpace(x), strings.TrimSpace(y)
+	return x != "" && y != "" && x[0] == y[0] && x[len(x)-1] == y[len(y)-1]
+}
+
+// cutContext cuts the lines above and below an edit that are longer than maxLineLen to their first maxLineLen characters and says whether it cut any.
+func cutContext(above, below []string) ([]string, []string, bool) {
+	cut := false
+	one := func(lines []string) []string {
+		out := make([]string, len(lines))
+		for i, l := range lines {
+			if r := []rune(l); len(r) > maxLineLen {
+				l, cut = string(r[:maxLineLen])+"…", true
+			}
+			out[i] = l
+		}
+		return out
+	}
+	return one(above), one(below), cut
 }
 
 // touchHint is what an insertion of lines a..end of text is told when its first (last) line sits against a line of the same
@@ -499,7 +525,7 @@ func touchHint(text string, a, end int) string {
 			return false
 		}
 		x, y := lines[in-1], lines[next-1]
-		return strings.TrimSpace(x) != "" && strings.TrimSpace(y) != "" && indent(x) == indent(y)
+		return strings.TrimSpace(x) != "" && strings.TrimSpace(y) != "" && indent(x) == indent(y) && !sameShape(x, y)
 	}
 	var msgs []string
 	if touches(a, a-1) {

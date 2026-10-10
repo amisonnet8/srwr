@@ -4,7 +4,7 @@
 
 | 対象 | 表記 | 備考 |
 |---|---|---|
-| 製品全体・Go のバイナリ | **srwr** | 常に小文字。文頭でも `srwr`。略語として意味を固定しない |
+| 製品全体・Go のバイナリ | **srwr** | 常に小文字。文頭でも `srwr`。名前の由来は売り文句の頭文字（**S**earch, **r**ewrite, say **w**hy, **r**eplay）。ツールの名前（`look`・`edit`・`new`）の頭文字ではない |
 | サブコマンド | `srwr mcp`・`srwr hook`・`srwr view-server`・`srwr view`・`srwr init`・`srwr tapes`・`srwr trace` | `docs/reference/cli.md` |
 | 表示サーバー | **表示サーバー**（view-server） | `srwr view-server`。エディタが起動する。人は直接使わない |
 | VSCode 拡張 | **srwr-view** | 拡張ID・表示名とも `srwr-view` |

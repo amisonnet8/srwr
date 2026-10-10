@@ -3,18 +3,21 @@
 <p align="center"><b>Until v0.2.0, srwr is an experiment. Tools, inputs, the tape format and the screens may change without notice, and old tapes may stop working.</b></p>
 
 <p align="center">
-  <img src="docs/images/banner.svg" alt="srwr: let AI agents edit files with a reason for every change, and replay every step" width="100%">
+  <img src="docs/images/banner.svg" alt="srwr: Search, rewrite, say why, replay. AI agents read, search and rewrite files with a reason for every step" width="100%">
 </p>
 
-<h3 align="center"><b>Let AI agents edit files with just <code>select</code> and <code>replace</code>, record every step with its reason on a tape, and replay it frame by frame in VSCode or Vim.</b></h3>
+<h3 align="center"><b>Search, rewrite, say why, replay: AI agents read, search and rewrite files with a reason for every step, recorded on a tape you can replay frame by frame in VSCode or Vim.</b></h3>
 
 <p align="center"><i><a href="README_ja.md">日本語</a> | <b>English</b></i></p>
+
+<p align="center"><sub><b>srwr</b> = <b>S</b>earch · <b>r</b>ewrite · say <b>w</b>hy · <b>r</b>eplay</sub></p>
 
 <p align="center">
   <a href="https://github.com/amisonnet8/srwr/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/amisonnet8/srwr/ci.yml?branch=main&label=CI&logo=github"></a>
   <a href="https://github.com/amisonnet8/srwr/releases"><img alt="Release" src="https://img.shields.io/github/v/release/amisonnet8/srwr?include_prereleases&sort=semver&logo=github"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/github/license/amisonnet8/srwr"></a>
   <img alt="Go" src="https://img.shields.io/github/go-mod/go-version/amisonnet8/srwr?logo=go&logoColor=white">
+  <a href="https://github.com/amisonnet8/srwr/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/amisonnet8/srwr?logo=github"></a>
   <img alt="Vim 9.0.0784+" src="https://img.shields.io/badge/Vim-9.0.0784%2B-019733?logo=vim&logoColor=white">
   <a href="https://marketplace.visualstudio.com/items?itemName=amisonnet8.srwr-view"><img alt="VSCode Marketplace" src="https://flat.badgen.net/vs-marketplace/v/amisonnet8.srwr-view"></a>
 </p>
@@ -38,12 +41,15 @@
 
 ## ✨ Features
 
-- ✍️ **Two commands only**: the AI edits with `select` (look) and `replace` (change). No other way to touch a file, so nothing slips past the record
+- ✍️ **Its own tools, nothing else**: the AI reads with `look`, changes with `edit` and creates with `new`. By default there is no other way to touch a file, so nothing slips past the record
+- 🔎 **Search, then change**: `look` can search a file or the whole project and hands back a token that `edit` takes. `edit` can also name its place by `file` and `expect`, or change part of a line with `old` and `new`, and `edits` changes many places at once
 - 🧾 **A reason for every step**: each call carries a `why`, and an empty one is refused
 - 🎞️ **Frame by frame**: replay what the AI did one frame at a time, with the reason line above the code it is about
 - 🧩 **VSCode and Vim**: the same screen in the [VSCode extension](extension/README.md) and in a plain Vim (`srwr view`, nothing to install)
 - 📡 **Live**: follow a tape while the AI is still writing it, and jump back to the newest frame when you want
 - 🔍 **Changes from outside are not lost**: if a file changes outside srwr, the next call notices and shows it as a side-by-side diff
+- 🧯 **Failures are recorded too**: a call that was turned away is on the tape. Choose what you see: look, edit, outside changes, failures
+- 🏷️ **Sessions with a title, and a way back from git**: the AI can name its session; `srwr trace` tells which operation, and which `why`, wrote the lines of a commit
 - 🔒 **Secrets stay out**: `.env`, keys and anything in `.srwrignore` are never put on a tape
 - 📦 **One binary, no dependencies**: a single Go binary, no cgo, Linux, macOS and Windows
 - 🕒 **Times that make sense**: tapes keep UTC, and screens show your own time zone

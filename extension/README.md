@@ -13,7 +13,7 @@
 
 # srwr-view
 
-**See what an AI agent did to your code, one frame at a time, with the reason of each step.** srwr-view is the VSCode side of [srwr](https://github.com/amisonnet8/srwr): the AI edits files with just `select` and `replace`, every step goes on a *tape* with its reason, and this extension replays the tape.
+**See what an AI agent did to your code, one frame at a time, with the reason of each step.** srwr-view is the VSCode side of [srwr](https://github.com/amisonnet8/srwr) (**S**earch, **r**ewrite, say **w**hy, **r**eplay): the AI reads, searches and rewrites files with a reason for every step, each step is recorded on a *tape*, and this extension replays the tape.
 
 ![srwr-view: an orange reason line above the replaced lines, the operations list on the left, the bottom bar](media/readme/replay.png)
 

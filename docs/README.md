@@ -2,7 +2,7 @@
 
 *[日本語](README_ja.md) | **English***
 
-srwr lets an AI agent edit files through its tools, records every step on a **tape** with its reason (`why`), and **replays it frame by frame** in VSCode or Vim.
+srwr — **S**earch, **r**ewrite, say **w**hy, **r**eplay: an AI agent reads, searches and rewrites files through its tools with a reason (`why`) for every step, each step is recorded on a **tape**, and you **replay it frame by frame** in VSCode or Vim.
 
 ## Who reads what
 

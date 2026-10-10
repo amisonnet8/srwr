@@ -13,7 +13,7 @@
 
 # srwr-view
 
-**AI エージェントがコードに何をしたかを、1 コマずつ、各操作の理由とともに見る。** srwr-view は [srwr](https://github.com/amisonnet8/srwr) の VSCode 側です。AI は `select` と `replace` だけでファイルを編集し、すべての操作が理由つきで*テープ*に載り、この拡張がテープを再生します。
+**AI エージェントがコードに何をしたかを、1 コマずつ、各操作の理由とともに見る。** srwr-view は [srwr](https://github.com/amisonnet8/srwr)（**S**earch・**r**ewrite・say **w**hy・**r**eplay）の VSCode 側です。AI はファイルを読み・検索し・書き換え、すべての操作が理由つきで*テープ*に載り、この拡張がテープを再生します。
 
 ![srwr-view：置き換えた行の上に橙の理由の行、左に操作一覧、下にバー](media/readme/replay.png)
 

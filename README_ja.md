@@ -3,18 +3,21 @@
 <p align="center"><b>v0.2.0 までの srwr は実験です。ツール・入力・テープの形式・画面は、予告なく変わることがあり、古いテープが読めなくなることもあります。</b></p>
 
 <p align="center">
-  <img src="docs/images/banner.svg" alt="srwr：AI にファイルを編集させ、変更ごとの理由つきで、すべての操作を再生する" width="100%">
+  <img src="docs/images/banner.svg" alt="srwr：Search, rewrite, say why, replay。AI エージェントが、一つ一つの操作に理由を添えて、ファイルを読み・検索し・書き換える" width="100%">
 </p>
 
-<h3 align="center"><b>AI エージェントに <code>select</code> と <code>replace</code> の 2 つだけでファイルを編集させ、すべての操作を理由つきでテープに記録して、VSCode か Vim でコマ送りで再生する。</b></h3>
+<h3 align="center"><b>Search, rewrite, say why, replay：AI エージェントが、一つ一つの操作に理由を添えて、ファイルを読み・検索し・書き換える。その記録（テープ）を、VSCode か Vim でコマ送りで再生できる。</b></h3>
 
 <p align="center"><i><a href="README.md">English</a> | <b>日本語</b></i></p>
+
+<p align="center"><sub><b>srwr</b> ＝ <b>S</b>earch（探す）・<b>r</b>ewrite（書き換える）・say <b>w</b>hy（理由を言う）・<b>r</b>eplay（再生する）の頭文字</sub></p>
 
 <p align="center">
   <a href="https://github.com/amisonnet8/srwr/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/amisonnet8/srwr/ci.yml?branch=main&label=CI&logo=github"></a>
   <a href="https://github.com/amisonnet8/srwr/releases"><img alt="Release" src="https://img.shields.io/github/v/release/amisonnet8/srwr?include_prereleases&sort=semver&logo=github"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/github/license/amisonnet8/srwr"></a>
   <img alt="Go" src="https://img.shields.io/github/go-mod/go-version/amisonnet8/srwr?logo=go&logoColor=white">
+  <a href="https://github.com/amisonnet8/srwr/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/amisonnet8/srwr?logo=github"></a>
   <img alt="Vim 9.0.0784+" src="https://img.shields.io/badge/Vim-9.0.0784%2B-019733?logo=vim&logoColor=white">
   <a href="https://marketplace.visualstudio.com/items?itemName=amisonnet8.srwr-view"><img alt="VSCode Marketplace" src="https://flat.badgen.net/vs-marketplace/v/amisonnet8.srwr-view"></a>
 </p>
@@ -38,12 +41,15 @@
 
 ## ✨ 特徴
 
-- ✍️ **コマンドは 2 つだけ**：AI は `select`（見る）と `replace`（変える）だけで編集します。ファイルに触れる道がほかに無いので、記録から漏れません
+- ✍️ **専用の道具だけ**：AI は `look`（読む）・`edit`（変える）・`new`（作る）で編集します。既定ではファイルに触れる道がほかに無いので、記録から漏れません
+- 🔎 **探して、変える**：`look` はファイルやプロジェクト全体を検索でき、`edit` がそのまま使えるトークンを返します。`edit` は `file` と `expect` で場所を示すことも、`old` と `new` で行の一部を変えることもでき、`edits` で何か所もまとめて変えられます
 - 🧾 **すべての操作に理由**：呼び出しごとに `why` を添え、空のものは断ります
 - 🎞️ **コマ送り**：AI がしたことを 1 コマずつ再生します。理由の行が、その理由が指すコードの真上に出ます
 - 🧩 **VSCode と Vim**：[VSCode 拡張](extension/README_ja.md)と、素の Vim（`srwr view`、何も入れなくてよい）で、同じ画面です
 - 📡 **ライブ**：AI が書いている最中のテープを追いかけ、好きなときに最新のコマへ戻れます
 - 🔍 **外からの変更も見逃さない**：srwr の外でファイルが変わると、次の呼び出しで気づき、左右に並べた差分で見せます
+- 🧯 **失敗も記録する**：断られた呼び出しもテープに残ります。見るものは選べます（look・edit・外からの変更・失敗）
+- 🏷️ **題つきのセッション、git からの逆引き**：AI はセッションに題を付けられます。`srwr trace` は、コミットの行をどの操作が、どの理由で書いたかを引きます
 - 🔒 **秘密は記録しない**：`.env`・鍵・`.srwrignore` に書いたものは、テープに載せません
 - 📦 **単一バイナリ・依存なし**：Go の単一バイナリ。cgo なし。Linux・macOS・Windows
 - 🕒 **わかりやすい時刻**：テープは UTC で持ち、画面ではあなたの時間帯で見せます

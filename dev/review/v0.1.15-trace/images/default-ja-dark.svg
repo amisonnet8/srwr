@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 244" width="1000" font-family="Menlo,Consolas,monospace" font-size="14">
+<rect width="1000" height="244" rx="6" fill="#1e1e1e"/>
+<text x="16" y="30" fill="#808080">$ <tspan fill="#d4d4d4">SRWR_LANG=ja git show HEAD | srwr trace</tspan></text>
+<text x="16" y="61" fill="#4fc1ff" xml:space="preserve">コミット 3f9a1c2  Fix the same-day check in formatTime</text>
+<text x="16" y="83" fill="#d4d4d4" xml:space="preserve">  internal/cli/render.go</text>
+<text x="16" y="105" fill="#e5a04a" xml:space="preserve">    67〜69行   edit  20261010-0931-e0tq #7   10:21</text>
+<text x="16" y="127" fill="#c586c0" xml:space="preserve">      理由: 月が比較されない Day() を YearDay() に戻すため</text>
+<text x="16" y="149" fill="#d4d4d4" xml:space="preserve">  internal/cli/render_test.go</text>
+<text x="16" y="171" fill="#e5a04a" xml:space="preserve">    108〜109行 edit  20261010-0931-e0tq #6   10:19</text>
+<text x="16" y="193" fill="#c586c0" xml:space="preserve">      理由: 先月の同じ日が HH:MM で出る不具合を再現するテストを足すため</text>
+<text x="16" y="215" fill="#808080" xml:space="preserve">  2 ファイル、追加 5 行：テープから 5 行、テープに無い 0 行</text>
+</svg>

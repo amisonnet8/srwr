@@ -1,0 +1,107 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>v0.1.15 srwr trace のサンプル</title>
+<style>body{font-family:system-ui,sans-serif;margin:24px auto;max-width:1040px;padding:0 16px;line-height:1.6}
+h2{margin-top:32px;font-size:1.05em} .pair{display:grid;gap:12px} svg{width:100%;height:auto} code{background:#8881;padding:1px 4px;border-radius:3px}
+li{margin:4px 0}</style>
+<h1>v0.1.15：srwr trace（コミットの差分から、行を作った操作と理由を引く）</h1>
+<ul>
+<li><b>作るもの</b>：<code>git show</code>・<code>git diff</code>・<code>git log -p</code> の出力（統一差分を含むテキスト）を渡すと、追加された行を作ったテープの操作（テープID・seq・時刻・why）を出す。<code>mtqg format</code> と同じ形（ファイル、なければ標準入力）。</li>
+<li><b>srwr と git は独立</b>：srwr は git を動かさない・hook を足さない。テープも差分の形も変えない。読み取りだけ。</li>
+<li><b>引き方</b>：差分の追加行の連なりと、テープの <code>edit</code>・<code>new</code> の新しい行の連なりを突き合わせる（時刻でなく内容）。同じ行が複数の操作にあるときは新しい操作。1行だけの短い一致（<code>}</code> など）は結びつけない。</li>
+<li><b>結びつかない行</b>は「テープに無い」と数で言う（人が書いた・記録しないファイル・テープを消した、など）。</li>
+<li><b>見直し</b>：出力のテープID は <code>srwr view &lt;テープ&gt;</code> でそのまま開ける。切り出して再生できるテープにする <code>--as-tape</code> は次の版。</li>
+<li><b>画面（VSCode・Vim）・テープ・プロトコルは変えない</b>。</li>
+<li><b>了承してほしいこと</b>：(a) 出力の形（下の4つ） (b) <code>--mark</code> の形 (c) 「テープに無い」の言い方</li>
+</ul>
+<h2>1. 既定の出力（英語）</h2><div class="pair"><div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 244" width="1000" font-family="Menlo,Consolas,monospace" font-size="14">
+<rect width="1000" height="244" rx="6" fill="#1e1e1e"/>
+<text x="16" y="30" fill="#808080">$ <tspan fill="#d4d4d4">git show HEAD | srwr trace</tspan></text>
+<text x="16" y="61" fill="#4fc1ff" xml:space="preserve">commit 3f9a1c2  Fix the same-day check in formatTime</text>
+<text x="16" y="83" fill="#d4d4d4" xml:space="preserve">  internal/cli/render.go</text>
+<text x="16" y="105" fill="#e5a04a" xml:space="preserve">    lines 67-69   edit  20261010-0931-e0tq #7   10:21</text>
+<text x="16" y="127" fill="#c586c0" xml:space="preserve">      why: 月が比較されない Day() を YearDay() に戻すため</text>
+<text x="16" y="149" fill="#d4d4d4" xml:space="preserve">  internal/cli/render_test.go</text>
+<text x="16" y="171" fill="#e5a04a" xml:space="preserve">    lines 108-109 edit  20261010-0931-e0tq #6   10:19</text>
+<text x="16" y="193" fill="#c586c0" xml:space="preserve">      why: 先月の同じ日が HH:MM で出る不具合を再現するテストを足すため</text>
+<text x="16" y="215" fill="#808080" xml:space="preserve">  2 files, 5 added lines: 5 from tapes, 0 not on a tape</text>
+</svg></div><div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 244" width="1000" font-family="Menlo,Consolas,monospace" font-size="14">
+<rect width="1000" height="244" rx="6" fill="#ffffff"/>
+<text x="16" y="30" fill="#6e7781">$ <tspan fill="#24292f">git show HEAD | srwr trace</tspan></text>
+<text x="16" y="61" fill="#0b61a4" xml:space="preserve">commit 3f9a1c2  Fix the same-day check in formatTime</text>
+<text x="16" y="83" fill="#24292f" xml:space="preserve">  internal/cli/render.go</text>
+<text x="16" y="105" fill="#b45f06" xml:space="preserve">    lines 67-69   edit  20261010-0931-e0tq #7   10:21</text>
+<text x="16" y="127" fill="#7a3e9d" xml:space="preserve">      why: 月が比較されない Day() を YearDay() に戻すため</text>
+<text x="16" y="149" fill="#24292f" xml:space="preserve">  internal/cli/render_test.go</text>
+<text x="16" y="171" fill="#b45f06" xml:space="preserve">    lines 108-109 edit  20261010-0931-e0tq #6   10:19</text>
+<text x="16" y="193" fill="#7a3e9d" xml:space="preserve">      why: 先月の同じ日が HH:MM で出る不具合を再現するテストを足すため</text>
+<text x="16" y="215" fill="#6e7781" xml:space="preserve">  2 files, 5 added lines: 5 from tapes, 0 not on a tape</text>
+</svg></div></div><h2>2. 日本語（SRWR_LANG=ja）</h2><div class="pair"><div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 244" width="1000" font-family="Menlo,Consolas,monospace" font-size="14">
+<rect width="1000" height="244" rx="6" fill="#1e1e1e"/>
+<text x="16" y="30" fill="#808080">$ <tspan fill="#d4d4d4">SRWR_LANG=ja git show HEAD | srwr trace</tspan></text>
+<text x="16" y="61" fill="#4fc1ff" xml:space="preserve">コミット 3f9a1c2  Fix the same-day check in formatTime</text>
+<text x="16" y="83" fill="#d4d4d4" xml:space="preserve">  internal/cli/render.go</text>
+<text x="16" y="105" fill="#e5a04a" xml:space="preserve">    67〜69行   edit  20261010-0931-e0tq #7   10:21</text>
+<text x="16" y="127" fill="#c586c0" xml:space="preserve">      理由: 月が比較されない Day() を YearDay() に戻すため</text>
+<text x="16" y="149" fill="#d4d4d4" xml:space="preserve">  internal/cli/render_test.go</text>
+<text x="16" y="171" fill="#e5a04a" xml:space="preserve">    108〜109行 edit  20261010-0931-e0tq #6   10:19</text>
+<text x="16" y="193" fill="#c586c0" xml:space="preserve">      理由: 先月の同じ日が HH:MM で出る不具合を再現するテストを足すため</text>
+<text x="16" y="215" fill="#808080" xml:space="preserve">  2 ファイル、追加 5 行：テープから 5 行、テープに無い 0 行</text>
+</svg></div><div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 244" width="1000" font-family="Menlo,Consolas,monospace" font-size="14">
+<rect width="1000" height="244" rx="6" fill="#ffffff"/>
+<text x="16" y="30" fill="#6e7781">$ <tspan fill="#24292f">SRWR_LANG=ja git show HEAD | srwr trace</tspan></text>
+<text x="16" y="61" fill="#0b61a4" xml:space="preserve">コミット 3f9a1c2  Fix the same-day check in formatTime</text>
+<text x="16" y="83" fill="#24292f" xml:space="preserve">  internal/cli/render.go</text>
+<text x="16" y="105" fill="#b45f06" xml:space="preserve">    67〜69行   edit  20261010-0931-e0tq #7   10:21</text>
+<text x="16" y="127" fill="#7a3e9d" xml:space="preserve">      理由: 月が比較されない Day() を YearDay() に戻すため</text>
+<text x="16" y="149" fill="#24292f" xml:space="preserve">  internal/cli/render_test.go</text>
+<text x="16" y="171" fill="#b45f06" xml:space="preserve">    108〜109行 edit  20261010-0931-e0tq #6   10:19</text>
+<text x="16" y="193" fill="#7a3e9d" xml:space="preserve">      理由: 先月の同じ日が HH:MM で出る不具合を再現するテストを足すため</text>
+<text x="16" y="215" fill="#6e7781" xml:space="preserve">  2 ファイル、追加 5 行：テープから 5 行、テープに無い 0 行</text>
+</svg></div></div><h2>3. テープに無い行があるとき（複数コミット）</h2><div class="pair"><div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 266" width="1000" font-family="Menlo,Consolas,monospace" font-size="14">
+<rect width="1000" height="266" rx="6" fill="#1e1e1e"/>
+<text x="16" y="30" fill="#808080">$ <tspan fill="#d4d4d4">git log -p -2 | srwr trace</tspan></text>
+<text x="16" y="61" fill="#4fc1ff" xml:space="preserve">commit 8b0e5d1  Add the member column</text>
+<text x="16" y="83" fill="#d4d4d4" xml:space="preserve">  internal/cli/context.go</text>
+<text x="16" y="105" fill="#e5a04a" xml:space="preserve">    lines 40-52   new   20261010-1402-k3pa #2   14:05</text>
+<text x="16" y="127" fill="#c586c0" xml:space="preserve">      why: member の列を新しいファイルとして足すため</text>
+<text x="16" y="149" fill="#e5a04a" xml:space="preserve">    lines 53-54   (not on a tape: 2 added lines)</text>
+<text x="16" y="171" fill="#4fc1ff" xml:space="preserve">commit 61c44aa  Update the docs</text>
+<text x="16" y="193" fill="#d4d4d4" xml:space="preserve">  docs/reference/cli.md</text>
+<text x="16" y="215" fill="#e5a04a" xml:space="preserve">    lines 12-13   (not on a tape: 2 added lines)</text>
+<text x="16" y="237" fill="#808080" xml:space="preserve">  commit 8b0e5d1: 2 files, 15 lines: 13 from tapes, 2 not on a tape</text>
+</svg></div><div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 266" width="1000" font-family="Menlo,Consolas,monospace" font-size="14">
+<rect width="1000" height="266" rx="6" fill="#ffffff"/>
+<text x="16" y="30" fill="#6e7781">$ <tspan fill="#24292f">git log -p -2 | srwr trace</tspan></text>
+<text x="16" y="61" fill="#0b61a4" xml:space="preserve">commit 8b0e5d1  Add the member column</text>
+<text x="16" y="83" fill="#24292f" xml:space="preserve">  internal/cli/context.go</text>
+<text x="16" y="105" fill="#b45f06" xml:space="preserve">    lines 40-52   new   20261010-1402-k3pa #2   14:05</text>
+<text x="16" y="127" fill="#7a3e9d" xml:space="preserve">      why: member の列を新しいファイルとして足すため</text>
+<text x="16" y="149" fill="#b45f06" xml:space="preserve">    lines 53-54   (not on a tape: 2 added lines)</text>
+<text x="16" y="171" fill="#0b61a4" xml:space="preserve">commit 61c44aa  Update the docs</text>
+<text x="16" y="193" fill="#24292f" xml:space="preserve">  docs/reference/cli.md</text>
+<text x="16" y="215" fill="#b45f06" xml:space="preserve">    lines 12-13   (not on a tape: 2 added lines)</text>
+<text x="16" y="237" fill="#6e7781" xml:space="preserve">  commit 8b0e5d1: 2 files, 15 lines: 13 from tapes, 2 not on a tape</text>
+</svg></div></div><h2>4. --mark（差分をそのまま出し、hunk の次に理由を足す）</h2><div class="pair"><div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 244" width="1000" font-family="Menlo,Consolas,monospace" font-size="14">
+<rect width="1000" height="244" rx="6" fill="#1e1e1e"/>
+<text x="16" y="30" fill="#808080">$ <tspan fill="#d4d4d4">git show HEAD | srwr trace --mark</tspan></text>
+<text x="16" y="61" fill="#808080" xml:space="preserve">commit 3f9a1c2</text>
+<text x="16" y="83" fill="#808080" xml:space="preserve">diff --git a/internal/cli/render.go b/internal/cli/render.go</text>
+<text x="16" y="105" fill="#808080" xml:space="preserve">@@ -64,7 +64,9 @@ func formatTime(</text>
+<text x="16" y="127" fill="#c586c0" xml:space="preserve"># why: 月が比較されない Day() を YearDay() に戻すため  (20261010-0931-e0tq #7)</text>
+<text x="16" y="149" fill="#808080" xml:space="preserve">     local, today := t.In(loc), now.In(loc)</text>
+<text x="16" y="171" fill="#f14c4c" xml:space="preserve">-    if local.Year() == today.Year() &amp;&amp; local.Day() == today.Day() {</text>
+<text x="16" y="193" fill="#6a9955" xml:space="preserve">+    if local.Year() == today.Year() &amp;&amp; local.YearDay() == today.YearDay() {</text>
+<text x="16" y="215" fill="#808080" xml:space="preserve">         return local.Format(&quot;15:04&quot;)</text>
+</svg></div><div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 244" width="1000" font-family="Menlo,Consolas,monospace" font-size="14">
+<rect width="1000" height="244" rx="6" fill="#ffffff"/>
+<text x="16" y="30" fill="#6e7781">$ <tspan fill="#24292f">git show HEAD | srwr trace --mark</tspan></text>
+<text x="16" y="61" fill="#6e7781" xml:space="preserve">commit 3f9a1c2</text>
+<text x="16" y="83" fill="#6e7781" xml:space="preserve">diff --git a/internal/cli/render.go b/internal/cli/render.go</text>
+<text x="16" y="105" fill="#6e7781" xml:space="preserve">@@ -64,7 +64,9 @@ func formatTime(</text>
+<text x="16" y="127" fill="#7a3e9d" xml:space="preserve"># why: 月が比較されない Day() を YearDay() に戻すため  (20261010-0931-e0tq #7)</text>
+<text x="16" y="149" fill="#6e7781" xml:space="preserve">     local, today := t.In(loc), now.In(loc)</text>
+<text x="16" y="171" fill="#cf222e" xml:space="preserve">-    if local.Year() == today.Year() &amp;&amp; local.Day() == today.Day() {</text>
+<text x="16" y="193" fill="#1a7f37" xml:space="preserve">+    if local.Year() == today.Year() &amp;&amp; local.YearDay() == today.YearDay() {</text>
+<text x="16" y="215" fill="#6e7781" xml:space="preserve">         return local.Format(&quot;15:04&quot;)</text>
+</svg></div></div>
+</html>

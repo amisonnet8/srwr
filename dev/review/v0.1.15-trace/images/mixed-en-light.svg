@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 266" width="1000" font-family="Menlo,Consolas,monospace" font-size="14">
+<rect width="1000" height="266" rx="6" fill="#ffffff"/>
+<text x="16" y="30" fill="#6e7781">$ <tspan fill="#24292f">git log -p -2 | srwr trace</tspan></text>
+<text x="16" y="61" fill="#0b61a4" xml:space="preserve">commit 8b0e5d1  Add the member column</text>
+<text x="16" y="83" fill="#24292f" xml:space="preserve">  internal/cli/context.go</text>
+<text x="16" y="105" fill="#b45f06" xml:space="preserve">    lines 40-52   new   20261010-1402-k3pa #2   14:05</text>
+<text x="16" y="127" fill="#7a3e9d" xml:space="preserve">      why: member の列を新しいファイルとして足すため</text>
+<text x="16" y="149" fill="#b45f06" xml:space="preserve">    lines 53-54   (not on a tape: 2 added lines)</text>
+<text x="16" y="171" fill="#0b61a4" xml:space="preserve">commit 61c44aa  Update the docs</text>
+<text x="16" y="193" fill="#24292f" xml:space="preserve">  docs/reference/cli.md</text>
+<text x="16" y="215" fill="#b45f06" xml:space="preserve">    lines 12-13   (not on a tape: 2 added lines)</text>
+<text x="16" y="237" fill="#6e7781" xml:space="preserve">  commit 8b0e5d1: 2 files, 15 lines: 13 from tapes, 2 not on a tape</text>
+</svg>

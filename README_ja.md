@@ -3,7 +3,7 @@
 <p align="center"><b>v0.2.0 までの srwr は実験です。ツール・入力・テープの形式・画面は、予告なく変わることがあり、古いテープが読めなくなることもあります。</b></p>
 
 <p align="center">
-  <img src="docs/images/banner.svg" alt="srwr：AI に select と replace だけでファイルを編集させ、すべての操作を理由つきで再生する" width="100%">
+  <img src="docs/images/banner.svg" alt="srwr：AI にファイルを編集させ、変更ごとの理由つきで、すべての操作を再生する" width="100%">
 </p>
 
 <h3 align="center"><b>AI エージェントに <code>select</code> と <code>replace</code> の 2 つだけでファイルを編集させ、すべての操作を理由つきでテープに記録して、VSCode か Vim でコマ送りで再生する。</b></h3>

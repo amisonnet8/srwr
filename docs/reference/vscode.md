@@ -10,11 +10,12 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 
 1. Install the `srwr` binary ([cli.md](cli.md)). The extension starts it to read tapes
 2. Install the extension srwr-view (the `.vsix`)
-3. Open the workspace in VSCode. From "srwr" at the left edge → "Operations", choose "Open a tape" or "Start live view"
+3. Open the workspace in VSCode. From "srwr" at the left edge → "Operations", choose "Open a tape" or "Start live view" (with no tape open, the panel says "No tape is open" and has the same two as links)
 
 - Where `srwr` is, is the setting `srwr.path` (the default `srwr` is searched for on the PATH). When it is not found, the extension says how to install it, with an "Open Settings" button. When the versions (`protocolVersion`) do not match, it asks you to update one of them
-- The only setting is `srwr.path`. There are no settings for the look
-- The view server (`srwr view-server`) is started when it is first needed. One per workspace
+- The only setting is `srwr.path`; changing it starts the server again. There are no settings for the look (the one color the extension defines, `srwr.failureForeground`, is a theme color, so `workbench.colorCustomizations` can override it)
+- The view server (`srwr view-server`) is started when it is first needed. One per window, for the first folder of the workspace. Without an open folder the commands say "Open a folder first"
+- What the server writes to standard error goes to the Output channel "srwr". A request the server does not answer in 15 seconds is given up with a message
 - The extension writes neither tapes nor real files. It does not read the key (`.srwr/key`) either
 - Tapes of old formats can be read too
 
@@ -40,7 +41,7 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 
 ### 2. Frames of look and edit
 
-- The tape is expanded into a virtual document (`srwr-replay:/<tape name>/<file>`) and shown. Real files are not touched. The extension of the original file is kept, so syntax highlighting works
+- The tape is expanded into a virtual document (`srwr-replay:/<tape name>/<file>`; `srwr-replay:/live/<file>` in live) and shown. Real files are not touched. The extension of the original file is kept, so syntax highlighting works
 - **A reason (`why`) line is actually inserted just before the range.** White bold text on a blue or orange background. A long reason is wrapped into several lines at the width (a display width of 100) and shown in full. From the second line it is indented. A frame whose `why` is `null` shows no reason line (only the color of the range)
 - The lines of the range are painted in the lighter color (an empty range is not painted)
 - It is replaced each time the frame changes, and the reason line is always only that of the current frame
@@ -59,22 +60,22 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 - When it goes back to an ordinary frame, the editor on the right is closed. **Tabs do not pile up when you move back and forth**
 - One frame per change. If there is no change, none is shown
 
-### 3a2. Frames of new
+### 3a. Frames of new
 
 - `new` creates a file (a `new` on the tape, [mcp.md](mcp.md#new)). It is shown like an `edit` frame, **in one editor**: the whole file painted orange, the `why` in the orange line above it. There is no left and right: the left side would be empty
-- In the operation list a row reads `number  new  file:range` (`1-5` for the whole file), with an orange dot and the `why` as the description. A frame of `new` is turned on and off with `edit` (see 8 below)
+- In the operation list a row reads `number  new  file:range` (`1-5` for the whole file), with an orange dot and the `why` as the description. A frame of `new` is turned on and off with `edit` (see 7 below)
 
 ### 3b. Failure frames
 
 - A failure frame has no file to open (a failure is often about an absolute path, a file that is not recorded, or a wrong input). It is shown as a **virtual document that explains it**: a red line `✖ look failed (invalid_range)` (white bold; for an `edit` it reads `edit failed`), then the message, then `why`, `tool` and `range` (the range given to a `look`; an `edit` has none) and `file` (`(not shown)` when it is left out). The editor tab is named `failure: look (invalid_range)`
-- It is on the list only when `failure` is shown (see 8 below)
+- It is on the list only when `failure` is shown (see 7 below). Its document is `srwr-replay:/<tape name>/failure<index>/…`, and the diff frames of 3 are `…/diff<index>/…`
 
 ### 4. The operation list (the left panel)
 
 - "srwr" at the left edge → "Operations". The frames are listed **in the order recorded, 1, 2, 3… from the top**. The number is the same as the position in the bottom bar (5/7). There is no indenting by parent and child
-- Each row: `number  kind  file:range` (`37`, `39-41`; an empty range reads `before 12`), with the `why` as the description. The color of the dot at the front tells them apart: look = blue, edit and new = orange, external and final = purple. The kinds are written `look`, `edit`, `new`, `external`, `final` and `failure` (in the Japanese UI: `look`, `edit`, `new`, `外部変更`, `録画後` and `失敗`). A failure row is a **red** dot, and its place is the error code (`invalid_range`) instead of `file:range`
+- Each row: `number  kind  file:range` (`37`, `39-41`; an empty range reads `before 12`), with the `why` as the description (an `external` that has no `why` says "File changed outside srwr"; hovering shows the error message of a failure). The color of the dot at the front tells them apart: look = blue, edit and new = orange, external and final = purple. The kinds are written `look`, `edit`, `new`, `external`, `final` and `failure` (in the Japanese UI: `look`, `edit`, `new`, `外部変更`, `録画後` and `失敗`). A failure row is a **red** dot, and its place is the error code (`invalid_range`) instead of `file:range`
 - Clicking moves to that frame. The row of the current frame is selected
-- The ☓ at the top right closes the tape (or the live view)
+- The buttons at the top right of the panel: "Open a tape" (a folder), "Start live view" (a broadcast mark), and, only while a tape or live view is open, the funnel (7 below) and the ☓, which closes the tape (or the live view)
 
 ### 5. The bottom bar (status bar)
 
@@ -90,7 +91,7 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 - **When you step back to an old frame with the stepping**, the screen does not move and only the number of new frames is counted. The bottom bar shows "Back to LIVE (N new)" (on an orange background). Pressing it moves to the newest and follows again
 - When it moves to another tape, the list is rebuilt and shown from the beginning
 
-### 8. Which frames to show
+### 7. Which frames to show
 
 - The kinds **look, edit, external and failure** can each be turned on or off. At the start, look, edit and external are on and **failure is off**. `final` (the diff after the recording) follows external, and `new` follows edit
 - The **funnel button** at the top right of the operation list (and the command `srwr: Choose Frames to Show`) opens a multi-select list with the four kinds. Applying it opens the tape again with the chosen kinds ([protocol.md](protocol.md)) and moves to the frame nearest to the current one (by the order recorded). In live, it opens again and follows the newest
@@ -98,11 +99,12 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 - Under the heading of the list it says what is left out: `Hiding: failure (2)`. In live the count follows the frames that arrive
 - A kind that is off does not appear in the list or in stepping. In live, **"Back to LIVE (N new)" counts only the kinds that are shown**
 - When nothing is shown, the screen says "No frames to show"
+- With no tape open, the command does nothing
 - The choice is not saved: it is kept while the extension runs, and a new start is the default. srwr adds no setting for it
 
-### 7. The tape picker
+### 8. The tape picker
 
-- "Open a tape" shows the tapes that have one or more operations, newest first (the start time with seconds in the time zone of the machine, then the number of operations and the files, and the tape file name below). Choosing one shows it from the first frame
+- "Open a tape" shows the tapes that have one or more operations, newest first (the start time with seconds in the time zone of the machine, then the number of operations and the files, and the tape file name below, always written `….tape.jsonl`, also for a compressed tape). Choosing one shows it from the first frame
 - A tape the AI started with the [`session`](mcp.md#session) tool has its title after the time (`2026-10-10 09:31:02  Write the docs first`). A tape without one is shown as before
 
 ## Commands and settings
@@ -114,7 +116,7 @@ With the VSCode extension **srwr-view**, you step through the AI's operations fr
 | srwr: Forward / Back (`srwr.stepForward`, `srwr.stepBack`) | Stepping (works in live too) |
 | srwr: Start Live View / Stop Live View (`srwr.liveStart`, `srwr.liveStop`) | |
 | srwr: Back to LIVE (`srwr.liveLatest`) | Moves to the newest and follows again |
-| srwr: Choose Frames to Show (`srwr.chooseKinds`) | Turns the kinds look, edit, external and failure on and off |
+| srwr: Choose Frames to Show (`srwr.chooseKinds`) | Turns the kinds look, edit, external and failure on and off (each is listed with a short description) |
 | `srwr.goto` | Internal (a click in the operation list). Not shown in the command palette |
 
 | Setting | Default | Meaning |

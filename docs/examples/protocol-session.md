@@ -28,10 +28,12 @@ A workspace that has the tape `20261001-0806-1795`, which recorded the work of [
 - `initialize` (id 1): passes the kind of the client and the setting (diff frames). A request before it gets `not_initialized`
 - `tapes/list` (id 2): the list of tapes that have one or more operations. Times are in UTC (`…Z`); a client shows them in the time zone of the machine
 - `tape/open` (id 3): **the frames**. Two frames come back. The `edit` frame (`index` 1) has `oldRange` (lines 3 to 5 before the change) and `range` (lines 3 to 6 after the change), and its `parent` points to the `look` frame (`index` 0). The real file is the same as the last content of the tape, so no `final` (final diff) frame is added
-- `frame/state` (id 4): the whole text before (`before`) and after (`after`) the frame at `index` 1, and the content of the file at the time that frame has finished (`content`). The client fetches this each time it moves to a frame, and replaces the content of its buffer
+- `frame/state` (id 4): the whole text before (`before`) and after (`after`) the frame at `index` 1, and the content of the file at the time that frame has finished (`content`). A client that does not take the text of every frame with the frames asks for it with this, one frame at a time (VSCode and Vim open the tape with `withText: true` and build it themselves)
 - `tape/close` (id 5): close
 
 The shape of a frame (the fields used for the `why` line and so on) is in [protocol.md](../reference/protocol.md), and how to show it is in [vscode.md](../reference/vscode.md).
+
+This exchange leaves out what the real clients add: `kinds` (which kinds of frames are sent; `failure` frames only when asked for), the `hidden` count and the `live/hidden` notification, `withText`, and the `title` of a tape in the list. They are described in [protocol.md](../reference/protocol.md).
 
 ## Errors
 

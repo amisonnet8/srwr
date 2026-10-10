@@ -45,7 +45,7 @@ $ srwr init
 
 ## 2. AI に作業させる
 
-いつもどおりに頼む。たとえば「`greet` は名前が空だと `hello ` と出る。直して」。AI は `look` で見て、`edit` で変える。どちらにも理由がつき、すべての呼び出しが `.srwr/tapes/` のテープに残る。AI 側のやり取りは [look-edit.md](look-edit_ja.md)。
+いつもどおりに頼む。たとえば「`greet` は名前が空だと `hello ` と出る。直して」。AI は `look` で見て、`edit` で変える（ファイルを作るなら `new`）。どれにも理由がつき、すべての呼び出しが `.srwr/tapes/` のテープに残る。AI 側のやり取りは [look-edit.md](look-edit_ja.md)。
 
 `srwr tapes` で、プロジェクトのテープの一覧が出る：
 
@@ -63,7 +63,7 @@ $ srwr tapes
 
 ## 4. テープに出ない変更がないか確かめる
 
-srwr が記録するのは、`look`・`edit` を通ったものと、hook が見たもの。ほかの方法（手で直した、シェルのコマンドで変えた）で変わったファイルは、テープに出ないことがある。`srwr tapes check` は、テープと `git status` を比べる。ここでは README を手で直した：
+srwr が記録するのは、`look`・`edit`・`new` を通ったものと、hook が見たもの。ほかの方法（手で直した、シェルのコマンドで変えた）で変わったファイルは、テープに出ないことがある。`srwr tapes check` は、テープと `git status` を比べる。ここでは README を手で直した：
 
 ```console
 $ srwr tapes check
@@ -84,10 +84,10 @@ $ srwr tapes new
 今のセッション 20261004-1200-7k7f を閉じました。次の書き込みから、新しいテープになります。
 ```
 
-- 次の書き込みから新しいテープになる。30分、イベントがないときも、セッションは自然に終わる
+- 次の書き込みから新しいテープになる。30分、イベントがないときも、セッションは自然に終わる。AI が題をつけて自分で始めること（`session` ツール。[mcp.md](../reference/mcp_ja.md#session)）もできる
 - 終わったセッションのテープは**圧縮**されて、`<id>.tape.jsonl.gz` になる。テープを読むものは、今までどおり開ける
 - 古いセッションで AI がもらった範囲トークンは使えなくなる。AI が作業の途中なら、`look` からやり直す
-- エディタからは、新しいセッションを始められない。ここ（ターミナル）で行う
+- エディタからは、新しいセッションを始められない。ここ（ターミナル）で行う（AI なら `session`）
 
 AI がまた作業すると、新しいセッションの、新しいテープができる：
 
@@ -122,3 +122,4 @@ $ srwr tapes prune --keep 1
 - コマンド：[cli.md](../reference/cli_ja.md)
 - テープの中身と、閉じたテープの置き方：[tape.md](../reference/tape_ja.md)
 - AI が使うツール：[mcp.md](../reference/mcp_ja.md)
+- コミットを、それを書いたテープに結ぶ：`srwr trace`（[cli.md](../reference/cli_ja.md#srwr-trace)）

@@ -6,7 +6,7 @@
 
 ## What srwr is
 
-A tool that lets an AI agent edit files with just two commands (`select` / `replace`), records the operations on a **tape**, and **replays them frame by frame** in an editor. Showing the `why` (the reason) together with the code of the selected range helps a person understand the AI's work.
+A tool that lets an AI agent edit files through its own tools (`look`, `edit` and `new`, and an optional `session`), records every step on a **tape** with its `why` (the reason), and **replays the steps frame by frame** in an editor. Showing the `why` together with the code of the range helps a person understand the AI's work.
 
 ## Premises
 
@@ -14,7 +14,7 @@ These five are where the design starts.
 
 | Premise | Effect on the design |
 |---|---|
-| A series of operations with a `why` lets a person understand what the AI did. Without the `why`, neither the series nor the diff is easy to read | Editing is limited to two commands that require a `why` |
+| A series of operations with a `why` lets a person understand what the AI did. Without the `why`, neither the series nor the diff is easy to read | Every edit goes through tools that require a `why` |
 | The `why` is the heart of understanding. The code of the selected range only makes the picture concrete | The screen shows the reason line and the range in the same place |
 | In an editor, syntax highlighting, the surrounding context and language features come for free | The place to view is an editor (VSCode and Vim) |
 | A change made by something other than the AI (an external change) cannot be understood from a label. It can be understood if the content is visible | An external change is shown as a side-by-side diff |
@@ -33,10 +33,10 @@ These five are where the design starts.
 
 | Line | Content |
 |---|---|
-| The tape is the only record | Replay can be rebuilt completely from the tape alone. The real files are used only for live and for the comparison in the "final diff" |
+| The tape is the only record | Replay can be rebuilt completely from the tape alone. The real files are used only for the comparison in the "final diff" (live also reads the tape alone) |
 | Writing, building and drawing are separate | `srwr mcp` and `srwr hook` **write** the tape. `srwr view-server` **reads the tape and builds the frames**. The editor side only **draws**; it does not read the tape directly. It writes neither the tape nor the real files |
 | The boundary between Go and the editors is the protocol | The tape format is a promise inside Go only. The promise with the editors is the view server's protocol. To change it, fix the documents first, then the server and both clients together |
-| Editing takes two commands only | There is no `replace` without `select` |
+| Editing goes through srwr's tools | `look`, `edit` and `new`. Every change leaves the range it changed on the tape, so "look, then change" can be replayed; in strict mode the agent's own Edit and Write are forbidden |
 | `why` is required (for edits through srwr) | Checked both in the input schema and on the server |
 | No more dependencies | Go has zero external dependencies (MCP and the view server use our own JSON-RPC). The VSCode extension has zero runtime dependencies (`tsc` only). Vim relies on no other plugin |
 
@@ -57,12 +57,13 @@ These five are where the design starts.
 
 ```
                            ┌────────────────────────────────┐
-AI ──select / replace────▶│ srwr mcp                       │──▶ real files
+AI ──look / edit / new───▶│ srwr mcp                       │──▶ real files
 AI ──Read/Bash/Grep/Edit─▶│ srwr hook (Claude Code hook)   │
                            └──────────────┬─────────────────┘
                                           │ take the lock and append
                                           ▼
-                        .srwr/tapes/<id>.tape.jsonl (one session = one tape)
+                        .srwr/tapes/<id>.tape.jsonl (one session = one tape;
+                                       .tape.jsonl.gz once it is closed)
                                           │ read only
                                           ▼
                            ┌────────────────────────────────┐
@@ -80,10 +81,17 @@ AI ──Read/Bash/Grep/Edit─▶│ srwr hook (Claude Code hook)   │
 
 | Part | What it is |
 |---|---|
-| **`srwr`** (a single Go binary) | The subcommands `mcp`, `hook`, `view-server`, `view`, `init` and `tapes` ([cli.md](../reference/cli.md)) |
-| **Tape** | An append-only JSONL file. One session = one tape ([tape.md](../reference/tape.md)) |
+| **`srwr`** (a single Go binary) | The subcommands `mcp`, `hook`, `view-server`, `view`, `init`, `tapes` and `trace` ([cli.md](../reference/cli.md)) |
+| **Tape** | An append-only JSONL file. One session = one tape, compressed when it is closed. A tape may have a title that the AI gave with `session` ([tape.md](../reference/tape.md)) |
 | **srwr-view** (VSCode extension) | **Displays** live, replay, stepping and diff frames |
 | **srwr-view.vim** (Vim script) | Shows the same UI in Vim. Embedded in the `srwr` binary |
+
+## Other things the design includes
+
+- **Which frames are shown.** look, edit, external and failure can be turned on and off in both editors. The view server filters ([protocol.md](../reference/protocol.md)); a call that failed is on the tape as a `failure` and is shown, in red, only when asked for
+- **Tape titles.** The AI may start a new tape with a title and a reason (`session`). The title is shown only in the lists of tapes
+- **Joining a commit to the tape.** `srwr trace` reads the text of a diff and tells which operation, and which `why`, wrote each added line. It can cut those operations out as a tape that replays. It does not run git, and the tape is not changed
+- **English by default, Japanese by switch; UTC on the tape, local time on the screen** ([settings.md](../reference/settings.md))
 
 ## Related
 

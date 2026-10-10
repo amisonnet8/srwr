@@ -2,7 +2,7 @@
 
 *[English](README.md) | **日本語***
 
-srwr は、AI エージェントに `select` / `replace` の2コマンドだけでファイルを編集させ、その操作を**テープ**に記録し、エディタで**コマ送りで再生**する道具。
+srwr は、AI エージェントに、srwr の道具でファイルを編集させ、一つ一つの操作を理由（`why`）つきで**テープ**に記録し、VSCode や Vim で**コマ送りで再生**する道具。
 
 ## 誰が、何を読むか
 
@@ -10,7 +10,7 @@ srwr は、AI エージェントに `select` / `replace` の2コマンドだけ�
 |---|---|
 | srwr を**使う人** | [reference/cli.md](reference/cli_ja.md)（導入・コマンド）、[reference/settings.md](reference/settings_ja.md)（設定の一覧）、[reference/mcp.md](reference/mcp_ja.md)（AI が使うツール）、[reference/vscode.md](reference/vscode_ja.md)・[reference/vim.md](reference/vim_ja.md)（見る） |
 | srwr の**テープや表示サーバーとつなぐ人**（他のエディタへの対応、テープを読む道具） | [reference/tape.md](reference/tape_ja.md)、[reference/protocol.md](reference/protocol_ja.md)、動かした例 [examples/protocol-session.md](examples/protocol-session_ja.md)、hook の例 [examples/hook.md](examples/hook_ja.md) |
-| srwr の**作りを知りたい人・開発に加わる人** | [design/overview.md](design/overview_ja.md)、[design/decisions.md](design/decisions_ja.md)、[design/limitations.md](design/limitations_ja.md) |
+| srwr の**作りを知りたい人・開発に加わる人** | [design/overview.md](design/overview_ja.md)、[design/decisions.md](design/decisions_ja.md)、[design/token.md](design/token_ja.md)、[design/limitations.md](design/limitations_ja.md) |
 
 ## 構成
 
@@ -29,4 +29,4 @@ srwr は、AI エージェントに `select` / `replace` の2コマンドだけ�
 
 ## 言語
 
-文書は、英語が基準で、それぞれの日本語版は同じ名前に `_ja` を付けたもの（例：`reference/cli_ja.md`）。srwr が画面や端末に出す文言も、英語が既定。日本語にするには、[reference/settings.md](reference/settings_ja.md) の `SRWR_LANG` を見る。
+文書は、英語が基準で、それぞれの日本語版は同じ名前に `_ja` を付けたもの（例：`reference/cli_ja.md`）。srwr が画面や端末に出す文言も、英語が既定。端末と Vim は、日本語にするには [reference/settings.md](reference/settings_ja.md) の `SRWR_LANG` を見る（VSCode は、VSCode の表示言語に従う）。

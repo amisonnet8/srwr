@@ -12,7 +12,7 @@
 | **コマの列の組み立て** | **描画**（範囲の色、`why` の行、diff 画面、サイドバー、ステータス） |
 | 各コマの時点の**文書の内容** | `why` の行を文書に差し込む |
 | 差分のコマの変更前・変更後、最後の差分（今のファイルとの比較） | コマ送り、キー操作 |
-| 設定（差分のコマを出すか）を受ける | 設定（差分のコマ）をサーバーに渡す（VSCode・Vim は、固定の値を送る） |
+| 設定（差分のコマを出すか）と、見たいコマの種類（`kinds`）を受ける | それらをサーバーに渡す（VSCode・Vim は、差分のコマには固定の値を、種類には人が選んだものを送る） |
 | ライブ：今のテープを見張り、追記されたコマを通知する | ライブ：通知を受けて描く |
 
 ## 流れ
@@ -21,9 +21,9 @@
 
 1. `srwr view-server --root <作業場>` を子プロセスとして起動する
 2. `initialize` を送る（これより前の要求は `not_initialized`）
-3. **リプレイ**：`tapes/list` で一覧を出す → 選ばれたら `tape/open`（コマの列が返る）→ コマを移るたびに `frame/state`（そのコマの文書の内容）→ 閉じるとき `tape/close`
+3. **リプレイ**：`tapes/list` で一覧を出す → 選ばれたら `tape/open`（コマの列が返る）→ 各コマの時点の文書の内容（VSCode・Vim は `withText: true` で全文を受け取り、コマの列から自分で作る。`frame/state` は、それをしないクライアントのために1コマ分を返す）→ 閉じるとき `tape/close`
 4. **ライブ**：`live/start`（今のテープのここまでのコマが返り、見張りが始まる）→ 追記のたびにサーバーから `live/frame` が届く → やめるとき `live/stop`
-5. 終わるとき `shutdown` を送る
+5. 終わるとき `shutdown` を送る。標準入力が閉じても、サーバーは終わる（Vim は `shutdown` を送らず、Vim が終わるときにプロセスを止める）
 
 1つのクライアントにつき、1つのサーバーのプロセスを起動する（共有のデーモンにはしない。共有の媒体はテープそのもの）。
 
@@ -40,19 +40,19 @@
 | メソッド | 種類 | 引数 → 結果 |
 |---|---|---|
 | `initialize` | 要求 | `{client:"vscode"\|"vim", protocolVersion:3, options:{diffFrames}}` → `{serverVersion, protocolVersion:3}`。`options` の既定は `diffFrames` が `true`。知らない `options` は無視する |
-| `tapes/list` | 要求 | `{}` → `{tapes:[TapeInfo…]}`。操作を1つ以上持つテープだけを、新しい順に（テープを始めた時刻の順。headerのないテープは最後の更新の時刻）。読めないテープは載せない |
+| `tapes/list` | 要求 | `{}` → `{tapes:[TapeInfo…]}`。操作（`failure` は数えない）を1つ以上持つテープだけを、圧縮したものも、`srwr trace --as-tape` の派生テープも含めて、新しい順に（テープを始めた時刻の順。headerのないテープは最後の更新の時刻）。読めないテープは載せない |
 | `tape/open` | 要求 | `{tapeId, withText?:false, kinds?}` → `{tapeId, frames:[Frame…], hidden?}`。コマの列。`diffFrames` が真なら、作業場の今のファイルと比べた**最後の差分**（`final`）を末尾に含む。同じ `tapeId` をもう一度開くと、読み直す |
 | `frame/state` | 要求 | `{tapeId, index, file?}` → `{before, after, content}`。`index` のコマの変更前・変更後（`index` が −1 のときは両方 `""`）。`content` は `file`（省略時はそのコマのファイル）の、そのコマを終えた時点の内容。どのコマも触れていないファイルは `null` |
 | `tape/close` | 要求 | `{tapeId}` → `{}` |
-| `live/start` | 要求 | `{withText?:false, kinds?}` → `{tapeId:string\|null, frames:[Frame…], hidden?}`。今のテープ（更新時刻が最新のもの）の、**ここまでのコマ**（クライアントは表示せず、一覧に載せるだけ）。返事のあと、見張りが始まる |
-| `live/hidden` | 通知（サーバー→クライアント） | `{tapeId, hidden}`。クライアントが頼んでいない種類のコマが届いたので、隠したコマの数が変わった |
+| `live/start` | 要求 | `{withText?:false, kinds?}` → `{tapeId:string\|null, frames:[Frame…], hidden?}`。今のテープ（更新時刻が最新のもの。`srwr trace --as-tape` が書いたばかりのテープも数える）の、**ここまでのコマ**（クライアントは表示せず、一覧に載せるだけ）。返事のあと、見張りが始まる。もう一度呼ぶと、見張りをやり直す |
+| `live/hidden` | 通知（サーバー→クライアント） | `{tapeId, hidden}`。クライアントが頼んでいない種類のコマが届いたので、隠したコマの数が変わった。`hidden` は、そのテープの全体の数で、増えた分ではない。ライブが別のテープに移ったときも、そのテープが何かを隠していれば、そのテープのコマのあとに送る（何も隠さないテープでは送らないので、クライアントは `tapeId` が替わったとき、自分で数を戻す） |
 | `live/frame` | 通知（サーバー→クライアント） | `{tapeId, frame:Frame}`。追記されたコマ。`tapeId` が今までと違う（別のテープに移った）ときは、クライアントは列を作り直す。そのテープのコマは先頭から送る |
 | `live/stop` | 要求 | `{}` → `{}`。見張りをやめる |
 | `shutdown` | 要求 | `{}` → `{}`。返事を書いたあと、サーバーは終了する |
 
-**`tapeId`**：テープのファイル名から `.tape.jsonl` を除いたもの（例：`20260929-0237-1359`）。使える文字は `0-9 A-Z a-z - _ .` だけで、`.` で始まってはいけない。それ以外（`/` など）は `invalid_params`。
+**`tapeId`**：テープのファイル名から `.tape.jsonl`（または `.tape.jsonl.gz`）を除いたもの（例：`20260929-0237-1359`）。サーバーは、どちらの形のテープも読む（ライブがそのテープにいるときも）。使える文字は `0-9 A-Z a-z - _ .` だけで、`.` で始まってはいけない。それ以外（`/` など）は `invalid_params`。
 
-**TapeInfo**：`{tapeId, startedAt, updatedAt, ops, files, title?, why?}`。`startedAt` は header の値（header がなければ `""`）、`updatedAt` はテープのファイルの最終更新時刻（UTC の RFC 3339、ミリ秒まで、末尾は `Z`）、`ops` は `look`・`edit`・`external` の数、`files` は触れたファイル（初めて触れた順）。`title`・`why` は、AI が [`session`](mcp_ja.md#session) ツールで付けたもの（テープの header にある）。付いていないテープでは無い（`""` でなく項目ごと）。知らないクライアントは無視する。古い版が書いたテープの `startedAt` には `+09:00` のようなオフセットが付いていることがある（同じ瞬間）。クライアントは、これらの時刻をその機械の時間帯で見せる。
+**TapeInfo**：`{tapeId, startedAt, updatedAt, ops, files, title?, why?}`。`startedAt` は header の値（header がなければ `""`）、`updatedAt` はテープのファイルの最終更新時刻（UTC の RFC 3339、ミリ秒まで、末尾は `Z`）、`ops` は `look`・`edit`・`new`・`external` の数（`failure` は数えない）、`files` は触れたファイル（初めて触れた順）。`title`・`why` は、AI が [`session`](mcp_ja.md#session) ツールで付けたもの（テープの header にある）。付いていないテープでは無い（`""` でなく項目ごと）。知らないクライアントは無視する。古い版が書いたテープの `startedAt` には `+09:00` のようなオフセットが付いていることがある（同じ瞬間）。クライアントは、これらの時刻をその機械の時間帯で見せる。`srwr trace --as-tape` が切り出したテープ（派生テープ）を、ほかと見分ける項目はない。
 
 ## コマ（Frame）
 
@@ -63,9 +63,9 @@
 | `look` | テープの `look`（`source` が `mcp` でも `hook` でも） | ファイル、範囲、`why`（`null` のことがある）、`seq`、系譜（`selection`） |
 | `edit` | テープの `edit` | ファイル、変更前後の範囲とテキスト、`why`（`null` のことがある）、`seq`、系譜（`from`→`selection`） |
 | `new` | テープの `new`：新しいファイル全体 | ファイル、範囲（ファイル全体）と変更後のテキスト（変更前は空）、`why`、`seq`。`edit` と同じ1枚のエディタで、ファイルを橙で塗り、上に `why` を出す |
-| `external` | テープの `external` | ファイル、変更前（直前の内容）と変更後（`text`）、削除されたか |
+| `external` | テープの `external` | ファイル、変更前（直前の内容。シェルのコマンドが作ったファイルでは空）と変更後、削除されたか。テープは変わった行を持ち、全文はサーバーが組み立てる |
 | `final` | テープの最後の内容と、今のファイルの比較 | ファイル、変更前（テープの最後）と変更後（今のファイル）、今は存在しないか |
-| `failure` | テープの `failure`（AI がエラーを受け取った `look`・`edit`・`new`） | `tool`・`code`・`message`・`why`。`file` は、分からないときと伏せるときは `""`。`range` は `look` に渡された範囲（ないときは `{start:0,end:-1}`）。変更前後の本文は空 |
+| `failure` | テープの `failure`（AI がエラーを受け取った `look`・`edit`・`new`） | `tool`・`code`・`message`・`why`。`file` は、分からないときと伏せるときは `""`。`range` は、呼び出しが渡した範囲（`look` と、`file` で行を指した `edit`。ないときは `{start:0,end:-1}`）。変更前後の本文は空 |
 
 Frame のフィールド：
 
@@ -76,14 +76,14 @@ Frame のフィールド：
 | `seq`・`ts` | テープの `seq`、時刻（エポックミリ秒。読めなければ前のコマの値、最初は 0）。`final` は最後のコマの値 |
 | `file` | 作業場からの相対パス（`/` 区切り） |
 | `range` | `{start, end}`。変更後の側の範囲（`look`＝その範囲、`edit`・`new`＝新しい範囲、`external`・`final`＝ファイル全体）。`end < start` は空範囲 |
-| `oldRange` | `edit` だけ。変更前の側の範囲 |
-| `why`・`selection`・`from` | 文字列または `null` |
+| `oldRange` | `edit` と `new`。変更前の側の範囲 |
+| `why`・`selection`・`from` | 文字列または `null`（`new` も `selection` を持つ） |
 | `parent` | 系譜の親（`from` が指すコマの `index`）、なければ `null` |
 | `tool`・`code`・`message` | `failure` だけ。ツール（`look`・`edit`・`new`）、エラーコード、エラー文（実際のパスは伏せてある。[tape_ja.md](tape_ja.md#failure)） |
 | `deleted` | 差分のコマだけ。変更後にファイルが存在しない（そのときだけ `true`。それ以外は出さない） |
-| `before`・`after` | **`withText` が真のときだけ**。変更前・変更後の全文。ふだんは `frame/state` で取る（大きいテープで、全コマが全文を持たないため） |
+| `before`・`after` | **`withText` が真のときだけ**。変更前・変更後の全文。既定では出さない（大きいテープで、全コマが全文を持たないため）。一部のコマだけが要るクライアントは `frame/state` で取る。VSCode・Vim は全部を受け取り、各コマの文書を自分で組み立てる |
 
-- **送る種類（`kinds`）**：`tape/open` と `live/start` は `kinds`（`look`・`edit`・`external`・`failure` の配列）を受ける。サーバーは、その種類だけを送り、**0 から番号を振り直す**（`index` は送ったものの中の位置で、`frame/state` もその `index` を受ける）。送らなかった数は `hidden` で返す（`{"failure": 2}` のような形。送らなかったものがない種類は入れない。何も送らなかったものがないときは、`hidden` 自体を出さない）。`final` は `external` に、`new` は `edit` に連れる。省略すると `["look","edit","external"]`：頼まない限り `failure` のコマは送らない。知らない名前は `invalid_params`。空の配列は何も送らない。表示する種類を替えるときは、クライアントが別の `kinds` でもう一度開く。`frame/state` は、送らなかったコマに左右されない：ファイルの内容は、送らなかったコマも含めた結果になる
+- **送る種類（`kinds`）**：`tape/open` と `live/start` は `kinds`（`look`・`edit`・`external`・`failure` の配列。`new`・`final` は独立した名前ではなく、`invalid_params`）を受ける。サーバーは、その種類だけを送り、**0 から番号を振り直す**（`index` は送ったものの中の位置で、`frame/state` もその `index` を受ける）。送らなかった数は `hidden` で返す（`{"failure": 2}` のような形。送らなかったものがない種類は入れない。何も送らなかったものがないときは、`hidden` 自体を出さない）。`new` は `edit` として、`final` は `external` として数える。`final` は `external` に、`new` は `edit` に連れる。省略すると `["look","edit","external"]`：頼まない限り `failure` のコマは送らない。知らない名前は `invalid_params`。空の配列は何も送らない。表示する種類を替えるときは、クライアントが別の `kinds` でもう一度開く。`frame/state` は、送らなかったコマに左右されない：ファイルの内容は、送らなかったコマも含めた結果になる
 - ライブのコマ（`live/start`・`live/frame`）に、最後の差分は含まれない（`external` はテープに書かれたものが出る）
 - **最後の差分は、サーバーが決める。** クライアントは出すだけ
 - テープの項目が増えても（`source`・`tool`・`vcs` など）、クライアントは使わなくてよい
@@ -93,7 +93,7 @@ Frame のフィールド：
 
 - 最後の差分で今のファイルを読むとき、作業場の外を指すパス（`..`・絶対パス・外を指すシンボリックリンク）は読まず、「存在しない」として扱う。共有されたテープに、任意のファイルを読まされないため
 - ライブの見張りは、テープの大きさのポーリング（間隔は200ミリ秒）。改行で終わっていない最後の行は、次に読むまで保留する
-- テープの場所は `<root>/.srwr/tapes/`
+- テープの場所は `<root>/.srwr/tapes/`。`<id>.tape.jsonl`、または（閉じたものは）`<id>.tape.jsonl.gz`。両方あるときは、圧縮していない方がテープ
 - エラーの文言は英語で、開発者向け。人にエラーを見せるクライアントは、人が出会うもの（`tape_not_found`・`tape_unreadable`）を、コードから自分の言葉で言い直す
 - サーバーはテープを**読むだけ**。ロックを取らず、書かない
 
@@ -108,8 +108,9 @@ Frame のフィールド：
 | `not_initialized` | −32000 | `initialize` の前に要求が来た |
 | `tape_not_found` | −32000 | `tapeId` のテープがない（開いていない・存在しない） |
 | `tape_unreadable` | −32000 | テープを読めない |
-| `invalid_params` | −32602 | 引数の誤り（型、`index` の範囲、不正な `tapeId`、`initialize` に `protocolVersion` がない） |
+| `invalid_params` | −32602 | 引数の誤り（型、`index` がない・範囲外、不正な `tapeId`、`kinds` の知らない名前・使えない名前、`initialize` に `protocolVersion` がない） |
 | （なし） | −32601 | 知らないメソッド |
+| （なし） | −32700・−32600 | 行が JSON でない、または JSON-RPC 2.0 の要求でない（バッチもそう） |
 
 ## 互換性
 
@@ -119,4 +120,4 @@ Frame のフィールド：
 ## 対応するエディタを作るとき
 
 - 描き方の基準は [vscode.md](vscode_ja.md)。コマの種類ごとの見せ方（範囲の色、`why` の行、差分のコマ）を、同じ情報・同じ順で出す
-- 動くやり取りの例は [動く例](../examples/look-edit_ja.md) にある
+- 本物のサーバーとのやり取りの記録は [protocol-session.md](../examples/protocol-session_ja.md)

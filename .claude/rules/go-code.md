@@ -39,8 +39,8 @@
 
 - **AI の作業を止めない。** 失敗しても標準エラー出力に出して**終了コード 0**。終了コード 2 は Claude Code が道具の実行を止める。コマンドラインの誤りだけが 1（止めない失敗）
 - 記録は `internal/core` の `Hook` に集める（`mcp` と同じ `Workspace.Do` の中。ロック・セッション・テープの読み足しが同じ）。`internal/hook` は JSON と Bash の読み取りを読んで `core.HookRequest` を作るだけ
-- パスは `toRel` で作業場からの相対にし、`core.cleanPath`・`readTarget` を通す（外を指すパス・リンクは記録しない）。記録しないファイル（R8）の判定は `core.readTarget` の1か所（hook・`observeAll` も `look`・`edit`・`replace`・`new` もここを通る）
-- **Edit は、ファイルを先に書いた後で呼ばれる（`PostToolUse`）。** 編集前の内容は、テープが持つもの、なければ `tool_response.originalFile`。`old_string` → `new_string` を当てて今のファイルと一致しなければ、`replace` を作らず `external` にする
+- パスは `toRel` で作業場からの相対にし、`core.cleanPath`・`readTarget` を通す（外を指すパス・リンクは記録しない）。記録しないファイル（R8）の判定は `core.readTarget` の1か所（hook・`observeAll` も `look`・`edit`・`new` もここを通る）
+- **Edit は、ファイルを先に書いた後で呼ばれる（`PostToolUse`）。** 編集前の内容は、テープが持つもの、なければ `tool_response.originalFile`。`old_string` → `new_string` を当てて今のファイルと一致しなければ、`edit` を作らず `external` にする
 - **Bash の後は、新しいファイルも探す**（`core.observeNew`）。`internal/vcs` の `NewFiles`（git の未追跡と、インデックスに追加したばかり＝`git add`・`git add -N` のファイル）から得て、**必ず `readTarget` を通す**（記録しない設定・バイナリ・CRLF・外を指すリンクを飛ばす）。1回に50件・1件256 KiB まで。git が使えなくても黙って何もしない。`created: true` の `external` として書く
 - Bash の読み取りは、**先頭のコマンドだけ**を見る。`$( )`・書き込みのリダイレクト・`sed -i`・`tail -f` などは読み取りとして扱わない。Bash のあとは、読み取りでなくても `ObserveAll`
 - 実際の Claude Code の形：Read・Edit・Bash の `tool_response` は過去の記録（`~/.claude/projects/*.jsonl` の `toolUseResult`）で確かめた。**Grep の形は確かめていない**ので、複数の書式を受け、実機で確かめる

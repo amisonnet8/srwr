@@ -8,7 +8,7 @@
 
 | Command | Used by | Role |
 |---|---|---|
-| `srwr mcp` | The AI (an MCP client) | The MCP server (stdio). Provides [`look` / `edit` / `new`](mcp.md) |
+| `srwr mcp` | The AI (an MCP client) | The MCP server (stdio). Provides [`look` / `edit` / `new` and `session`](mcp.md) |
 | `srwr hook` | The hook of Claude Code | Records Read, Bash, Grep and Edit on the same [tape](tape.md) as `srwr mcp` |
 | `srwr view-server` | The editors (the VSCode extension, the Vim script) | The view server. People do not use it directly ([protocol.md](protocol.md)) |
 | `srwr view [tape]` | People | Replays in Vim ([vim.md](vim.md)) |
@@ -16,7 +16,7 @@
 | `srwr tapes` | People | Lists and tidies tapes |
 | `srwr trace [file]` | People | Finds the tape operations (and their why) behind the lines a diff adds |
 
-`srwr --version` shows the version and `srwr --help` shows the usage.
+`srwr --version` (or `version`) shows the version, and `srwr --help` (or `-h`, `help`) shows the usage. With no command, or with a command srwr does not know, the usage goes to standard error and the exit code is 2.
 
 What srwr prints is English by default. Set the environment variable `SRWR_LANG=ja` for Japanese ([settings.md](settings.md)).
 
@@ -46,16 +46,18 @@ The directory where srwr is used is called the **workspace**. srwr makes the fol
 │   ├── lock                For exclusive writing (flock)
 │   ├── active              The tape ID of the current session
 │   └── tapes/
-│       ├── <id>.tape.jsonl   A tape (the one being written)
+│       ├── <id>.tape.jsonl   A tape (the one being written; also what `srwr trace --as-tape` writes)
 │       └── <id>.tape.jsonl.gz   A tape of a session that ended (compressed)
+│   └── init-backup/        What srwr init held before it rewrote a file (only when it did)
 ├── .srwrignore             Files not to record (optional)
+├── .gitignore              srwr init adds the lines for key, lock, active and init-backup
 ├── .mcp.json               Registers srwr mcp (written by srwr init)
 └── .claude/settings.json   Registers the hook, forbids Edit/Write (written by srwr init)
 ```
 
 ## srwr mcp
 
-The MCP server the AI uses. It is started by the AI agent (the MCP client). The workspace is `--root <workspace>` (the current directory if omitted). There are three tools for work, `look`, `edit` and `new`, and an optional `session` that starts a titled tape ([mcp.md](mcp.md)). Several may be started in the same workspace. They write to the same session (the same tape), and a selection token issued by one can be used by another ([tape.md](tape.md)).
+The MCP server the AI uses. It is started by the AI agent (the MCP client). The workspace is `--root <workspace>` (the current directory if omitted). The tools are `look`, `edit` and `new` for work, and an optional `session` that starts a titled tape ([mcp.md](mcp.md)). Several may be started in the same workspace. They write to the same session (the same tape), and a selection token issued by one can be used by another ([tape.md](tape.md)).
 
 ## srwr hook
 
@@ -66,8 +68,8 @@ srwr hook [--root <workspace>]
 Called from a hook of Claude Code, it records the operations of the tools the AI already has on the same tape, so that the investigation (where it read) is on the tape too. It reads the JSON of the hook from standard input. A recorded run is in [hook.md](../examples/hook.md).
 
 - The workspace is `--root`. If omitted, the environment variable `CLAUDE_PROJECT_DIR`, and then the current directory
-- Only the JSON of `PostToolUse` (after a tool has been used) is recorded. The items used are `hook_event_name`, `tool_name`, `tool_input`, `tool_response` and `cwd`. A relative path is read relative to `cwd`, and a path outside the workspace is not recorded
-- **It does not stop the AI's work.** If the JSON cannot be read, a file is missing, or a file cannot be handled (binary, CRLF), it prints the reason to standard error and exits with code 0 (code 2 is not used, because Claude Code would stop running the tool)
+- Only the JSON of `PostToolUse` (after a tool has been used) is recorded (an input with no `hook_event_name` is read as one). The items used are `hook_event_name`, `tool_name`, `tool_input`, `tool_response` and `cwd`. A relative path is read relative to `cwd`, and a path outside the workspace is not recorded
+- **It does not stop the AI's work.** If the JSON cannot be read, a file is missing, or a file cannot be handled (binary, CRLF), it prints the reason to standard error and exits with code 0 (code 2 is not used, because Claude Code would stop running the tool). Only a mistake in the command line itself exits with 1
 - It is registered in `.claude/settings.json` (written by `srwr init`):
 
 ```json
@@ -90,26 +92,26 @@ Called from a hook of Claude Code, it records the operations of the tools the AI
 
 - After a Bash command (even one that does not read), every file whose content the tape holds is read again, and a difference is recorded as `external` (`detectedBy` is `hook`)
 - After a Bash command, in a git work tree, a **new file** (one that git lists as untracked or as newly added to the index, including `git add -N`, that git does not ignore, and that is not in `.srwrignore`) is recorded as an `external` with `created: true`, so the tape shows what was made. A file with CRLF, a binary file, and a file over 256 KiB are left out. At most 50 new files are recorded per command; the rest are not, and the hook says so. Outside a git work tree new files are not found. **Only a file written after the last event of the tape counts as made by the command** (`created: true`, and told to the agent); an untracked file that was already there (older than the last event, as a file made by `new` in an earlier tape is) is only learned, as a `snapshot`, and not told. On a tape with no event yet nothing is told as made
-- For an Edit, `old_string` → `new_string` is applied to the content before the edit (what the tape holds; if there is none, `tool_response.originalFile`), and if the result equals the current file it is a `edit`. If it does not (other changes are mixed in, for example), it is recorded as `external`
+- For an Edit, `old_string` → `new_string` is applied to the content before the edit (what the tape holds; if there is none, `tool_response.originalFile`), and if the result equals the current file it is an `edit`. If it does not (other changes are mixed in, for example), it is recorded as `external`
 - A single call records at most 100 `look`s (so that a search over a wide range does not swell the tape)
-- For a pipe, only the first command is looked at. `$( )`, redirects that write, `sed -i`, `tail -f` and `grep` without `-n` are not recorded
-- A frame recorded by the hook is shown with a `why` of `null` (no `why` line). It has no selection token (`selection` and `from` are `null`). A token issued earlier by `srwr mcp` can still be used after a `edit` by the hook; its line numbers are corrected
-- **After it records a read of one file** (a Read, or a Bash `cat`, `nl`, `head`, `tail` or `sed -n`; not a search over several files or `grep -n`), the hook tells the agent in one line to use `look` (with `search`, or with `startLine` and `endLine`): it returns the same lines with a selection token for `edit`. It writes the JSON of a `PostToolUse` hook to standard output (`{"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": "…"}}`) and exits with 0. Nothing is written when the read was not recorded
-- **After a Bash command that made or changed files** (new files git lists, and files the tape has content of that differ now), the hook says so in one more line of the same JSON: the files (up to 5 names, then a count), that they are on the tape as changes made outside srwr with no `why`, and that `new` and `edit` record a `why` when the agent writes a file itself, while files a tool writes (a generator, a formatter) are fine as they are. Nothing is written when the command changed nothing. A changed file is told only if it was written after the last event of the tape (a deleted file always is). **This line is given once for a tape:** the later commands that make or change files get none (a generator that runs again and again is not told every time; the changes are on the tape) The advice to use `look` after the agent read one file is also given once for a tape (the first read the hook records, of any kind), not at every `cat` or `grep`
+- For a pipe, only the first command is looked at. `$( )`, redirects that write, an input redirect, `sed -i`, `tail -f` and `grep` without `-n` are not recorded; `grep -n` counts only for one file, and not with `-r`, `-l`, `-c`, `-q` or `-H`
+- A frame recorded by the hook is shown with a `why` of `null` (no `why` line). It has no selection token (`selection` and `from` are `null`). A token issued earlier by `srwr mcp` can still be used after an `edit` by the hook; its line numbers are corrected
+- **After it records a read of one file** (a Read, or a Bash `cat`, `nl`, `head`, `tail` or `sed -n`; not a search over several files or `grep -n`), the hook tells the agent in one line to use `look` (with `search`, or with `startLine` and `endLine`): it returns the same lines with a selection token for `edit`. It writes the JSON of a `PostToolUse` hook to standard output (`{"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": "…"}}`) and exits with 0. Nothing is written when the read was not recorded, or when the call also had a note to print (a file outside the workspace, or more than 50 new files)
+- **After a Bash command that made or changed files** (new files git lists, and files the tape has content of that differ now), the hook says so in one more line of the same JSON: the files (up to 5 names, then a count), that they are on the tape as changes made outside srwr with no `why`, and that `new` and `edit` record a `why` when the agent writes a file itself, while files a tool writes (a generator, a formatter) are fine as they are. Nothing is written when the command changed nothing. A changed file is told only if it was written after the last event of the tape (a deleted file always is). **This line is given once for a tape:** it is left out once the tape holds an `external` that the hook recorded, so the later commands that make or change files get none (a generator that runs again and again is not told every time; the changes are on the tape). The advice to use `look` after the agent read one file is also given once for a tape (after the first read the hook records, of any kind), not at every `cat` or `grep`
 
 ## srwr view-server
 
 The view server that an editor starts as a child process. It reads the tape and builds the data needed for stepping.
 
 ```
-srwr view-server --root <workspace>
+srwr view-server [--root <workspace>]
 ```
 
-It is not for people to use directly. Those who add support for an editor read [protocol.md](protocol.md).
+`--root` is the workspace (the current directory if omitted). It is not for people to use directly. Those who add support for an editor read [protocol.md](protocol.md).
 
 ## srwr view
 
-`srwr view [tape]` replays a tape in a plain Vim, with no plugin, using the Vim scripts embedded in the binary. If the tape is left out, you choose from the list. A tape is its ID or the path of a `.tape.jsonl` or `.tape.jsonl.gz` file. `--live` is live viewing. When running from outside the workspace, give `--root <workspace>`. Vim 9.0.0784 or later is needed. For how to use it, see [vim.md](vim.md).
+`srwr view [tape]` replays a tape in a plain Vim, with no plugin, using the Vim scripts embedded in the binary. If the tape is left out, you choose from the list. A tape is its ID or the path of a `.tape.jsonl` or `.tape.jsonl.gz` file (only the file name is used: the tape is looked for in `.srwr/tapes/` of the workspace). `--live` is live viewing; it cannot be given together with a tape. When running from outside the workspace, give `--root <workspace>`. Vim 9.0.0784 or later with `+vim9script`, `+channel`, `+job` and `+textprop` is needed; set the environment variable `SRWR_VIM` to use a Vim other than `vim`. The embedded scripts are written under the user cache directory (`srwr/vim/<version>/`). For how to use it, see [vim.md](vim.md).
 
 ## srwr init
 
@@ -123,7 +125,7 @@ Sets up the workspace for srwr. It gives the same result however many times it r
 |---|---|
 | `.srwr/` | Makes the directory and the key |
 | `.mcp.json` | Registers `srwr mcp` (existing servers are kept and this is added; if `srwr` is already there, it is left alone) |
-| `.claude/settings.json` | Registers the hook, the setting that lets Claude Code use the tools without asking (`enabledMcpjsonServers`, and the permission of `look`, `edit` and `new`), and in strict mode the ban on Edit/Write (existing content is kept and this is added) |
+| `.claude/settings.json` | Registers the hook, the setting that lets Claude Code use the tools without asking (`enabledMcpjsonServers`, and the permission of `look`, `edit`, `new` and `session`), and in strict mode the ban on Edit/Write (existing content is kept and this is added) |
 | `.gitignore` | Adds `.srwr/key`, `.srwr/lock`, `.srwr/active` and `.srwr/init-backup/` (when under git). Tapes (`.srwr/tapes/`) are not ignored, so that they can be shared |
 
 - **After srwr is updated to a version with new tools, run `srwr init` again** in each workspace: it adds the permission of the new names to `permissions.allow`, and takes away the permissions of the tools that are gone (`select` and `sub`, which became `look` and `edit`; and `replace`, which is gone). Without it, Claude Code asks every time, or does not use them
@@ -131,6 +133,7 @@ Sets up the workspace for srwr. It gives the same result however many times it r
 - What a file held before the rewrite is kept in `.srwr/init-backup/<date and time>/` (only when there is a file to change)
 - If a file cannot be read as JSON (or the shape of an object or array is wrong), nothing is rewritten and it stops with exit code 1
 - If `srwr` is not on the PATH, a note is printed at the end (`.mcp.json` and the hook run `srwr`)
+- When there is nothing to change it prints `Already set up. Nothing was rewritten.`, and when it rewrote a file it says where the backup is
 - The only target agent is **Claude Code** (MCP itself can be used by other agents, but the ban on Edit/Write and the hook depend on the settings of Claude Code)
 
 An example of the output (an empty workspace):
@@ -152,7 +155,7 @@ For lenient mode (Edit and Write stay allowed), run: srwr init --lenient.
 | Mode | Content |
 |---|---|
 | **Strict mode** (the default) | Forbids Edit, Write, MultiEdit and NotebookEdit of Claude Code. The only way for the AI to change a file is `look` / `edit`, so the tape always holds a `why` |
-| **Lenient mode** (`srwr init --lenient`) | Does not forbid Edit and Write. The hook records an Edit as a `edit` (with a `why` of `null`). A Write is not recorded and shows up as `external` |
+| **Lenient mode** (`srwr init --lenient`) | Does not forbid Edit and Write. The hook records an Edit as an `edit` (with a `why` of `null`). A Write is not recorded and shows up as `external` |
 
 - Strict ⇄ lenient is switched with `srwr init` and `srwr init --lenient`. Lenient mode removes the four above (`Edit`, `Write`, `MultiEdit`, `NotebookEdit`) from `permissions.deny`. Other bans are left (a ban on `Edit` the user added by themselves has the same name, so it is removed too)
 - Even strict mode cannot shut out everything. Editing through Bash (`sed -i`, redirects and so on) is detected and shown as `external`
@@ -167,11 +170,11 @@ srwr tapes [new | prune (--keep N | --older-than 30d) | path <tape ID> | check [
 |---|---|
 | `srwr tapes` | A list (tape ID, start, last update, number of events, number of files, size, whether it is the current session). A tape the AI started with the [`session`](mcp.md#session) tool has its title on a line of its own under its row. Newest first (by the time the tape started). Times are in the time zone of the machine |
 | `srwr tapes new` | Closes the current session, and the next write starts a new session. The tape is [compressed](tape.md#a-closed-tape-is-compressed); if that fails, the tape stays as it was and a warning is printed. Selection tokens issued before the closing can no longer be used |
-| `srwr tapes prune --keep N` / `--older-than 30d` | Deletes old tapes, compressed or not. `--keep N` keeps the newest N. `--older-than` takes the form `30d` or `12h`. It does not ask for confirmation, and prints each deleted tape on a line. **It does not delete the tape of the current session** |
+| `srwr tapes prune --keep N` / `--older-than 30d` | Deletes old tapes, compressed or not. Exactly one of `--keep N` and `--older-than` is needed (otherwise exit code 2). `--keep N` keeps the newest N (0 is allowed). `--older-than` takes the form `30d` or `12h` and counts from the last update of the tape. It does not ask for confirmation, and prints each deleted tape on a line. **It does not delete the tape of the current session** |
 | `srwr tapes path <id>` | Prints the path of a tape, `.tape.jsonl` or `.tape.jsonl.gz` (used when sharing) |
 | `srwr tapes check [<id>]` | Lists the files that changed in the git work tree but are not on the tape. Without an ID it checks the current session (or the newest tape). It only reads |
 
-There is no automatic cleanup. Deleting is done explicitly by the user.
+With no tape, `srwr tapes` prints `No tapes.`, and `srwr tapes new` prints `There is no current session.` There is no automatic cleanup. Deleting is done explicitly by the user.
 
 ### srwr tapes check
 
@@ -180,7 +183,7 @@ srwr records only the files that `look`, `edit` and the hook saw. A file the AI 
 - A file is **on the tape** if any event of the tape is about it
 - A changed file that is not on the tape is a **warning**. A changed file that [is not recorded by the settings](#files-that-are-not-recorded) is counted apart and is not a warning. Anything inside `.srwr/` is left out
 - If the work tree already had uncommitted changes when the tape started (the `dirty` of the header), the output says that some warnings may be older than the tape
-- The exit code is 0 when there is no warning and 1 when there is. It needs git; outside a git work tree it prints why and exits with 1
+- The exit code is 0 when there is no warning and 1 when there is. It needs git; outside a git work tree, or when there is no tape or the ID is not one, it prints why and exits with 1
 - It does not take the lock and does not create `.srwr/`
 
 ```
@@ -211,16 +214,16 @@ git show HEAD | srwr trace
 git log -p -5 | srwr trace --mark
 ```
 
-Gives the lines a commit adds back to the operations on the tapes that wrote them, and their `why`. It reads a text (the file, or the standard input) that holds unified diffs: the output of `git show`, `git diff` or `git log -p`, or any other diff. **srwr does not run git, and git does not know srwr**: the only thing between them is the text. Like `mtqg format`, anything that has the diff in it will do. It only reads: no lock, and no `.srwr/` is made.
+Gives the lines a commit adds back to the operations on the tapes that wrote them, and their `why`. It reads a text (the file, or the standard input) that holds unified diffs: the output of `git show`, `git diff` or `git log -p`, or any other diff. **srwr does not run git, and git does not know srwr**: the only thing between them is the text. Anything that has the diff in it will do. Without `--as-tape` it only reads: no lock, and no `.srwr/` is made.
 
-- **How a line is found**: the added lines of each hunk are matched, by what the lines say, against the lines the `edit`s and `new`s of the tapes wrote (all tapes of the workspace, or the one of `--tape`). A run of added lines is given to the operation that wrote the longest stretch of it; the rest is looked for again on each side. When two operations wrote the same lines, the later one is told. **A single short line (`}`) is not believed by itself**; it has to be part of a stretch of two lines or more, or be a line of 12 characters or more.
+- **How a line is found**: the added lines of each hunk are matched, by what the lines say, against the lines the `edit`s and `new`s of the tapes wrote (all tapes of the workspace, or the one of `--tape`). A run of added lines is given to the operation that wrote the longest stretch of it; the rest is looked for again on each side. When two operations wrote the same lines, the later one is told. **A single short line (`}`) is not believed by itself**; it has to be part of a stretch of two lines or more, or be a line of 12 characters or more (not counting the spaces around it).
 - **What it cannot tell**: lines that no tape holds (written by a person, by a tool outside srwr, in a file that is not recorded, or on a tape that was deleted) are counted as `not on a tape`. A line that was moved or changed after srwr wrote it is not found. This is not `git blame`: it tells which operation wrote an added line of the diff, not who last touched a line.
-- **Default output**: for each commit (when the text has `commit <sha>` lines), each file, the lines of the new file, the operation (the kind, the tape ID, `#seq`, the time in the time zone of the machine) and its `why`. At the end of a commit, how many added lines came from tapes. A tape ID can be replayed with `srwr view <tape>`.
+- **Default output**: for each commit (when the text has `commit <sha>` lines), each file, the lines of the new file, the operation (the kind, the tape ID, `#seq`, the time as `HH:MM` in the time zone of the machine) and its `why` (an operation the hook recorded has no `why`, and is shown as made through a hook). A tape that `--as-tape` made is not counted as a source. At the end of a commit, how many added lines came from tapes. A tape ID can be replayed with `srwr view <tape>`.
 - **`--mark`**: prints the text as it is, and puts `# why: …  (<tape ID> #<seq>)` after the `@@` line of each hunk for the operations that wrote its lines.
-- **`--json`**: the same as the default output, for a program.
-- **`--as-tape`**: writes the operations found for each commit as one tape in `.srwr/tapes/` that can be replayed (`srwr view <ID>`, or the list of the editor), and names it under the commit. The tape holds, for each file, everything between the first and the last of those operations ([tape.md](tape.md)). The same text makes the same tape. A tape of the same ID that this command did not make is never replaced.
+- **`--json`**: the same operations, for a program: `{"commits": [{"commit", "subject", "files": [{"file", "segments": [{"from", "to", "tape", "seq", "type", "time", "why"}]}]}]}`. A segment of lines no tape holds has only `from` and `to`. `time` is UTC.
+- **`--as-tape`**: writes the operations found for each commit as one tape in `.srwr/tapes/` that can be replayed (`srwr view <ID>`, or the list of the editor), and names it under the commit (`→ srwr view <ID>`). The tape holds, for each file, everything between the first and the last of those operations ([tape.md](tape.md#header)). The same text makes the same tape; it is written without the lock, through a temporary file. A tape of the same ID that this command did not make, or that has been compressed, is never replaced.
 - `--mark`, `--json` and `--as-tape` do not go together.
-- Files under `.srwr/` and deleted files are not listed.
+- Files under `.srwr/` and deleted files are not listed. When nothing is found it says so and the exit code is still 0.
 
 ## Files that are not recorded
 

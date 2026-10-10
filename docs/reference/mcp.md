@@ -1,19 +1,19 @@
-# MCP tools (look, edit, new)
+# MCP tools (look, edit, new, session)
 
 *[日本語](mcp_ja.md) | **English***
 
 **Readers**: people who use srwr. For people who want to know what the AI is made to do and what errors come back.
 
-The AI agent edits files with only **three tools** provided by the MCP server `srwr mcp`.
+The AI agent edits files with the tools provided by the MCP server `srwr mcp`: `look`, `edit` and `new` read and change files, and `session` is an optional fourth that only starts a new tape.
 
 | Tool | What it does |
 |---|---|
 | `look` | Looks at a range. A selection token is returned |
 | `edit` | Changes the range of a selection token to new text |
 | `new` | Creates a file that does not exist yet, with its content |
-| `session` | Optional. Starts a new tape with a title (see [session](#session)). It does not edit anything |
+| `session` | Optional. Starts a new tape with a title (see [session](#session)). It touches no file |
 
-There is no `edit` without `look`. So the tape always holds "look, then change" together. The same change in many places is made with `edits` (one `why`, all or none). Searching and reading are left to the Read and grep the AI already has (the hook records them; see `srwr hook` in [cli.md](cli.md)).
+The usual way is to `look`, then `edit` with the token that came back, so the tape holds "look, then change" together. An `edit` can also point at its range by `file` and `expect`, or change a part of a line by `old` and `new`, with no token; the range is then checked against the file, and the tape still holds the range that was changed. The same change in many places is made with `edits` (one `why`, all or none). Finding a place is `look` with `search`; the AI's own Read and grep still work, and the hook records them (see `srwr hook` in [cli.md](cli.md)).
 
 `look`, `edit` and `new` require a `why`; so does `session` (the reason). It is the heart of what a person sees when replaying the [tape](tape.md).
 
@@ -32,7 +32,7 @@ Looks at a range, and returns a **selection token** for editing that range with 
 
 | Item | Meaning |
 |---|---|
-| `file` | A path relative to the workspace. Existing files only (make a new file with `new`) |
+| `file` | A path relative to the workspace. Existing files only (make a new file with `new`). Not given when `looks` is; may be a directory when `search` is given (see "Searching") |
 | `startLine`, `endLine` | Line numbers, 1-based, both inclusive. Give both or neither (with neither, `expect` finds the range; with no `expect` either, the whole file is read, the first 2000 lines of a longer one, and the result has a `note`) |
 | `expect` | Optional. The lines the range must hold, joined with `\n`. See "Checking the content" below |
 | `search` | Optional, instead of a range. A text to find in the file. See "Searching" below |
@@ -42,7 +42,7 @@ Looks at a range, and returns a **selection token** for editing that range with 
 | `selection` | The selection token. The AI passes it to `edit` as it is ([what the token is](../design/token.md)) |
 | `startLine`, `endLine` in the output | The range that was selected (when `expect` found it, this is where) |
 | `lines` | The current content of the range. Always returned |
-| `lineCount`, `note` in the output | Only when an `endLine` past the end of the file was cut to the last line: how many lines the file has, and a sentence that says so |
+| `lineCount`, `note` in the output | Only when the result was cut: an `endLine` past the end of the file was cut to the last line, or a whole-file read stopped at 2000 lines. How many lines the file has, and a sentence that says so |
 
 - **A place to insert**: an empty range with `endLine = startLine - 1` means "just before line `startLine`". For example `startLine: 13, endLine: 12` is between lines 12 and 13. To append to the end of the file, `startLine = number of lines + 1`
 - Conditions of the range: `1 ≤ startLine ≤ number of lines + 1`, `startLine - 1 ≤ endLine ≤ number of lines`. Outside them, `invalid_range`. **One exception, since a look only reads:** an `endLine` past the end of the file, with a `startLine` that is in the file (or just after it), is cut to the last line, and the result says so (`lineCount`, `note`). The tape holds the range that was looked at. `edit` does not do this
@@ -58,7 +58,7 @@ Looks at a range, and returns a **selection token** for editing that range with 
 | `startLine`, `endLine` and `expect` | It passes only when the range holds exactly the lines of `expect`. Otherwise `content_mismatch`. This catches line numbers that have moved |
 | `expect` only | srwr looks for the consecutive lines of `expect` in the file. Exactly one place: that is the range. None: `content_not_found`. Two or more: `content_ambiguous` |
 
-- With only one of `startLine` and `endLine`, the call is `invalid_input`. With neither line numbers nor `expect`, the whole file is read. So is an `expect` of `""` without line numbers (a place to insert is pointed at with line numbers)
+- With only one of `startLine` and `endLine`, the call is `invalid_input`. With neither line numbers nor `expect`, the whole file is read. An `expect` of `""` without line numbers is `invalid_input` (a place to insert is pointed at with line numbers)
 - `content_mismatch` says where the same lines are in the file (up to 5 places), which is usually the fix. `content_ambiguous` says where they are (up to 10 places): add line numbers, or more lines to `expect`
 - `expect` is not written to the tape
 
@@ -77,9 +77,9 @@ Looks at a range, and returns a **selection token** for editing that range with 
 
 - **A directory**: `file` may be a directory (`"."` is the whole workspace) with `search`. Every file below it that git lists (the tracked ones and the new ones it does not ignore; without git, every file in directories whose names do not begin with a dot) is searched, in the order of their paths, and each match has its `file`. Files that are not recorded, not text, or bigger than 1 MiB are left out without a word. At most 5000 files are searched (`note` says when there were more). The 20 matches are 20 in all, and `count` is the number of all lines that hold the text. Only the files that have a match get a snapshot on the tape, besides the looks. `file` that is not a directory or a file that exists is `file_not_found`, as before
 - `search` is plain text (not a regular expression), in one line (a line break is `invalid_input`; so is an empty text), and capital letters and spaces count. A line that holds it more than once is one match
-- Each match is **a `look` of that one line**, with its own `selection` (to pass to `edit` as it is), and `above` and `below` (up to 2 lines of the file each). The result is in line order. `count` is how many lines hold the text. At most 20 matches are returned and put on the tape; `more` is how many lines were left out (it is left out when none). No match is not an error: `matches` is `[]` and nothing is written to the tape
-- **Choosing the files** (`include`, `exclude`): lists of patterns (one string is taken as a list of one) in `.gitignore` syntax (`"*.go"`, `"internal/"`, `"docs/**/*.md"`; a pattern with no `/` matches the name at any depth, case does not matter). A file is searched when it matches one of `include` (or `include` is not given) and none of `exclude`. They work for one file too: a file that does not pass has no match. Blank patterns are ignored
-- **Long lines**: a matching line longer than 200 characters is returned as the 80 characters on each side of the first place of the text, with `…` where it was cut; `above` and `below` lines longer than 200 characters are cut to their first 200. The match then has `cut: true`. The `selection` is still of the whole line, and so is what the tape holds
+- Each match is **a `look` of that one line**, with its own `selection` (to pass to `edit` as it is), and `above` and `below` (up to 2 lines of the file each). The result is in line order. `count` is how many lines hold the text. At most 20 matches are returned and put on the tape; `more` is how many lines were left out (it is left out when none). No match is not an error: `matches` is `[]` and no `look` is written (a search of one file still puts a `snapshot` of the file on the tape if the tape did not hold it yet)
+- **Choosing the files** (`include`, `exclude`): lists of patterns (one string is taken as a list of one) in `.gitignore` syntax (`"*.go"`, `"internal/"`, `"docs/**/*.md"`; a pattern with no `/` matches the name at any depth; case does not matter in any pattern). A file is searched when it matches one of `include` (or `include` is not given) and none of `exclude`. They work for one file too: a file that does not pass has no match. Blank patterns are ignored
+- **Long lines**: a matching line longer than 200 characters is returned as the 80 characters on each side of the first place of the text, with `…` where it was cut; `above` and `below` lines longer than 200 characters are cut the same way (around the text if they hold it, else to their first 200). The match then has `cut: true`. The `selection` is still of the whole line, and so is what the tape holds
 - **More than 20 matches**: `offset` skips that many matches (in the order described above) and returns the next 20; `more` is how many are left after those (`count - offset - the matches returned`). The tape gets only the matches returned. When not all matches were returned in a directory, `byFile` lists the files with the most matches, `[{"file", "count"}, …]`, up to 20, so the AI can narrow the search with `include` or `exclude`
 - An `include` pattern that starts with `!`, or an `exclude` that starts with one, is `invalid_input` (it would match nothing): to leave files out, write the pattern in `exclude` without the `!`. A `!` later in `exclude` takes back an earlier pattern.
 - With `startLine`, `endLine` or `expect`, the call is `invalid_input`; so are `include`, `exclude` or `offset` without `search`, and a negative `offset`. The text searched for is not written to the tape. The same files are refused as for any `look`
@@ -95,7 +95,7 @@ Looks at a range, and returns a **selection token** for editing that range with 
 { "ok": true, "looks": [ { "file": "a.go", "selection": "sel_…", "startLine": 1, "endLine": 30, "lines": ["…"] }, … ] }
 ```
 
-- **All or none**: every item is checked before anything is put on the tape. A bad item (a file that does not exist or is not recorded, a range outside the file, more than 2000 lines in all) is the item's own error with `looks[1]: ` at the start of its message and "Nothing was looked at" at the end. One `failure` is written, about that item. An `endLine` past the end is cut as for a single `look`
+- **All or none**: every item is checked before anything is put on the tape. A bad item (a file that does not exist or is not recorded, a range outside the file, more than 2000 lines in all) is the item's own error with `looks[1]: ` at the start of its message and "Nothing was looked at" at the end. One `failure` is written, about that item. An `endLine` past the end is cut as for a single `look`, but the result of an item does not say so (no `note`). `include`, `exclude` and `offset` are not given with `looks`
 - Each item is a `look` on the tape, with the same `why`, and has its own `selection`. The results are in the order given
 
 ## edit
@@ -121,12 +121,12 @@ Changes the range to new text, in one call. An insertion is a change of an empty
 | `why` | Why it changes it this way |
 | `selection` in the output | A new token for **the range after the replacement**. To go on fixing the same place, it can be used without calling `look` again |
 | `lines` in the output | The content of the range after the replacement (`[]` for a deletion) |
-| `hint` in the output | A line, in two cases. When this edit follows an edit of the same file with nothing between them on the tape: it tells of `edits` (a single edit only). When lines of 2 or more were inserted with no empty line between them and the line above (or below), which is not empty, has the same indentation and is not of the same shape (a line that starts and ends with the same characters, like the elements `{…},` of a table, is of the same shape, and no hint is given between them): it says so, since two blocks put together (functions, paragraphs) are usually meant to be apart; start (end) `newText` with an empty line. srwr does not add the empty line itself, because what a block is differs by language. In `edits` the second one is in the item's result. A hint is not on the tape |
+| `hint` in the output | A line, in two cases (when both hold, only the first is given). When this edit follows an edit of the same file with nothing between them on the tape: it tells of `edits` (a single edit only). When lines of 2 or more were inserted with no empty line between them and the line above (or below), which is not empty, has the same indentation and is not of the same shape (a line that starts and ends with the same characters, like the elements `{…},` of a table, is of the same shape, and no hint is given between them): it says so, since two blocks put together (functions, paragraphs) are usually meant to be apart; start (end) `newText` with an empty line. srwr does not add the empty line itself, because what a block is differs by language. In `edits` the second one is in the item's result. A hint is not on the tape |
 | `above`, `below` in the output | Up to 2 lines of the file as it is now, right above and right below the new range (fewer near the start or the end of the file, `[]` if none). They are **not** the old content: what was replaced is not returned (the AI has just given it as `expect`). A line longer than 200 characters is cut to its first 200 (with `…`) and the result has `cut: true`; `lines` is never cut, and the tape holds the whole line. With them the result can be checked without reading the file again |
 
 **How the lines of `newText` are counted**: `""` is 0 lines (a deletion). Otherwise it is split into lines at `\n`, and if it ends with `\n` the last empty element is not counted (`"x\n"` is 1 line, `"\n"` is one empty line). The range of the returned token follows this count.
 
-**The AI does not have to calculate line numbers.** If edits elsewhere shift the lines, srwr corrects them. Only when an edit overlaps the range does it become `selection_stale`.
+**The AI does not have to calculate line numbers.** If edits elsewhere shift the lines, srwr corrects them (a `new` and an Edit recorded by the hook count too). Only when an edit overlaps the range does it become `selection_stale`.
 
 ### Without a token (`file` and `expect`)
 
@@ -140,7 +140,7 @@ Zero places is `content_not_found` (`actual` holds the lines at the given line n
 
 An **insertion** (`endLine = startLine - 1`, no `expect`) has no lines to check. It is accepted only if the file has not changed since its last look (no `edit`, `new` or `external` after it), and the line numbers are then taken as given. Otherwise it is `content_not_found`: look again, or point at the line next to the place with `expect` and `insert`.
 
-**`insert`** (`"after"` or `"before"`) inserts next to lines without needing them to be unchanged since a look: point at the lines as usual (a token, or `file` and `expect`, which is checked), and they are kept while `newText` goes just after (before) them. The result (`selection`, `startLine`, `endLine`, `lines`, `above`, `below`) is about the new lines, and the tape holds an `edit` of an empty range, as for any insertion. `insert` is `invalid_input` with an empty range (there are no lines to point at), and with an `insert` other than `"after"` and `"before"`. An empty `newText` with `insert` puts **one empty line** (without `insert` it deletes).
+**`insert`** (`"after"` or `"before"`) inserts next to lines without needing them to be unchanged since a look: point at the lines as usual (a token, or `file` and `expect`, which is checked), and they are kept while `newText` goes just after (before) them. The result (`selection`, `startLine`, `endLine`, `lines`, `above`, `below`) is about the new lines, and the tape holds an `edit` of an empty range, as for any insertion. `insert` is `invalid_input` with an empty range given by `file` and line numbers (there are no lines to point at), and with a value other than `"after"`, `"before"`, `"start"` and `"end"`. An empty `newText` with `insert` puts **one empty line** (without `insert` it deletes).
 
 **`insert: "start"` and `"end"`** put `newText` at the top or the bottom of the file, with `file` and `newText` and nothing else (no `selection`, `expect` or line numbers: `invalid_input`). No look is needed and the file may have changed, since the place cannot move. The tape holds an `edit` of an empty range (`1..0`, or `n+1..n`), as for any insertion. They can be items of `edits`; two at one place overlap.
 
@@ -160,7 +160,7 @@ The tape holds the same `edit` as for a token, with `from` of `null`. `expect` i
 - With `old`, **one line number is enough**: `startLine` alone looks from that line to the end of the file, `endLine` alone from the top to that line (both are still needed with `expect`). The moved lines of the last look are tried only when both are given.
 - `old` is not empty, `old` and `new` are not the same, neither has CR, and they are not given with `selection`, `expect`, `newText` or `insert` (`invalid_input`). They can be used in the items of `edits`.
 
-Files that cannot be handled: files with line breaks other than LF (CRLF), and binary files. They give `unsupported_file`.
+Files that cannot be handled: files with a CR or a NUL, or that are not UTF-8 (CRLF files and binary files). They give `unsupported_file`. A top-level `content` given to a single `edit` is ignored; make files with `new`.
 
 ### Several edits in one call (`edits`)
 
@@ -211,7 +211,7 @@ Creates a file that does not exist yet, with its content, and records why.
 
 ## session
 
-Starts a new tape (a new [session](tape.md#file-name-and-session)) with a title, when the AI begins work that is a different unit from what it did before (for example "docs first", then "the code"). The AI never has to call it: without it a new tape starts after 30 minutes without an operation, as before.
+Starts a new tape (a new [session](tape.md#file-name-and-session)) with a title, when the AI begins work that is a different unit from what it did before (for example "docs first", then "the code"). The AI never has to call it: without it a new tape starts after 30 minutes without an event on the tape (a read that the hook recorded counts), as before.
 
 ```jsonc
 // input
@@ -225,7 +225,7 @@ Starts a new tape (a new [session](tape.md#file-name-and-session)) with a title,
 | `title` | A short name of the work. One line, at most 80 characters, not blank (`invalid_input`) |
 | `why` | Why the work is started as a new unit. Required |
 | `tapeId` in the output | The tape that is written now. It is made at once, with the title and why in its `header` |
-| `closed` in the output | The tape that was closed (it is [compressed](tape.md#a-closed-tape-is-compressed)), or `null` when there was none or it had no operation yet |
+| `closed` in the output | The tape that was closed (it is [compressed](tape.md#a-closed-tape-is-compressed)), or `null` when there was none, it had no operation yet, or the 30-minute rule had closed it already |
 
 - It works on the **whole workspace**, like `srwr tapes new`: what other agents and hooks write next goes to the new tape too. Selection tokens issued before it can no longer be used (they belong to the tape that was closed)
 - A tape that had no operation (only a title from an earlier `session`) is removed, not closed
@@ -248,18 +248,18 @@ In the MCP response `isError` is `true`, and the body is the following JSON.
 
 | Code | Meaning | What the AI should do |
 |---|---|---|
-| `invalid_selection` | The form of the token is wrong, or it was altered. A token issued on another tape (another session) also gives this. So does a new session started after a gap of 30 minutes | Call `look` again |
+| `invalid_selection` | The form of the token is wrong, or it was altered. A token issued on another tape (another session) also gives this, and so does one whose file the tape does not hold. A new session makes the tokens of the old one unusable: after a gap of 30 minutes, after `session`, and after `srwr tapes new` | Call `look` again |
 | `selection_stale` | An edit that overlaps the range was made after the token was issued | Call `look` again |
 | `selection_mismatch` | Even with the line numbers corrected, the content of the range differs from when `look` was called (it may have been changed outside srwr) | Check the content and call `look` again |
 | `file_not_found` | The target file does not exist, or is not a regular file (a directory, for example) | — |
 | `invalid_range` | The line numbers are outside the file, or the path is outside the workspace | Check the number of lines and call `look` again |
 | `content_mismatch` | The range holds other lines than `expect` | Read where the message says the lines are, and call `look` again (or copy from `nearMatches`) |
-| `content_not_found` | `expect` is not in the file | Check the content, or give line numbers. If `nearMatches` is there, copy `expect` from it |
-| `content_ambiguous` | `expect` (given without line numbers) is in the file in more than one place | Give line numbers, or more lines in `expect` |
+| `content_not_found` | `expect` (or `old`) is not in the file, or an insertion without `expect` was made after the file had changed | Check the content, or give line numbers. If `nearMatches` is there, copy `expect` from it |
+| `content_ambiguous` | `expect` or `old` is in the file in more than one place, or the line numbers as given and as moved point at different places | Give line numbers, or more lines in `expect` (or more text in `old`) |
 | `file_exists` | `new` was used on a file that already exists | Use `look` and `edit` on it |
 | `ignored_file` | `look`, `edit` or `new` was used on a file that is not recorded | srwr cannot handle it. Ask the user |
-| `invalid_input` | A required input is missing, has the wrong type (the message names the input and the form it wants: `edits must be an array of objects, got string. Pass it as JSON, not as a string that holds JSON`), or `why` is empty; `file` is empty or has a NUL; only one of `startLine` and `endLine` is given, or none of them and no `expect`; `selection` is blank; `newText` has a CR; for `look`, `search` is empty, has a line break, or is given with `startLine`, `endLine` or `expect`, `include`, `exclude` or `offset` is given without `search`, `offset` is negative, or `looks` holds no item or more than 10, has more than 2000 lines in all, or is given with `file`, `startLine`, `endLine`, `expect` or `search`; for `edit` with `edits`, there are no items or more than 50, ranges overlap, or an item or the call has one of the faults above, or an item has a `content`; for `new`, `content` is missing or has a CR, or a directory above the file is a file | Fix the input |
-| `unsupported_file` | CRLF or binary | — |
+| `invalid_input` | A required input is missing, has the wrong type (the message names the input and the form it wants: `edits must be an array of objects, got string. Pass it as JSON, not as a string that holds JSON`), or `why` is empty; `file` is empty or has a NUL; only one of `startLine` and `endLine` is given (one is enough for `edit` with `old`); `selection` is blank; `newText` or `expect` has a CR; `expect` is `""` without line numbers; `insert`, `old` and `new` are used in a way the sections above forbid; for `session`, `title` is blank, has a line break or is longer than 80 characters; for `look`, `search` is empty, has a line break, or is given with `startLine`, `endLine` or `expect`, `include`, `exclude` or `offset` is given without `search`, an `include` pattern (or the first `exclude` pattern) starts with `!`, `offset` is negative, or `looks` holds no item or more than 10, has more than 2000 lines in all, or is given with `file`, `startLine`, `endLine`, `expect` or `search`; for `edit` with `edits`, there are no items or more than 50, ranges overlap, or an item or the call has one of the faults above, or an item has a `content`; for `new`, `content` is missing or has a CR, or a directory above the file is a file | Fix the input |
+| `unsupported_file` | The file has a CR or a NUL, or is not UTF-8 (CRLF files, binary files) | — |
 | `internal_error` | An I/O error and the like | — |
 
 An error may carry the current content (`actual`). What it holds is decided for each code.
@@ -269,22 +269,23 @@ An error may carry the current content (`actual`). What it holds is decided for 
 | `selection_mismatch` | The current content of the corrected range (an array of lines) |
 | `content_mismatch` | The current content of the range (an array of lines) |
 | `selection_stale` | The current content of the range, corrected up to just before the overlapping edit (kept inside the file) |
+| `content_not_found` | For an `edit` with line numbers: the content at those lines now |
 | `invalid_range` | `{"lineCount": number of lines}`. None for a path outside the workspace |
 | Others | None |
 
 ### `nearMatches`
 
-When a text is not found, a mistake in spaces and tabs is the likeliest reason. So when `expect` (for `look` and `edit`) is not found but for spaces and tabs, the error has `nearMatches` (next to `actual`, not in it; `actual` is not changed): `[{"file", "startLine", "endLine", "lines"}]`, with the lines as they are in the file (`file` is the file). To compare, each line has its runs of spaces and tabs folded into one space and its trailing spaces dropped. A place where the text is exactly is not listed. At most 5 are listed, and `nearMatches` is left out if there is none. If there is no such place but `expect` is found as part of whole lines (`foo(` for the line `x := foo(1)`), those lines are listed instead, and the message says `expect` must be whole lines (`Line 12 holds expect only as part of the line: expect must be whole lines. Copy them from nearMatches`); this is for `look` and `edit` only. The message says where (`Line 12 differs from expect only in spaces or tabs: see nearMatches`), without any of the file. **`nearMatches` is not written to the tape**: its lines are the file's.
+When a text is not found, a mistake in spaces and tabs is the likeliest reason. So when `expect` (for `look` and `edit`) is not found but for spaces and tabs, the error has `nearMatches` (next to `actual`, not in it; `actual` is not changed): `[{"file", "startLine", "endLine", "lines"}]`, with the lines as they are in the file (`file` is not given: the call names it). To compare, each line has its runs of spaces and tabs folded into one space and its trailing spaces dropped. A place where the text is exactly is not listed. At most 5 are listed, and `nearMatches` is left out if there is none. If there is no such place but `expect` is found as part of whole lines (`foo(` for the line `x := foo(1)`), those lines are listed instead, and the message says `expect` must be whole lines (`Line 12 holds expect only as part of the line: expect must be whole lines. Copy them from nearMatches`); this is for `look` and `edit` only. The message says where (`Line 12 differs from expect only in spaces or tabs: see nearMatches`), without any of the file. **`nearMatches` is not written to the tape**: its lines are the file's.
 
 ### `retry`
 
 When the one place the AI must have meant can be told, the error of `look` and `edit` has `retry`: the arguments of the call to make again (without `why`), for the lines as they are. It is given when `expect` is not found and exactly one place differs from it only in spaces or tabs (or, if there is none, holds it only as parts of its lines), and when `look` finds `expect` in other lines than the ones asked for and in one place only. It is `{"file", "startLine", "endLine", "expect"}` with the lines of that place; for `edit` it also has the `newText` (and `insert`) that was given, which are kept as they were. Nothing is applied: the AI reads it and calls again. With no place, or two or more, there is no `retry`. In an item of `edits` it is the call of a single `edit`. **`retry` is not written to the tape** (its lines are the file's).
 
-A failed call is also written to the tape as a [`failure`](tape.md#failure), so that the mistakes the AI makes can be read later. The real path is left out when it is absolute or outside the workspace.
+A failed call is also written to the tape as a [`failure`](tape.md#failure), so that the mistakes the AI makes can be read later. The real path is left out when it is absolute, outside the workspace, of a file that is not recorded, or when an internal error happened. A refused `session` is not written.
 
 ## The order of processing
 
-When srwr receives a `edit`, it works in this order.
+When srwr receives an `edit` with a token, it works in this order.
 
 1. Decode and verify the token (a failure is `invalid_selection`)
 2. Find the file
@@ -293,7 +294,7 @@ When srwr receives a `edit`, it works in this order.
 5. Check the content (a mismatch gives `selection_mismatch`)
 6. **Write the real file first, then append to the tape**
 
-The file to detect is learned from the token, so decoding comes first. With a forged token, no external change is recorded. For `look`, the order is: the check of the path, the files that are not recorded and the kind of file (`invalid_range`, `ignored_file`, `file_not_found`, `unsupported_file`), then detection, then the check of the range (`invalid_range`), then the check of the content (`content_mismatch`, `content_not_found`, `content_ambiguous`), then recording.
+The input is checked before step 1 (`invalid_input`). The file to detect is learned from the token, so decoding comes first. With a forged token, no external change is recorded. For an `edit` with `file`, the file is found by the checks that `look` makes (below), then comes detection, and the range is decided as in "Without a token" and "A part of a line". For `look`, the order is: the check of the path, the files that are not recorded and the kind of file (`invalid_range`, `ignored_file`, `file_not_found`, `unsupported_file`), then detection, then the check of the range (`invalid_range`), then the check of the content (`content_mismatch`, `content_not_found`, `content_ambiguous`), then recording.
 
 Even if the process dies in between, the next time srwr touches the files, the mismatch with the real file shows up as `external`.
 
@@ -303,7 +304,7 @@ These are the mistakes seen when an AI used the tools. Each is an ordinary error
 
 - **Give `file` as a path relative to the workspace.** An absolute path such as `/home/me/app/main.go` is `invalid_range`, and so is `../main.go`. Write `cmd/app/main.go`.
 - **An empty range is easy to place one line off.** `endLine = startLine - 1` means "just before line `startLine`", so `startLine: 13, endLine: 12` is between lines 12 and 13. Read the lines on both sides of the place first, and check the numbers before calling `look`.
-- **The line numbers of a new `look` are the numbers of the file now.** srwr corrects the token it has already issued when another edit moves the lines, but not the `startLine` and `endLine` of a new `look`. After other edits, read the file again, or check the returned `lines` (and, after a `edit`, `above` and `below`). Better: pass `expect` with the lines you mean, and a wrong number is refused instead of selecting the wrong place.
+- **The line numbers of a new `look` are the numbers of the file now.** srwr corrects the token it has already issued when another edit moves the lines, but not the `startLine` and `endLine` of a new `look`. After other edits, read the file again, or check the returned `lines` (and, after an `edit`, `above` and `below`). Better: pass `expect` with the lines you mean, and a wrong number is refused instead of selecting the wrong place.
 - **Make a new file with `new`.** `look` on a file that does not exist gives `file_not_found`. A file made with a shell command is recorded too, as an [`external`](tape.md#external) with `created: true`, but without a `why`.
 - **To change the same place again, use the new token that `edit` returned.** The token you used is spent: using it again gives `selection_stale`.
 - **For the same change in many places, use `edits`** (one `old` and `new` for each place), not many `look` and `edit`.

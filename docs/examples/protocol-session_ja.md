@@ -28,10 +28,12 @@
 - `initialize`（id 1）：クライアントの種類と、設定（差分のコマ）を渡す。これより前の要求は `not_initialized`
 - `tapes/list`（id 2）：操作を1つ以上持つテープの一覧
 - `tape/open`（id 3）：**コマの列**。2つのコマが返る。`edit` のコマ（`index` 1）は、`oldRange`（変更前の3〜5行目）と `range`（変更後の3〜6行目）を持ち、`parent` が `look` のコマ（`index` 0）を指す。実ファイルが、テープの最後の内容と同じなので、`final`（最後の差分）のコマは付かない
-- `frame/state`（id 4）：`index` 1 のコマの、変更前（`before`）と変更後（`after`）の全文と、そのコマを終えた時点のファイルの内容（`content`）。クライアントは、コマを移るたびにこれを取り、バッファの内容を差し替える
+- `frame/state`（id 4）：`index` 1 のコマの、変更前（`before`）と変更後（`after`）の全文と、そのコマを終えた時点のファイルの内容（`content`）。全コマの本文をコマと一緒に受け取らないクライアントが、1コマずつこれで取る（VSCode・Vim は `withText: true` でテープを開き、自分で組み立てる）
 - `tape/close`（id 5）：閉じる
 
 コマの形（`why` の行に使うフィールドなど）は [protocol.md](../reference/protocol_ja.md)、見せ方は [vscode.md](../reference/vscode_ja.md)。
+
+このやり取りは、本物のクライアントが足すものを省いている：`kinds`（送るコマの種類。`failure` は頼んだときだけ）、`hidden` の数と `live/hidden` の通知、`withText`、一覧のテープの `title`。[protocol.md](../reference/protocol_ja.md) に書いてある。
 
 ## エラー
 

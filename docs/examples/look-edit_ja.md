@@ -61,19 +61,19 @@ AI は、`actual` を見て、`look` し直す。
 ファイルの行数を超える範囲を選ぶと、`invalid_range` になり、`actual` に行数が付く。
 
 ```jsonrpc
-→ {"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"look","arguments":{"file":"cmd/main.go","startLine":9,"endLine":9,"why":"範囲の外を選ぶ"}}}
+→ {"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"look","arguments":{"file":"cmd/main.go","startLine":9,"endLine":9,"why":"範囲の外を見る"}}}
 ← {"jsonrpc":"2.0","id":5,"result":{"content":[{"text":"{\"ok\":false,\"error\":{\"code\":\"invalid_range\",\"message\":\"cmd/main.go has 6 lines; startLine=9 endLine=9 is out of range\",\"actual\":{\"lineCount\":6}}}","type":"text"}],"isError":true}}
 ```
 
 ## トークンなしの edit
 
-`edit` は、範囲を自分で指すこともできる。`file` と、範囲が今持っている行 `expect` を渡す。行番号（`startLine`・`endLine`）は省いてよく、あっても手がかりにすぎない。違っていれば、srwr が `expect` の行を探し、1か所だけなら、そこを範囲にする。同じファイルへの edit を、`look` を挟まずに、順不同でまとめて送れる。
+`edit` は、範囲を自分で指すこともできる。`file` と、範囲が今持っている行 `expect` を渡す。行番号（`startLine`・`endLine`）は省いてよく、あっても手がかりにすぎない。違っていれば、srwr は、そのファイルの最後の look 以降の編集の分だけ行番号をずらし、それでも合わなければ `expect` の行を探して、1か所だけなら、そこを範囲にする。同じファイルへの edit を、`look` を挟まずに、順不同でまとめて送れる。
 
 ここでは行番号が違う（`\trun()` は4行目でなく5行目）が、srwr が見つける。
 
 ```jsonrpc
 → {"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"edit","arguments":{"file":"cmd/main.go","startLine":4,"endLine":4,"expect":"\trun()","newText":"\trun()\n\tcleanup()","why":"run のあとに、setup で作ったものを片付ける"}}}
-← {"jsonrpc":"2.0","id":6,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_041G61P48KVH3AYWAY6Q99GP\",\"startLine\":5,\"endLine\":6,\"lines\":[\"\\trun()\",\"\\tcleanup()\"],\"above\":[\"func main() {\",\"\\tsetup()\"],\"below\":[\"}\"]}","type":"text"}],"isError":false}}
+← {"jsonrpc":"2.0","id":6,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_0430A1P48KVH34W5PXDQ1FN4\",\"startLine\":5,\"endLine\":6,\"lines\":[\"\\trun()\",\"\\tcleanup()\"],\"above\":[\"func main() {\",\"\\tsetup()\"],\"below\":[\"}\"]}","type":"text"}],"isError":false}}
 ```
 
 ファイルは7行になる。

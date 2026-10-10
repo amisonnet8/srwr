@@ -8,13 +8,13 @@ A **tape** is the series of operations srwr records. It is an append-only JSONL 
 
 ## File name and session
 
-- The file name is `<date and time>-<short ID>.tape.jsonl` (for example `20260929-0237-1359`). The date and time are **UTC**. The name without `.tape.jsonl` is the **tape ID**. The short ID at the end (for example `1359`) is the same as `session` in the `header`
-- A tape is **made when the first operation is recorded**. If nothing is done, no empty tape is left
+- The file name is `<date and time>-<short ID>.tape.jsonl` (for example `20260929-0237-1359.tape.jsonl`; `.tape.jsonl.gz` once the tape is closed). The date and time are **UTC**. The name without `.tape.jsonl` (or `.tape.jsonl.gz`) is the **tape ID**. The short ID at the end (for example `1359`) is the same as `session` in the `header`
+- A tape is **made when the first operation is recorded**. If nothing is done, no empty tape is left. The one exception is the [`session`](mcp.md#session) tool, which makes the tape at once, with only a `header`; if nothing is recorded after it, the next `session` removes it (an empty tape is not compressed)
 - One tape corresponds to one unit of work (a **session**)
 
 The current session is the one `.srwr/active` (the current tape ID) of the workspace points to. **Even if several `srwr mcp` are started, they write to the same tape if the workspace is the same** (writes take turns using `.srwr/lock`. What another process wrote is read from the tape before writing). A new session (a new tape) starts in any of these cases:
 
-1. There is no current session (no `.srwr/active`, or the tape it points to is missing)
+1. There is no current session (no `.srwr/active`, or the tape it points to is missing or already closed)
 2. A set time (30 minutes by default) has passed since the last event of the current session
 3. The user ran `srwr tapes new`
 4. The AI called the [`session`](mcp.md#session) tool (the new tape is made at once, with its title)
@@ -23,7 +23,7 @@ The current session is the one `.srwr/active` (the current tape ID) of the works
 
 ## A closed tape is compressed
 
-When a session ends, its tape is **compressed with gzip** and renamed `<id>.tape.jsonl.gz`. The tape ID is the same, and the content is the same JSONL (`zcat` shows it). It is done by whoever starts the next session (a write after a pause, or `srwr tapes new`), while it holds the lock, so a tape that is still being written is never compressed. The tape of the session that is still current, and the last one until something is written again, stay plain.
+When a session ends, its tape is **compressed with gzip** and renamed `<id>.tape.jsonl.gz`. The tape ID is the same, and the content is the same JSONL (`zcat` shows it). It is done by whoever starts the next session (a write after a pause, `srwr tapes new`, or the `session` tool), while it holds the lock, so a tape that is still being written is never compressed. The tape of the session that is still current, and the last one until something is written again, stay plain.
 
 - Everything that reads tapes opens both forms. If a crash leaves both the plain and the compressed file, the plain one is the tape
 - Nothing is appended to a closed tape. The compressed bytes depend only on the content (no time or name is stored in the header of the gzip), and the file keeps the time of last change of the plain tape
@@ -33,10 +33,10 @@ When a session ends, its tape is **compressed with gzip** and renamed `<id>.tape
 ## Rules of writing
 
 - Every event has `"v":2` (the version of the format). **Version 1 tapes are still read** (see "Tapes of version 1" below)
-- Append only. Existing lines are never rewritten or deleted
+- Append only. Existing lines are never rewritten or deleted. There are three exceptions, all of whole tapes and none of the content of a line: a closed tape is compressed (above), a tape that holds only a `header` is removed when the next `session` starts, and `srwr trace --as-tape` writes a derived tape again, as the same file, when it is run for the same commit
 - `seq` is a sequence number that starts at 1 within the tape and has no gaps (the `header` has none)
 - `ts` is RFC 3339 **in UTC**, with milliseconds and a trailing `Z` (`2026-09-29T02:20:04.123Z`). Tapes written by older versions have an offset such as `+09:00` (the time zone of the machine then); they are read as the same moments, and an old line is never rewritten
-- A field with no value (`why`, `selection`, `from` and so on) is written as `null`, not left out. The exceptions are the optional fields `source` and `tool` (left out when empty) and `deleted` (written only when true)
+- A field with no value (`why`, `selection`, `from` and so on) is written as `null`, not left out. The exceptions are the optional fields `source` and `tool` (left out when empty), `deleted` and `created` (written only when true), `title` and `why` of the `header` (only for a tape with a title), `name` of `author` (left out when empty), and, on an `external`, `hunks` or `text` (only one of the two is written)
 - One event per line. A last line that does not end with a line break is treated as being in the middle of being written
 - A reader ignores fields it does not know
 - **Until v1, the tape format may change without compatibility.** A tape written by one version is not promised to be read by another. From v1 on, fields may be added, but the meaning of an existing one is not changed
@@ -59,7 +59,7 @@ A tape that the AI started with the [`session`](mcp.md#session) tool also has `t
 {"v":2,"type":"header","session":"a1b2","startedAt":"…","author":{…},"vcs":null,"tool":{…},"title":"Write the docs first","why":"Settle the wording before the code changes"}
 ```
 
-`vcs` is the state of git when the tape was made (when the first record of the session was written). It is not rewritten even if the state changes later.
+`vcs` is the state of git when the tape was made (when the first record of the session was written, or when the `session` tool was called). It is not rewritten even if the state changes later. A derived tape has the `vcs` of the oldest of the tapes it was cut from.
 
 ```json
 "vcs":{"type":"git","head":"3f2a… (40 hex digits)","dirty":true}
@@ -70,7 +70,7 @@ A tape that the AI started with the [`session`](mcp.md#session) tool also has `t
 - When the workspace is not under git, or git cannot be used (not installed, refused, or not finished in 5 seconds), it is `null`. The AI's work is not stopped
 - Neither the branch name nor the URL of the remote is written (tapes are shared). A reader ignores items of `vcs` it does not know
 
-**A tape cut from other tapes**: `srwr trace --as-tape` writes the operations that made the lines of a commit as one tape, with `author` `{"kind":"derived","name":"srwr trace"}`. Everything else is the same as a tape written in a session: the replay does not change, and `srwr trace` does not count such a tape as the writer of a line (it holds the operations of other tapes). For each file the tape has a `snapshot` of the file as it was before the first of the operations, then every `look`, `edit`, `new` and `external` of that file up to the last of them (the lines of an `edit` count on the edits before it, so the ones between cannot be left out). `seq` starts again from 1, and `selection` and `from` are `null`: the tokens belong to the tape they came from. The ID is the time of the first event and the first 4 characters of the commit, so the same commit gives the same tape. The last diff of a replay is against the file as it is now, so later work shows as a difference.
+**A tape cut from other tapes**: `srwr trace --as-tape` writes the operations that made the lines of a commit as one tape, with `author` `{"kind":"derived","name":"srwr trace"}`. Everything else is the same as a tape written in a session: the replay does not change, and `srwr trace` does not count such a tape as the writer of a line (it holds the operations of other tapes). For each file the tape has a `snapshot` of the file as it was before the first of the operations (none when the first of them made the file), then every `look`, `edit`, `new`, `external` and `snapshot` of that file up to the last of them (the lines of an `edit` count on the edits before it, so the ones between cannot be left out). A `failure` is not copied. `seq` starts again from 1, and `selection` and `from` are `null`: the tokens belong to the tape they came from. The ID is the time of the first event and the first 4 characters of the commit (the first 4 hex digits of the SHA-256 of the diff when the text has no commit), so the same commit gives the same tape; the `session` of its `header` is those 4 characters, and it has no `title`. It is written as plain JSONL and never compressed, and it replaces a tape of the same ID only when that one is derived too. The last diff of a replay is against the file as it is now, so later work shows as a difference.
 
 ### snapshot
 
@@ -119,7 +119,7 @@ Recorded when a change to a file made outside srwr is detected. No `snapshot` fo
 - `hunks`: **the lines that changed**, against the content the tape held before (the one `expectedSha` is the hash of). The places come from top to bottom and do not overlap. `startLine` and `endLine` are the lines before, `newText` the lines after (joined with `\n`), and `newStartLine` and `newEndLine` their numbers, as in `edit`. An insertion has `endLine = startLine - 1`; a deletion has an empty `newText` and `newEndLine = newStartLine - 1`. Applying them to the content before gives the content after, which `actualSha` is the hash of. It is replayed as a diff frame (a side-by-side diff)
 - `text`: **the whole text of the file after the change**, written instead of `hunks` when the change cannot be told as lines (only the line break at the end of the file changed) or is too big to compare. When the file was gone it is `null`, `actualSha` is an empty string, and `deleted: true` is added
 - `created`: written (as `true`) when the file is **new**: the tape held no content of it, and a shell command made it. `expectedSha` is an empty string and `hunks` (or `text`) holds the whole file, so it is replayed as a diff frame with an empty left side. Only the hook finds these (see `srwr hook` in [cli.md](cli.md))
-- `detectedBy`: what led to the detection (`look`, `edit`, `new`, `hook`; `select` and `sub` in tapes of version 1)
+- `detectedBy`: what led to the detection (`look`, `edit`, `new`, `hook`; `select`, `replace` and `sub` in older tapes). It is not read over: a reader sees the name that was written
 - `author.kind` is always `external` (srwr cannot know who changed it)
 - An `external` of the old forms can be read too: one with the whole `text` and a `snapshot` after it, and one without `text` (then the `snapshot` right after it is shown as the content after the change)
 
@@ -137,10 +137,11 @@ Recorded when a `look`, an `edit` or a `new` fails (the AI gets an error). It is
 ```
 
 - `tool`: `look`, `edit` or `new`. `code` and `message` are the error the AI got ([mcp.md](mcp.md))
-- `file`: the path in the workspace, or `null` when it is not known or is left out (for a `new` it is the file given). `startLine` and `endLine` are for a `look`, and `selection` (the token that was given) for an `edit`; `why` is what the AI wrote. A value that is not there is `null`
-- **The real path is left out** when it is an absolute path, a path outside the workspace, or a file that is not recorded: `file` is `null`, and `message` is a sentence without the path (`The path is absolute. Give a path relative to the workspace`, `The path points outside the workspace`, `The file is not recorded`)
+- `file`: the path in the workspace, or `null` when it is not known or is left out (for a `new` it is the file given; for an `edit` made by a token it is the file of the token). `startLine` and `endLine` are the lines the call gave, for a `look` and for an `edit` that points by `file` (`null` when not given); `selection` is the token that was given, for an `edit` by token; `why` is what the AI wrote. A value that is not there is `null`. A failure of an `edits` call as a whole (no items, too many, overlapping ranges) has `selection` of an empty string
+- **The real path is left out** when it is an absolute path, a path outside the workspace, a file that is not recorded, or when an internal error happened: `file` is `null`, and `message` is a sentence without the path (`The path is absolute. Give a path relative to the workspace`, `The path points outside the workspace`, `The file is not recorded`, `An internal error happened`)
 - `newText` of an `edit`, `content` of a `new` and `expect` of a `look` are not written. `message` is cut at 300 characters
 - A failure that is found before the call reaches srwr's editing (a required input is missing, a value has the wrong type) is recorded too, with `file` `null`
+- A refused `session` is not recorded: it touches no file
 
 ## Tapes of version 1
 
@@ -162,7 +163,7 @@ The version is read from each line, so a tape that went on with version 2 after 
 
 The `sel_…` string that `look`, `edit` and `new` return. It goes into `from` and `selection`. The AI only passes it on and need not know what is inside.
 
-- **Valid only within the tape.** One issued on another tape (another session) gives `invalid_selection`. When the session changes (after a gap of 30 minutes, for example), the tokens of the previous session cannot be used
+- **Valid only within the tape.** One issued on another tape (another session) gives `invalid_selection`. When the session changes (after a gap of 30 minutes, by the `session` tool, or by `srwr tapes new`), the tokens of the previous session cannot be used
 - The format and the verification are described in [token.md](../design/token.md), for developers
 
 ## Notes when sharing

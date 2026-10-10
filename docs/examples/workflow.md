@@ -45,7 +45,7 @@ Reopen Claude Code, so that it reads the new settings. Commit what `srwr init` w
 
 ## 2. Let the AI work
 
-Ask for the change as you always do, for example: "`greet` prints `hello ` when the name is empty. Fix it." The AI looks with `look` and changes with `edit`, each with a reason, and every call goes on a tape in `.srwr/tapes/`. The AI's side of this is in [look-edit.md](look-edit.md).
+Ask for the change as you always do, for example: "`greet` prints `hello ` when the name is empty. Fix it." The AI looks with `look` and changes with `edit` (or makes a file with `new`), each with a reason, and every call goes on a tape in `.srwr/tapes/`. The AI's side of this is in [look-edit.md](look-edit.md).
 
 `srwr tapes` lists the tapes of the project:
 
@@ -63,7 +63,7 @@ Open the tape in an editor and step through it frame by frame, with the reason a
 
 ## 4. Check that nothing changed behind the tape
 
-srwr records what goes through `look` and `edit`, and what the hook sees. A file changed some other way, by hand or by a shell command, may not be on the tape. `srwr tapes check` compares the tape with `git status`. Here the README was edited by hand:
+srwr records what goes through `look`, `edit` and `new`, and what the hook sees. A file changed some other way, by hand or by a shell command, may not be on the tape. `srwr tapes check` compares the tape with `git status`. Here the README was edited by hand:
 
 ```console
 $ srwr tapes check
@@ -84,10 +84,10 @@ $ srwr tapes new
 Closed the current session 20261004-1200-7k7f. The next write starts a new tape.
 ```
 
-- The next write starts a new tape. A session also ends by itself when 30 minutes pass without an event
+- The next write starts a new tape. A session also ends by itself when 30 minutes pass without an event, and the AI can start one with a title by itself (the `session` tool, [mcp.md](../reference/mcp.md#session))
 - The tape of the session that ended is **compressed** to `<id>.tape.jsonl.gz`. Everything that reads tapes opens it as before
 - The selection tokens the AI got in the old session stop working. If the AI is in the middle of a task, it calls `look` again
-- The editors cannot start a new session: it is done here, in the terminal
+- The editors cannot start a new session: it is done here, in the terminal (or by the AI, with `session`)
 
 When the AI works again, the new session has its own tape:
 
@@ -122,3 +122,4 @@ Deleted 1 tape. 1 left (1.9 KB).
 - The commands: [cli.md](../reference/cli.md)
 - What is on a tape, and how a closed one is stored: [tape.md](../reference/tape.md)
 - The tools the AI uses: [mcp.md](../reference/mcp.md)
+- Joining a commit to the tape that wrote it: `srwr trace` ([cli.md](../reference/cli.md#srwr-trace))

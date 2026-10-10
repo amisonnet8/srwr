@@ -61,19 +61,19 @@ The AI looks at `actual` and calls `look` again.
 Looking at a range beyond the number of lines of the file gives `invalid_range`, and `actual` carries the number of lines.
 
 ```jsonrpc
-→ {"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"look","arguments":{"file":"cmd/main.go","startLine":9,"endLine":9,"why":"Select outside the range"}}}
+→ {"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"look","arguments":{"file":"cmd/main.go","startLine":9,"endLine":9,"why":"Look outside the range"}}}
 ← {"jsonrpc":"2.0","id":5,"result":{"content":[{"text":"{\"ok\":false,\"error\":{\"code\":\"invalid_range\",\"message\":\"cmd/main.go has 6 lines; startLine=9 endLine=9 is out of range\",\"actual\":{\"lineCount\":6}}}","type":"text"}],"isError":true}}
 ```
 
 ## Edit without a token
 
-`edit` can also point at the range by itself: pass `file` and `expect`, the lines the range holds now. The line numbers (`startLine`, `endLine`) are optional, and only a hint: if they are wrong, srwr looks for the lines of `expect`, and takes the place if there is exactly one. Several edits to one file can be sent together this way, in any order, without a `look` for each.
+`edit` can also point at the range by itself: pass `file` and `expect`, the lines the range holds now. The line numbers (`startLine`, `endLine`) are optional, and only a hint: if they are wrong, srwr first moves them by the edits made to the file since its last look, and then looks for the lines of `expect`, and takes the place if there is exactly one. Several edits to one file can be sent together this way, in any order, without a `look` for each.
 
 Here the line numbers are wrong (`\trun()` is on line 5, not 4), and srwr finds it:
 
 ```jsonrpc
 → {"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"edit","arguments":{"file":"cmd/main.go","startLine":4,"endLine":4,"expect":"\trun()","newText":"\trun()\n\tcleanup()","why":"Release what setup made, after run"}}}
-← {"jsonrpc":"2.0","id":6,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_041G61P48KVH3AYWAY6Q99GP\",\"startLine\":5,\"endLine\":6,\"lines\":[\"\\trun()\",\"\\tcleanup()\"],\"above\":[\"func main() {\",\"\\tsetup()\"],\"below\":[\"}\"]}","type":"text"}],"isError":false}}
+← {"jsonrpc":"2.0","id":6,"result":{"content":[{"text":"{\"ok\":true,\"selection\":\"sel_0430A1P48KVH34W5PXDQ1FN4\",\"startLine\":5,\"endLine\":6,\"lines\":[\"\\trun()\",\"\\tcleanup()\"],\"above\":[\"func main() {\",\"\\tsetup()\"],\"below\":[\"}\"]}","type":"text"}],"isError":false}}
 ```
 
 The file is now 7 lines.

@@ -18,7 +18,7 @@ func main() {
 }
 ```
 
-AI は `srwr mcp` を使わずに、Claude Code が持つ道具で、ファイルを読み（Read）、行を絞って見て（Bash の `sed -n`）、直した（Edit）。Claude Code は、道具を使い終えるたびに、`srwr hook` の標準入力へ JSON を1つ渡す（`PostToolUse`）。下の `→` がその JSON の1つ。ここでは読みやすいように、使う項目だけを書いている。
+AI は `srwr mcp` を使わずに、Claude Code が持つ道具で、ファイルを読み（Read）、行を絞って見て（Bash の `sed -n`）、直した（Edit。厳格モードは Edit を禁止するので、これは緩いモードの作業場。[cli.md](../reference/cli_ja.md)）。Claude Code は、道具を使い終えるたびに、`srwr hook` の標準入力へ JSON を1つ渡す（`PostToolUse`）。下の `→` がその JSON の1つ。ここでは読みやすいように、使う項目だけを書いている。
 
 ## Claude Code が渡すもの
 
@@ -29,8 +29,18 @@ AI は `srwr mcp` を使わずに、Claude Code が持つ道具で、ファイ�
 ```
 
 - Read は、`offset`・`limit` がなければファイル全体の `look`
-- Bash は `sed -n '3,5p'` を読み取りと見て、3〜5行目の `look`。ほかに `cat`・`nl`・`head`・`tail`・`grep -n` を読む（[cli.md](../reference/cli_ja.md)）。Bash のあとは、テープが内容を持つ全ファイルを読み直す
+- Bash は `sed -n '3,5p'` を読み取りと見て、3〜5行目の `look`。ほかに `cat`・`nl`・`head`・`tail`・`grep -n`（最後は1つのファイルだけ）を読む（[cli.md](../reference/cli_ja.md)）。Bash のあとは、テープが内容を持つ全ファイルを読み直す
 - Edit は、編集前の内容（`originalFile`）に `old_string` → `new_string` を当てて今のファイルと一致を確かめ、置換位置を含む行全体の `edit`。この例では `run()` の1行（4行目）が、2行（4〜5行目）になる
+
+## hook が返すもの
+
+最初の読み取りのあと、`srwr hook` は標準出力に JSON を1行書く（終了コードは 0）。Claude Code が、これを AI に見せる：
+
+```json
+{"hookSpecificOutput":{"additionalContext":"srwr: to read part of a file and then edit it, call look (with search, or with startLine and endLine): it returns those lines with a selection token that edit takes as it is.","hookEventName":"PostToolUse"}}
+```
+
+この案内は、テープごとに1回だけなので、続く `sed -n` には出ない。テープには書かない。（Bash のコマンドがファイルを作った・変えたときも、同じ形で知らせる。[cli.md](../reference/cli_ja.md)）
 
 ## できるテープ
 

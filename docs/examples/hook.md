@@ -18,7 +18,7 @@ func main() {
 }
 ```
 
-The AI did not use `srwr mcp`. With the tools that Claude Code has, it read the file (Read), looked at some lines (Bash `sed -n`), and fixed it (Edit). Each time a tool has finished, Claude Code hands one JSON to the standard input of `srwr hook` (`PostToolUse`). In what follows `→` is one of those JSONs. To make it easy to read, only the items that are used are written here.
+The AI did not use `srwr mcp`. With the tools that Claude Code has, it read the file (Read), looked at some lines (Bash `sed -n`), and fixed it (Edit; this is a workspace in lenient mode, since strict mode forbids Edit, see [cli.md](../reference/cli.md)). Each time a tool has finished, Claude Code hands one JSON to the standard input of `srwr hook` (`PostToolUse`). In what follows `→` is one of those JSONs. To make it easy to read, only the items that are used are written here.
 
 ## What Claude Code hands over
 
@@ -29,8 +29,18 @@ The AI did not use `srwr mcp`. With the tools that Claude Code has, it read the 
 ```
 
 - A Read is a `look` of the whole file when there is no `offset` or `limit`
-- Bash `sed -n '3,5p'` is seen as a read and becomes a `look` of lines 3 to 5. Others read are `cat`, `nl`, `head`, `tail` and `grep -n` ([cli.md](../reference/cli.md)). After a Bash command, every file whose content the tape holds is read again
-- An Edit applies `old_string` → `new_string` to the content before the edit (`originalFile`), checks that it matches the current file, and becomes a `edit` of the whole lines that contain the replaced place. In this example the one line `run()` (line 4) becomes two lines (lines 4 to 5)
+- Bash `sed -n '3,5p'` is seen as a read and becomes a `look` of lines 3 to 5. Others read are `cat`, `nl`, `head`, `tail` and `grep -n`, the last only for one file ([cli.md](../reference/cli.md)). After a Bash command, every file whose content the tape holds is read again
+- An Edit applies `old_string` → `new_string` to the content before the edit (`originalFile`), checks that it matches the current file, and becomes an `edit` of the whole lines that contain the replaced place. In this example the one line `run()` (line 4) becomes two lines (lines 4 to 5)
+
+## What the hook says back
+
+After the first read, `srwr hook` also writes one line of JSON to standard output, with exit code 0. Claude Code shows it to the agent:
+
+```json
+{"hookSpecificOutput":{"additionalContext":"srwr: to read part of a file and then edit it, call look (with search, or with startLine and endLine): it returns those lines with a selection token that edit takes as it is.","hookEventName":"PostToolUse"}}
+```
+
+This advice is given once for a tape, so the `sed -n` that follows gets none. It is not written on the tape. (When a Bash command makes or changes files, the hook says so in the same form; see [cli.md](../reference/cli.md).)
 
 ## The tape that results
 

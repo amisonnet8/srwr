@@ -10,8 +10,8 @@ From the terminal where the AI agent runs, you can replay a tape in Vim as it is
 
 - **`srwr view [tape]`**: writes the Vim scripts embedded in the `srwr` binary to the user's cache directory (`os.UserCacheDir()/srwr/vim/<version>-<hash of the files>/`), adds it to `runtimepath`, and starts Vim. **You do not have to install a plugin**
   - Run it in the workspace directory (where `.srwr/` is). From elsewhere, `--root <workspace>`
-  - The tape is a tape ID (what shows in the list of `:SrwrOpen`) or the path of a `.tape.jsonl`. If left out, you choose from the list buffer
-  - `--live` is live viewing (`srwr view --live`)
+  - The tape is a tape ID (what shows in the list of `:SrwrOpen`) or the path of a `.tape.jsonl` or `.tape.jsonl.gz` (compressed). If left out, you choose from the list buffer
+  - `--live` is live viewing (`srwr view --live`; it is not given together with a tape)
   - The Vim that is started is `$SRWR_VIM`, or `vim` on the PATH. Your `vimrc` is still read (settings of `g:srwr_…` can go in your `vimrc`)
   - With a Vim that cannot be used (too old, `vim-tiny` and the like), it says what is missing and ends
 - **It can also be installed as a plugin**: install the repository's `vim/` with a plugin manager. After that, the following commands can be used inside Vim. The `srwr` binary is needed in this case too (on the PATH, or given with `g:srwr_path`)
@@ -78,11 +78,13 @@ The same as [vscode.md](vscode.md). **look is blue, and what changes a file (edi
 | `SrwrDotFailure` | The dots in the operation list (failure, red) | `#ff3b30` | `#d50000` |
 | `SrwrDim` | Buttons that cannot be used | gray | gray |
 
+The names with `Select` and `Replace` are older names of the colors (blue, orange). They were kept as they are, so that the overrides in your `vimrc` keep working; the names of the groups are not shown on the screen.
+
 - It has values that can be told apart even on a 256-color terminal (`ctermbg`). If `termguicolors` is on, those colors are used
 - Changing 'background' changes the colors (colors the user overrode are left as they are)
 
 ### 3. The replay buffer (frames of look and edit)
-- The name is `srwr://<tape name>/<file>`. `buftype=nofile`, `nomodifiable`. `filetype` is decided from the extension of the original file (syntax highlighting is left to Vim)
+- The name is `srwr://<tape name>/<file>` (`srwr://live/<file>` in live while there is no tape yet; a failure frame is `srwr://<tape name>/failure<index>`; a diff frame has the two buffers `srwr://<tape name>/before/<file>` and `…/after/<file>`; the operation list is `srwr://operations`, and the tape list `srwr://tapes`). `buftype=nofile`, `nomodifiable`. `filetype` is decided from the extension of the original file (syntax highlighting is left to Vim)
 - For each frame, the content is replaced with the content of the document received from the view server
 - **A reason line is actually inserted just before the range.** A long reason is wrapped into several lines at the width of the window and shown in full. From the second line it is indented. A frame whose `why` is `null` shows no reason line
 - The lines of the range are painted in the lighter color (up to the end of the line. An empty range is not painted)
@@ -103,16 +105,16 @@ The same as [vscode.md](vscode.md). **look is blue, and what changes a file (edi
 
 ### 4c. Frames of new
 
-- A file made by `new` is shown like a `edit` frame, in one window: the whole file painted orange, the `why` in the orange rows above it. In the operation list a row reads `● n new     file:range` with an orange dot
+- A file made by `new` is shown like an `edit` frame, in one window: the whole file painted orange, the `why` in the orange rows above it. In the operation list a row reads `● n new     file:range` with an orange dot
 
 ### 5. The operation list
 - The frames are listed **in the order recorded, 1, 2, 3…** (the number is the same as the position in the status line). There is no indenting by parent and child
-- Each row: `● number kind file:range  why` (the range is `37`, `39-41`, or `before 12` for an empty range; the same order as the list of VSCode: dot, number, kind, file name). The color of the dot tells them apart (look = blue, edit and new = orange, external and final = purple). An external change is `external`, and the final diff is `final`
+- Each row: `● number kind file:range  why` (the range is `37`, `39-41`, or `before 12` for an empty range; the same order as the list of VSCode: dot, number, kind, file name). The color of the dot tells them apart (look = blue, edit and new = orange, external and final = purple). An external change is `external`, and the final diff is `final`. An `external` that has no `why` says `File changed outside srwr` in the place of the `why`, as in VSCode
 - `<CR>` moves to that frame. The row of the current frame is painted
 
 ### 6. The status line and keys
 - The status line: `srwr  position/total  [[ Back  ]] Forward  file:range`. **"Back" and "Forward" are always shown.** The side that cannot be taken (Back at the first frame, Forward at the last) is dimmed. The "(Close: q in the list on the left, or :SrwrClose)" that comes last in live is shown only when all of it fits in the window (when it does not fit, it is left out so that "L: Back to LIVE (N new)" can always be read). If the line is still too long for the window, the file and range at its end are cut (the position and the buttons stay)
-- The keys work only inside the buffers of srwr (the operation list, the replay, the diff). Even if a plugin for the file type (`filetype`) assigns the same keys (`]]`, `[[` and so on), the keys of srwr win
+- The keys work only inside the buffers of srwr (the operation list, the replay, the diff; `q` works in all of them). Even if a plugin for the file type (`filetype`) assigns the same keys (`]]`, `[[` and so on), the keys of srwr win
 
 | Key | Command | Action |
 |---|---|---|
@@ -130,6 +132,7 @@ The same as [vscode.md](vscode.md). **look is blue, and what changes a file (edi
 - Keys (only inside the buffers of srwr): `tl` look, `te` edit, `tx` external, `tf` failure. `:SrwrToggle {kind}` does the same. In these buffers `t` followed by `l`, `e`, `x` or `f` is taken by srwr
 - A change opens the tape again with the chosen kinds ([protocol.md](protocol.md)) and moves to the frame nearest to the current one (by the order recorded); in live it follows the newest again
 - The numbers are 1, 2, 3… of what is shown. The right end of the status line says what is left out: `hidden: failure (2)`; in live the count follows the frames that arrive. A kind that is off is not in the list or in stepping, and "L: Back to LIVE (N new)" **counts only the kinds that are shown**. When nothing is shown, the replay buffer says "No frames to show"
+- Each change says what is shown now (`srwr: showing look, edit, external`), and a name that is not a kind is a warning
 - The choice is not saved: it is kept while Vim runs, and a new start is the default. srwr adds no setting for it
 
 ### 7. Live (`srwr view --live`, `:SrwrLive`)
@@ -139,6 +142,7 @@ The same as [vscode.md](vscode.md). **look is blue, and what changes a file (edi
 - **When you step back to an old frame with `[[`**, the screen does not move and only the number of new frames is counted. The status line shows "L: Back to LIVE (N new)" (on an orange background). `L` moves to the newest and follows again
 - When it moves to another tape, the list is rebuilt and shown from the beginning
 - To close: `q` in the operation list on the left, or `:SrwrClose` from anywhere (it is written in the status line too)
+- When no frame has come yet the status line says "● LIVE  (waiting for the AI's operations)". If the view server ends while live is open, the live view is closed with a warning
 
 ### 8. The tape list
 - The buffer `srwr://tapes`. Newest first (by the time the tape started), with the columns `Started`, `Updated`, `Ops`, `Files` and `Tape` (the tape ID), the times in the time zone of the machine (`2026-10-03 17:12`). With no tape it says "No tapes (in .srwr/tapes/ of this workspace)". `<CR>` opens one. `q` closes it. When a tape has a title (the AI gave one with the [`session`](mcp.md#session) tool), a column `Title` is added at the end, and the tape has its title there; a list with no titled tape has no such column

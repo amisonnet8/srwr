@@ -3,7 +3,7 @@
 <p align="center"><b>Until v0.2.0, srwr is an experiment. Tools, inputs, the tape format and the screens may change without notice, and old tapes may stop working.</b></p>
 
 <p align="center">
-  <img src="docs/images/banner.svg" alt="srwr: let AI agents edit files with just select and replace, and replay every step with its reason" width="100%">
+  <img src="docs/images/banner.svg" alt="srwr: let AI agents edit files with a reason for every change, and replay every step" width="100%">
 </p>
 
 <h3 align="center"><b>Let AI agents edit files with just <code>select</code> and <code>replace</code>, record every step with its reason on a tape, and replay it frame by frame in VSCode or Vim.</b></h3>

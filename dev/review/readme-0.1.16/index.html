@@ -1,0 +1,118 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>v0.1.16 README・ロゴ・デモ</title>
+<style>body{font-family:system-ui,sans-serif;margin:24px auto;max-width:1040px;padding:0 16px;line-height:1.6;background:#fff;color:#222}
+h2{margin-top:32px;font-size:1.05em} svg{width:100%;height:auto;display:block;margin:8px 0} code{background:#8881;padding:1px 4px;border-radius:3px} li{margin:4px 0}
+@media (prefers-color-scheme:dark){body{background:#161616;color:#ddd}}</style>
+<h1>v0.1.16：README・ロゴ・デモ</h1>
+<ul>
+<li><b>作るもの</b>：バナーを売り文句に合わせて新しくする。デモ（Vim の動く絵・VSCode の絵・拡張の画像）は、筋はそのままで今の画面に取り直す（<code>qsoku readme-media</code>）。</li>
+<li><b>反映済み</b>：README・拡張 README・docs/README の冒頭と特徴、版 0.1.16、最終コミット日のバッジ。</li>
+<li><b>変えない</b>：リールのロゴ、下の丸の色（青＝look、橙＝edit、紫＝外からの変更）、拡張のアイコン。</li>
+<li><b>決めてほしいこと</b>：バナーは A か B か（推奨：A）。</li>
+</ul>
+<h2>今のバナー</h2><svg xmlns="http://www.w3.org/2000/svg" width="1280" height="360" viewBox="0 0 1280 360" role="img" aria-label="srwr: let AI agents edit files with a reason for every change, and replay every step">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1117"/>
+      <stop offset="1" stop-color="#1b2433"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="360" rx="18" fill="url(#bg)"/>
+  <!-- the tape: frames in a row, look blue, edit orange, a change from outside purple -->
+  <g stroke="#30394a" stroke-width="2"><path d="M90 292H1190"/></g>
+  <g>
+    <circle cx="150" cy="292" r="9" fill="#4aa3ff"/>
+    <circle cx="290" cy="292" r="9" fill="#f0883e"/>
+    <circle cx="430" cy="292" r="9" fill="#4aa3ff"/>
+    <circle cx="570" cy="292" r="9" fill="#f0883e"/>
+    <circle cx="710" cy="292" r="9" fill="#b180d7"/>
+    <circle cx="850" cy="292" r="9" fill="#4aa3ff"/>
+    <circle cx="990" cy="292" r="9" fill="#f0883e"/>
+    <circle cx="1130" cy="292" r="9" fill="#b180d7"/>
+  </g>
+  <rect x="540" y="280" width="60" height="24" rx="12" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="2"/>
+  <!-- the logo: a tape reel -->
+  <g transform="translate(120,72) scale(6)" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2.5" y="6" width="19" height="12" rx="2"/>
+    <circle cx="8" cy="12" r="2.5"/>
+    <circle cx="16" cy="12" r="2.5"/>
+    <path d="M6 18l1.5-3M18 18l-1.5-3"/>
+  </g>
+  <text x="300" y="150" fill="#ffffff" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="92" font-weight="700" letter-spacing="2">srwr</text>
+  <text x="300" y="200" fill="#c9d1d9" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="30">Let AI agents edit files, with a <tspan fill="#4aa3ff" font-weight="700">reason</tspan> for every change.</text>
+  <text x="300" y="242" fill="#8b949e" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="21">Every step on a tape. Replay it frame by frame in VSCode or Vim.</text>
+</svg>
+
+<h2>案 A（推奨）：<code>srwr</code> の4文字を4つの色で塗り、下に頭文字がつながる語を並べる</h2><svg xmlns="http://www.w3.org/2000/svg" width="1280" height="360" viewBox="0 0 1280 360" role="img" aria-label="srwr: Search, rewrite, say why, replay">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1117"/>
+      <stop offset="1" stop-color="#1b2433"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="360" rx="18" fill="url(#bg)"/>
+  <!-- the tape: frames in a row, look blue, edit orange, a change from outside purple -->
+  <g stroke="#30394a" stroke-width="2"><path d="M90 292H1190"/></g>
+  <g>
+    <circle cx="150" cy="292" r="9" fill="#4aa3ff"/>
+    <circle cx="290" cy="292" r="9" fill="#f0883e"/>
+    <circle cx="430" cy="292" r="9" fill="#4aa3ff"/>
+    <circle cx="570" cy="292" r="9" fill="#f0883e"/>
+    <circle cx="710" cy="292" r="9" fill="#b180d7"/>
+    <circle cx="850" cy="292" r="9" fill="#4aa3ff"/>
+    <circle cx="990" cy="292" r="9" fill="#f0883e"/>
+    <circle cx="1130" cy="292" r="9" fill="#b180d7"/>
+  </g>
+  <rect x="540" y="280" width="60" height="24" rx="12" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="2"/>
+  <!-- the logo: a tape reel -->
+  <g transform="translate(120,72) scale(6)" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2.5" y="6" width="19" height="12" rx="2"/>
+    <circle cx="8" cy="12" r="2.5"/>
+    <circle cx="16" cy="12" r="2.5"/>
+    <path d="M6 18l1.5-3M18 18l-1.5-3"/>
+  </g>
+  <text x="300" y="150" fill="#ffffff" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="92" font-weight="700" letter-spacing="2"><tspan fill="#4aa3ff">s</tspan><tspan fill="#f0883e">r</tspan><tspan fill="#ffffff">w</tspan><tspan fill="#b180d7">r</tspan></text>
+  <text x="300" y="200" fill="#c9d1d9" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="30"><tspan fill="#4aa3ff" font-weight="700">S</tspan>earch · <tspan fill="#f0883e" font-weight="700">r</tspan>ewrite · say <tspan fill="#ffffff" font-weight="700">w</tspan>hy · <tspan fill="#b180d7" font-weight="700">r</tspan>eplay</text>
+  <text x="300" y="242" fill="#8b949e" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="21">Every step on a tape, with its reason. Replay it frame by frame.</text>
+</svg>
+
+<h2>案 B：4つの頭文字を大きく並べ、下に語を置く</h2><svg xmlns="http://www.w3.org/2000/svg" width="1280" height="360" viewBox="0 0 1280 360" role="img" aria-label="srwr: Search, rewrite, say why, replay">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1117"/>
+      <stop offset="1" stop-color="#1b2433"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="360" rx="18" fill="url(#bg)"/>
+  <!-- the tape: frames in a row, look blue, edit orange, a change from outside purple -->
+  <g stroke="#30394a" stroke-width="2"><path d="M90 292H1190"/></g>
+  <g>
+    <circle cx="150" cy="292" r="9" fill="#4aa3ff"/>
+    <circle cx="290" cy="292" r="9" fill="#f0883e"/>
+    <circle cx="430" cy="292" r="9" fill="#4aa3ff"/>
+    <circle cx="570" cy="292" r="9" fill="#f0883e"/>
+    <circle cx="710" cy="292" r="9" fill="#b180d7"/>
+    <circle cx="850" cy="292" r="9" fill="#4aa3ff"/>
+    <circle cx="990" cy="292" r="9" fill="#f0883e"/>
+    <circle cx="1130" cy="292" r="9" fill="#b180d7"/>
+  </g>
+  <rect x="540" y="280" width="60" height="24" rx="12" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="2"/>
+  <!-- the logo: a tape reel -->
+  <g transform="translate(120,72) scale(6)" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2.5" y="6" width="19" height="12" rx="2"/>
+    <circle cx="8" cy="12" r="2.5"/>
+    <circle cx="16" cy="12" r="2.5"/>
+    <path d="M6 18l1.5-3M18 18l-1.5-3"/>
+  </g>
+  <text x="420" y="160" text-anchor="middle" fill="#4aa3ff" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="96" font-weight="700">s</text>
+  <text x="420" y="204" text-anchor="middle" fill="#4aa3ff" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="26" font-weight="700">Search</text>
+  <text x="580" y="160" text-anchor="middle" fill="#f0883e" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="96" font-weight="700">r</text>
+  <text x="580" y="204" text-anchor="middle" fill="#f0883e" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="26" font-weight="700">rewrite</text>
+  <text x="740" y="160" text-anchor="middle" fill="#ffffff" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="96" font-weight="700">w</text>
+  <text x="740" y="204" text-anchor="middle" fill="#ffffff" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="26" font-weight="700">say why</text>
+  <text x="900" y="160" text-anchor="middle" fill="#b180d7" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="96" font-weight="700">r</text>
+  <text x="900" y="204" text-anchor="middle" fill="#b180d7" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="26" font-weight="700">replay</text>
+  <text x="300" y="248" fill="#8b949e" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="21">AI agents read, search and rewrite files, with a reason for every step.</text>
+</svg>
+
+</html>

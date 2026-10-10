@@ -145,11 +145,11 @@ func isDerived(path string) bool {
 	if strings.HasSuffix(path, ".gz") {
 		return false
 	}
-	f, err := os.Open(path)
+	f, err := os.Open(path) //nolint:gosec // a tape in the workspace, found by tape.Find
 	if err != nil {
 		return false
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	line, _ := bufio.NewReader(f).ReadBytes('\n')
 	var h struct {
 		Author *struct {

@@ -10,7 +10,7 @@ fmt: (cd //; golangci-lint fmt)
 vet: (cd //; go vet ./...)
 
 # Also reports files that the formatters would change.
-lint: (cd //; golangci-lint run)
+lint: (cd //; if out=$(golangci-lint run 2>&1); then printf '%s\n' "$out"; else printf '%s\n' "$out"; if printf '%s' "$out" | grep -q 'export data version'; then echo "hint: this golangci-lint is older than the Go in this container and cannot read its standard library. Update it: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest (.claude/rules/testing.md)" >&2; fi; false; fi)
 
 unit: (cd //; go test ./...)
 

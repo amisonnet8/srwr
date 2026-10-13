@@ -61,10 +61,10 @@ if [ -f "$sandbox_settings" ]; then
   done < <(jq -r '.sandbox.filesystem.allowWrite[]?' "$sandbox_settings")
 fi
 
-# golangci-lint: lint (qsoku check, .golangci.yaml). The official install script
-# puts the binary into GOPATH/bin. The version is pinned so that lint results
-# do not change when the container is rebuilt; .golangci.yaml was verified with it.
-wget -qO - https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b "$(go env GOPATH)/bin" v2.13.2
+# golangci-lint: lint (qsoku check, .golangci.yaml). Built with the container's Go and
+# not pinned: a prebuilt binary older than this Go cannot read its standard library
+# ("export data version N is greater than maximum supported version M").
+go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 
 go install golang.org/x/tools/gopls@latest
 go install golang.org/x/tools/cmd/goimports@latest

@@ -2,17 +2,29 @@
 
 配布物は2つ（`srwr` のバイナリと、VSCode 拡張）。Vim スクリプトはバイナリに埋め込むので、別には配らない。`docs/reference/cli.md`（導入）・`docs/reference/vim.md`・`dev/roadmap.md` の R13。
 
+## リリースの流れ
+
+ビルド済みのバイナリなどを GitHub Releases で配るときは、次の流れにする。
+
+1. **人間が**タグ（`v0.1.0`の形）を打って push する
+2. タグで動く workflow（`.github/workflows/release.yml`）が、テストを通してから配布物を作り、**下書きの Release**（`--draft`）に添付する
+3. **人間が**下書きの中身を見て、公開する
+
+- **Claude Codeは、タグも Release も作らない。** `gh release create`は`.claude/settings.json`で拒否（deny）されている。Release を作るのは workflow の中だけ
+- 配布物の作り方は、`qsokufile`の自前の項目`qsoku dist`（下の「srwr（Go のバイナリ）」）。`release.yml`もこれを動かす
+- ビルド済みのバイナリは、リポジトリにコミットしない（`.claude/rules/directory-structure.md`「配布物」）
+
 ## srwr（Go のバイナリ）
 
 手順の全体（版、タグ、Release、Marketplace）は `dev/publish.md`。成果物は `qsoku dist` が `dist/` に作り、自分で検査する（6つの実行ファイルの形式と CPU、`.vsix` の中身、`checksums.txt`）。確認は `qsoku dist-try`（入れて開く）と `qsoku publish-check`（アップロード前）。
 
 - **`go install github.com/amisonnet8/srwr/cmd/srwr@latest`** で入れられるようにする（最初の配布方法）
-- GitHub Releases に、Linux・macOS・Windows（amd64・arm64）のビルド済みバイナリを置く。**リリースの作成は人間が行う**（`gh release create` は deny）
+- GitHub Releases に、Linux・macOS・Windows（amd64・arm64）のビルド済みバイナリを置く。作り方は上の「リリースの流れ」
 - **cgo は使わない**（`CGO_ENABLED=0`）。どの OS でも単一のバイナリで動くようにする。ロック（flock）など OS に依存する処理は、ビルドタグで OS ごとに分け、cgo なしで書く
 - 外部依存を足さない（`.claude/rules/go-code.md`）
 - **バージョン**：`srwr --version` は `runtime/debug.ReadBuildInfo()` のモジュールのバージョンを出す（`go install …@vX.Y.Z` で入れたときにタグが入る）。取れないとき（`go test` のバイナリなど）は `(devel)`。Go 1.24 以降は、リポジトリで `go build` したバイナリにも `v0.0.0-<日時>-<コミット>+dirty` の形のバージョンが入る
 - テープの `header.tool.version` にも、同じバージョンを書く
-- **Release は人間が作る**（タグを push し、GitHub で Publish）。公開されると `.github/workflows/release.yml` が `qsoku dist` を動かし、6つの圧縮ファイル（`srwr_<版>_<os>_<arch>.tar.gz`、Windows は `.zip`）・`checksums.txt`・`.vsix` を付ける。**タグのコミットからビルドしないと、`srwr --version` が `v0.0.0-…` になる**（workflow は `fetch-depth: 0`）。CI の `dist` ジョブも同じコマンドを毎回動かす
+- **タグの push で `.github/workflows/release.yml` が動き**、テストを通してから `qsoku dist` を動かし、6つの圧縮ファイル（`srwr_<版>_<os>_<arch>.tar.gz`、Windows は `.zip`）・`checksums.txt`・`.vsix` を付けた**下書きの Release** を作る。人間が中身を見て公開する（上の「リリースの流れ」。手順は `dev/publish.md`）。**タグのコミットからビルドしないと、`srwr --version` が `v0.0.0-…` になる**（workflow は `fetch-depth: 0`）。CI の `dist` ジョブも同じコマンドを毎回動かす
 - ビルド済みバイナリはリポジトリにコミットしない（`/bin/`・`/dist/` は `.gitignore` 済み）
 
 ## 取り消せない操作の前に（公開・タグの push・Release・Marketplace へのアップロード）

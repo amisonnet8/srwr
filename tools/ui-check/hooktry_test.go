@@ -37,7 +37,7 @@ func TestPrepareHookTryRegistersMCPAndTheHook(t *testing.T) {
 		Permissions struct{ Allow []string }
 	}
 	for name, v := range map[string]any{".mcp.json": &mcp, ".claude/settings.json": &settings} {
-		b, err := os.ReadFile(filepath.Join(dst, name)) //nolint:gosec // a path in a temporary directory
+		b, err := os.ReadFile(filepath.Join(dst, name))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -95,14 +95,14 @@ func TestHookTryProjectHasTwoBugs(t *testing.T) {
 	}
 	fix := func(file, old, repl string) {
 		p := filepath.Join(dst, file)
-		b, err := os.ReadFile(p) //nolint:gosec // a path in a temporary directory
+		b, err := os.ReadFile(p)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if !strings.Contains(string(b), old) {
 			t.Fatalf("%s lacks %q", file, old)
 		}
-		if err := os.WriteFile(p, []byte(strings.Replace(string(b), old, repl, 1)), 0o600); err != nil { //nolint:gosec // a path in a temporary directory
+		if err := os.WriteFile(p, []byte(strings.Replace(string(b), old, repl, 1)), 0o600); err != nil {
 			t.Fatal(err)
 		}
 	}

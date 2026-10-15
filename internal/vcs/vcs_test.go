@@ -26,7 +26,7 @@ func needGit(t *testing.T) {
 
 func runGit(t *testing.T, dir string, args ...string) string {
 	t.Helper()
-	cmd := exec.Command("git", append([]string{"-c", "user.email=t@example.com", "-c", "user.name=t", "-c", "commit.gpgsign=false", "-c", "init.defaultBranch=main"}, args...)...) //nolint:gosec // git, in a temporary directory
+	cmd := exec.Command("git", append([]string{"-c", "user.email=t@example.com", "-c", "user.name=t", "-c", "commit.gpgsign=false", "-c", "init.defaultBranch=main"}, args...)...)
 	cmd.Dir = dir
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -196,7 +196,7 @@ func TestDoesNotRunProgramsOfTheRepository(t *testing.T) {
 	dir := repo(t)
 	marker := filepath.Join(t.TempDir(), "ran")
 	script := filepath.Join(t.TempDir(), "monitor.sh")
-	if err := os.WriteFile(script, []byte("#!/bin/sh\ntouch "+marker+"\n"), 0o700); err != nil { //nolint:gosec // a script in a temporary directory
+	if err := os.WriteFile(script, []byte("#!/bin/sh\ntouch "+marker+"\n"), 0o700); err != nil {
 		t.Fatal(err)
 	}
 	runGit(t, dir, "config", "core.fsmonitor", script)
@@ -272,7 +272,7 @@ func TestChanges(t *testing.T) {
 func TestChangesOutsideGit(t *testing.T) {
 	needGit(t)
 	dir := t.TempDir()
-	if exec.Command("git", "-C", dir, "rev-parse", "--git-dir").Run() == nil { //nolint:gosec // git, in a temporary directory
+	if exec.Command("git", "-C", dir, "rev-parse", "--git-dir").Run() == nil {
 		t.Skip("the temporary directory is inside a git work tree")
 	}
 	if _, err := Changes(dir); err == nil {
@@ -344,7 +344,7 @@ func TestListFilesWithoutGit(t *testing.T) {
 	write(t, dir, "sub/b.go", "b\n")
 	write(t, dir, ".hidden/c.go", "c\n")
 	// A temporary directory is not under git, unless the machine's temp directory is in a work tree.
-	if out, err := exec.Command("git", "-C", dir, "rev-parse").CombinedOutput(); err == nil { //nolint:gosec // git in a temporary directory
+	if out, err := exec.Command("git", "-C", dir, "rev-parse").CombinedOutput(); err == nil {
 		t.Skipf("under git: %s", out)
 	}
 	all, more := ListFiles(dir, ".")

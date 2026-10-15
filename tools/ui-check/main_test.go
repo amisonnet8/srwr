@@ -41,7 +41,7 @@ func TestPrepareWorkspace(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(dst, "text.go")); err != nil {
 		t.Errorf("the real files are needed for the last diff: %v", err)
 	}
-	b, err := os.ReadFile(filepath.Join(dst, ".vscode", "settings.json")) //nolint:gosec // a path in a temporary directory
+	b, err := os.ReadFile(filepath.Join(dst, ".vscode", "settings.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,7 +85,7 @@ func TestFeedLive(t *testing.T) {
 	var atWait int
 	var log strings.Builder
 	wait := func() {
-		b, err := os.ReadFile(tape) //nolint:gosec // a path in a temporary directory
+		b, err := os.ReadFile(tape)
 		if err != nil {
 			t.Error(err)
 		}
@@ -98,7 +98,7 @@ func TestFeedLive(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	got, err := os.ReadFile(tape) //nolint:gosec // a path in a temporary directory
+	got, err := os.ReadFile(tape)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -180,7 +180,7 @@ func TestLongWhyTapeIsMadeByTheRealMCP(t *testing.T) {
 	if err := makeLongWhyTape(bin, extra); err != nil {
 		t.Fatal(err)
 	}
-	b, err := os.ReadFile(filepath.Join(extra, ".srwr", "tapes", longWhyTape+".tape.jsonl")) //nolint:gosec // a path in a temporary directory
+	b, err := os.ReadFile(filepath.Join(extra, ".srwr", "tapes", longWhyTape+".tape.jsonl"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -205,11 +205,11 @@ func TestLongWhyTapeIsMadeByTheRealMCP(t *testing.T) {
 	if len(whys) != 6 || whys[0] != longSelectWhy || whys[1] != longReplaceWhy || whys[3] != longSubWhy || whys[5] != longSubWhy {
 		t.Errorf("whys = %q", whys)
 	}
-	a, err := os.ReadFile(filepath.Join(extra, "a.go")) //nolint:gosec // a path in a temporary directory
+	a, err := os.ReadFile(filepath.Join(extra, "a.go"))
 	if err != nil || !strings.Contains(string(a), "println") {
 		t.Errorf("a.go is not the file as the edit left it: %q %v", a, err)
 	}
-	st, err := os.ReadFile(filepath.Join(extra, "store.go")) //nolint:gosec // a path in a temporary directory
+	st, err := os.ReadFile(filepath.Join(extra, "store.go"))
 	if err != nil || strings.Contains(string(st), "errEmpty") || strings.Count(string(st), "ErrEmpty") != 3 {
 		t.Errorf("store.go is not the file as the edits left it: %q %v", st, err)
 	}
@@ -253,7 +253,7 @@ func TestLongWhyTapeHasTheSameTimesEveryRun(t *testing.T) {
 		if err := makeLongWhyTape(bin, extra); err != nil {
 			t.Fatal(err)
 		}
-		b, err := os.ReadFile(filepath.Join(extra, ".srwr", "tapes", longWhyTape+".tape.jsonl")) //nolint:gosec // a path in a temporary directory
+		b, err := os.ReadFile(filepath.Join(extra, ".srwr", "tapes", longWhyTape+".tape.jsonl"))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -324,7 +324,7 @@ func TestFailureTapeIsMadeByTheRealMCP(t *testing.T) {
 	if err := makeFailureTape(bin, extra); err != nil {
 		t.Fatal(err)
 	}
-	b, err := os.ReadFile(filepath.Join(extra, ".srwr", "tapes", failureTape+".tape.jsonl")) //nolint:gosec // a path in a temporary directory
+	b, err := os.ReadFile(filepath.Join(extra, ".srwr", "tapes", failureTape+".tape.jsonl"))
 	if err != nil {
 		t.Fatal(err)
 	}

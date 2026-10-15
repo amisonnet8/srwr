@@ -5,7 +5,9 @@ set -euo pipefail
 # lsb-release: Adding the Trivy apt repository below.
 # gcc:         qsoku race (CGO_ENABLED=1 go test -race) needs a C compiler.
 #              The container itself runs with CGO_ENABLED=0 (devcontainer.json).
-# jq:          Used by .claude/hooks/build.sh and for inspecting --json output.
+# jq:          Used by .claude/hooks/build.sh, .claude/hooks/require-bcuz.sh (and
+#              its test, qsoku hook) and the allowWrite block below; also for
+#              inspecting --json output.
 # ShellCheck:  Static analysis of tracked *.sh and *.bash files (qsoku shellcheck).
 #              Comment lines must not start with the lowercase directive word,
 #              or ShellCheck parses them as directives (SC1072/SC1073).
@@ -61,9 +63,14 @@ if [ -f "$sandbox_settings" ]; then
   done < <(jq -r '.sandbox.filesystem.allowWrite[]?' "$sandbox_settings")
 fi
 
-# golangci-lint: lint (qsoku check, .golangci.yaml). Built with the container's Go and
-# not pinned: a prebuilt binary older than this Go cannot read its standard library
-# ("export data version N is greater than maximum supported version M").
+# golangci-lint: lint (qsoku check, .golangci.yaml). Built from source with the
+# container's Go (go install), not the prebuilt binary of install.sh. @latest,
+# not pinned: a golangci-lint reads the export data of the standard library only
+# up to the version of its own x/tools, so a pinned one stops working when the
+# container's Go moves on ("export data version 5 is greater than maximum
+# supported version 4"; building the same version again does not help). A newer
+# lint reads it. If lint still fails that way right after a Go update, the lint
+# is not out yet: `qsoku lint` says so (qsokufile, .claude/rules/testing.md).
 go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 
 go install golang.org/x/tools/gopls@latest
@@ -74,6 +81,26 @@ go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
 
 # mtqg: memo/todo/qa/bug/glossary/rule journal (.mtqg/, CLAUDE.md, .mcp.json).
 go install github.com/amisonnet8/mtqg/cmd/mtqg@latest
+
+# srwr: the AI's edits (srwr's look / edit / new with a reason, or Edit / Write:
+# this repository uses the lenient mode) are recorded on a tape
+# (.claude/rules/srwr-usage.md). This is the released srwr the AI works with,
+# not bin/srwr built from this repository (qsoku bin). @latest, like qsoku and
+# mtqg above. srwr is 0.x, so after a rebuild that
+# picked up a new version, run `srwr init --lenient` once (never plain
+# `srwr init`: that is the strict mode): it makes .claude/settings.json
+# follow any change in the tools' names.
+go install github.com/amisonnet8/srwr/cmd/srwr@latest
+
+# bcuz: every command Claude Code runs through the Bash tool goes through
+# `bcuz "<reason>" <command>`, which records when / why / what / result in
+# .bcuz/history.jsonl (.claude/rules/bcuz-usage.md; enforced by the PreToolUse
+# hook .claude/hooks/require-bcuz.sh). @latest, like the tools above.
+go install github.com/amisonnet8/bcuz/cmd/bcuz@latest
+
+# Create .bcuz/ at the repository root (idempotent: prints "already exists"
+# and succeeds if it is there). Without it, commands still run but are not recorded.
+(cd "$(dirname "$0")/.." && bcuz --init)
 
 # Wire up qsoku's bash integration (working-directory carry-back and
 # completion). Idempotent: skipped if already present, so re-running

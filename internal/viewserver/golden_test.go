@@ -59,7 +59,7 @@ func TestGolden(t *testing.T) {
 	}
 	for _, path := range paths {
 		t.Run(strings.TrimSuffix(filepath.Base(path), ".json"), func(t *testing.T) {
-			b, err := os.ReadFile(path) //nolint:gosec // a path found by Glob
+			b, err := os.ReadFile(path)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -99,7 +99,7 @@ func workspaceFor(t *testing.T, g golden) (root, tapeID string, diffFrames bool)
 	if err := os.MkdirAll(filepath.Join(root, ".srwr", "tapes"), 0o750); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, ".srwr", "tapes", tape.FileName(tapeID)), data, 0o600); err != nil { //nolint:gosec // a path in a temporary directory
+	if err := os.WriteFile(filepath.Join(root, ".srwr", "tapes", tape.FileName(tapeID)), data, 0o600); err != nil {
 		t.Fatal(err)
 	}
 	for name, text := range g.Current.Files {

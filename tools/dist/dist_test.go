@@ -24,13 +24,13 @@ func tiny(t *testing.T, tg target) []byte {
 		t.Fatal(err)
 	}
 	out := filepath.Join(dir, tg.exe())
-	cmd := exec.Command("go", "build", "-o", out, ".") //nolint:gosec // fixed arguments
+	cmd := exec.Command("go", "build", "-o", out, ".")
 	cmd.Dir = dir
 	cmd.Env = append(os.Environ(), "CGO_ENABLED=0", "GOOS="+tg.goos, "GOARCH="+tg.goarch)
 	if msg, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("%s: %v\n%s", tg, err, msg)
 	}
-	b, err := os.ReadFile(out) //nolint:gosec // a file just built
+	b, err := os.ReadFile(out)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,8 +80,8 @@ func TestArchiveRoundTripAndCheck(t *testing.T) {
 		if err := writeArchive(again, files); err != nil {
 			t.Fatal(err)
 		}
-		a, _ := os.ReadFile(path)  //nolint:gosec // see above
-		b, _ := os.ReadFile(again) //nolint:gosec // see above
+		a, _ := os.ReadFile(path)
+		b, _ := os.ReadFile(again)
 		if !bytes.Equal(a, b) {
 			t.Errorf("%s: two archives of the same files differ", tg)
 		}

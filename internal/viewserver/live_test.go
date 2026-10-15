@@ -31,7 +31,7 @@ func baseTape() []string {
 
 func appendTo(t *testing.T, root, id, text string) {
 	t.Helper()
-	f, err := os.OpenFile(filepath.Join(root, ".srwr", "tapes", tape.FileName(id)), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o600) //nolint:gosec // a path in a temporary directory
+	f, err := os.OpenFile(filepath.Join(root, ".srwr", "tapes", tape.FileName(id)), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o600)
 	if err != nil {
 		t.Fatal(err)
 	}

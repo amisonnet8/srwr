@@ -56,7 +56,7 @@ func TestCompressRoundTrip(t *testing.T) {
 		t.Errorf("files left: %v", entries)
 	}
 	// Anyone with gzip can read it.
-	f, _ := os.Open(gz) //nolint:gosec // a temporary directory
+	f, _ := os.Open(gz)
 	zr, err := gzip.NewReader(f)
 	if err != nil {
 		t.Fatal(err)
@@ -79,7 +79,7 @@ func TestCompressIsDeterministic(t *testing.T) {
 		if err := Compress(dir, "20261001-0000-aaaa"); err != nil {
 			t.Fatal(err)
 		}
-		b, err := os.ReadFile(p + GzSuffix) //nolint:gosec // a temporary directory
+		b, err := os.ReadFile(p + GzSuffix)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -211,10 +211,10 @@ func TestCompressFailureLeavesThePlainTape(t *testing.T) {
 	}
 	dir := t.TempDir()
 	writeFile(t, dir, FileName("20261001-0000-aaaa"), []byte(sample))
-	if err := os.Chmod(dir, 0o500); err != nil { //nolint:gosec // a temporary directory
+	if err := os.Chmod(dir, 0o500); err != nil {
 		t.Fatal(err)
 	}
-	defer func() { _ = os.Chmod(dir, 0o700) }() //nolint:gosec // a temporary directory
+	defer func() { _ = os.Chmod(dir, 0o700) }()
 	if err := Compress(dir, "20261001-0000-aaaa"); err == nil {
 		t.Error("Compress succeeded in a directory it cannot write")
 	}

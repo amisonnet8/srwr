@@ -111,6 +111,9 @@ jobs:
         run: go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
       - name: qsoku shellcheck
         run: qsoku shellcheck
+      # The decision table of the hook that forces commands through bcuz (jq is on the runner).
+      - name: qsoku hook
+        run: qsoku hook
 
   trivy:
     runs-on: ubuntu-latest
@@ -123,7 +126,7 @@ jobs:
         run: go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
       - uses: aquasecurity/setup-trivy@v0.3.1
         with:
-          version: v0.71.2
+          version: latest
       - name: qsoku trivy
         run: qsoku trivy
 

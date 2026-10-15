@@ -158,8 +158,11 @@ func makeTape(bin, extra, id string, session func(c *mcpClient) error) error {
 		return err
 	}
 	tapes, err := filepath.Glob(filepath.Join(work, ".srwr", "tapes", "*.tape.jsonl"))
-	if err != nil || len(tapes) != 1 {
-		return fmt.Errorf("srwr mcp made %d tapes, want 1 (%v)", len(tapes), err)
+	if err != nil {
+		return fmt.Errorf("srwr mcp's tapes: %w", err)
+	}
+	if len(tapes) != 1 {
+		return fmt.Errorf("srwr mcp made %d tapes, want 1", len(tapes))
 	}
 	if err := os.MkdirAll(filepath.Join(extra, ".srwr", "tapes"), 0o750); err != nil {
 		return err
@@ -237,7 +240,10 @@ func (c *mcpClient) call(method string, params any) (json.RawMessage, error) {
 		return nil, err
 	}
 	if !c.out.Scan() {
-		return nil, fmt.Errorf("srwr mcp ended before answering %s: %v", method, c.out.Err())
+		if err := c.out.Err(); err != nil {
+			return nil, fmt.Errorf("srwr mcp ended before answering %s: %w", method, err)
+		}
+		return nil, fmt.Errorf("srwr mcp ended before answering %s", method)
 	}
 	var r struct {
 		Result json.RawMessage `json:"result"`
@@ -262,8 +268,11 @@ func (c *mcpClient) tool(name string, args map[string]any) (map[string]any, erro
 		Content []struct{ Text string }
 		IsError bool `json:"isError"`
 	}
-	if err := json.Unmarshal(res, &r); err != nil || len(r.Content) == 0 {
-		return nil, fmt.Errorf("%s: no answer (%v)", name, err)
+	if err := json.Unmarshal(res, &r); err != nil {
+		return nil, fmt.Errorf("%s: no answer: %w", name, err)
+	}
+	if len(r.Content) == 0 {
+		return nil, fmt.Errorf("%s: no answer", name)
 	}
 	var body map[string]any
 	if err := json.Unmarshal([]byte(r.Content[0].Text), &body); err != nil {

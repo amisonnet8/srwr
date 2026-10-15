@@ -4,6 +4,17 @@
     "MTQG_AUTHOR_NAME": "claude-code"
   },
   "hooks": {
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/require-bcuz.sh",
+            "type": "command"
+          }
+        ],
+        "matcher": "Bash"
+      }
+    ],
     "PostToolUse": [
       {
         "hooks": [
@@ -12,7 +23,16 @@
             "type": "command"
           }
         ],
-        "matcher": "Edit|Write"
+        "matcher": "Edit|Write|mcp__srwr__edit|mcp__srwr__new"
+      },
+      {
+        "matcher": "Read|Bash|Grep|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "srwr hook"
+          }
+        ]
       }
     ],
     "SessionStart": [
@@ -42,8 +62,18 @@
     "autoAllowBashIfSandboxed": true,
     "allowUnsandboxedCommands": false,
     "filesystem": {
-      "allowWrite": ["~/.cache/go-build", "~/go", "~/.cache/trivy", "~/.cache/golangci-lint", "~/.npm"],
-      "denyRead": ["~/.ssh", "~/.aws", "~/.config/gh"]
+      "allowWrite": [
+        "~/.cache/go-build",
+        "/go",
+        "~/.cache/trivy",
+        "~/.cache/golangci-lint",
+        "~/.npm"
+      ],
+      "denyRead": [
+        "~/.ssh",
+        "~/.aws",
+        "~/.config/gh"
+      ]
     },
     "network": {
       "allowedDomains": [
@@ -67,6 +97,16 @@
       "Bash(git push*)",
       "Bash(gh pr merge*)",
       "Bash(gh release create*)"
+    ],
+    "allow": [
+      "mcp__srwr__look",
+      "mcp__srwr__edit",
+      "mcp__srwr__new",
+      "mcp__srwr__session"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "mtqg",
+    "srwr"
+  ]
 }

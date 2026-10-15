@@ -103,7 +103,7 @@ func (e *env) events() []tape.Event {
 	if err != nil {
 		e.t.Fatal(err)
 	}
-	b, err := os.ReadFile(filepath.Join(e.root, ".srwr", "tapes", tape.FileName(strings.TrimSpace(string(active))))) //nolint:gosec // a path in a temporary directory
+	b, err := os.ReadFile(filepath.Join(e.root, ".srwr", "tapes", tape.FileName(strings.TrimSpace(string(active)))))
 	if err != nil {
 		e.t.Fatal(err)
 	}
@@ -612,7 +612,7 @@ func TestPermissionsAreKeptAndNoTemporaryFileIsLeft(t *testing.T) {
 	e := newEnv(t)
 	e.write("run.sh", "1\n2\n")
 	if runtime.GOOS != "windows" {
-		if err := os.Chmod(filepath.Join(e.root, "run.sh"), 0o750); err != nil { //nolint:gosec // the test checks that this mode is kept
+		if err := os.Chmod(filepath.Join(e.root, "run.sh"), 0o750); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -667,7 +667,7 @@ func TestRecoversFromAnUnfinishedTape(t *testing.T) {
 
 // Random edits, checked against a model of the file after every step: the file and the tape agree.
 func TestRandomEdits(t *testing.T) {
-	rng := rand.New(rand.NewPCG(1, 2)) //nolint:gosec // a fixed seed makes the test repeatable
+	rng := rand.New(rand.NewPCG(1, 2))
 	e := newEnv(t)
 	var model []string
 	for i := range 20 {
@@ -720,7 +720,7 @@ func TestRandomEdits(t *testing.T) {
 
 // Several selections made first, then replaced in any order: each lands where its lines are now.
 func TestSelectionsReplacedInAnyOrder(t *testing.T) {
-	rng := rand.New(rand.NewPCG(3, 4)) //nolint:gosec // a fixed seed makes the test repeatable
+	rng := rand.New(rand.NewPCG(3, 4))
 	for round := range 40 {
 		e := newEnv(t)
 		var lines []string

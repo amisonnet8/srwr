@@ -11,7 +11,7 @@ import (
 	"github.com/amisonnet8/srwr/internal/tape"
 )
 
-const secret = "API_KEY=hunter2-very-secret\n" //nolint:gosec // a fake secret for the tests
+const secret = "API_KEY=hunter2-very-secret\n"
 
 // noSecretOnTape fails if any event of the current tape (or its header) holds the secret, or names the file.
 func (e *env) noSecretOnTape(files ...string) {
@@ -20,7 +20,7 @@ func (e *env) noSecretOnTape(files ...string) {
 	if err != nil {
 		return // no tape at all: nothing was recorded
 	}
-	b, err := os.ReadFile(filepath.Join(e.root, ".srwr", "tapes", tape.FileName(strings.TrimSpace(string(active))))) //nolint:gosec // a path in a temporary directory
+	b, err := os.ReadFile(filepath.Join(e.root, ".srwr", "tapes", tape.FileName(strings.TrimSpace(string(active)))))
 	if err != nil {
 		e.t.Fatal(err)
 	}

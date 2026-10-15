@@ -227,7 +227,7 @@ func TestCreateFileDoesNotOverwriteAFileThatAppeared(t *testing.T) {
 		t.Fatal(err)
 	}
 	wantCode(t, createFile(dest, "mine\n", "a.txt"), CodeFileExists)
-	if b, _ := os.ReadFile(dest); string(b) != "theirs\n" { //nolint:gosec // a path in a temporary directory
+	if b, _ := os.ReadFile(dest); string(b) != "theirs\n" {
 		t.Errorf("file = %q", b)
 	}
 	if entries, _ := os.ReadDir(dir); len(entries) != 1 {

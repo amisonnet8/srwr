@@ -31,7 +31,7 @@ func languageProblems(root string) []string {
 			problems = append(problems, f+": no "+filepath.Base(other)+" next to it")
 			continue
 		}
-		b, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(f))) //nolint:gosec // a document of this repository
+		b, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(f)))
 		if err != nil {
 			problems = append(problems, f+": "+err.Error())
 			continue

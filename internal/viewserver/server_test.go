@@ -187,7 +187,7 @@ func TestTapesListSeesAChangedTape(t *testing.T) {
 	var first struct{ Tapes []struct{ Ops int } }
 	resultOf(t, out.next(), &first)
 
-	f, err := os.OpenFile(filepath.Join(root, ".srwr", "tapes", tape.FileName("20261001-1000-aaaa")), os.O_APPEND|os.O_WRONLY, 0o600) //nolint:gosec // a path in a temporary directory
+	f, err := os.OpenFile(filepath.Join(root, ".srwr", "tapes", tape.FileName("20261001-1000-aaaa")), os.O_APPEND|os.O_WRONLY, 0o600)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -266,7 +266,7 @@ func TestTapeOpen(t *testing.T) {
 		var a struct{ Frames []struct{} }
 		resultOf(t, out.next(), &a)
 
-		f, _ := os.OpenFile(filepath.Join(root, ".srwr", "tapes", tape.FileName("20261001-1000-aaaa")), os.O_APPEND|os.O_WRONLY, 0o600) //nolint:gosec // a path in a temporary directory
+		f, _ := os.OpenFile(filepath.Join(root, ".srwr", "tapes", tape.FileName("20261001-1000-aaaa")), os.O_APPEND|os.O_WRONLY, 0o600)
 		_, _ = f.WriteString(`{"v":1,"seq":4,"type":"select","file":"a.go","startLine":1,"endLine":1,"why":"x","selection":null}` + "\n")
 		_ = f.Close()
 		defer writeTape(t, root, "20261001-1000-aaaa", strings.Join(smallTape("2026-10-01T10:00:00.000+09:00"), "\n")+"\n")
@@ -322,7 +322,7 @@ func TestTapeErrors(t *testing.T) {
 				t.Fatal(err)
 			}
 			// Running as root, the mode makes no difference.
-			if f, err := os.Open(p); err == nil { //nolint:gosec // a path in a temporary directory
+			if f, err := os.Open(p); err == nil {
 				_ = f.Close()
 				t.Skip("files can be read despite their mode")
 			}

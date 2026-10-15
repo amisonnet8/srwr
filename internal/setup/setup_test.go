@@ -39,7 +39,7 @@ func ws(t *testing.T, git bool, files map[string]string) string {
 
 func read(t *testing.T, root, rel string) string {
 	t.Helper()
-	b, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(rel))) //nolint:gosec // a file in a temporary directory
+	b, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(rel)))
 	if err != nil {
 		t.Fatal(err)
 	}

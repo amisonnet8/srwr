@@ -104,7 +104,7 @@ func TestAppendMakesTheTape(t *testing.T) {
 	if e := res.Events[1]; e.Seq != 1 || e.TS != "2026-10-01T08:06:00.000Z" {
 		t.Errorf("event = %+v", e)
 	}
-	active, _ := os.ReadFile(filepath.Join(root, ".srwr", "active")) //nolint:gosec // a path in a temporary directory
+	active, _ := os.ReadFile(filepath.Join(root, ".srwr", "active"))
 	if string(bytes.TrimSpace(active)) != id {
 		t.Errorf("active = %q, want %q", active, id)
 	}
@@ -167,7 +167,7 @@ func TestSessionEndsAfterTheGap(t *testing.T) {
 			t.Errorf("after the gap: TapeID = %s (first %s), NextSeq = %d", second, first, tx.NextSeq())
 		}
 		// The pointer to the old tape stays until something is written.
-		active, _ := os.ReadFile(filepath.Join(root, ".srwr", "active")) //nolint:gosec // a path in a temporary directory
+		active, _ := os.ReadFile(filepath.Join(root, ".srwr", "active"))
 		if string(bytes.TrimSpace(active)) != first {
 			t.Errorf("active changed before a write: %q", active)
 		}
@@ -176,7 +176,7 @@ func TestSessionEndsAfterTheGap(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	active, _ := os.ReadFile(filepath.Join(root, ".srwr", "active")) //nolint:gosec // a path in a temporary directory
+	active, _ := os.ReadFile(filepath.Join(root, ".srwr", "active"))
 	if string(bytes.TrimSpace(active)) != second {
 		t.Errorf("active = %q, want %q", active, second)
 	}
@@ -303,7 +303,7 @@ func TestReadsAgainWhenTheTapeShrinks(t *testing.T) {
 	// Someone replaces the tape with a shorter one (for instance, a copy of an earlier state).
 	b, _ := os.ReadFile(w.TapePath(id))
 	lines := bytes.SplitAfter(b, []byte("\n"))
-	if err := os.WriteFile(w.TapePath(id), bytes.Join(lines[:2], nil), 0o600); err != nil { //nolint:gosec // a path in a temporary directory
+	if err := os.WriteFile(w.TapePath(id), bytes.Join(lines[:2], nil), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if err := w.Do(func(tx *Tx) error {

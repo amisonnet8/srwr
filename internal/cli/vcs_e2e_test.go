@@ -11,7 +11,7 @@ import (
 
 func runGit(t *testing.T, dir string, args ...string) string {
 	t.Helper()
-	cmd := exec.Command("git", append([]string{"-c", "user.email=t@example.com", "-c", "user.name=t", "-c", "commit.gpgsign=false"}, args...)...) //nolint:gosec // git, in a temporary directory
+	cmd := exec.Command("git", append([]string{"-c", "user.email=t@example.com", "-c", "user.name=t", "-c", "commit.gpgsign=false"}, args...)...)
 	cmd.Dir = dir
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -82,7 +82,7 @@ func TestHeaderSaysTheGitState(t *testing.T) {
 
 	// Not under git (the temporary directory may be inside a work tree on some machines: then there is nothing to check).
 	root = newRoot()
-	probe := exec.Command("git", "-C", root, "rev-parse", "--git-dir") //nolint:gosec // git, in a temporary directory
+	probe := exec.Command("git", "-C", root, "rev-parse", "--git-dir")
 	if probe.Run() == nil {
 		t.Skip("the temporary directory is inside a git work tree")
 	}
@@ -180,7 +180,7 @@ func TestTapesCheckDirtyStartAndNoGit(t *testing.T) {
 	}
 
 	plain := t.TempDir()
-	if probe := exec.Command("git", "-C", plain, "rev-parse", "--git-dir"); probe.Run() == nil { //nolint:gosec // git, in a temporary directory
+	if probe := exec.Command("git", "-C", plain, "rev-parse", "--git-dir"); probe.Run() == nil {
 		t.Skip("the temporary directory is inside a git work tree")
 	}
 	write(t, plain, "a.go", "package a\n")

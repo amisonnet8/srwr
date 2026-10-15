@@ -230,7 +230,7 @@ func TestSelectAndReplace(t *testing.T) {
 	if isErr || rep["ok"] != true || rep["startLine"] != float64(2) || rep["endLine"] != float64(2) {
 		t.Fatalf("replace = %v %v", rep, isErr)
 	}
-	if b, _ := os.ReadFile(filepath.Join(root, "a.go")); string(b) != "1\na < b && c > d\n" { //nolint:gosec // a path in a temporary directory
+	if b, _ := os.ReadFile(filepath.Join(root, "a.go")); string(b) != "1\na < b && c > d\n" {
 		t.Errorf("file = %q", b)
 	}
 
@@ -277,7 +277,7 @@ func TestNew(t *testing.T) {
 	if _, has := m["lines"]; has {
 		t.Errorf("the answer has lines: %v", m)
 	}
-	if b, _ := os.ReadFile(filepath.Join(root, "pkg", "a.go")); string(b) != "package pkg\n\nvar X = 1\n" { //nolint:gosec // a path in a temporary directory
+	if b, _ := os.ReadFile(filepath.Join(root, "pkg", "a.go")); string(b) != "package pkg\n\nvar X = 1\n" {
 		t.Errorf("file = %q", b)
 	}
 	// A file that exists is refused.
@@ -404,7 +404,7 @@ func TestEditInsert(t *testing.T) {
 	if isErr || m["startLine"] != float64(3) || m["endLine"] != float64(3) {
 		t.Fatalf("got %v", m)
 	}
-	b, _ := os.ReadFile(filepath.Join(root, "a.go")) //nolint:gosec // a path in a temporary directory
+	b, _ := os.ReadFile(filepath.Join(root, "a.go"))
 	if string(b) != "a\nb\nx\nc\n" {
 		t.Errorf("file = %q", b)
 	}
@@ -538,7 +538,7 @@ func TestEditWithEdits(t *testing.T) {
 	if first, _ := es[0].(map[string]any); first["startLine"] != float64(6) || first["selection"] == "" {
 		t.Errorf("first = %v", es[0])
 	}
-	b, _ := os.ReadFile(path) //nolint:gosec // a path in a temporary directory
+	b, _ := os.ReadFile(path)
 	if string(b) != "x\ny\nb\nz\nc\nD\n" {
 		t.Errorf("file = %q", b)
 	}
@@ -554,7 +554,7 @@ func TestEditWithEdits(t *testing.T) {
 			t.Errorf("%s: got %v", args, m)
 		}
 	}
-	b, _ = os.ReadFile(path) //nolint:gosec // a path in a temporary directory
+	b, _ = os.ReadFile(path)
 	if string(b) != "x\ny\nb\nz\nc\nD\n" {
 		t.Errorf("a refused call changed the file: %q", b)
 	}
@@ -575,7 +575,7 @@ func TestEditWithOldAndNew(t *testing.T) {
 	if es, _ := m["edits"].([]any); isErr || len(es) != 2 {
 		t.Fatalf("got %v", m)
 	}
-	b, _ := os.ReadFile(path) //nolint:gosec // a path in a temporary directory
+	b, _ := os.ReadFile(path)
 	if string(b) != "F(A)\ng(C)\n" {
 		t.Errorf("file = %q", b)
 	}
@@ -795,7 +795,7 @@ func TestEditsWithContentIsTurnedAway(t *testing.T) {
 	if !strings.Contains(r[1], "edits.0.content must be a string") {
 		t.Errorf("2: %s", r[1])
 	}
-	if b, err := os.ReadFile(filepath.Join(dir, "a.txt")); err != nil || string(b) != "a\n" { //nolint:gosec // a file of the test directory
+	if b, err := os.ReadFile(filepath.Join(dir, "a.txt")); err != nil || string(b) != "a\n" {
 		t.Errorf("a.txt = %q %v: nothing is changed", b, err)
 	}
 	if _, err := os.Stat(filepath.Join(dir, "sub", "b.txt")); err == nil {

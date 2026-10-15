@@ -58,7 +58,7 @@ func grepDir(t *testing.T, dir, suffix string, re *regexp.Regexp) bool {
 		if !strings.HasSuffix(e.Name(), suffix) {
 			continue
 		}
-		b, err := os.ReadFile(filepath.Join(dir, e.Name())) //nolint:gosec // the repository's own test directory
+		b, err := os.ReadFile(filepath.Join(dir, e.Name()))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -162,7 +162,7 @@ func resultRoot(t *testing.T, state string, checkOK bool) string {
 
 func readFile(t *testing.T, p string) string {
 	t.Helper()
-	b, err := os.ReadFile(p) //nolint:gosec // a temporary directory
+	b, err := os.ReadFile(p)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -255,7 +255,7 @@ func TestBreakingTheVimClientIsFoundAndNamed(t *testing.T) {
 		if err := os.MkdirAll(filepath.Dir(filepath.Join(root, d[1])), 0o750); err != nil {
 			t.Fatal(err)
 		}
-		if out, err := exec.Command("cp", "-r", filepath.Join(repo, d[0]), filepath.Join(root, d[1])).CombinedOutput(); err != nil { //nolint:gosec // paths made by this test
+		if out, err := exec.Command("cp", "-r", filepath.Join(repo, d[0]), filepath.Join(root, d[1])).CombinedOutput(); err != nil {
 			t.Fatalf("cp: %v\n%s", err, out)
 		}
 	}

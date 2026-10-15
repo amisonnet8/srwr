@@ -16,7 +16,7 @@ const fixtures = "../../extension/test/fixtures"
 
 func readTape(t *testing.T, path string) Result {
 	t.Helper()
-	b, err := os.ReadFile(path) //nolint:gosec // a fixture path found by Glob
+	b, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +42,7 @@ func TestFixturesMatchExpected(t *testing.T) {
 			if res.Skipped != 0 {
 				t.Errorf("skipped %d lines", res.Skipped)
 			}
-			b, err := os.ReadFile(filepath.Join(fixtures, name+".expected.json")) //nolint:gosec // a fixture path
+			b, err := os.ReadFile(filepath.Join(fixtures, name+".expected.json"))
 			if err != nil {
 				t.Fatal(err)
 			}

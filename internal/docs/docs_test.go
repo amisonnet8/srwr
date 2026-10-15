@@ -92,7 +92,7 @@ func scan(root, file string, fn func(line int, text string, spans []string)) {
 
 // proseLines returns the lines of a file with the lines of fenced code blocks blanked out.
 func proseLines(root, file string) []string {
-	b, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(file))) //nolint:gosec // the path comes from a directory walk
+	b, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(file)))
 	if err != nil {
 		return nil
 	}

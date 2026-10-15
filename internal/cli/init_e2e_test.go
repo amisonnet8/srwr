@@ -25,7 +25,7 @@ func srwrOnPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, name), b, 0o700); err != nil { //nolint:gosec // an executable in a temporary directory
+	if err := os.WriteFile(filepath.Join(dir, name), b, 0o700); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
@@ -64,7 +64,7 @@ func TestInitThenTheRegisteredCommandsWork(t *testing.T) {
 	if !ok {
 		t.Fatalf(".mcp.json = %s", read(t, root, ".mcp.json"))
 	}
-	mc := exec.Command(srv.Command, srv.Args...) //nolint:gosec // the command srwr init wrote, which is srwr on PATH
+	mc := exec.Command(srv.Command, srv.Args...)
 	mc.Dir = root
 	m := startClientCmd(t, mc)
 	m.initialize()
@@ -93,7 +93,7 @@ func TestInitThenTheRegisteredCommandsWork(t *testing.T) {
 		"hook_event_name": "PostToolUse", "tool_name": "Read", "cwd": root,
 		"tool_input": map[string]any{"file_path": filepath.Join(root, "main.go")}, "tool_response": map[string]any{"type": "text"},
 	})
-	hc := exec.Command("sh", "-c", entry.Hooks[0].Command) //nolint:gosec // the command srwr init wrote
+	hc := exec.Command("sh", "-c", entry.Hooks[0].Command)
 	hc.Dir = root
 	hc.Stdin = bytes.NewReader(payload)
 	var hookErr bytes.Buffer

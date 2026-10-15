@@ -75,7 +75,7 @@ pwd > "$FAKE_VIM_PWD"
 exit "$FAKE_VIM_EXIT"
 `
 	path := filepath.Join(dir, "vim")
-	if err := os.WriteFile(path, []byte(script), 0o700); err != nil { //nolint:gosec // a script for the test to run
+	if err := os.WriteFile(path, []byte(script), 0o700); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv("SRWR_VIM", path)
@@ -154,7 +154,7 @@ func TestExtractVim(t *testing.T) {
 		}
 		n++
 		want, _ := vim.Files.ReadFile(p)
-		got, rerr := os.ReadFile(filepath.Join(dir, filepath.FromSlash(p))) //nolint:gosec // a path in a temporary directory
+		got, rerr := os.ReadFile(filepath.Join(dir, filepath.FromSlash(p)))
 		if rerr != nil || string(got) != string(want) {
 			t.Errorf("%s: %v, equal = %v", p, rerr, string(got) == string(want))
 		}
@@ -251,7 +251,7 @@ func TestViewStartsVim(t *testing.T) {
 			if code != 0 {
 				t.Fatalf("code = %d, stderr = %q", code, stderr)
 			}
-			b, err := os.ReadFile(argsFile) //nolint:gosec // a path in a temporary directory
+			b, err := os.ReadFile(argsFile)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -269,7 +269,7 @@ func TestViewStartsVim(t *testing.T) {
 			if args[3] != "let g:srwr_path = '"+exe+"'" {
 				t.Errorf("g:srwr_path command = %q", args[3])
 			}
-			pwd, _ := os.ReadFile(pwdFile) //nolint:gosec // a path in a temporary directory
+			pwd, _ := os.ReadFile(pwdFile)
 			wantDir, _ := filepath.EvalSymlinks(root)
 			gotDir, _ := filepath.EvalSymlinks(strings.TrimSpace(string(pwd)))
 			if gotDir != wantDir {
@@ -341,10 +341,10 @@ func TestLaunchArgsWithARealVim(t *testing.T) {
 	args = append(args, "-c", "runtime plugin/srwr.vim",
 		"-c", "call writefile([exists(':SrwrOpen') . ' ' . exists(':SrwrLive') . ' ' . exists(':SrwrNext') . ' ' . g:srwr_path], '"+out+"')",
 		"-c", "qall!")
-	if b, err := exec.Command(real, args...).CombinedOutput(); err != nil { //nolint:gosec // the Vim found in PATH
+	if b, err := exec.Command(real, args...).CombinedOutput(); err != nil {
 		t.Fatalf("vim: %v\n%s", err, b)
 	}
-	b, err := os.ReadFile(out) //nolint:gosec // a path in a temporary directory
+	b, err := os.ReadFile(out)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -65,7 +65,7 @@ func (e *env) events() []tape.Event {
 	if err != nil {
 		return nil
 	}
-	b, err := os.ReadFile(filepath.Join(e.root, ".srwr", "tapes", tape.FileName(strings.TrimSpace(string(active))))) //nolint:gosec // a path in a temporary directory
+	b, err := os.ReadFile(filepath.Join(e.root, ".srwr", "tapes", tape.FileName(strings.TrimSpace(string(active)))))
 	if err != nil {
 		e.t.Fatal(err)
 	}
@@ -366,7 +366,7 @@ func TestOutsideAdvice(t *testing.T) {
 		t.Skip("git is not installed")
 	}
 	e := newEnv(t)
-	if out, err := exec.Command("git", "-C", e.root, "init", "-q").CombinedOutput(); err != nil { //nolint:gosec // git in a temporary directory
+	if out, err := exec.Command("git", "-C", e.root, "init", "-q").CombinedOutput(); err != nil {
 		t.Fatalf("git init: %v\n%s", err, out)
 	}
 	e.write("a.go", "a\nb\n")
@@ -419,7 +419,7 @@ func TestOutsideAdviceIsOnlyTheFirst(t *testing.T) {
 		t.Skip("git is not installed")
 	}
 	e := newEnv(t)
-	if out, err := exec.Command("git", "-C", e.root, "init", "-q").CombinedOutput(); err != nil { //nolint:gosec // git in a temporary directory
+	if out, err := exec.Command("git", "-C", e.root, "init", "-q").CombinedOutput(); err != nil {
 		t.Fatalf("git init: %v\n%s", err, out)
 	}
 	e.write("a.go", "a\n")

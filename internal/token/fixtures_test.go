@@ -18,7 +18,7 @@ func TestTokensInRealTapes(t *testing.T) {
 
 	tokens := 0
 	for _, path := range paths {
-		data, err := os.ReadFile(path) //nolint:gosec // a fixture path found by Glob
+		data, err := os.ReadFile(path)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -56,5 +56,5 @@ func TestTokensInRealTapes(t *testing.T) {
 }
 
 func u64(n int) uint64 {
-	return uint64(n) //nolint:gosec // line numbers and seq in the fixtures are positive
+	return uint64(n)
 }

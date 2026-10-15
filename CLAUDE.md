@@ -29,18 +29,37 @@
 - 進捗は mtqg の todo。**最初のセッションで、`dev/roadmap.md` の段階を `mtqg t add` で立てる**（段階ごとに1件。中のタスクは着手前に足す）
 - 仕様と実装がずれたら `.claude/rules/documentation.md`
 
+## 守ること（設計の芯）
+
+実装の細部より優先する。これを崩す変更は、実装する前に必ず相談すること。
+
+- **外部依存ゼロを保つ。** トークン・テープ・MCP・表示サーバーは標準ライブラリで書く（`.claude/rules/go-code.md`）
+- **先に実ファイルを書き、そのあとテープに追記する。** テープへの書き込みは、すべて `internal/session` を通す（`.claude/rules/go-code.md`・`tape.md`）
+- **エディタはテープを直接読まない。** エディタとの境界は表示サーバーのプロトコル（`.claude/rules/tape.md`）
+- **`docs/` が正本。** 確定した画面の仕様と、正解データ・画面の基準は変えない（上の「進め方の要点」、`.claude/rules/documentation.md`）
+
+## ドキュメントの言語
+
+- **`CLAUDE.md`・`.claude/rules/`・`dev/`・mtqg の記録は日本語のみ**
+- **`docs/`・README は英語が基準**で、日本語版 `*_ja.md` と2本立て
+- **コード・コメント・コミットメッセージは英語**。利用者に見せる文言は英語が既定で、日本語に切り替えられる
+- 詳しい書き方は `.claude/rules/documentation.md`
+
 ## 参照すべきファイル
 
 作業を始める前に、以下を確認すること。
 
+- **`.claude/rules/bcuz-usage.md`** — bcuzの使い方。**Bashで実行するコマンドは、必ず`bcuz "理由" コマンド…`の形で打つ**（フックが、そうでないものを断る）。理由は「なぜ」を書く。**コマンドを打つ前に読む**
+- **`.claude/rules/srwr-usage.md`** — srwrの使い方（**緩いモード**）。**ファイルの変更は`look`／`edit`／`new`（理由`why`つき）で行う。`Edit`・`Write`は禁止されていないが、srwrの道具が使えないときだけ使う。作業のまとまりごとに`session`で題つきのテープを始め、コミットの前にテープを閉じる。ファイルを変える前に読む**
 - **`.claude/rules/mtqg-usage.md`** — mtqgの使い方（記録者、種類の使い分け、こまめに記録する）
 - **`.claude/rules/qsoku-usage.md`** — qsokuの使い方（`qsokufile`の名前の一覧、呼び方、書式、`//`、シェル連携）。**ビルド・テスト・lintは`go`などを直接打たず、ここの名前で実行する**
 - **`.claude/rules/testing.md`** — テスト方針（開発環境の前提、動作確認の粒度、Trivy、ShellCheck、`-race`、Bashサンドボックス・CIの落とし穴）
 - **`.claude/rules/directory-structure.md`** — ディレクトリ構成と、ファイルの置き場所の判断基準。**新しいファイルを追加するときに読む**
+- **`.claude/rules/datetime.md`** — 日時の扱い（データは UTC で持ち、表示だけ利用者のタイムゾーンに直す。瞬間で比べる、時計を差し替える）。**日時を保存・表示・比較するコードを書くときに読む**
 - **`.claude/rules/working-with-human.md`** — 人間とのやり取り（頼み方の3種類、小さなつまずきの頼み方、確認の自動化、UIゲート）。**人間に何かを頼む前に読む**
 - **`.claude/rules/naming.md`** — 命名規則（製品名、用語の日本語と英語の対応、JSON・Go・TypeScript・Vim script の名前）
-- **`.claude/rules/distribution.md`** — 配布方法（`go install`、GitHub Releases、cgo なし、バージョン、`.vsix`、Vim スクリプトの埋め込み）
-- **`.claude/rules/documentation.md`** — ドキュメントの書き方（文書の役割、仕様と実装がずれたとき、言語）
+- **`.claude/rules/distribution.md`** — 配布方法（リリースの流れ、`go install`、GitHub Releases、cgo なし、バージョン、`.vsix`、Vim スクリプトの埋め込み）
+- **`.claude/rules/documentation.md`** — ドキュメントの書き方（文書の役割、仕様と実装がずれたとき、言語、`docs/design/`に書く経緯の線引き）
 - **`.claude/rules/go-code.md`** — Go の srwr 固有の決まり（外部依存ゼロ、書き込みの順序、ロック、記録しないファイル）
 - **`.claude/rules/tape.md`** — テープ・範囲トークン・表示サーバーのプロトコルの互換性、正解データとの答え合わせ。**形式やプロトコルに触れるときに読む**
 - **`.claude/rules/extension.md`** — VSCode 拡張の決まりと落とし穴。**`extension/` を触るときに読む**
@@ -50,7 +69,11 @@
 
 ## 開発の進め方
 
-- 実装後は`.claude/rules/testing.md`に従い、ビルド確認に加えて実際の動作確認（`qsoku check`、必要に応じて`qsoku race`・`qsoku trivy`・`qsoku shellcheck`）を行うこと。判断に迷ったら実行する側に倒すこと
+- **Bashのコマンドは、すべて`bcuz "理由" コマンド…`で実行する**（`bcuz "lintの確認" qsoku lint`）。理由は「何をするか」でなく「なぜするか」。`bcuz`で始まらない・`&&`や`;`でつなぐコマンドは、`.claude/settings.json`の`PreToolUse`フック（`.claude/hooks/require-bcuz.sh`）が実行前に断る。**`git commit`だけは`bcuz`を通さない**（通すとコミットの後に記録が増えるため。理由はコミットメッセージに書く）。実行の記録は`.bcuz/history.jsonl`に残り（コミットする）、`bcuz -H`で見られる。**トークンなどの秘密を、コマンドの引数・`env`の指定・理由に書かない**（記録に残り、コミットされる）（`.claude/rules/bcuz-usage.md`）
+- **ファイルの変更は、srwrの道具（`look`で見て`edit`、新規は`new`）で行い、すべてに理由（`why`）を添える。** このリポジトリは緩いモードで、組み込みの`Edit`・`Write`は禁止されていないが、srwrの道具が使えないとき（道具の不具合など）だけ使う。Bashでの書き換え（`sed -i`・リダイレクト）もしない
+- **作業のまとまり（todo・bug・人間の依頼・作業の種類の変わり目）ごとに、最初に`session`で題つきのテープを始める。** 1つの作業＝1本のテープ、コミットも同じ区切り
+- **コミットの前に、テープを閉じる**（`srwr tapes check`のあと`srwr tapes new`）。書き込み中の生のテープは`.gitignore`で対象外で、閉じて圧縮した`.srwr/tapes/*.tape.jsonl.gz`だけがgitに入る（`.claude/rules/srwr-usage.md`）
+- 実装後は`.claude/rules/testing.md`に従い、ビルド確認に加えて実際の動作確認（`bcuz "…" qsoku check`、必要に応じて`qsoku race`・`qsoku trivy`・`qsoku shellcheck`）を行うこと。判断に迷ったら実行する側に倒すこと
 - 依存ライブラリを足したら、Trivyでライセンス・脆弱性を確認すること（`qsoku trivy`）
 - 人間に確認を頼むときは、`.claude/rules/working-with-human.md` 3章の形で、1コマンドと見るところだけを渡すこと
 
@@ -59,23 +82,26 @@
 - **pushは人間が行う。** Claude Codeはコミットまでで止めること。`git push`は`.claude/settings.json`で拒否（deny）されている
 - 作業の区切りでこまめにコミットしてよい（消してしまったときに戻せるように）
 - `git reset --hard`・`git clean`は、コミットしていない作業を消すので、使う前に必ず理由を説明すること
+- **コミットの前に`git config user.email`／`user.name`を確かめる。** 正しい値は`65074207+amisonnet8@users.noreply.github.com`／`amisonnet8`（GitHubのプライバシー用noreplyアドレス）。違う値なら、`.git/config`の`[user]`（ローカルの上書き）を疑う。ローカルに設定が無いと、コンテナのglobalの設定（noreplyでないことがある）が使われる
 
 ## 権限・自動化について
 
 `.claude/settings.json`（人間が管理する）により、次の設定になっている。
 
 - 拒否（deny）：`git push`、`gh pr merge`、`gh release create`
+- **`bcuz`を通さないBashコマンドの拒否**：`PreToolUse`フック（`.claude/hooks/require-bcuz.sh`）が、`bcuz`で始まらないコマンド（`git commit`を除く。逆に`bcuz`を通した`git commit`を断る）と、後ろに別のコマンドをつなぐもの（`&&`・`||`・`;`・`&`・改行・単一引用符の外のコマンド置換）を、実行前に断る。直し方は断りのメッセージと`.claude/rules/bcuz-usage.md`に書いてある
 - 実行前に確認（ask）：`git reset --hard`、`git clean`、`sudo`、`gh pr create`
-- srwr 自身が利用者の作業場に書く「Edit/Write の禁止」（`srwr init`）は、**この開発リポジトリには入れない**（入れると開発できなくなる）
 - **Bashコマンドは既定でOSレベルのサンドボックス（Linux bubblewrap）内で実行される。** ファイルシステムの書き込み先とネットワーク接続先は許可リストで絞られている。この範囲内なら`curl`・`wget`・`go get`などは確認なしに実行できる。リストに無い宛先・書き込み先は`sandbox_violations`として拒否される。そのときは、`.claude/rules/working-with-human.md` 2章の形（原因と、`.claude/settings.json` のどこに何を足すか）で**短く頼む**（許可を広げるかは人間が判断する）。落とし穴は`.claude/rules/testing.md`「Bashサンドボックスの落とし穴」参照
 
 確認を求められた場合、無理に実行しようとしない。`.claude/settings.json`を変更したいときは、変更案を差分で示すにとどめること（人間が貼るだけで済む形にする）。
 
-ビルドの自動フック（`PostToolUse`）が設定されている。`.go`・`go.mod`・`go.sum`を編集すると`.claude/hooks/build.sh`が`qsoku build`を、`extension/`の`.ts`・`package.json`・`tsconfig.json`を編集すると`qsoku ext-build`を実行し、失敗すると理由がClaude Codeに返る。複数ファイルにまたがる編集の途中は、まだ書いていないファイルを参照して一時的に失敗することがある。
+**srwrの緩いモード**（2026-10-16、人間の決定）：`.mcp.json`にsrwrのMCPサーバー、`PostToolUse`に`srwr hook`（読み取りと`Edit`・外部変更の記録）があり、`permissions.allow`でsrwrの道具を許可している。厳格モードの`Edit`・`Write`の禁止は**入れていない**（使っているsrwrに不具合があっても、編集の手段を失わないため）。道具として動くのは公開済みの`srwr`（`@latest`）で、開発中の`bin/srwr`ではない。テープ（`.srwr/tapes/`）はgitで共有する（鍵`.srwr/key`は入れない）。引数なしの`srwr init`（厳格モードにする）は動かさない。詳細は`.claude/rules/srwr-usage.md`。
+
+ビルドの自動フック（`PostToolUse`）が設定されている。`Edit`・`Write`かsrwrの`edit`・`new`で、`.go`・`go.mod`・`go.sum`を変えると`.claude/hooks/build.sh`が`qsoku build`を、`extension/`の`.ts`・`package.json`・`tsconfig.json`を編集すると`qsoku ext-build`を実行し、失敗すると理由がClaude Codeに返る。複数ファイルにまたがる編集の途中は、まだ書いていないファイルを参照して一時的に失敗することがある。
 
 ## mtqgでの記録について
 
-作業の中で生まれる「気づき・やること・質問と答え・不具合とそのやり取り・用語の合意・この先も効き続ける決まり事」は、コードにもコミットにも残らず、チャットの履歴やメモアプリに散って失われやすい。`mtqg`（`m`emo & rules・`t`odo・`q`a & bugs・`g`lossary）はそれを`.mtqg/journal.jsonl`に追記し、gitに乗せて共有する。使い方は`.claude/rules/mtqg-usage.md`。`.mtqg/`にはこのテンプレートの時点で決まり事（rule）を3件登録済み——`mtqg context`で確認できる。AIエージェントからは、フック（`.claude/settings.json`の`mtqg hook`）とMCPサーバー（`.mcp.json`の`mtqg mcp`）の両方で使える。
+作業の中で生まれる「気づき・やること・質問と答え・不具合とそのやり取り・用語の合意・この先も効き続ける決まり事」は、コードにもコミットにも残らず、チャットの履歴やメモアプリに散って失われやすい。`mtqg`（`m`emo & rules・`t`odo・`q`a & bugs・`g`lossary）はそれを`.mtqg/journal.jsonl`に追記し、gitに乗せて共有する。使い方は`.claude/rules/mtqg-usage.md`。`.mtqg/`には決まり事（rule）を17件登録済み——`mtqg context`で確認できる。AIエージェントからは、フック（`.claude/settings.json`の`mtqg hook`）とMCPサーバー（`.mcp.json`の`mtqg mcp`）の両方で使える。
 
 ## ルール・スキルの提案
 

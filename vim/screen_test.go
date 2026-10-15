@@ -40,7 +40,7 @@ func srwrBinary(t *testing.T) string {
 			return
 		}
 		binPath = filepath.Join(dir, "srwr")
-		cmd := exec.Command("go", "build", "-o", binPath, "../cmd/srwr") //nolint:gosec // fixed arguments
+		cmd := exec.Command("go", "build", "-o", binPath, "../cmd/srwr")
 		if out, err := cmd.CombinedOutput(); err != nil {
 			buildErr = &buildError{string(out), err}
 		}
@@ -60,7 +60,7 @@ func (e *buildError) Error() string { return "go build: " + e.err.Error() + "\n"
 
 func copyDir(t *testing.T, src, dst string) {
 	t.Helper()
-	if out, err := exec.Command("cp", "-r", src+"/.", dst).CombinedOutput(); err != nil { //nolint:gosec // paths made by this test
+	if out, err := exec.Command("cp", "-r", src+"/.", dst).CombinedOutput(); err != nil {
 		t.Fatalf("cp: %v\n%s", err, out)
 	}
 }
@@ -105,7 +105,7 @@ func TestScreens(t *testing.T) {
 			for _, sc := range scenarios {
 				t.Run(lang+"/"+sc.name+"/"+theme, func(t *testing.T) {
 					t.Parallel()
-					data, err := os.ReadFile(filepath.Join("test", "baseline", lang, sc.name+"_"+theme+".json")) //nolint:gosec // a fixed path under vim/test/baseline
+					data, err := os.ReadFile(filepath.Join("test", "baseline", lang, sc.name+"_"+theme+".json"))
 					if err != nil {
 						t.Fatal(err)
 					}

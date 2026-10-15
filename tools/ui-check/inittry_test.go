@@ -148,7 +148,7 @@ func TestRunInFindsTheCommandInBinDir(t *testing.T) {
 	}
 	bin, work := t.TempDir(), t.TempDir()
 	script := "#!/bin/sh\necho \"hello from $PWD $1\"\nexit 3\n"
-	if err := os.WriteFile(filepath.Join(bin, "srwrfake"), []byte(script), 0o700); err != nil { //nolint:gosec // a script in a temporary directory
+	if err := os.WriteFile(filepath.Join(bin, "srwrfake"), []byte(script), 0o700); err != nil {
 		t.Fatal(err)
 	}
 	out, err := runIn(work, bin, "srwrfake", "init")

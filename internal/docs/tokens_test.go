@@ -17,7 +17,7 @@ var selectionRe = regexp.MustCompile("sel_[0-9A-Za-z]+")
 func tokenProblems(root string) []string {
 	var problems []string
 	for _, f := range markdownFiles(root, "docs") {
-		b, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(f))) //nolint:gosec // a document of this repository
+		b, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(f)))
 		if err != nil {
 			problems = append(problems, f+": "+err.Error())
 			continue

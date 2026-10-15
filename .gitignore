@@ -26,11 +26,15 @@
 /.*
 !/.gitignore
 !/.gitattributes
+!/.srwrignore
 !/.golangci.yaml
 !/.mcp.json
 !/.devcontainer/
 !/.github/
 !/.mtqg/
+# bcuz's record of the commands run (.claude/rules/bcuz-usage.md). Shared, like
+# .mtqg/; .gitattributes merges it with merge=union.
+!/.bcuz/
 # Only to launch the extension with F5 (.claude/rules/directory-structure.md).
 !/.vscode/
 
@@ -41,3 +45,17 @@
 !/.claude/rules/
 !/.claude/skills/
 !/.claude/hooks/
+# srwr (.claude/rules/srwr-usage.md). The closed tapes (.srwr/tapes/*.gz) are
+# shared; everything else in .srwr/ stays local (the key must never be shared).
+# A tape that is still being written (*.tape.jsonl) is not tracked: it turns
+# into a .gz when it is closed, and tracking it would make that a delete + add.
+!/.srwr/
+/.srwr/*
+!/.srwr/tapes/
+/.srwr/tapes/*.tape.jsonl
+# The four lines below are what `srwr init` looks for; without them it would
+# append them again each time.
+.srwr/key
+.srwr/lock
+.srwr/active
+.srwr/init-backup/

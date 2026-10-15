@@ -345,7 +345,7 @@ func TestHookRecordsANewFileThatBashAddedToGit(t *testing.T) {
 	e.write("intent.go", "package a\n")
 	e.write("staged.go", "package b\n")
 	for _, args := range [][]string{{"add", "-N", "intent.go"}, {"add", "staged.go"}} {
-		cmd := exec.Command("git", args...) //nolint:gosec // git, with fixed arguments, in a temporary directory
+		cmd := exec.Command("git", args...)
 		cmd.Dir = e.root
 		if out, err := cmd.CombinedOutput(); err != nil {
 			t.Fatalf("git %v: %v\n%s", args, err, out)
@@ -411,7 +411,7 @@ func TestHookNewFilesOutsideGit(t *testing.T) {
 	if _, err := exec.LookPath("git"); err != nil {
 		t.Skip("git is not installed")
 	}
-	if exec.Command("git", "-C", e.root, "rev-parse", "--git-dir").Run() == nil { //nolint:gosec // git, in a temporary directory
+	if exec.Command("git", "-C", e.root, "rev-parse", "--git-dir").Run() == nil {
 		t.Skip("the temporary directory is inside a git work tree")
 	}
 	e.write("new.txt", "x\n")

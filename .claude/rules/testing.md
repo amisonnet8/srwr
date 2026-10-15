@@ -12,6 +12,7 @@
 - 並行性・排他制御に関わる変更は`qsoku race`も通す
 - 依存を足したら`qsoku trivy`（既知の脆弱性・ライセンス）を通す
 - シェルスクリプトを足したら`qsoku shellcheck`を通す（`git add`してから走らせる。追跡中のものだけが対象）
+- `.claude/hooks/require-bcuz.sh`を変えたら`qsoku hook`（判定の表）を通す。判定を変えたら、表も同じ変更の中で直す
 
 ## srwr での動作確認
 
@@ -21,7 +22,13 @@
 - **`internal/cli` の e2e テスト**は、本物の `srwr` を `go build` して、`srwr mcp` を複数のプロセスで動かす（`go test -short` では飛ばす）。セッションの30分は固定なので、間が空いた状態は、テープの日時を書き換えて作る（書き換えた日時を短くして、動いているサーバーに「テープが差し替わった」と分からせる）
 - **拡張**：`qsoku ext`（`.claude/rules/extension.md`）。**Vim**：`qsoku vim-test`（画面なしの Vim のテストと、疑似端末の画面の比較）と、最も古い Vim の `qsoku vim-oldest`（`.claude/rules/vim.md`）
 - **見た目**：自動で確かめられることはテストにし、人間には実物でしか分からないことだけを、1コマンドで見せる（`.claude/rules/working-with-human.md` 3章）。固定テープに無い場面は、本物の `srwr mcp` でテープを作るところまで自動にする
-- **Claude Code での通しの確認**（R7・R9）は、この開発リポジトリではなく、一時的な作業場で行う。この開発リポジトリの `.claude/settings.json` を srwr 用に書き換えない
+- **Claude Code での通しの確認**（R7・R9）は、この開発リポジトリではなく、一時的な作業場で行う。確かめたい設定（厳格モードなど）を、この開発リポジトリの `.claude/settings.json` で試さない（このリポジトリは緩いモードで、道具として公開済みの srwr を使っている。`.claude/rules/srwr-usage.md`）
+
+## Goのテスト
+
+- **期待値（件数・ID・桁など）は、手で書かず、実際の出力を読んで正しいと確かめてから固定する。** 手で数えた件数や写し間違えたIDは、正しい実装の出力と食い違い、実装を疑う遠回りになる。テストが落ちたときは、実装と期待値のどちらが誤りかを先に確かめる
+- **gitを使うテストは、開発者の設定の影響を受けないようにする。** `HOME`と`GIT_CONFIG_GLOBAL`を一時ディレクトリに向け、`user.name`・`user.email`はテストの中で決める（`t.Setenv`）。このリポジトリでは、git を動かすテストのあるパッケージ（`cli`・`core`・`docs`・`hook`・`vcs`）の`TestMain`が`internal/gittest`の`Isolate`を呼ぶ（`GOCACHE`は元の場所に固定するので、`go build`するテストは遅くならない）。**git を動かすテストを新しいパッケージに足したら、その`TestMain`でも呼ぶ**
+- **Goのソースに、見えない文字（ゼロ幅、U+2028・U+2029、文字の向きを変える制御文字、そのほかの制御文字）をそのまま書かない。** エスケープ（`\u2028`・`\x00`など）で書く。書き込みの途中で本物の文字に置き換わると、見た目では気づけない不具合になる
 
 ## 壊して確かめる（mutation-check）
 
@@ -39,6 +46,7 @@
 - シェルスクリプトは最小限にする。込み入った処理はGoで書く
 - `qsoku shellcheck`は`git ls-files '*.sh' '*.bash'`で追跡中のものを列挙してShellCheckにかける
 - シェルスクリプト中のコメントを、行頭が小文字の`# shellcheck`で始まる文にしてはいけない（ShellCheckがインラインディレクティブとして誤解釈し、SC1072/SC1073でパースエラーになる）。「ShellCheck」のように大文字を混ぜて書く
+- **`postCreate.sh`の中で`. /etc/os-release`をsourceしない。** ShellCheckのSC1091（追えない形で指定されたファイル）が情報の水準で報告され、終了コードが0でなくなる。ディストリビューションの版は`lsb_release -rs`で取る
 
 ## `-race`の運用
 
@@ -59,6 +67,8 @@
 - **拡張の`npm ci`・`npm install`（`qsoku ext-deps`）には`registry.npmjs.org`への許可と、`~/.npm`への書き込みが要る**（どちらも`.claude/settings.json`に入れてある）
 - **`srwr view` は `os.UserCacheDir()`（`~/.cache/srwr`）に書く。** サンドボックスでは `~/.cache` が読み取り専用なので、テストでは `XDG_CACHE_HOME` を一時ディレクトリに向ける
 - **`.vscode/` はダミーのデバイスファイルで、サンドボックスの中からは作れない**（`mkdir` が「ファイルが存在します」）。`.vscode/launch.json` のように `.vscode/` に置くものは、内容を作業用ディレクトリに作り、`mkdir -p .vscode && cp …` を人間に頼む（`.claude/rules/working-with-human.md` 2章の形）
+- **`srwr init --lenient`は、書き換えるものがあるときは、サンドボックスの中では`.mcp.json`・`.claude/settings.json`を置き換えられない（書き換えが無ければ動く。設定は入っているので、ふだんは動かさなくてよい。引数なしの`srwr init`は厳格モードにするので動かさない）**（一時ファイルを`rename`する先が書き込み保護で、`device or resource busy`。`.srwr/`の鍵だけが先にできる）。人間のターミナルで動かす（`.claude/rules/srwr-usage.md`「落とし穴」）。`srwr view`は`~/.cache/srwr`に書くので、同じく人間のターミナルで動かす
+- **`sudo`は、サンドボックスの中では承認しても失敗する。** サンドボックスのuidの付け替え（特権の無いユーザー名前空間）で、本来rootが持つファイルがnobodyの持ち物に見え、`sudo`自身の所有者の確認に落ちる。`sudo`が要るときは、人間のターミナルで動かすよう頼む（`.claude/rules/working-with-human.md` 2章）
 - **許可リストに無いものに当たったら、自分で回り道を探し続けない。** `.claude/rules/working-with-human.md` 2章の形で、何をどこに足すかを短く頼む
 - **サンドボックスの書き込み保護が、作業ディレクトリ直下に`.bashrc`・`.gitconfig`などのダミーファイルを出現させることがある。** `git status`に大量の未追跡ファイルとして見えて驚くが、実害はない（未追跡のままなのでコミットには影響しない）。これはサンドボックス内のBashからだけ見える見かけ上のファイル（`/dev/null`のbind mount）で、サンドボックスの外の人間側には存在しない。`.gitignore`はルート直下のドットファイルを許可リスト方式にしてあり、`git add -A`で混ざらない
 
@@ -69,7 +79,10 @@
 - **Windowsのcheckoutで改行がCRLFになると、`gofmt -l`が全ファイルを未整形と誤検知する。** ルートの`.gitattributes`（`* text=auto eol=lf`）で防ぐ
 - **`uses: owner/repo@TAG`はタグ名と厳密に一致しないと失敗する。** `v`の有無を見落としやすい。書く前に実際のタグ名を確かめる
 - **Unix 専用の呼び出し（`syscall.Flock` など）は、Windows ではビルドできない。** OS ごとにビルドタグで分け、手元でも `qsoku cross`（`GOOS=windows`・`darwin` で `vet` と `lint`）を通す。手元の Linux だけでは見つからず、CI の Windows で初めて落ちる
-- **手元の機械は JST で、CI は UTC。** 時刻を文字列で比べるテストは、手元でだけ通る。時刻は瞬間（`time.Time.Equal`）で比べる。時刻を扱う変更では、手元でも `TZ=UTC go test ./...` を流す（R3 で、`updatedAt` を `+09:00` の文字列で比べて、CI の3OSで落ちた）。R10.5 から、テープの時刻は UTC で書くので、表示（`srwr tapes`、Vim の一覧、VSCode のテープ選び）が `TZ` に従うことを、`time.Local`・`process.env.TZ`・`$TZ` を替えるテストで確かめる
+- **手元の機械は JST で、CI は UTC。** 時刻を文字列で比べるテストは、手元でだけ通る。時刻は瞬間（`time.Time.Equal`）で比べる。時刻を扱う変更では、手元でも `TZ=UTC` で単体テストを流す（`bcuz "UTC での時刻の確認" env TZ=UTC qsoku unit`）（R3 で、`updatedAt` を `+09:00` の文字列で比べて、CI の3OSで落ちた）。R10.5 から、テープの時刻は UTC で書くので、表示（`srwr tapes`、Vim の一覧、VSCode のテープ選び）が `TZ` に従うことを、`time.Local`・`process.env.TZ`・`$TZ` を替えるテストで確かめる
 - **golangci-lint が、手元の Go の標準ライブラリの export data を読めないことがある**（`could not load export data … version 5 is greater than maximum supported version 4`。Go 1.27.2 に上がったとき、go1.27.0 製の v2.13.2 で起きた）。**同じ版を新しい Go で作り直しても直らない**（読めないのは lint に同梱された読み取り部品）。直し方は、新しい golangci-lint にすること（`go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest`。v2.14.0 は go1.27.2 を読めた。モジュールの取得に `proxy.golang.org` と `storage.googleapis.com` への接続が要る）。版は固定しない：`postCreate.sh` は `@latest` でビルドし、CI の `setup-go` は `go.mod`、`golangci-lint-action` は `version: latest`。`qsoku lint` は、この失敗のとき更新のヒントを出す。lint の新しい規則で突然赤くなることはありうる（そのときは規則か `.golangci.yaml` を直す）。CI が赤になったら、注釈（`api.github.com/repos/…/check-runs/<job>/annotations`）に理由が出る
 - **Windowsには実行ビットの概念がない。** `os.Chmod`後に実行ビットを確かめるテストは、`runtime.GOOS != "windows"`でガードする
+- **実行権限の無いファイルで「起動できない（126）」を作るテストは、Windowsでは「見つからない（127）」になる。** 拡張子の無い名前（`script`・`build.sh`）は`PATHEXT`に合わず、コマンドとして探されないため。Windowsでは`.exe`の名前で、中身が実行形式でないファイルにすると、起動に失敗して126になる
+- **出力に出るパスと比べるテストは、一時ディレクトリを`filepath.EvalSymlinks`で解決してから比べる。** 同じディレクトリでも、macOSは`/var`→`/private/var`のシンボリックリンク、Windowsは8.3の短縮名（`RUNNER~1`）と長い名前が食い違う。`t.TempDir()`の値のまま比べると、macOS・WindowsのCIだけで落ちる
+- **Windowsでは、開いたままのファイルを置き換え（`rename`）られないことがあり、開いたハンドルのあるディレクトリは消せない。** 一時ファイル経由の置き換えや、失敗したときの後片付け（`os.RemoveAll`）の前に、先に`Close`する。Windowsのランナーでだけ落ちる
 - **時刻に関わるテストは、本物の現在時刻に頼らない。** CLI の「今のセッション」は、テープの最後のイベントから 30 分以内かで決まる。固定した日時でテープを作るテストが、本物の `time.Now` で CLI を動かすと、書いた直後は通り、30 分後の CI で落ちる（`TestWorkflowExample` で起きた）。CLI の時計は `cli.Now` で差し替える

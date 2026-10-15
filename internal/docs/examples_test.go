@@ -26,7 +26,7 @@ var (
 // codeBlocks returns the contents of the fenced code blocks of a document that start with the given language.
 func codeBlocks(t *testing.T, path, lang string) [][]string {
 	t.Helper()
-	b, err := os.ReadFile(path) //nolint:gosec // a path inside the repository
+	b, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -143,7 +143,7 @@ func checkSelectReplaceExample(t *testing.T, path string) {
 
 	// The document also shows the file after the last exchange (its last go block).
 	if len(goBlocks) > 1 {
-		b, err := os.ReadFile(file) //nolint:gosec // a path in a temporary directory
+		b, err := os.ReadFile(file)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -269,11 +269,11 @@ func checkHookExample(t *testing.T, path string) {
 			t.Fatal(err)
 		}
 		if msg.Tool == "Edit" {
-			b, err := os.ReadFile(file) //nolint:gosec // a path in a temporary directory
+			b, err := os.ReadFile(file)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if err := os.WriteFile(file, []byte(strings.Replace(string(b), msg.Input.Old, msg.Input.New, 1)), 0o600); err != nil { //nolint:gosec // a path in a temporary directory
+			if err := os.WriteFile(file, []byte(strings.Replace(string(b), msg.Input.Old, msg.Input.New, 1)), 0o600); err != nil {
 				t.Fatal(err)
 			}
 		}
@@ -299,11 +299,11 @@ func checkHookExample(t *testing.T, path string) {
 		t.Errorf("the document says the hook writes\n%s\nbut it writes\n%s", saidBlocks[0][0], said)
 	}
 
-	active, err := os.ReadFile(filepath.Join(root, ".srwr", "active")) //nolint:gosec // a path in a temporary directory
+	active, err := os.ReadFile(filepath.Join(root, ".srwr", "active"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	raw, err := os.ReadFile(filepath.Join(root, ".srwr", "tapes", tape.FileName(strings.TrimSpace(string(active))))) //nolint:gosec // a path in a temporary directory
+	raw, err := os.ReadFile(filepath.Join(root, ".srwr", "tapes", tape.FileName(strings.TrimSpace(string(active)))))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -320,7 +320,7 @@ func checkHookExample(t *testing.T, path string) {
 	if strings.Join(got, "\n") != strings.Join(want, "\n") {
 		t.Errorf("the tape differs from the document.\nthe tape:\n%s\nthe document:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
 	}
-	b, err := os.ReadFile(file) //nolint:gosec // a path in a temporary directory
+	b, err := os.ReadFile(file)
 	if err != nil {
 		t.Fatal(err)
 	}

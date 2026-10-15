@@ -1,17 +1,44 @@
 name: Release
 
-# A person makes the release (the tag and the Release on GitHub). When it is published, this builds what is handed to the users
-# from the tagged commit and attaches it: the binary for six machines, checksums.txt and the .vsix (.claude/rules/distribution.md).
+# A person pushes a tag (v0.1.0). This runs the tests, builds what is handed to the users from the tagged commit
+# (the binary for six machines, checksums.txt and the .vsix) and attaches it to a draft Release. A person looks at
+# the draft and publishes it (.claude/rules/distribution.md, dev/publish.md).
 on:
-  release:
-    types: [published]
+  push:
+    tags: ['v*']
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  assets:
+  # The same checks as CI on main (ci.yml), on Linux: Go, the extension and Vim. The other OSes are covered by CI.
+  check:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Install qsoku
+        run: go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
+      - uses: golangci/golangci-lint-action@v9
+        with:
+          version: latest
+          install-only: true
+      - name: qsoku go-check
+        run: qsoku go-check
+      - name: qsoku ext
+        run: qsoku ext
+      - name: Install Vim
+        run: sudo apt-get update && sudo apt-get install -y vim
+      - name: qsoku vim-test
+        run: qsoku vim-test
+
+  draft:
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v7
         with:
@@ -24,8 +51,15 @@ jobs:
         run: go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
       - name: qsoku dist
         run: qsoku dist
-      - name: Attach to the release
+      # A re-run replaces the files of the draft it made before; a published Release is never touched.
+      - name: Make the draft Release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.release.tag_name }}
-        run: gh release upload "$TAG" dist/* --clobber
+          TAG: ${{ github.ref_name }}
+        run: |
+          draft=$(gh release view "$TAG" --json isDraft --jq .isDraft 2>/dev/null || echo none)
+          case "$draft" in
+            none) gh release create "$TAG" dist/* --draft --verify-tag --title "$TAG" ;;
+            true) gh release upload "$TAG" dist/* --clobber ;;
+            *) echo "the Release $TAG is already published; not changing it" >&2; exit 1 ;;
+          esac

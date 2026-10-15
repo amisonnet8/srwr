@@ -1,6 +1,6 @@
 # 公開の手順（人間がする）
 
-AI は公開しない（`git push`・`gh release create`・Marketplace へのアップロードは人間）。AI が用意するのは、`qsoku dist`（成果物）、`qsoku dist-try`（入れて開く確認）、`qsoku publish-check`（アップロード前の検査）まで。
+AI は公開しない（`git push`・タグの push・下書きの Release の公開・Marketplace へのアップロードは人間。Release は `release.yml` が下書きで作り、AI は `gh release create` を使わない）。AI が用意するのは、`qsoku dist`（成果物）、`qsoku dist-try`（入れて開く確認）、`qsoku publish-check`（アップロード前の検査）まで。
 
 ## 1. 版を決める
 
@@ -19,12 +19,12 @@ AI は公開しない（`git push`・`gh release create`・Marketplace へのア
 ## 3. GitHub Releases（バイナリと .vsix）
 
 1. main のコミットにタグを付けて push する：`git tag v0.1.0 && git push origin v0.1.0`
-2. GitHub の *Releases* → *Draft a new release* でそのタグを選び、*Publish release*
-3. `release.yml` が動き、6つの圧縮ファイル・`checksums.txt`・`.vsix` を Release に付ける（数分）。付いたら、*Actions* の `Release` が緑で、*Assets* に9個あること
-4. 付いたものを1つ取り出して確かめる：`sha256sum -c checksums.txt`（手元の OS のものだけでよい）。`srwr --version` が `v0.1.0` を言う
+2. タグの push で `release.yml` が動く。テスト（Go・拡張・Vim）を通してから、6つの圧縮ファイル・`checksums.txt`・`.vsix` を作り、**下書きの Release** に付ける（数分）。*Actions* の `Release` が緑で、*Releases* に下書きができ、*Assets* に9個あること
+3. 下書きの中身を確かめる：付いたものを1つ取り出して `sha256sum -c checksums.txt`（手元の OS のものだけでよい）。`srwr --version` が `v0.1.0` を言う
+4. 下書きの *Edit* で、説明を書き（任意）、*Publish release*
 5. `go install github.com/amisonnet8/srwr/cmd/srwr@latest` で入ることを確かめる（タグが push されていれば入る）
 
-`release.yml` は、最初の Release で初めて動く（手元では動かせない）。落ちたら、*Actions* のログを AI に見せる。
+`release.yml` は、タグを push したときに初めて動く（手元では動かせない）。テストが落ちると下書きは作られない。落ちたら、*Actions* のログを AI に見せる。コードを直したら、同じタグを打ち直さず、版を上げて新しいタグを push する。通信などの一時的な失敗なら、*Re-run jobs* で動かし直せる（前に作った下書きがあれば、その添付を置き換える。公開済みの Release には触れない）。
 
 ## 4. VSCode Marketplace（Web サイトからアップロード）
 

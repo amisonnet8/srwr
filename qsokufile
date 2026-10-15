@@ -95,6 +95,9 @@ trivy: (cd //; trivy fs --config trivy.yaml .)
 
 shellcheck: (cd //; git ls-files '*.sh' '*.bash' | xargs -r shellcheck)
 
+# The decision table of the hook that forces commands through bcuz (needs jq).
+hook: (cd //; bash .claude/hooks/require-bcuz.test.sh)
+
 # The oldest Vim srwr-view.vim supports (9.0.0784, docs/reference/vim.md): built from source once, then vim-test runs with it.
 # SRWR_VIM_OLDEST_DIR says where to build it (the default is under the user cache; a sandbox that cannot write there can name another).
 vim-oldest: (cd //; sh tools/vim-oldest.sh)

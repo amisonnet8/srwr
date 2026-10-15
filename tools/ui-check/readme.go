@@ -98,8 +98,11 @@ func makeDemoWorkspace(bin string) (string, error) {
 		return fail(err)
 	}
 	tapes, err := filepath.Glob(filepath.Join(work, ".srwr", "tapes", "*.tape.jsonl"))
-	if err != nil || len(tapes) != 1 {
-		return fail(fmt.Errorf("srwr mcp made %d tapes, want 1 (%v)", len(tapes), err))
+	if err != nil {
+		return fail(fmt.Errorf("srwr mcp's tapes: %w", err))
+	}
+	if len(tapes) != 1 {
+		return fail(fmt.Errorf("srwr mcp made %d tapes, want 1", len(tapes)))
 	}
 	if err := os.Rename(tapes[0], filepath.Join(work, ".srwr", "tapes", demoTape+".tape.jsonl")); err != nil {
 		return fail(err)

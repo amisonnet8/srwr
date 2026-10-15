@@ -27,7 +27,7 @@ var (
 func readmeProblems(root string) []string {
 	var problems []string
 	for _, f := range readmeFiles {
-		b, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(f))) //nolint:gosec // a README of this repository
+		b, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(f)))
 		if err != nil {
 			problems = append(problems, f+": "+err.Error())
 			continue

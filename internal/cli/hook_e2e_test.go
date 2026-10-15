@@ -24,8 +24,8 @@ func runHookProcess(t *testing.T, root string, payload map[string]any) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cmd := exec.Command(binary(t), "hook") //nolint:gosec // the binary was built by this test
-	cmd.Dir = root                         // no --root: the working directory is the workspace, like a hook started in the project
+	cmd := exec.Command(binary(t), "hook")
+	cmd.Dir = root // no --root: the working directory is the workspace, like a hook started in the project
 	cmd.Stdin = bytes.NewReader(b)
 	var errOut bytes.Buffer
 	cmd.Stderr = &errOut
@@ -247,7 +247,7 @@ func TestHookTellsTheAgentAboutLook(t *testing.T) {
 		payload := toolPayload(tc.tool, tc.input, map[string]any{"content": "1:package main\n"})
 		payload["hook_event_name"], payload["cwd"] = "PostToolUse", root
 		b, _ := json.Marshal(payload)
-		cmd := exec.Command(binary(t), "hook") //nolint:gosec // the binary was built by this test
+		cmd := exec.Command(binary(t), "hook")
 		cmd.Dir = root
 		cmd.Stdin = bytes.NewReader(b)
 		var out bytes.Buffer

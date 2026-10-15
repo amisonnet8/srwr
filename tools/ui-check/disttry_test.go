@@ -56,7 +56,7 @@ func TestDistArchiveAndExtractExe(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if b, _ := os.ReadFile(exe); string(b) != "EXE" { //nolint:gosec // the file just extracted
+	if b, _ := os.ReadFile(exe); string(b) != "EXE" {
 		t.Errorf("the extracted file holds %q", b)
 	}
 	if info, _ := os.Stat(exe); runtime.GOOS != "windows" && info.Mode().Perm()&0o100 == 0 {

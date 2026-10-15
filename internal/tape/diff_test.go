@@ -53,7 +53,7 @@ func TestDiffHunksAreSmall(t *testing.T) {
 }
 
 func TestDiffRandom(t *testing.T) {
-	rng := rand.New(rand.NewSource(1)) //nolint:gosec // a fixed seed, so the test repeats
+	rng := rand.New(rand.NewSource(1))
 	for range 300 {
 		a := randomText(rng)
 		b := mutate(rng, a)

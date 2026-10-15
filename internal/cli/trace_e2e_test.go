@@ -46,7 +46,7 @@ func traceWorkspace(t *testing.T) (root, show string) {
 
 func runTraceBinary(t *testing.T, root, stdin string, env []string, args ...string) (string, int) {
 	t.Helper()
-	cmd := exec.Command(binary(t), append([]string{"trace", "--root", root}, args...)...) //nolint:gosec // the binary was built by this test
+	cmd := exec.Command(binary(t), append([]string{"trace", "--root", root}, args...)...)
 	cmd.Stdin = strings.NewReader(stdin)
 	cmd.Env = append(os.Environ(), env...)
 	var out bytes.Buffer
@@ -230,12 +230,12 @@ func TestTraceAsTape(t *testing.T) {
 	}
 
 	// The same input makes the same tape, and does not make a second one.
-	b1, _ := os.ReadFile(path) //nolint:gosec // a path in a temporary directory
+	b1, _ := os.ReadFile(path)
 	out2, code := runTraceBinary(t, root, show, []string{"SRWR_LANG="}, "--as-tape")
 	if code != 0 || !strings.Contains(out2, id) {
 		t.Fatalf("again: exit %d\n%s", code, out2)
 	}
-	b2, _ := os.ReadFile(path) //nolint:gosec // a path in a temporary directory
+	b2, _ := os.ReadFile(path)
 	if !bytes.Equal(b1, b2) || len(tapes(t, root)) != len(after) {
 		t.Errorf("the second run changed or added a tape (%d vs %d bytes, %d tapes)", len(b1), len(b2), len(tapes(t, root)))
 	}

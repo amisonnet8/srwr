@@ -59,7 +59,7 @@ func (w *workflowRun) why(en, ja string) string {
 
 func (w *workflowRun) git(args ...string) {
 	w.t.Helper()
-	cmd := exec.Command("git", append([]string{"-c", "user.name=demo", "-c", "user.email=demo@example.com"}, args...)...) //nolint:gosec // git, in a temporary directory
+	cmd := exec.Command("git", append([]string{"-c", "user.name=demo", "-c", "user.email=demo@example.com"}, args...)...)
 	cmd.Dir = w.root
 	if out, err := cmd.CombinedOutput(); err != nil {
 		w.t.Fatalf("git %v: %v\n%s", args, err, out)

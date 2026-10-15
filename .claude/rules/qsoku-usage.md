@@ -37,6 +37,7 @@
 | `qsoku race` | `CGO_ENABLED=1 go test -race` | 並行性・排他に関わる変更 |
 | `qsoku trivy` | 既知の脆弱性・ライセンスの検査 | 依存を足したとき |
 | `qsoku shellcheck` | 追跡中の`*.sh`・`*.bash`をShellCheckにかける | シェルスクリプトを足したとき |
+| `qsoku hook` | `.claude/hooks/require-bcuz.test.sh`（bcuz を強制するフックの判定の表。`jq`が要る） | `require-bcuz.sh`を変えたとき |
 
 `extension/package.json`・`vim/test/`が無いあいだは、`ext`・`ext-build`・`vim-test`は「skipped」と出して成功する。確認の自動化は、`ui-open vscode` が R4、`ui-open vim` が R5、`ui-check`・`ui-live`・`ui-accept` が R6 で入った。
 
@@ -48,6 +49,7 @@
 qsoku <名前> [引数...]
 ```
 
+- **Claude Codeは、Bashツールでは`bcuz`を通して呼ぶ**：`bcuz "理由" qsoku <名前>`（`.claude/rules/bcuz-usage.md`）。以下の例・表の`qsoku <名前>`は、素の形で書いてある
 - 引数は、項目のコマンドの中で`"$@"`・`$1`として受けられる。**このプロジェクトの`qsokufile`の項目は、どれも引数を受けていない**（書いていない引数は捨てられる）。受けたいときは、項目を`unit: (cd //; go test "$@")`のように書き換える。そうすれば`qsoku unit -run TestFoo ./internal/...`が使える
 - **qsoku自身のオプションは無い。** `--help`・`--version`は**名前として調べられる**ので、「定義されていない」というエラーになる。使い方は`qsoku .help`、バージョンは`qsoku .version`
 - コマンドは、どのOSでも、また呼び出し元がどのシェルでも、常に`sh`で実行される

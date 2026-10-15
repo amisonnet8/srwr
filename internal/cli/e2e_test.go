@@ -15,6 +15,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/amisonnet8/srwr/internal/gittest"
 	"github.com/amisonnet8/srwr/internal/tape"
 )
 
@@ -29,6 +30,11 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	cleanup, err := gittest.Isolate()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 	// The texts the tests expect are the Japanese ones (what srwr said before it spoke English by default).
 	// lang_test.go sets SRWR_LANG back for the English ones. A child srwr inherits this.
 	_ = os.Setenv("SRWR_LANG", "ja")
@@ -36,6 +42,7 @@ func TestMain(m *testing.M) {
 	if binDir != "" {
 		_ = os.RemoveAll(binDir)
 	}
+	cleanup()
 	os.Exit(code)
 }
 
@@ -56,10 +63,10 @@ func binary(t *testing.T) string {
 			name += ".exe"
 		}
 		binPath = filepath.Join(dir, name)
-		cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/srwr") //nolint:gosec // fixed arguments
+		cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/srwr")
 		cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
 		if out, err := cmd.CombinedOutput(); err != nil {
-			binErr = fmt.Errorf("go build: %v\n%s", err, out)
+			binErr = fmt.Errorf("go build: %w\n%s", err, out)
 		}
 	})
 	if binErr != nil {
@@ -79,7 +86,7 @@ type client struct {
 
 func startClient(t *testing.T, root string) *client {
 	t.Helper()
-	return startClientCmd(t, exec.Command(binary(t), "mcp", "--root", root)) //nolint:gosec // the binary was built by this test
+	return startClientCmd(t, exec.Command(binary(t), "mcp", "--root", root))
 }
 
 // startClientCmd runs cmd, which has to be srwr mcp, and talks to it.
@@ -184,7 +191,7 @@ func write(t *testing.T, root, rel, text string) {
 
 func read(t *testing.T, root, rel string) string {
 	t.Helper()
-	b, err := os.ReadFile(filepath.Join(root, rel)) //nolint:gosec // a path in a temporary directory
+	b, err := os.ReadFile(filepath.Join(root, rel))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -205,7 +212,7 @@ func tapes(t *testing.T, root string) []string {
 
 func readTape(t *testing.T, path string) []tape.Event {
 	t.Helper()
-	b, err := os.ReadFile(path) //nolint:gosec // a path in a temporary directory
+	b, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -307,7 +314,7 @@ func TestStartedTogether(t *testing.T) {
 			t.Errorf("f%d.txt = %q", i, got)
 		}
 	}
-	key, err := os.ReadFile(filepath.Join(root, ".srwr", "key")) //nolint:gosec // a path in a temporary directory
+	key, err := os.ReadFile(filepath.Join(root, ".srwr", "key"))
 	if err != nil || len(key) != 32 {
 		t.Errorf("key: %d bytes, %v", len(key), err)
 	}
@@ -349,7 +356,7 @@ func TestNewSessionAfterAPause(t *testing.T) {
 		t.Fatal(err)
 	}
 	old := tsRe.ReplaceAllString(string(b), `"$1":"2020-01-01T00:00:00Z"`)
-	if err := os.WriteFile(files[0], []byte(old), 0o600); err != nil { //nolint:gosec // a path in a temporary directory
+	if err := os.WriteFile(files[0], []byte(old), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -370,7 +377,7 @@ func TestNewSessionAfterAPause(t *testing.T) {
 	if closed := slices.IndexFunc(files, func(f string) bool { return strings.HasSuffix(f, tape.GzSuffix) }); closed < 0 || files[closed] == files[1-closed] {
 		t.Errorf("the tape of the session that ended is not compressed: %v", files)
 	}
-	active, _ := os.ReadFile(filepath.Join(root, ".srwr", "active")) //nolint:gosec // a path in a temporary directory
+	active, _ := os.ReadFile(filepath.Join(root, ".srwr", "active"))
 	newTape := filepath.Join(root, ".srwr", "tapes", tape.FileName(strings.TrimSpace(string(active))))
 	if newTape == files[0] && newTape == files[1] {
 		t.Fatal("active does not point at a tape")
@@ -391,7 +398,7 @@ func TestNewSessionAfterAPause(t *testing.T) {
 func TestRootDefaultsToTheCurrentDirectory(t *testing.T) {
 	root := t.TempDir()
 	write(t, root, "f.txt", "1\n")
-	cmd := exec.Command(binary(t), "mcp") //nolint:gosec // the binary was built by this test
+	cmd := exec.Command(binary(t), "mcp")
 	cmd.Dir = root
 	cmd.Stdin = strings.NewReader(`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"look","arguments":{"file":"f.txt","startLine":1,"endLine":1,"why":"w"}}}` + "\n")
 	out, err := cmd.Output()
@@ -406,7 +413,7 @@ func TestRootDefaultsToTheCurrentDirectory(t *testing.T) {
 // viewer is a running srwr view-server.
 func startViewer(t *testing.T, root string) *client {
 	t.Helper()
-	cmd := exec.Command(binary(t), "view-server", "--root", root) //nolint:gosec // the binary was built by this test
+	cmd := exec.Command(binary(t), "view-server", "--root", root)
 	in, err := cmd.StdinPipe()
 	if err != nil {
 		t.Fatal(err)

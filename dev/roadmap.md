@@ -40,9 +40,9 @@ srwr は、前のリポジトリで一度作った（段階 P0〜P5 と、UI の
 
 ## R0：土台
 
-- [ ] devcontainer で `qsoku check` が通る（Go はプレースホルダーだけ。拡張・Vim は「skipped」）
-- [ ] `internal/docs`：`docs/` の文書の相対リンクと、`docs/…` のパスが切れていないことを確かめるテスト。これを足したら `internal/doc.go` を消す
-- [ ] 最初のコミット（push は人間）
+- [x] devcontainer で `qsoku check` が通る（Go はプレースホルダーだけ。拡張・Vim は「skipped」）
+- [x] `internal/docs`：`docs/` の文書の相対リンクと、`docs/…` のパスが切れていないことを確かめるテスト。これを足したら `internal/doc.go` を消す
+- [x] 最初のコミット（push は人間）
 
 **完了条件**：`qsoku check` が通る。CI が通る（push のあと）。
 **人間の確認**：なし。
@@ -51,8 +51,8 @@ srwr は、前のリポジトリで一度作った（段階 P0〜P5 と、UI の
 
 参照：`docs/reference/tape.md`・`docs/design/token.md`・`.claude/rules/tape.md`
 
-- [ ] `internal/tape`：イベントの型、追記、読み込み（古い形式・壊れた行・改行で終わらない最後の行の保留を含む）、テープから作る状態（ファイルごとの内容、最後の `seq`、`replace` の列）
-- [ ] `internal/token`：LEB128、Crockford Base32（読み替えの許容）、HMAC（テープID 全体を含む）
+- [x] `internal/tape`：イベントの型、追記、読み込み（古い形式・壊れた行・改行で終わらない最後の行の保留を含む）、テープから作る状態（ファイルごとの内容、最後の `seq`、`replace` の列）
+- [x] `internal/token`：LEB128、Crockford Base32（読み替えの許容）、HMAC（テープID 全体を含む）
 
 **完了条件**：`extension/test/fixtures/` のテープ4本（`basic`・`external-text`・`phase0-bash`・`real-playground`）を読んだ結果が、`*.expected.json`（最後のファイルの内容と、コマの種類の並び）と一致する。トークンの往復・改ざんの検出・読み替えのテストが通る。
 **人間の確認**：なし。
@@ -61,11 +61,11 @@ srwr は、前のリポジトリで一度作った（段階 P0〜P5 と、UI の
 
 参照：`docs/reference/mcp.md`・`docs/reference/tape.md`（セッション）・`docs/examples/look-edit.md`・`.claude/rules/go-code.md`
 
-- [ ] `internal/jsonrpc`（改行区切り。`mcp` と表示サーバーで共有する）
-- [ ] `internal/core`：範囲の検証、行番号の補正、内容の照合、`external` の検知
-- [ ] `internal/session`：`.srwr/active`、セッションの区切り（30分）、`.srwr/lock`（flock。OS ごとにビルドタグ）、テープからの読み足し、鍵の作成（書きかけを読ませない）
-- [ ] `internal/tools`・`internal/mcp`・`internal/cli`（`mcp`）・`cmd/srwr`
-- [ ] `internal/docs` に、`docs/examples/look-edit.md` の応答が本物と一致することの確認を足す
+- [x] `internal/jsonrpc`（改行区切り。`mcp` と表示サーバーで共有する）
+- [x] `internal/core`：範囲の検証、行番号の補正、内容の照合、`external` の検知
+- [x] `internal/session`：`.srwr/active`、セッションの区切り（30分）、`.srwr/lock`（flock。OS ごとにビルドタグ）、テープからの読み足し、鍵の作成（書きかけを読ませない）
+- [x] `internal/tools`・`internal/mcp`・`internal/cli`（`mcp`）・`cmd/srwr`
+- [x] `internal/docs` に、`docs/examples/look-edit.md` の応答が本物と一致することの確認を足す
 
 **完了条件**：①`srwr mcp` を2つ起動し、片方のトークンをもう片方の `replace` で使える、②間が空くと新しいセッションになる（テストでは短く）、③別のセッションのトークンは `invalid_selection`、④2つ同時に起動しても鍵の作成で失敗しない。`qsoku race` と `qsoku cross` が通る。
 **人間の確認**：なし。
@@ -74,10 +74,10 @@ srwr は、前のリポジトリで一度作った（段階 P0〜P5 と、UI の
 
 参照：`docs/reference/protocol.md`・`docs/examples/protocol-session.md`・`handoff/ui/UI.md`（2〜4章）
 
-- [ ] `internal/timeline`：コマの列、各コマの時点の文書、差分のコマ、最後の差分
-- [ ] `internal/viewserver`：メソッド、エラー、ライブ（テープの大きさのポーリング、200ミリ秒）、通知は返事のあとに始める
-- [ ] 安全：テープに書かれたパスを信用しない（作業場の外・シンボリックリンクは「存在しない」）。`tapeId` は裸の名前だけ
-- [ ] `internal/docs` に、`docs/examples/protocol-session.md` の確認を足す
+- [x] `internal/timeline`：コマの列、各コマの時点の文書、差分のコマ、最後の差分
+- [x] `internal/viewserver`：メソッド、エラー、ライブ（テープの大きさのポーリング、200ミリ秒）、通知は返事のあとに始める
+- [x] 安全：テープに書かれたパスを信用しない（作業場の外・シンボリックリンクは「存在しない」）。`tapeId` は裸の名前だけ
+- [x] `internal/docs` に、`docs/examples/protocol-session.md` の確認を足す
 
 **完了条件**：`extension/test/golden/` の22本すべてで、コマの列が一致する。要求と応答、ライブの通知、失敗のテストが通る。
 **人間の確認**：なし。
@@ -86,11 +86,11 @@ srwr は、前のリポジトリで一度作った（段階 P0〜P5 と、UI の
 
 参照：`docs/reference/vscode.md`・`handoff/design/`（`DESIGN.md`・`images/vscode/`・`CODE.md`）・`handoff/ui/`（`UI.md`・`CODE.md`）・`.claude/rules/extension.md`
 
-- [ ] **ゲート**：`dev/review/R4/`（作る画面の一覧と、`handoff/design/images/vscode/` の該当の画像）で了承をもらう
-- [ ] `extension/`：`server.ts`（表示サーバーとの通信）と、表示の部品（`present`・`replay`・`live`・`controls`・`sidebar`・`extension`）
-- [ ] テスト：偽の `vscode`、偽のサーバー（golden から答える）、本物の `bin/srwr` との通し（`server.test.ts`）、`wiring.test.ts`
-- [ ] **画面の取得**：偽の `vscode` の上で全コマの見せる内容（文書・装飾・一覧・バー）を JSON に取り、`handoff/checklist/captured/`（前の実装の記録）と比べる。最初の基準として取り込む
-- [ ] **`qsoku ui-open vscode <テープ>`**：固定テープの作業場を一時ディレクトリに作り、拡張を入れた VSCode で開くまでを1コマンドに。`.vscode/launch.json`（F5）も置く
+- [x] **ゲート**：`dev/review/R4/`（作る画面の一覧と、`handoff/design/images/vscode/` の該当の画像）で了承をもらう
+- [x] `extension/`：`server.ts`（表示サーバーとの通信）と、表示の部品（`present`・`replay`・`live`・`controls`・`sidebar`・`extension`）
+- [x] テスト：偽の `vscode`、偽のサーバー（golden から答える）、本物の `bin/srwr` との通し（`server.test.ts`）、`wiring.test.ts`
+- [x] **画面の取得**：偽の `vscode` の上で全コマの見せる内容（文書・装飾・一覧・バー）を JSON に取り、`handoff/checklist/captured/`（前の実装の記録）と比べる。最初の基準として取り込む
+- [x] **`qsoku ui-open vscode <テープ>`**：固定テープの作業場を一時ディレクトリに作り、拡張を入れた VSCode で開くまでを1コマンドに。`.vscode/launch.json`（F5）も置く
 
 **完了条件**：`qsoku ext` が通る。取得した全コマが基準と一致する（違いは理由を書いて、了承をもらってから基準を更新）。
 **人間の確認**：`qsoku ui-open vscode why-basic` などで、`handoff/checklist/CHECKLIST.md` 4-2 の 1〜4 を見る。
@@ -99,11 +99,11 @@ srwr は、前のリポジトリで一度作った（段階 P0〜P5 と、UI の
 
 参照：`docs/reference/vim.md`・`handoff/design/images/vim/`・`handoff/ui/UI.md`・`.claude/rules/vim.md`
 
-- [ ] **ゲート**：`dev/review/R5/`。確定した画面に加え、持ち越しの課題（下の表）の直し方を、推奨案つきの静止画で決めてもらう
-- [ ] `vim/`（Vim9 script）、`vim/embed.go`、`srwr view`（埋め込み、キャッシュへの書き出し、機能の確認。最も古い Vim は 9.0.0784）
-- [ ] テスト：画面なしの Vim。持ち越しの不具合2件を回帰テストにする
-- [ ] **画面の取得**：疑似端末で本物の Vim を動かし、コマごとの画面を `term_scrape()` で取る。色は `handoff/checklist/captured/hl_*.json` と比べる。画面の基準は、ゲートで了承した画像から作る
-- [ ] **`qsoku ui-open vim <テープ>`**
+- [x] **ゲート**：`dev/review/R5/`。確定した画面に加え、持ち越しの課題（下の表）の直し方を、推奨案つきの静止画で決めてもらう
+- [x] `vim/`（Vim9 script）、`vim/embed.go`、`srwr view`（埋め込み、キャッシュへの書き出し、機能の確認。最も古い Vim は 9.0.0784）
+- [x] テスト：画面なしの Vim。持ち越しの不具合2件を回帰テストにする
+- [x] **画面の取得**：疑似端末で本物の Vim を動かし、コマごとの画面を `term_scrape()` で取る。色は `handoff/checklist/captured/hl_*.json` と比べる。画面の基準は、ゲートで了承した画像から作る
+- [x] **`qsoku ui-open vim <テープ>`**
 
 **完了条件**：`qsoku vim-test` が通る（最新の Vim と 9.0.0784）。取得した画面が基準と一致する。
 **人間の確認**：`qsoku ui-open vim why-basic` などで、4-2 の 1〜4 を見る。
@@ -213,7 +213,7 @@ v0.2.0 に向けた機能（mtqg `cbfe6a6716`）。テープに残る `failure`�
 - [x] プロトコル：`tape/open`・`live/start` の `kinds`、`hidden`、`live/hidden`、`failure` のコマ（`docs/reference/protocol.md`）
 - [x] 表示サーバー（`timeline.Filter`、番号の振り直し、`frame/state` は元のコマの位置に写す）
 - [x] VSCode：漏斗ボタン、失敗の画面、赤、`Hiding: …`
-- [x] Vim：`ts`・`tr`・`te`・`tf`、`:SrwrToggle`、失敗の画面、ステータス行の `hidden: …`
+- [x] Vim：`tl`・`te`・`tx`・`tf`（0.1.4 までは `ts`・`tr`・`te`・`tf`）、`:SrwrToggle`、失敗の画面、ステータス行の `hidden: …`
 - [x] 確認の自動化：`qsoku ui-open vscode|vim with-failure`、`qsoku ui-check` の `replay-failure`・`with_failure`（基準は `qsoku ui-accept` で取った。人間の OK：赤を #d50000 に直したあと）
 
 ---

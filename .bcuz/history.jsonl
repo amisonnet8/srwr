@@ -30,3 +30,15 @@
 {"v":1,"ts":"2026-10-15T19:35:42.784Z","why":"コミットの作者が noreply のアドレスかを確かめるため","cmd":["sh","-c","git config user.email; git config user.name"],"dir":".","exit":0,"ms":4}
 {"v":1,"ts":"2026-10-15T19:35:46.780Z","why":"ルール共通化と、それに合わせた直しを1つのコミットにまとめるため","cmd":["git","add","-A"],"dir":".","exit":0,"ms":14}
 {"v":1,"ts":"2026-10-15T19:35:46.980Z","why":"コミットに入るものに余計なファイルが無いかを確かめるため","cmd":["git","status","--short"],"dir":".","exit":0,"ms":5}
+{"v":1,"ts":"2026-10-19T07:42:40.320Z","why":"セッション開始時に未完了のtodoを把握する","cmd":["mtqg","todo","list"],"dir":".","exit":0,"ms":8}
+{"v":1,"ts":"2026-10-19T07:42:40.733Z","why":"直近の記録で現在地を把握する","cmd":["mtqg","log","-n","25"],"dir":".","exit":2,"ms":3}
+{"v":1,"ts":"2026-10-19T07:42:40.918Z","why":"道具の版を確かめる（srwrは版が変わればinit --lenientが要る）","cmd":["sh","-c","srwr --version; mtqg --version; qsoku .version; bcuz --version; go version"],"dir":".","exit":0,"ms":12}
+{"v":1,"ts":"2026-10-19T07:42:44.834Z","why":"直近の記録で現在地を把握する","cmd":["mtqg","log","--limit","25"],"dir":".","exit":0,"ms":8}
+{"v":1,"ts":"2026-10-19T07:42:45.060Z","why":"テープの状況と最近のコミットを把握する","cmd":["sh","-c","srwr tapes | tail -8; git log --oneline -15; git tag --sort=-creatordate | head -5"],"dir":".","exit":0,"ms":27}
+{"v":1,"ts":"2026-10-19T07:42:50.002Z","why":"道具のコマンド体系がルールの記述と合っているか確かめる","cmd":["sh","-c","mtqg help 2>&1 | head -40; echo ----; srwr --help 2>&1 | head -30; echo ----; bcuz --help 2>&1 | head -20"],"dir":".","exit":0,"ms":8}
+{"v":1,"ts":"2026-10-19T07:43:12.010Z","why":"把握の中で見つけた資料の食い違いを、次のセッションが気づけるよう残す","cmd":["mtqg","memo","add","dev/roadmap.md の古い記述（2026-10-19 の把握で気づいた。未修正・人間の判断待ち）：R0〜R5 のチェックボックスが完了済みなのに [ ] のまま。R15 の Vim のキーが ts・tr・te・tf のままで、今の .claude/rules/vim.md の tl・te・tx・tf と食い違う。"],"dir":".","exit":0,"ms":3}
+{"v":1,"ts":"2026-10-19T07:44:58.740Z","why":"未完了の印が残っていないか、新しいキー名が docs の Vim の仕様と合うかを確かめる","cmd":["sh","-c","grep -n \"\\[ \\]\" dev/roadmap.md; echo ---; grep -n \"\\`tl\\`\" docs/reference/vim.md | head -3"],"dir":".","exit":0,"ms":3}
+{"v":1,"ts":"2026-10-19T07:44:58.934Z","why":"文書を直したあと、文書の検査を含む単体テストが通るか確かめる","cmd":["qsoku","unit"],"dir":".","exit":0,"ms":10703}
+{"v":1,"ts":"2026-10-19T07:45:14.786Z","why":"コミットの前に、テープに無い変更が無いか確かめる","cmd":["srwr","tapes","check"],"dir":".","exit":0,"ms":9}
+{"v":1,"ts":"2026-10-19T07:45:17.745Z","why":"コミットにテープを入れるため、今のテープを閉じて圧縮する","cmd":["srwr","tapes","new"],"dir":".","exit":0,"ms":10}
+{"v":1,"ts":"2026-10-19T07:45:17.897Z","why":"コミットするユーザーが正しいか確かめる","cmd":["sh","-c","git config user.email; git config user.name"],"dir":".","exit":0,"ms":3}

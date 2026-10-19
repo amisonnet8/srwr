@@ -59,3 +59,14 @@
 {"v":1,"ts":"2026-10-19T08:33:13.374Z","why":"コミットの前に、テープに無い変更が無いか確かめる","cmd":["srwr","tapes","check"],"dir":".","exit":0,"ms":26}
 {"v":1,"ts":"2026-10-19T08:33:17.110Z","why":"調査のテープを閉じてコミットに含められるようにする","cmd":["srwr","tapes","new"],"dir":".","exit":0,"ms":2}
 {"v":1,"ts":"2026-10-19T08:33:17.312Z","why":"閉じたテープがファイルとして残ったか確かめる","cmd":["sh","-c","git status --short; ls .srwr/tapes | grep 0747"],"dir":".","exit":0,"ms":8}
+{"v":1,"ts":"2026-10-19T08:33:20.244Z","why":"不具合の調査と結論の記録をコミットに含める","cmd":["git","add",".bcuz/history.jsonl",".mtqg/journal.jsonl",".srwr/tapes/20261019-0747-90xg.tape.jsonl.gz"],"dir":".","exit":0,"ms":6}
+{"v":1,"ts":"2026-10-19T08:33:41.715Z","why":"CI の lint の失敗を不具合として残す","cmd":["mtqg","bug","add","CI の go-check で golangci-lint の errcheck が internal/uicheck/vimcap.go:58（case <-done:）を指摘して落ちた（2026-10-19、push 後の CI）。手元では通っていた。"],"dir":".","exit":0,"ms":3}
+{"v":1,"ts":"2026-10-19T08:33:53.436Z","why":"手元で通っていた理由を知るため、手元の golangci-lint の版を確かめる","cmd":["golangci-lint","version"],"dir":".","exit":0,"ms":79}
+{"v":1,"ts":"2026-10-19T08:33:58.838Z","why":"CI と同じ最新の golangci-lint で指摘を再現・確認するため更新する","cmd":["go","install","github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest"],"dir":".","exit":0,"ms":611}
+{"v":1,"ts":"2026-10-19T08:34:01.750Z","why":"更新した版と、直したあとの lint の結果を確かめる","cmd":["sh","-c","golangci-lint version; cd /workspaces/srwr && qsoku lint"],"dir":".","exit":1,"ms":2556}
+{"v":1,"ts":"2026-10-19T08:34:13.105Z","why":"直したあとの lint と、他 OS 向けの lint を確かめる","cmd":["sh","-c","cd /workspaces/srwr && qsoku lint && qsoku cross"],"dir":".","exit":0,"ms":15916}
+{"v":1,"ts":"2026-10-19T08:34:35.081Z","why":"手元と CI で lint の結果が違った理由を、CI が使った版で確かめる","cmd":["sh","-c","id=$(gh run list --workflow ci.yml --limit 1 --json databaseId -q \".[0].databaseId\"); gh run view \"$id\" --log-failed | grep -iE \"golangci-lint (has )?version|installed golangci|Run qsoku|errcheck\" | head -10"],"dir":".","exit":0,"ms":90}
+{"v":1,"ts":"2026-10-19T08:34:40.297Z","why":"vimcap の直しのあと、Vim の画面の取得を含む全体の検査が通るか確かめる","cmd":["qsoku","check"],"dir":".","exit":0,"ms":20944}
+{"v":1,"ts":"2026-10-19T08:35:07.096Z","why":"直し方と残る点を不具合に返す","cmd":["mtqg","bug","add","2734c57209","直した（claude-code）：cmd.Wait() のエラーは、成否を画面のファイルで決めるので、わざと捨てていた。case <-done: を case waitErr = <-done: にし、画面が取れなかったときだけメッセージに %w で含める（nil のときは場合分けして %!w(<nil>) を避ける）。手元の qsoku check は通った。手元の golangci-lint は @latest でも v2.15.0 で、元のコードを指摘しなかった。CI の版は gh が未認証で見られず、手元と結果が違った理由は分かっていない。push 後に CI が通れば閉じる。"],"dir":".","exit":0,"ms":7}
+{"v":1,"ts":"2026-10-19T08:35:07.250Z","why":"コミットの前に、テープに無い変更が無いか確かめる","cmd":["srwr","tapes","check"],"dir":".","exit":0,"ms":8}
+{"v":1,"ts":"2026-10-19T08:35:09.431Z","why":"コミットにテープを入れるため、今のテープを閉じて圧縮する","cmd":["srwr","tapes","new"],"dir":".","exit":0,"ms":11}

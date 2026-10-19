@@ -54,8 +54,10 @@ func CaptureVim(o VimOptions) (*Capture, error) {
 	}
 	done := make(chan error, 1)
 	go func() { done <- cmd.Wait() }()
+	// The screens file, not the exit status, says whether the capture worked; the status only helps explain a failure.
+	var waitErr error
 	select {
-	case <-done:
+	case waitErr = <-done:
 	case <-time.After(3 * time.Minute):
 		_ = cmd.Process.Kill()
 		return nil, fmt.Errorf("the outer Vim did not finish; it printed:\n%s", output.String())
@@ -63,6 +65,9 @@ func CaptureVim(o VimOptions) (*Capture, error) {
 	data, err := os.ReadFile(out) //nolint:gosec // a path in a temporary directory
 	if err != nil {
 		msg, _ := os.ReadFile(out + ".error") //nolint:gosec // see above
+		if waitErr != nil {
+			return nil, fmt.Errorf("no screens were taken: %w (the outer Vim: %w)\n%s\n%s", err, waitErr, msg, output.String())
+		}
 		return nil, fmt.Errorf("no screens were taken: %w\n%s\n%s", err, msg, output.String())
 	}
 	normal := "#1e1e1e"

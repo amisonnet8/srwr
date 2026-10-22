@@ -53,6 +53,16 @@ snapshot:
 
 changelog:
   sort: asc
+  # srwr only (not in the shared template): the Release notes keep what users
+  # see (feat, fix, docs), not the commits of the process record (chore(mtqg)),
+  # the build, CI, tests or the development notes (docs(dev)).
+  filters:
+    exclude:
+      - "^chore"
+      - "^build"
+      - "^ci"
+      - "^test"
+      - "^docs\\(dev\\)"
 
 # A draft, which release.yml publishes once everything is attached. The draft
 # left by a failed run is replaced by the next run for the tag.

@@ -80,7 +80,7 @@ AI ──Read/Bash/Grep/Edit─▶│ srwr hook（Claude Code hook）│
 
 | 部品 | 中身 |
 |---|---|
-| **`srwr`**（Go の単一バイナリ） | サブコマンド `mcp`・`hook`・`view-server`・`view`・`init`・`tapes`・`trace`（[cli.md](../reference/cli_ja.md)） |
+| **`srwr`**（Go の単一バイナリ） | サブコマンド `mcp`・`hook`・`view-server`・`view`・`init`・`tapes`・`trace`・`completion`（[cli.md](../reference/cli_ja.md)） |
 | **テープ** | 追記のみの JSONL。1セッション＝1本で、閉じると圧縮する。AI が `session` で付けた題を持つことがある（[tape.md](../reference/tape_ja.md)） |
 | **srwr-view**（VSCode 拡張） | ライブ・リプレイ・コマ送り・差分のコマの**表示** |
 | **srwr-view.vim**（Vim スクリプト） | 同じ UI を Vim で表示する。`srwr` のバイナリに埋め込む |

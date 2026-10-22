@@ -81,7 +81,7 @@ AI ──Read/Bash/Grep/Edit─▶│ srwr hook (Claude Code hook)   │
 
 | Part | What it is |
 |---|---|
-| **`srwr`** (a single Go binary) | The subcommands `mcp`, `hook`, `view-server`, `view`, `init`, `tapes` and `trace` ([cli.md](../reference/cli.md)) |
+| **`srwr`** (a single Go binary) | The subcommands `mcp`, `hook`, `view-server`, `view`, `init`, `tapes`, `trace` and `completion` ([cli.md](../reference/cli.md)) |
 | **Tape** | An append-only JSONL file. One session = one tape, compressed when it is closed. A tape may have a title that the AI gave with `session` ([tape.md](../reference/tape.md)) |
 | **srwr-view** (VSCode extension) | **Displays** live, replay, stepping and diff frames |
 | **srwr-view.vim** (Vim script) | Shows the same UI in Vim. Embedded in the `srwr` binary |

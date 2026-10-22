@@ -106,7 +106,7 @@ bash・zsh・fish・PowerShell の補完：`srwr completion <シェル>` がス�
 
 3. **何が起きたかを見る**（次の章）。
 
-`srwr init` からテープの片付けまで、すべてのコマンドで一回りする例は [docs/examples/workflow.md](docs/examples/workflow_ja.md)。
+`srwr init` からテープの片付けまで、すべてのコマンドで一回りする例は [docs/examples/workflow_ja.md](docs/examples/workflow_ja.md)。
 
 ## 👀 テープを見る
 

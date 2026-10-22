@@ -29,7 +29,7 @@ What srwr shows is **English by default**. Japanese is available.
 
 | Where | How to switch to Japanese |
 |---|---|
-| The terminal output of `srwr` (usage, `srwr init`, `srwr tapes`, `srwr trace`, `srwr view`, errors) | Set the environment variable `SRWR_LANG=ja` |
+| The terminal output of `srwr` (usage, `srwr init`, `srwr tapes`, `srwr trace`, `srwr view`, errors) and the descriptions of shell completion | Set the environment variable `SRWR_LANG=ja` |
 | Vim (`srwr view`, srwr-view.vim) | Set the environment variable `SRWR_LANG=ja` before starting Vim |
 | VSCode (srwr-view) | Nothing to set for srwr: the extension follows the display language of VSCode. Install the Japanese language pack and VSCode shows the Japanese texts |
 

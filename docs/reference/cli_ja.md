@@ -46,9 +46,9 @@ srwr を使うディレクトリを**作業場**と呼ぶ。srwr は作業場の
 │   ├── key                 HMAC の鍵（32バイト、0600）。共有しない
 │   ├── lock                書き込みの排他用（flock）
 │   ├── active              今のセッションのテープID
-│   └── tapes/
-│       ├── <id>.tape.jsonl   テープ（書き込み中のもの。`srwr trace --as-tape` が書くものも）
-│       └── <id>.tape.jsonl.gz   終わったセッションのテープ（圧縮）
+│   ├── tapes/
+│   │   ├── <id>.tape.jsonl   テープ（書き込み中のもの。`srwr trace --as-tape` が書くものも）
+│   │   └── <id>.tape.jsonl.gz   終わったセッションのテープ（圧縮）
 │   └── init-backup/        srwr init が書き換える前の内容（書き換えたときだけ）
 ├── .srwrignore             記録しないファイルの指定（任意）
 ├── .gitignore              srwr init が、鍵・lock・active・init-backup の行を足す

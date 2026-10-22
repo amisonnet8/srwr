@@ -46,9 +46,9 @@ The directory where srwr is used is called the **workspace**. srwr makes the fol
 │   ├── key                 The HMAC key (32 bytes, 0600). Do not share
 │   ├── lock                For exclusive writing (flock)
 │   ├── active              The tape ID of the current session
-│   └── tapes/
-│       ├── <id>.tape.jsonl   A tape (the one being written; also what `srwr trace --as-tape` writes)
-│       └── <id>.tape.jsonl.gz   A tape of a session that ended (compressed)
+│   ├── tapes/
+│   │   ├── <id>.tape.jsonl   A tape (the one being written; also what `srwr trace --as-tape` writes)
+│   │   └── <id>.tape.jsonl.gz   A tape of a session that ended (compressed)
 │   └── init-backup/        What srwr init held before it rewrote a file (only when it did)
 ├── .srwrignore             Files not to record (optional)
 ├── .gitignore              srwr init adds the lines for key, lock, active and init-backup

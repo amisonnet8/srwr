@@ -29,7 +29,7 @@ srwr が出す文言は**英語が既定**で、日本語にも切り替えら�
 
 | どこ | 日本語にする方法 |
 |---|---|
-| `srwr` の端末の出力（使い方、`srwr init`、`srwr tapes`、`srwr trace`、`srwr view`、エラー） | 環境変数 `SRWR_LANG=ja` |
+| `srwr` の端末の出力（使い方、`srwr init`、`srwr tapes`、`srwr trace`、`srwr view`、エラー）と、シェルの補完の候補の説明 | 環境変数 `SRWR_LANG=ja` |
 | Vim（`srwr view`、srwr-view.vim） | Vim を起動する前に、環境変数 `SRWR_LANG=ja` |
 | VSCode（srwr-view） | srwr の設定はない。拡張は VSCode の表示言語に従う。日本語の言語パックを入れると、日本語で出る |
 

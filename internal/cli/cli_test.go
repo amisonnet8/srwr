@@ -49,6 +49,17 @@ func TestRun(t *testing.T) {
 	}
 }
 
+// A release build stamps the tag (.goreleaser.yaml: -X main.version=v0.1.0); that is what --version says, not the
+// version Go records for the module.
+func TestVersionOfAReleaseBuild(t *testing.T) {
+	BuildVersion = "v1.2.3"
+	t.Cleanup(func() { BuildVersion = "" })
+	code, stdout, _ := run([]string{"--version"}, "")
+	if code != 0 || stdout != "srwr v1.2.3\n" {
+		t.Errorf("code %d, stdout %q; want 0, %q", code, stdout, "srwr v1.2.3\n")
+	}
+}
+
 func TestHookNeverStopsTheAgent(t *testing.T) {
 	root := t.TempDir()
 	for name, in := range map[string]string{

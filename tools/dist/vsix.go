@@ -40,7 +40,7 @@ func readManifest(root string) (manifest, error) {
 	return m, json.Unmarshal(b, &m)
 }
 
-// buildVsix packs the extension (already compiled) into dist/<name>-<version>.vsix and returns the path.
+// buildVsix packs the extension (already compiled) into dir/<name>-<version>.vsix and returns the path.
 func buildVsix(root, dir string) (string, error) {
 	m, err := readManifest(root)
 	if err != nil {
@@ -169,4 +169,25 @@ func readmeMatchesRepo(root, vsixReadme string) error {
 		return fmt.Errorf("the README inside the .vsix is not extension/README.md of this checkout: build the .vsix again from the commit you mean to publish")
 	}
 	return nil
+}
+
+// looksExecutable reports whether data begins like an ELF, Mach-O or PE file. The .vsix must not carry the srwr binary
+// (the decision of R11), and this finds one whatever it is called.
+func looksExecutable(data []byte) bool {
+	if len(data) < 4 {
+		return false
+	}
+	switch {
+	case bytes.HasPrefix(data, []byte("\x7fELF")):
+		return true
+	case bytes.HasPrefix(data, []byte("MZ")):
+		return true
+	}
+	magic := [][]byte{{0xfe, 0xed, 0xfa, 0xce}, {0xfe, 0xed, 0xfa, 0xcf}, {0xce, 0xfa, 0xed, 0xfe}, {0xcf, 0xfa, 0xed, 0xfe}, {0xca, 0xfe, 0xba, 0xbe}}
+	for _, m := range magic {
+		if bytes.HasPrefix(data, m) {
+			return true
+		}
+	}
+	return false
 }

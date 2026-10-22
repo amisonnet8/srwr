@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  # release.yml runs these same checks before it builds a release.
+  workflow_call:
 
 permissions:
   contents: read
@@ -130,17 +132,22 @@ jobs:
       - name: qsoku trivy
         run: qsoku trivy
 
-  # What is handed to the users: the binary for six machines and the .vsix (qsoku dist builds them and checks what it made).
+  # What is handed to the users, made as release.yml makes it on a tag, but without one (qsoku snapshot): the archives of
+  # srwr for six machines, checksums.txt and the .vsix (.goreleaser.yaml; its before hook runs qsoku vsix, which checks it).
   dist:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # goreleaser reads the earlier tags
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
       - name: Install qsoku
         run: go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
-      - name: qsoku dist
-        run: qsoku dist
+      - uses: goreleaser/goreleaser-action@v7
+        with:
+          version: "~> v2"
+          install-only: true
+      - name: qsoku snapshot
+        run: qsoku snapshot

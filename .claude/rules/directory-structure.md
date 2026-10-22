@@ -2,6 +2,8 @@
 
 新しいファイルを追加する際は、どこに置くかをここで確かめる。**構成を変えたら、この文書も同じ変更の中で直す。**
 
+**このリポジトリの説明（`.crube/`）も保つ。** ファイル・ディレクトリを足す・動かす・消すときは、同じ変更の中で英語と日本語の説明を直し、コミットの前に両方の言語で`crube status --require all`を通す。やり方（MCPとCLI、`.crube/ignore`の保ち方）は`.claude/rules/crube-usage.md`
+
 下の図は、段階（`dev/roadmap.md`）を進めた後の姿。`(R2)` などの印は、その段階で作るもの。まだ無いディレクトリは、その段階で作る。
 
 ```
@@ -14,11 +16,13 @@
 ├── .gitattributes          （`* text=auto eol=lf`）
 ├── .gitignore
 ├── .golangci.yaml          ← lintの設定
+├── .goreleaser.yaml        ← 配布物の作り方（goreleaser。`release.yml`と`qsoku snapshot`が使う。`.claude/rules/distribution.md`）
 ├── trivy.yaml              ← 脆弱性・ライセンス検査の設定
-├── .mcp.json               ← mtqgとsrwrのMCPサーバーの配線（srwr は道具として入れた公開済みの版を呼ぶ）
+├── .mcp.json               ← mtqg・srwrとcrube（英語の`crube`・日本語の`crube-ja`）のMCPサーバーの配線（srwr は道具として入れた公開済みの版を呼ぶ）
 ├── .srwrignore             ← srwrがテープに記録しないファイル（`.mtqg/`・`.bcuz/`など）
 ├── .srwr/                  ← srwrの鍵・ロック・テープ（最初のhook・MCPの呼び出しでできる。**閉じた`tapes/*.gz`だけコミットする**）
 ├── .bcuz/                  ← bcuzの記録（`history.jsonl`）。`postCreate.sh`が`bcuz --init`で作る。**コミットする**（`merge=union`）
+├── .crube/                 ← このリポジトリのファイルの説明（crube。`structure.txt`は英語、`structure_ja.txt`は日本語、`ignore`は`.gitignore`に合わせて手で保つ）。**コミットする**
 ├── cmd/srwr/               ← 単一バイナリ（R2）。main.go は引数を internal/cli に渡すだけ
 ├── internal/
 │   ├── docs/               ← docs/ の検査だけのテスト（リンク切れ、英語版と日本語版の対、examples/ の本物との照合）（R0・R2・R3・R10.5）
@@ -60,7 +64,8 @@
 │   ├── screen_test.go      ← 画面を取って基準と比べる（`SRWR_SCREEN_TEST=1` のときだけ。`qsoku vim-test` が設定する）
 │   └── embed.go            ← plugin/・autoload/ を srwr に埋め込む（go:embed）
 ├── tools/
-│   ├── dist/               ← 配る物を作る：`qsoku dist`（6つのバイナリ・圧縮・`checksums.txt`・`.vsix`、自分で検査）と `publish-check`（R13）
+│   ├── dist/               ← `.vsix`を作って検査する`qsoku vsix`（goreleaser の`before`の手順が呼ぶ）と、Marketplace に上げる前の`publish-check`（R13）
+│   ├── licenses/           ← 配布物に入れる依存のライセンス文を集める道具（goreleaser が`go run`で動かす。実行ファイルには組み込まれない）
 │   ├── usage/              ← `qsoku usage`：Claude Code の会話ファイル（.jsonl）から、srwr の道具の引数の形・失敗・ほかの道具への逃げを数える
 │   ├── ui-check/           ← UI の確認の自動化：`run`（qsoku ui-check）・`live`・`accept`・`open`、自動の検証の項目の表（checks.go）、長い理由のテープ（maketape.go）、確認ページ（page.go）（R4〜R6）
 │   └── vim-oldest.sh       ← 最も古い Vim（9.0.0784）をビルドして `vim-test` を動かす（R5）
@@ -69,8 +74,8 @@
 ├── dev/                    ← 開発のうちうち。roadmap.md、publish.md（公開の手順）、review/<段階>/（UIゲートの資料。終わった段階は `<段階>.zip`）
 ├── .vscode/launch.json     ← 拡張を F5 で起動するためだけに置く（R4）
 ├── .devcontainer/          ← 開発環境（devcontainer.json、postCreate.sh）
-├── .claude/                ← rules/（ルール）、hooks/（build.sh、require-bcuz.sh とそのテスト）、settings.json（人間が管理する）
-├── .github/workflows/      ← CI
+├── .claude/                ← rules/（ルール）、skills/（commit-with-tape：テープを閉じてコミットする手順。mutation-check：壊して確かめる手順と、変異の道具`mutants/`（別の Go モジュール）・仕様の変異の一覧`spec.txt`）、hooks/（build.sh、require-bcuz.sh とそのテスト、crube-untracked.sh：srwr の new のあとに未説明を知らせる）、settings.json（人間が管理する）
+├── .github/workflows/      ← CI（`ci.yml`。Go・拡張・Vim・配布物）と、タグで動くリリース（`release.yml`。`ci.yml`を呼んでから Release を作って公開する）
 └── .mtqg/                  ← mtqgの記録
 ```
 
@@ -106,12 +111,15 @@
 - **`extension/`・`vim/`**: `package.json`・`vim/test/` が無いあいだは、`qsoku ext`・`ext-build`・`vim-test` が「skipped」と出して成功する（`qsokufile`）
 - **`.vscode/launch.json`**: **例外として置く。** VSCode の設定は原則 `devcontainer.json` にまとめるが、拡張を F5 で起動する設定は `devcontainer.json` に書けないため。`launch.json`（と、必要なら `tasks.json`）以外は置かない。`.gitignore` で `!/.vscode/` として戻してある
 - **`internal/`**: Goの仕組みとして、モジュールの外からimportできない。外へ公開するパッケージは`internal/`に置かない
+- **`tools/licenses/`**: 配布物に同梱する依存のライセンス文を集める（`.claude/rules/distribution.md`）。`go run ./tools/licenses <出力先> <main パッケージ>`。`TestRun`が`srwr`の一覧を確かめる
+- **`.claude/skills/mutation-check/mutants/`**: 変異の道具。`go.mod`を持つ別のモジュールなので、`qsoku check`（`./...`）の対象に入らない。変えたら、そのディレクトリで整形・vet・テストを通す（Skill の「気をつけること」）
 - **`go.sum`**: コミットする。srwr は外部依存ゼロなので、空か無いことがある
 - **`extension/package-lock.json`**: コミットする（`npm ci` のため）
 - **`.mtqg/`**: コミットされる。中のファイルは直接編集せず、すべて`mtqg`のコマンド経由で書く（`.claude/rules/mtqg-usage.md`）。`.mtqg/.local/`はコミットされない。
-- **`.bcuz/`**: bcuzが`.bcuz/history.jsonl`に追記する、コマンドの実行の記録（`.claude/rules/bcuz-usage.md`）。**コミットする**（`.gitignore`の`!/.bcuz/`）。行を足すだけなので、`.gitattributes`の`merge=union`で、マージしても両側の行が残る。コミットの前に`git add .bcuz/history.jsonl`する（`git commit`は`bcuz`を通さない）。秘密をコマンドに書かない（記録に残る）。中のファイルは直接編集しない
+- **`.bcuz/`**: bcuzが`.bcuz/history.jsonl`に追記する、コマンドの実行の記録（`.claude/rules/bcuz-usage.md`）。**コミットする**（`.gitignore`の`!/.bcuz/`）。行を足すだけなので、`.gitattributes`の`merge=union`で、マージしても両側の行が残る。コミットの前に`git add .bcuz/history.jsonl`する（`git commit`は`bcuz`を通さない）。秘密をコマンドに書かない（記録に残る）。中のファイルは直接編集しない。`.srwrignore`でテープにも載せない
 - **`.claude/hooks/require-bcuz.sh`**: Bashツールのコマンドを、`bcuz`を通っていなければ実行前に断る`PreToolUse`フック。判定の表は`require-bcuz.test.sh`（`bash .claude/hooks/require-bcuz.test.sh`）。判定を変えたら、テストの表も同じ変更の中で直す
-- **`.mcp.json`**: `mtqg mcp`と`srwr mcp`（MCPサーバー）の配線。`mtqg init --agent claude-code`・`srwr init --lenient`が書くものと同じ。`srwr`は`PATH`の公開済みの版で、開発中の`bin/srwr`ではない（`.claude/rules/srwr-usage.md`）
+- **`.mcp.json`**: `mtqg mcp`と`srwr mcp`（MCPサーバー）の配線。`mtqg init --agent claude-code`・`srwr init --lenient`が書くものと同じ。`srwr`は`PATH`の公開済みの版で、開発中の`bin/srwr`ではない（`.claude/rules/srwr-usage.md`）。その後ろに、crubeのMCPサーバー（`crube mcp --allow-write`。`crube-ja`は`CRUBE_LANG=ja`）を手で足している（`.claude/rules/crube-usage.md`）
+- **`.crube/`**: このリポジトリのファイルとディレクトリの説明（`.claude/rules/crube-usage.md`）。**コミットする**（`.gitignore`の`!/.crube/`）。閉じたテープ（`*.tape.jsonl.gz`）は、説明を付けず`.crube/ignore`で外す（パターンのエントリにすると、最初のテープを閉じるまで何にも当たらず`orphan`になり、無ければ新しいテープが`untracked`になるため）。`ignore`は`.gitignore`を手で写したもの（crube は`.gitignore`を読まない）
 - **`.srwr/`**: 最初のhook・MCPの呼び出しで、srwrが作る（`srwr init`でも作られる。鍵`key`・`lock`・`active`・`tapes/`・`init-backup/`）。**コミットするのは閉じて圧縮したテープ`tapes/*.tape.jsonl.gz`だけ**。書き込み中の生のテープ`*.tape.jsonl`は`.gitignore`で対象外（閉じると`.gz`に置き換わり、生のままコミットすると「削除＋追加」の差分が出るため）。鍵は共有しない。鍵はリポジトリに置かない（鍵を作業場ごとに別にするため）。リポジトリ直下の`.srwr/`は、AIの作業を記録する道具のもの。**開発中の`srwr`を動かすテストは`t.TempDir()`の中で行い**、リポジトリ直下の`.srwr/`を使わない
 - **`.srwrignore`**: テープに記録しないファイル（`.gitignore`と同じ書き方）。生成物や巨大なファイルはここに足す。`.env`・`*.pem`・`*.key`などはsrwrが元から外す（このリポジトリでは`/bin/`・`/dist/`・`/ui-check-result/`・`extension/node_modules/`・`extension/out/`・`*.vsix`も）
 - **`.devcontainer/devcontainer-lock.json`**: コンテナのビルドで自動で作られる。**コミットする**（この版のfeatureでテストなどが通った証明になる）。featureを新しくしたいときは、lockを消してビルドし直し、新しいlockをコミットする

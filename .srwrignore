@@ -5,7 +5,7 @@
 .mtqg/
 # .bcuz/ is written only by bcuz (.claude/rules/bcuz-usage.md).
 .bcuz/
-# Build output and results (qsoku bin, qsoku dist, qsoku ui-check, the extension's compile and dependencies).
+# Build output and results (qsoku bin, qsoku vsix, qsoku snapshot, qsoku ui-check, the extension's compile and dependencies).
 /bin/
 /dist/
 /ui-check-result/

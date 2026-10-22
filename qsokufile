@@ -9,7 +9,9 @@ fmt: (cd //; golangci-lint fmt)
 
 vet: (cd //; go vet ./...)
 
-# Also reports files that the formatters would change.
+# Also reports files that the formatters would change. If golangci-lint is older
+# than the Go in this container it cannot read the standard library (typecheck
+# errors "export data version N is greater than ..."); say what to do about it.
 lint: (cd //; if out=$(golangci-lint run 2>&1); then printf '%s\n' "$out"; else printf '%s\n' "$out"; if printf '%s' "$out" | grep -q 'export data version'; then echo "hint: this golangci-lint is older than the Go in this container and cannot read its standard library. Update it: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest (.claude/rules/testing.md)" >&2; fi; false; fi)
 
 unit: (cd //; go test ./...)
@@ -49,14 +51,15 @@ hook-try: (cd //; qsoku bin && go run ./tools/ui-check hook-try)
 # For a person to run in their terminal.
 init-try: (cd //; qsoku bin && go run ./tools/ui-check init-try)
 
-# qsoku dist: what is handed to the users, into dist/: the srwr binary for six machines (archives and checksums.txt) and the .vsix.
-# It checks what it made (the format and CPU of each binary, the contents of the .vsix). The version is the tag of HEAD, if any.
-dist: (cd //; qsoku ext-build && go run ./tools/dist)
+# qsoku vsix: the .vsix of the extension, into bin/vsix/, checked (no srwr inside, the URLs of the README pictures).
+# goreleaser's before hook runs it (.goreleaser.yaml), so the Release carries it.
+vsix: (cd //; qsoku ext-build && go run ./tools/dist vsix)
 
-# qsoku dist-try: for a person (R13). Puts what dist/ holds to use: the srwr of this machine out of its archive and the .vsix, in VSCode and in Vim.
-dist-try: (cd //; qsoku dist && go run ./tools/ui-check dist-try)
+# qsoku dist-try: for a person (R13). Puts what qsoku snapshot made to use: the srwr of this machine out of its archive in
+# dist/ and the .vsix of bin/vsix/, in VSCode and in Vim.
+dist-try: (cd //; qsoku snapshot && go run ./tools/ui-check dist-try)
 
-# qsoku publish-check: checks the newest dist/*.vsix before a person uploads it to the Marketplace by hand (dev/publish.md).
+# qsoku publish-check: checks the newest bin/vsix/*.vsix before a person uploads it to the Marketplace by hand (dev/publish.md).
 publish-check: (cd //; go run ./tools/dist publish-check "$@")
 
 # qsoku readme-media: makes the pictures of the README (docs/images/, extension/media/readme/) and the page to look at
@@ -103,3 +106,7 @@ hook: (cd //; bash .claude/hooks/require-bcuz.test.sh)
 vim-oldest: (cd //; sh tools/vim-oldest.sh)
 # qsoku usage [file.jsonl...]: counts how the AI used each form of the srwr tools in Claude Code conversation files (default: *.jsonl in the root); writes ui-check-result/usage/index.html. For judging which features to keep (todo 2101fbfff0).
 usage: (cd //; go run ./tools/usage "$@")
+
+# The release archives of .goreleaser.yaml (and the .vsix of its before hook), made without a tag into dist/, to
+# look at before tagging (needs goreleaser: .claude/rules/distribution.md).
+snapshot: (cd //; goreleaser check && goreleaser release --snapshot --clean)

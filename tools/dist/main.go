@@ -1,21 +1,23 @@
-// Command dist makes what is handed to the users (docs: .claude/rules/distribution.md): the srwr binary for six machines,
-// each in an archive, with a list of SHA-256 sums, and the .vsix of the extension. `go run ./tools/dist` (qsoku dist) makes them
-// in dist/ and checks what it made. `go run ./tools/dist publish-check [file.vsix]` (qsoku publish-check) checks a .vsix before
-// a person uploads it to the Marketplace by hand.
+// Command dist makes and checks the .vsix of the extension (docs: .claude/rules/distribution.md). The archives of the srwr
+// binary and checksums.txt are made by goreleaser (.goreleaser.yaml); its before hook runs `go run ./tools/dist vsix`
+// (qsoku vsix), which packs the .vsix into bin/vsix/ and checks it, and goreleaser attaches it to the Release.
+// `go run ./tools/dist publish-check [file.vsix]` (qsoku publish-check) checks a .vsix before a person uploads it to the
+// Marketplace by hand.
 package main
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"runtime"
 	"sort"
 	"strings"
 )
+
+// vsixDir is where qsoku vsix puts the .vsix, relative to the root: goreleaser's release.extra_files and
+// checksum.extra_files take it from there.
+const vsixDir = "bin/vsix"
 
 func main() {
 	if err := run(os.Args[1:], os.Stdout); err != nil {
@@ -30,74 +32,26 @@ func run(args []string, out io.Writer) error {
 		return err
 	}
 	switch {
-	case len(args) == 0:
-		return makeDist(root, out)
-	case args[0] == "publish-check" && len(args) <= 2:
+	case len(args) == 1 && args[0] == "vsix":
+		return makeVsix(root, out)
+	case len(args) >= 1 && args[0] == "publish-check" && len(args) <= 2:
 		path := ""
 		if len(args) == 2 {
 			path = args[1]
 		}
 		return publishCheck(root, path, out)
 	}
-	return errors.New("usage: dist [publish-check [file.vsix]]")
+	return errors.New("usage: dist vsix | dist publish-check [file.vsix]")
 }
 
-// describe is the version the archives are named for: the tag when HEAD is on one (v0.1.0), else what `git describe` says,
-// else "dev" (not a git checkout).
-func describe(root string) string {
-	cmd := exec.Command("git", "describe", "--tags", "--always")
-	cmd.Dir = root
-	b, err := cmd.Output()
-	if err != nil {
-		return "dev"
-	}
-	return cleanVersion(string(b))
-}
-
-// makeDist builds, packs and checks everything into root/dist.
-func makeDist(root string, out io.Writer) error {
-	dir := filepath.Join(root, "dist")
+// makeVsix packs the extension (already compiled) into root/bin/vsix/, alone, and checks it.
+func makeVsix(root string, out io.Writer) error {
+	dir := filepath.Join(root, filepath.FromSlash(vsixDir))
 	if err := os.RemoveAll(dir); err != nil {
 		return err
 	}
 	if err := os.MkdirAll(dir, 0o750); err != nil {
 		return err
-	}
-	version := describe(root)
-	license, err := os.ReadFile(filepath.Join(root, "LICENSE")) //nolint:gosec // the license of this repository
-	if err != nil {
-		return err
-	}
-	readme, err := os.ReadFile(filepath.Join(root, "README.md")) //nolint:gosec // the README of this repository
-	if err != nil {
-		return err
-	}
-	work, err := os.MkdirTemp("", "srwr-dist-")
-	if err != nil {
-		return err
-	}
-	defer func() { _ = os.RemoveAll(work) }()
-
-	var names []string
-	for _, t := range targets {
-		bin := filepath.Join(work, t.goos+"_"+t.goarch, t.exe())
-		if err := build(root, t, bin); err != nil {
-			return err
-		}
-		data, err := os.ReadFile(bin) //nolint:gosec // just built
-		if err != nil {
-			return err
-		}
-		archive := t.archiveName(version)
-		files := []file{{t.exe(), data, 0o755}, {"LICENSE", license, 0o644}, {"README.md", readme, 0o644}}
-		if err := writeArchive(filepath.Join(dir, archive), files); err != nil {
-			return err
-		}
-		if err := checkArchive(filepath.Join(dir, archive), t); err != nil {
-			return err
-		}
-		names = append(names, archive)
-		_, _ = fmt.Fprintf(out, "built  %-14s %s (%d KB)\n", t, archive, len(data)/1024)
 	}
 	vsix, err := buildVsix(root, dir)
 	if err != nil {
@@ -107,80 +61,16 @@ func makeDist(root string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	names = append(names, filepath.Base(vsix))
-	_, _ = fmt.Fprintf(out, "packed %-14s %s (version %s)\n", "extension", filepath.Base(vsix), m.Version)
-	if err := writeChecksums(dir, names); err != nil {
-		return err
-	}
-	if err := verifyChecksums(dir); err != nil {
-		return err
-	}
-	if err := smokeTest(dir, version, out); err != nil {
-		return err
-	}
-	_, _ = fmt.Fprintf(out, "done   %d archives, the .vsix and checksums.txt in %s\n", len(targets), dir)
-	return nil
-}
-
-// build makes the binary of t: no cgo, the paths of the machine left out, symbols stripped. The version of the binary is
-// the one Go records from the checkout (a tag gives v0.1.0).
-func build(root string, t target, out string) error {
-	cmd := exec.Command("go", "build", "-trimpath", "-ldflags", "-s -w", "-o", out, "./cmd/srwr") //nolint:gosec // fixed arguments
-	cmd.Dir = root
-	cmd.Env = append(os.Environ(), "CGO_ENABLED=0", "GOOS="+t.goos, "GOARCH="+t.goarch)
-	if msg, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("go build for %s: %w\n%s", t, err, msg)
-	}
-	return nil
-}
-
-// smokeTest runs the binary of this machine out of its archive: it says its version and its usage.
-func smokeTest(dir, version string, out io.Writer) error {
-	here := target{runtime.GOOS, runtime.GOARCH}
-	found := false
-	for _, t := range targets {
-		found = found || t == here
-	}
-	if !found {
-		_, _ = fmt.Fprintf(out, "skip   running the binary: %s is not one of the targets\n", here)
-		return nil
-	}
-	files, err := readArchive(filepath.Join(dir, here.archiveName(version)))
-	if err != nil {
-		return err
-	}
-	tmp, err := os.MkdirTemp("", "srwr-run-")
-	if err != nil {
-		return err
-	}
-	defer func() { _ = os.RemoveAll(tmp) }()
-	exe := filepath.Join(tmp, here.exe())
-	if err := os.WriteFile(exe, files[here.exe()], 0o755); err != nil { //nolint:gosec // it is an executable
-		return err
-	}
-	for _, args := range [][]string{{"--version"}, {"--help"}} {
-		var stdout, stderr bytes.Buffer
-		cmd := exec.Command(exe, args...) //nolint:gosec // the binary this tool just built
-		cmd.Stdout, cmd.Stderr = &stdout, &stderr
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("srwr %s: %w\n%s", args[0], err, stderr.String())
-		}
-		if args[0] == "--version" {
-			if !strings.HasPrefix(stdout.String(), "srwr ") {
-				return fmt.Errorf("srwr --version printed %q", stdout.String())
-			}
-			_, _ = fmt.Fprintf(out, "ran    %s: %s", here, stdout.String())
-		}
-	}
+	_, _ = fmt.Fprintf(out, "packed %s (version %s)\n", filepath.Join(vsixDir, filepath.Base(vsix)), m.Version)
 	return nil
 }
 
 // publishCheck checks the .vsix that a person is about to upload at the Marketplace by hand, and says how.
 func publishCheck(root, path string, out io.Writer) error {
 	if path == "" {
-		matches, err := filepath.Glob(filepath.Join(root, "dist", "*.vsix"))
+		matches, err := filepath.Glob(filepath.Join(root, filepath.FromSlash(vsixDir), "*.vsix"))
 		if err != nil || len(matches) == 0 {
-			return errors.New("no .vsix in dist/; run qsoku dist first")
+			return errors.New("no .vsix in " + vsixDir + "/; run qsoku vsix first")
 		}
 		sort.Strings(matches)
 		path = matches[len(matches)-1]
@@ -194,7 +84,7 @@ func publishCheck(root, path string, out io.Writer) error {
 		return err
 	}
 	if src.Version != m.Version {
-		return fmt.Errorf("the .vsix is version %s but extension/package.json says %s: run qsoku dist again", m.Version, src.Version)
+		return fmt.Errorf("the .vsix is version %s but extension/package.json says %s: run qsoku vsix again", m.Version, src.Version)
 	}
 	// Everything the READMEs reach over the network is fetched now, before anything is uploaded.
 	files, err := readZip(path)
@@ -213,7 +103,7 @@ func publishCheck(root, path string, out io.Writer) error {
 	if len(problems) > 0 {
 		return fmt.Errorf("DO NOT UPLOAD. %d picture(s) of the READMEs do not work:\n  %s\n(look at %s)", len(problems), strings.Join(problems, "\n  "), page)
 	}
-	info, err := os.Stat(path) //nolint:gosec // the .vsix a person named, or one found in dist/
+	info, err := os.Stat(path) //nolint:gosec // the .vsix a person named, or one found in bin/vsix/
 	if err != nil {
 		return err
 	}

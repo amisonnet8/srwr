@@ -87,9 +87,16 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	}
 }
 
-// Version returns the version of the module srwr was installed as (go install …@v1.2.3), or
-// "(devel)" when the binary was built from a checkout.
+// BuildVersion is the version a release build was stamped with (goreleaser sets main.version to the tag, v0.1.0, and
+// main passes it here). It is empty in a binary made by go install or go build.
+var BuildVersion string
+
+// Version returns BuildVersion when there is one, else the version of the module srwr was installed as
+// (go install …@v1.2.3), else "(devel)". Both ways give the same v0.1.0 for a release.
 func Version() string {
+	if BuildVersion != "" {
+		return BuildVersion
+	}
 	if info, ok := debug.ReadBuildInfo(); ok && info.Main.Version != "" {
 		return info.Main.Version
 	}

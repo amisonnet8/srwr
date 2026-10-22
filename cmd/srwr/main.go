@@ -7,6 +7,10 @@ import (
 	"github.com/amisonnet8/srwr/internal/cli"
 )
 
+// version is set by the release build (.goreleaser.yaml: -X main.version=<tag>). Empty otherwise.
+var version string
+
 func main() {
+	cli.BuildVersion = version
 	os.Exit(cli.Run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
 }

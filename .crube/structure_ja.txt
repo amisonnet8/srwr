@@ -1,0 +1,346 @@
+.bcuz/	bcuz を通して動かしたコマンドの記録（コミットする）
+	history.jsonl	1コマンド1行の JSON：いつ・なぜ・何を・終了コード
+.claude/	リポジトリで共有する Claude Code の設定
+	hooks/	Claude Code が道具の前後に動かすフック
+		build.sh	Go や拡張のソースを編集したあと qsoku build・qsoku ext-build を動かし、失敗を知らせる
+		crube-untracked.sh	srwr の new でファイルを作ったあと、説明の無いパスを言語ごとに Claude に知らせる
+		require-bcuz.sh	bcuz を通さない Bash のコマンドを断る PreToolUse フック
+		require-bcuz.test.sh	require-bcuz.sh が通す・断るコマンドの表（qsoku hook）
+	rules/	このリポジトリで作業するときのルール（日本語）。いつ読むかは CLAUDE.md にある
+		bcuz-usage.md	Bash のコマンドを bcuz で動かす方法と、秘密をコマンドに書かないこと
+		crube-usage.md	crube の使い方：MCP と CLI、場所の探し方、両方の言語の説明の保ち方
+		datetime.md	日時の扱い：UTC で持ち、表示だけ利用者のタイムゾーンに直す
+		directory-structure.md	ファイルの置き場所と、リポジトリの構成
+		distribution.md	srwr と拡張の配り方：goreleaser、版、.vsix、Marketplace
+		documentation.md	文書の書き方：役割、言語、仕様と実装がずれたとき
+		extension.md	VSCode 拡張（srwr-view）の決まりと落とし穴
+		go-code.md	srwr 固有の Go の決まり：依存ゼロ、書き込みの順序、ロック、記録しないファイル
+		mtqg-usage.md	mtqg でメモ・todo・質問・不具合・決まり事を記録する方法
+		naming.md	命名：製品名、用語の日本語と英語、JSON・Go・TypeScript・Vim script の名前
+		qsoku-usage.md	ビルド・テスト・lint の qsoku の名前と呼び方
+		srwr-usage.md	このリポジトリでの srwr の使い方（緩いモード）：look・edit・new、セッション、テープを閉じる
+		tape.md	テープ・範囲トークン・表示サーバーのプロトコルの互換性
+		testing.md	テスト方針と、サンドボックス・OS ごとの CI の落とし穴
+		vim.md	Vim クライアント（srwr-view.vim、Vim9 script）の決まりと落とし穴
+		working-with-human.md	人間への頼み方：小さなつまずき、OK／NG だけの確認、UIゲート
+	settings.json	Claude Code の許可・サンドボックス・フック（人間が管理する）
+	skills/	Claude Code のスキル
+		commit-with-tape/	スキル：srwr のテープを閉じてコミットする
+			SKILL.md	スキルの手順
+		mutation-check/	スキル：実装をわざと壊して、テストが気づくか確かめる
+			SKILL.md	スキルの手順
+			spec.txt	プロジェクトの仕様の約束を1つずつ壊す変異の一覧（仕様の言葉で書く。最初は空）
+			mutants/	変異を入れてテストを回す道具（独立した Go モジュール）
+				go.mod	モジュールの定義（このプロジェクトとは別）
+				main.go	構文の変異、または一覧の変異を1つずつ入れ、ファイルを元に戻す
+				main_test.go	道具のテスト
+.devcontainer/	開発用のコンテナ
+	devcontainer-lock.json	コンテナを作ったときの feature の版
+	devcontainer.json	コンテナの定義と VS Code の設定
+	postCreate.sh	道具（qsoku・mtqg・srwr・bcuz・crube・goreleaser など）を入れ、シェルとつなぐ
+.github/	GitHub の設定
+	workflows/	GitHub Actions のワークフロー
+		ci.yml	3つの OS の CI：Go、ほかの OS 向けの検査、拡張、Vim、最も古い Vim、race、Trivy、配布物
+		release.yml	タグで動くリリース。ci.yml を通してから、goreleaser の配布物を Release に添付して公開する
+.mtqg/	mtqg の作業記録：メモ・todo・質問・不具合・用語・決まり事
+	.gitattributes	journal.jsonl を merge=union でマージする
+	.gitignore	.local/ を git に入れない
+	SCHEMA.md	journal.jsonl のデータ形式
+	journal.jsonl	記録そのもの。1件1行の JSON（mtqg からだけ書く）
+	version	mtqg のデータ形式の版
+.srwr/	srwr：AI によるファイル編集のテープ（操作ごとに理由つき）
+	tapes/	閉じたテープ（コミットする）。srwr view で再生できる
+		| 作業のまとまりごとに1本のテープ（圧縮済みの *.tape.jsonl.gz）。
+		| テープは .crube/ignore で crube の対象から外してあり、説明は要らない。
+.vscode/	devcontainer.json に書けない VSCode の設定だけ
+	launch.json	開発中の拡張を F5 で起動する
+.gitattributes	改行（すべて LF）と、記録のファイルの merge=union
+.gitignore	git に入れないもの。ルート直下のドットで始まる名前は許可リスト方式
+.golangci.yaml	golangci-lint の設定
+.goreleaser.yaml	goreleaser の配布物の作り方：6つの機械向けの srwr の圧縮ファイル、checksums.txt、.vsix
+.mcp.json	Claude Code に mtqg・srwr と、crube（英語・日本語）の MCP サーバーをつなぐ設定
+.srwrignore	srwr がテープに記録しないファイル
+CLAUDE.md	このリポジトリでの Claude Code のルールと、読むべきルールファイルの案内
+LICENSE	MIT ライセンス
+README.md	利用者向けの入口：srwr とは何か、入れ方と使い方（英語）
+README_ja.md	README.md の日本語版
+cmd/	このモジュールのコマンド
+	srwr/	単一バイナリ srwr
+		main.go	引数を internal/cli に渡す。リリースのビルドが埋める版を持つ
+dev/	開発のうちうち（日本語）：段階、公開の手順、UIゲートの資料
+	README.md	dev/ に何があるか
+	publish.md	人間がする公開の手順：タグ、Release、Marketplace
+	roadmap.md	作り直しの段階 R0〜R15 と、それぞれの完了条件
+	review/	UIゲートで見せた資料。段階が終わったら zip にする
+		*.zip	1つの UIゲートのポイント・サンプル画像・ページ
+docs/	利用者と開発に加わる人向けの文書（正本）。英語が基準で、*_ja.md が日本語版
+	README.md	文書の案内
+	*_ja.md	同じ名前の文書の日本語版
+	design/	開発に加わる人向け：全体像、判断、トークン、制限
+		decisions.md	下した判断とその理由
+		limitations.md	制限・未定・追加の候補
+		overview.md	srwr の部品と、そのつながり
+		token.md	範囲トークンの形式
+		*_ja.md	同じ名前の文書の日本語版
+	examples/	実際に動かして取ったやり取り。internal/docs が本物と照合する
+		hook.md	Claude Code 自身の道具について srwr hook が記録するもの
+		look-edit.md	MCP の look と edit を、要求ごとに
+		protocol-session.md	表示サーバーのプロトコルの一回りのやり取り
+		workflow.md	init・作業・tapes・view・片付けまでの一回り
+		*_ja.md	同じ名前の文書の日本語版
+	images/	README の画像（デモと VSCode の絵は qsoku readme-media が作る）
+		banner.svg	バナー（手書き）
+		demo-vim_dark.svg	デモのセッションを Vim で再生する、動く画像
+		vscode_dark.svg	デモのセッションの1コマを VSCode で見た絵
+	reference/	仕様：各部品の約束
+		cli.md	srwr のコマンド、入れ方、記録しないファイル
+		mcp.md	MCP の道具 look・edit・new・session とエラー
+		protocol.md	表示サーバーとエディタの間のプロトコル
+		settings.md	srwr init が書く Claude Code の設定
+		tape.md	テープの形式
+		vim.md	Vim クライアントの画面とキー（確定）
+		vscode.md	VSCode 拡張の画面と振る舞い（確定）
+		*_ja.md	同じ名前の文書の日本語版
+extension/	VSCode 拡張 srwr-view（TypeScript、ランタイムの依存なし）
+	.vscodeignore	vsce が .vsix に入れないもの
+	LICENSE	拡張の MIT ライセンス
+	README.md	Marketplace に出る README（画像は PNG）
+	README_ja.md	拡張の README の日本語版（Marketplace には出ない）
+	package-lock.json	開発用の依存の固定（npm ci）
+	package.json	拡張の定義：コマンド、ビュー、設定 srwr.path
+	package.nls.json	package.json の英語の文言
+	package.nls.ja.json	package.json の日本語の文言
+	tsconfig.json	TypeScript の設定（strict。out/src と out/test）
+	media/	アイコンと README の画像
+		icon.png	Marketplace のアイコン
+		icon.svg	アイコンの元
+		srwr.svg	アクティビティバーのアイコン
+		readme/	拡張の README の PNG 画像（qsoku readme-media）
+			banner.png	バナー
+			replay.png	デモのセッションの再生画面
+	src/	拡張のコード
+		config.ts	ただ1つの設定 srwr.path
+		controls.ts	下のバー：戻る・進む・位置
+		extension.ts	起動、コマンド、テープ選び、表示する種類
+		lang.ts	英語、または VSCode が日本語なら日本語
+		lines.ts	範囲の上に差し込む理由の行
+		live.ts	ライブ：新しいコマを追いかける再生画面
+		present.ts	コマが見せるもの：理由の行、範囲、行番号
+		replay.ts	録画：仮想ドキュメントと、差分の左右2つのエディタ
+		server.ts	srwr view-server と話す（vscode を import しない）
+		sidebar.ts	サイドパネルの操作一覧
+		timeline.ts	サーバーから届くコマの列と、その上の小さな計算
+		times.ts	テープの UTC の時刻を、その機械の時間帯で見せる
+	test/	偽の vscode・偽のサーバー・本物の bin/srwr でのテスト
+		*.test.ts	テスト（node:test）
+		capture.ts	全コマの画面の中身を取る（基準と qsoku ui-check 用）
+		fakeserver.ts	渡されたコマから答える偽のサーバー
+		fakevscode.ts	画面に出るはずのものを記録する偽の vscode
+		harness.ts	偽の vscode の上で拡張を起動する
+		helpers.ts	golden を読む。テープの版 1 の名前を読み替える
+		setup.ts	require("vscode") で偽物を返す（node --require）
+		baseline/	拡張の承認した画面（了承なしに書き換えない）
+			README.md	基準とは何か、いつ承認したか
+			en/	英語の画面
+				*.json	1本のテープの全コマで拡張が見せたもの
+			ja/	日本語の画面
+				*.json	1本のテープの全コマで拡張が見せたもの
+		fixtures/	実物のテープと、それを読んだ答え（書き換えない）
+			*.tape.jsonl	実物のテープ
+			*.expected.json	同じ名前のテープの、最後のファイルの内容とコマの種類の並び
+			external-text.final.txt	external-text のテープのあとのファイル
+			ui-check/	UI の確認すべてで使う、固定テープ3本の作業場
+				*.go	固定テープが手を入れる小さな Go のプロジェクト
+				go.mod	これらをルートのモジュールから外す（消さない）
+				.srwr/	固定の作業場の srwr のディレクトリ
+					tapes/	固定テープ3本
+						*.tape.jsonl	固定テープ（why-basic・no-why・external）
+		golden/	各テープが出すべきコマの列（書き換えない）
+			README.md	各 golden が何を押さえるか
+			*.json	1つの場面のコマの列・files・contentAt・最後の差分
+internal/	srwr のパッケージ
+	cli/	サブコマンド：mcp・hook・view-server・view・init・tapes・trace
+		cli.go	サブコマンドの振り分けと版
+		init.go	srwr init
+		tapes.go	srwr tapes：一覧・path・new・prune・check
+		trace.go	srwr trace：差分を読み、その行を書いた操作を示す
+		view.go	srwr view：埋め込んだ Vim のスクリプトを書き出して Vim を起動する
+		width.go	端末での文字列の幅（全角は2桁）
+		*_test.go	テスト。ビルドした srwr を動かす通しのテストを含む
+	core/	look・edit・new の意味：範囲、行番号の補正、外部変更
+		content.go	中身で範囲を探す（expect、old と new）
+		core.go	Core 型と look・edit
+		correct.go	トークンの範囲を、行の今の場所へずらす
+		edits.go	edit の edits：複数の編集を、全部入るか全部入らないかで
+		errors.go	docs/reference/mcp.md のエラーコード
+		failure.go	失敗した呼び出しを、ファイルの中身を書かずにテープに記録する
+		hook.go	srwr hook が記録するものと、出す案内
+		looks.go	look の looks：複数のファイルを1回で
+		near.go	nearMatches と retry：空白だけ違う場所
+		new.go	new：ファイルを作る
+		observe.go	外部変更と新しいファイルに気づく
+		path.go	すべての入口が通る1つの検査：作業場の中か、記録しないファイルでないか
+		search.go	look の search。ファイルでもディレクトリでも
+		session.go	session の道具：題つきの新しいテープ
+		*_test.go	パッケージのテスト
+	docs/	docs/ を確かめるテスト：リンク、言語の対、例と本物の照合
+		*_test.go	文書のテスト
+		testdata/	例の題材
+			demo/	古い +09:00 の日本語のテープを持つ作業場
+				.srwr/	デモの srwr のディレクトリ
+					tapes/	デモのテープ
+						*.tape.jsonl	docs/examples/protocol-session_ja.md のテープ
+				cmd/	デモのプログラム
+					main.go	デモのテープが手を入れるファイル
+			demo-en/	UTC の英語のテープを持つ作業場
+				.srwr/	デモの srwr のディレクトリ
+					tapes/	デモのテープ
+						*.tape.jsonl	docs/examples/protocol-session.md のテープ
+				cmd/	デモのプログラム
+					main.go	デモのテープが手を入れるファイル
+	gittest/	テスト専用：テストが動かす git を開発者の設定から切り離す
+		gittest.go	Isolate が HOME と GIT_CONFIG_GLOBAL を一時ディレクトリに向ける
+	hook/	srwr hook：Claude Code の hook の JSON を読み、core.HookRequest を作る
+		bash.go	どの Bash のコマンドが読むだけか、何のファイルを読むか
+		grep.go	Grep が見せたファイルと行
+		hook.go	hook の入力を読み、出す案内を決める
+		*_test.go	パッケージのテスト
+	ignore/	テープに記録しないファイル（.srwrignore と既定の対象）
+		ignore.go	.gitignore の書き方の照合
+		*_test.go	パッケージのテスト
+	jsonrpc/	改行区切りの JSON-RPC 2.0。mcp と viewserver が共有する
+		jsonrpc.go	要求を読み、応答と通知を書く
+		*_test.go	パッケージのテスト
+	lang/	srwr が人に見せる文言の言語（SRWR_LANG）
+		lang.go	英語と日本語を並べて書く Pick・Sprintf
+		*_test.go	パッケージのテスト
+	mcp/	MCP サーバー：initialize・ping・tools/list・tools/call
+		mcp.go	道具の入力を読んで core を呼ぶ
+		*_test.go	パッケージのテスト
+	session/	今のテープ、ロック、テープの読み足し
+		key.go	トークンの鍵（.srwr/key）を1回だけ作る
+		lock_unix.go	Unix のファイルロック（flock）
+		lock_windows.go	Windows のファイルロック（LockFileEx）
+		session.go	今のテープ、30分空いたら新しいセッション、テープを閉じる
+		*_test.go	パッケージのテスト。複数のプロセスが同時に動く場面を含む
+	setup/	srwr init：.mcp.json・.claude/settings.json・.gitignore
+		ordered.go	キーの順と数値の書式を保つ JSON
+		setup.go	変更を全部計画してから、バックアップつきで書く
+		*_test.go	パッケージのテスト
+	tape/	テープの読み書き
+		diff.go	外部変更の差分の塊
+		event.go	イベントの型
+		ids.go	テープ ID とファイル名
+		lines.go	mcp.md の数え方で文字列を行に分ける
+		read.go	テープを読む。版 1 のテープも
+		state.go	テープが知っている、ファイルごとの内容
+		store.go	生のテープと gzip のテープ：探す、開く、圧縮する
+		write.go	イベントの行を書く
+		*_test.go	テスト。extension/test/fixtures と照合する
+	timeline/	テープを、見る側のためのコマの列にする
+		filter.go	クライアントが求めたコマの種類
+		timeline.go	コマの列、各コマの状態、差分のコマ、最後の差分
+		*_test.go	テスト。extension/test/golden と照合する
+	token/	範囲トークン（sel_...）
+		token.go	符号化と復号：varint、Crockford Base32、HMAC
+		*_test.go	パッケージのテスト
+	tools/	MCP の道具の定義：名前、説明、入力スキーマ
+		tools.go	AI が読む look・edit・new・session
+		*_test.go	パッケージのテスト
+	trace/	srwr trace：差分が足した行を書いた操作
+		diff.go	unified diff を読む
+		slice.go	--as-tape：ほかのテープから切り出したテープ
+		trace.go	足した行を、edit と new が書いたものと突き合わせる
+		*_test.go	パッケージのテスト
+	uicheck/	画面を比べられる形にする：本物の Vim、承認した画像、拡張
+		animate.go	画面を順に見せる1枚の動く SVG
+		decisions.go	R5 のゲートで決めた画面を、比べるために描き直す
+		frame.go	基準に持つ、画面の縮めた形
+		grid.go	セルの格子としての画面
+		render.go	基準のコマから格子を作る
+		shots.go	拡張が見せたものを基準と比べる
+		svg.go	画面を SVG として読み、描く
+		vimcap.go	疑似端末で本物の Vim の画面を取る
+		*_test.go	パッケージのテスト
+	vcs/	作業場の git の状態（テープの header と srwr tapes check のため）
+		vcs.go	HEAD、未コミットの有無、新しいファイル、探すファイル
+		*_test.go	パッケージのテスト
+	viewserver/	表示サーバー（srwr view-server）：テープを読み、エディタに答える
+		files.go	最後の差分のために今のファイルを読む（作業場の中だけ）
+		live.go	伸びるテープを見張り、新しいコマを送る
+		server.go	プロトコルのメソッド
+		tapes.go	テープの一覧
+		*_test.go	パッケージのテスト
+go.mod	Go モジュールと依存
+qsokufile	ビルド・テスト・lint の名前つきコマンド（qsoku）
+trivy.yaml	Trivy の設定：何を脆弱性・ライセンスの失敗とみなすか
+tools/	プロジェクトを作るための道具（実行ファイルには組み込まれない）
+	vim-oldest.sh	Vim 9.0.0784 をビルドし、それで Vim のテストを動かす（qsoku vim-oldest）
+	dist/	.vsix：qsoku vsix（goreleaser が呼ぶ）と qsoku publish-check
+		main.go	2つのコマンド：vsix と publish-check
+		remote.go	上げる前に、README の画像とバッジを全部取りに行く
+		vsix.go	vsce で .vsix を作り、中身を検査する
+		*_test.go	パッケージのテスト
+	licenses/	配布物に入れる依存のライセンス文を集める
+		| go run ./tools/licenses <dir> <main パッケージ>。goreleaser がビルドの前に動かす。ライセンスのファイルが無いモジュールがあれば失敗する。
+		main.go	実行ファイルに組み込まれるモジュールを go list -deps で求め、ライセンス文を写す
+		main_test.go	srwr の一覧を確かめる
+	ui-check/	人間の確認の自動化：qsoku ui-check、ui-open、*-try の確認、readme-media
+		accept.go	qsoku ui-accept：OK／NG を記録し、基準を更新する
+		checks.go	機械で決める確認の項目と、それぞれのテスト
+		disttry.go	qsoku dist-try：配布物の圧縮ファイルと .vsix を使ってみる
+		hooktry.go	qsoku hook-try：作業場で Claude Code に作業させ、テープを検査する
+		inittry.go	qsoku init-try：自前の設定がある作業場で srwr init
+		longwhy.go	長い理由のテープ。本物の srwr mcp で作る
+		main.go	ui-check のサブコマンド
+		maketape.go	本物の srwr mcp を動かしてテープを作る
+		openvim.go	qsoku ui-open vim：固定テープを Vim で開く
+		page.go	人間が見る確認ページ
+		readme.go	qsoku readme-media：README の画像
+		readmepage.go	README の画像を見るページ
+		readmepng.go	拡張の README の PNG 画像
+		readmevscode.go	README の VSCode の絵
+		run.go	qsoku ui-check と ui-live：取得、比較、ページ
+		sessiontry.go	qsoku session-try：題つきのセッション
+		tracetry.go	qsoku trace-try：本物のコミットで srwr trace --as-tape
+		workspace.go	固定の作業場を一時ディレクトリに作り、VSCode を開く
+		*_test.go	パッケージのテスト
+	usage/	qsoku usage：Claude Code の会話で、AI が srwr の道具をどう使ったか
+		count.go	使った形・失敗・代わりに使ったほかの道具を数える
+		main.go	会話のファイルを読む
+		page.go	ページと result.json
+		*_test.go	パッケージのテスト
+		testdata/	テスト用の会話
+			sample.jsonl	短い Claude Code の会話ファイル
+vim/	srwr-view.vim。Vim クライアント（Vim9 script）。srwr に埋め込む
+	embed.go	plugin/ と autoload/ を srwr に埋め込む（go:embed）
+	screen_test.go	本物の Vim の画面を取り、基準と比べる
+	autoload/	必要になったときに読み込まれるコード
+		srwr/	クライアントの部品
+			buf.vim	バッファと行
+			config.vim	ただ1つの設定：srwr の場所
+			diff.vim	差分のコマ：2つの窓、変わった行に色
+			hl.vim	ハイライトグループ
+			lang.vim	英語、または SRWR_LANG=ja で日本語
+			list.vim	テープの一覧
+			live.vim	ライブの見張りを始める・止める
+			paint.vim	コマの行を塗る
+			replay.vim	再生の画面
+			server.vim	表示サーバーと話す、ただ1つの部品
+			sidebar.vim	操作一覧
+			timeline.vim	開いたテープのコマの列
+			ui.vim	すべてのコマンドの入口
+	plugin/	起動時に読み込まれる
+		srwr.vim	Vim に足りない機能が無いか確かめてから、コマンドを定義する
+	test/	画面なしの Vim でのテスト（qsoku vim-test）
+		helpers.vim	テストが共有する部品
+		test_*.vim	1本ずつのテストのスクリプト
+		baseline/	Vim の承認した画面と、色の実測値
+			README.md	基準とは何か、いつ承認したか
+			hl_*.json	ハイライトグループの色（dark と light）
+			en/	英語の画面
+				*.json	1つの場面の承認した画面（dark か light）
+			ja/	日本語の画面（承認した画像から作った）
+				*.json	1つの場面の承認した画面（dark か light）
+		screen/	本物の Vim の画面を取る
+			capture.vim	外側の Vim。端末の中で srwr-view.vim を動かし、コマごとに記録する

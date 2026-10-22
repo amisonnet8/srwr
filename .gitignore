@@ -28,10 +28,13 @@
 !/.gitattributes
 !/.srwrignore
 !/.golangci.yaml
+!/.goreleaser.yaml
 !/.mcp.json
 !/.devcontainer/
 !/.github/
 !/.mtqg/
+# The descriptions of this repository's files (crube, .claude/rules/crube-usage.md).
+!/.crube/
 # bcuz's record of the commands run (.claude/rules/bcuz-usage.md). Shared, like
 # .mtqg/; .gitattributes merges it with merge=union.
 !/.bcuz/

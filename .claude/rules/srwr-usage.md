@@ -19,7 +19,7 @@
 |---|---|
 | `mcp__srwr__session` | **作業のまとまりの最初に呼ぶ**。題（`title`）と理由（`why`）つきで新しいテープを始める。ファイルには触れない（下の「セッション」） |
 | `mcp__srwr__look` | ファイルの範囲を見る。`search`で探す（ディレクトリも可）。`looks`で複数ファイルを1回で見る。範囲トークン（`sel_…`）が返る |
-| `mcp__srwr__edit` | 範囲を書き換える。`selection`（`look`のトークン）、または`file`＋`expect`、行の一部は`old`＋`new`。同じ変更を複数箇所に入れるときは`edits`（`why`は1つ、全部入るか全部入らないか） |
+| `mcp__srwr__edit` | 範囲を書き換える。`selection`（`look`のトークン）、または`file`＋`expect`、行の一部は`old`＋`new`。同じ変更を複数箇所に入れるときは`edits`（`why`は1つ、全部入るか全部入らないか）。**`edits`では`file`を各項目の中に書く**（`{"why": "…", "edits": [{"file": "a.go", "old": "x", "new": "y"}, …]}`。`edits`の外に書くと断られる） |
 | `mcp__srwr__new` | まだ無いファイルを、内容つきで作る |
 
 - **`why`は必須**（空白だけも不可）。「何をするか」でなく**「なぜそうするか」**を1〜2文で書く。人間が再生で読む
@@ -48,7 +48,11 @@
 
 ### コミットの前に、テープを閉じる
 
+**コミットするときは、Skill`commit-with-tape`（`.claude/skills/commit-with-tape/SKILL.md`）の手順で行う。** 下はその要点。
+
 ```
+crube status --require all                  # 説明の漏れが無いか（.claude/rules/crube-usage.md）
+env CRUBE_LANG=ja crube status --require all  # 日本語も
 srwr tapes check   # テープに無いのに変わったファイルが無いか（閉じる前に）
 srwr tapes new     # 今のテープを閉じて、その場で圧縮する
 git add … && git commit …
@@ -70,6 +74,7 @@ git add … && git commit …
 
 - **`Edit`・`Write`は、srwrの道具が使えないときだけ使う**（上の「緩いモードでの編集」）
 - **Bashでファイルを書き換えない**（`sed -i`・リダイレクト・`tee`・`cat > file`など）。止められないが、理由のない`external`としてテープに残り、再生が読みにくくなる。ジェネレーターや整形ツール（`go build`・`qsoku fmt`など）が書くものは、そのままでよい
+- **srwrにはファイルを消す道具が無い。** 消すときは`bcuz "理由" git rm <ファイル>`で消す（理由は`bcuz`の記録に残る）。`srwr tapes check`には「テープにない`D`」として出るが、それでよい。コミットメッセージにも消した理由を書く
 - **`.mtqg/`は`mtqg`のコマンド経由だけ**（`.claude/rules/mtqg-usage.md`）。`.srwrignore`で記録から外してあるので、`look`・`edit`は`ignored_file`で断られる
 - **`.claude/settings.json`は人間が管理する。** 変更案は差分で示し、`edit`で書き換えない。`.mcp.json`・`.devcontainer/`も、人間の依頼があったときだけ変える
 - 人間が事情を聞くときは、テープのIDで答えられる（`srwr tapes`で一覧、`srwr view`で再生）

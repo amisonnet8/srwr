@@ -1,0 +1,65 @@
+# What srwr hands to its users (.claude/rules/distribution.md): the archives of
+# the srwr binary and the .vsix of srwr-view. On a tag,
+# .github/workflows/release.yml runs this, which attaches them to a draft
+# Release, and then publishes the Release. Locally: qsoku snapshot.
+version: 2
+
+project_name: srwr
+
+before:
+  hooks:
+    # The license texts of what is built into srwr, put into every archive.
+    - go run ./tools/licenses bin/licenses ./cmd/srwr
+    # The .vsix of srwr-view, into bin/vsix/ (attached by extra_files below).
+    - qsoku vsix
+
+builds:
+  - main: ./cmd/srwr
+    binary: srwr
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    flags:
+      - -trimpath
+    # The tag as it is (v0.1.0), the same as go install shows.
+    ldflags:
+      - -s -w -X main.version={{ .Tag }}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+archives:
+  - formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - LICENSE
+      - README.md
+      - README_ja.md
+      # The directory itself, not a glob: with a glob that matches one file
+      # only (a project with no dependencies has just go/LICENSE), goreleaser
+      # drops the parent directories and the archive gets licenses/LICENSE.
+      - src: bin/licenses
+        dst: licenses
+
+checksum:
+  name_template: checksums.txt
+  extra_files:
+    - glob: bin/vsix/*.vsix
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-snapshot"
+
+changelog:
+  sort: asc
+
+# A draft, which release.yml publishes once everything is attached. The draft
+# left by a failed run is replaced by the next run for the tag.
+release:
+  draft: true
+  replace_existing_draft: true
+  # The .vsix goes on the same Release as the archives. The Marketplace gets
+  # it by hand from there (dev/publish.md).
+  extra_files:
+    - glob: bin/vsix/*.vsix

@@ -1,0 +1,346 @@
+.bcuz/	Record of the commands run through bcuz (committed)
+	history.jsonl	One JSON line per command: when, why, what and the exit code
+.claude/	Claude Code settings shared in the repository
+	hooks/	Hooks that Claude Code runs around its tools
+		build.sh	After an edit of Go or extension sources, runs qsoku build or qsoku ext-build and reports a failure
+		crube-untracked.sh	After srwr new creates a file, tells Claude which of its paths have no description, per language
+		require-bcuz.sh	PreToolUse hook that refuses Bash commands not run through bcuz
+		require-bcuz.test.sh	Table of the commands require-bcuz.sh allows and refuses (qsoku hook)
+	rules/	Rules for working in this repository (Japanese); CLAUDE.md says when to read each
+		bcuz-usage.md	How to run Bash commands through bcuz, and keeping secrets out of them
+		crube-usage.md	Using crube: MCP and the CLI, finding places, keeping descriptions in both languages
+		datetime.md	Dates and times: keep UTC, show in the local time zone
+		directory-structure.md	Where each file goes, and the layout of the repository
+		distribution.md	How srwr and the extension are released: goreleaser, versions, the .vsix, the Marketplace
+		documentation.md	How the documents are written: roles, languages, when spec and code differ
+		extension.md	Rules and pitfalls of the VSCode extension (srwr-view)
+		go-code.md	Rules of the Go code particular to srwr: no dependencies, write order, locks, ignored files
+		mtqg-usage.md	How to record memos, todos, questions, bugs and rules with mtqg
+		naming.md	Names: the product, the terms in Japanese and English, JSON, Go, TypeScript and Vim script
+		qsoku-usage.md	The qsoku names for build, test and lint, and how to call them
+		srwr-usage.md	Using srwr on this repository in the lenient mode: look, edit, new, sessions, closing tapes
+		tape.md	Compatibility of the tape, the selection token and the display server protocol
+		testing.md	Test policy, and pitfalls of the sandbox and of CI on each OS
+		vim.md	Rules and pitfalls of the Vim client (srwr-view.vim, Vim9 script)
+		working-with-human.md	How to ask people: small blocks, checks that need only OK or NG, the UI gate
+	settings.json	Permissions, sandbox and hooks of Claude Code (managed by people)
+	skills/	Skills of Claude Code
+		commit-with-tape/	Skill: close the srwr tape and commit
+			SKILL.md	The steps of the skill
+		mutation-check/	Skill: break the code on purpose to see that the tests notice
+			SKILL.md	The steps of the skill
+			spec.txt	Mutations that break the promises of the project one by one, in the words of the spec (empty at first)
+			mutants/	The tool that makes the mutations and runs the tests (a Go module of its own)
+				go.mod	Module definition, apart from this project
+				main.go	Makes syntactic mutations, or those of a list, one at a time, and puts the files back
+				main_test.go	Tests of the tool
+.devcontainer/	Development container
+	devcontainer-lock.json	Versions of the features the container was built with
+	devcontainer.json	Container definition and VS Code settings
+	postCreate.sh	Installs the tools (qsoku, mtqg, srwr, bcuz, crube, goreleaser...) and wires the shells
+.github/	GitHub settings
+	workflows/	GitHub Actions workflows
+		ci.yml	CI on three OSes: Go, cross builds, the extension, Vim, the oldest Vim, race, Trivy, the release archives
+		release.yml	Release on a tag: runs ci.yml, attaches goreleaser's archives to a Release and publishes it
+.mtqg/	Process record kept with mtqg: memos, todos, questions, bugs, glossary and rules
+	.gitattributes	Merges journal.jsonl with merge=union
+	.gitignore	Keeps .local/ out of git
+	SCHEMA.md	Data format of journal.jsonl
+	journal.jsonl	The records, one JSON line each (written only through mtqg)
+	version	Version of the mtqg data format
+.srwr/	srwr: tapes of the file edits made by AI, each with its reason
+	tapes/	Closed tapes (committed); replay them with srwr view
+		| One compressed tape (*.tape.jsonl.gz) for each unit of work.
+		| The tapes are left out by .crube/ignore, so that they need no description.
+.vscode/	Only what VSCode cannot take from devcontainer.json
+	launch.json	Starts the extension with F5 for development
+.gitattributes	Line endings (LF everywhere) and merge=union for the record files
+.gitignore	Files kept out of git; dot entries in the root are an allowlist
+.golangci.yaml	golangci-lint settings
+.goreleaser.yaml	How goreleaser builds the release: archives of srwr for six machines, checksums.txt and the .vsix
+.mcp.json	MCP servers for Claude Code: mtqg, srwr, and crube in English and Japanese
+.srwrignore	Files srwr does not put on its tapes
+CLAUDE.md	Rules for Claude Code in this repository, and the rule files to read
+LICENSE	MIT license
+README.md	The entry for users: what srwr is, how to install and use it (English)
+README_ja.md	The Japanese version of README.md
+cmd/	The commands of this module
+	srwr/	The single binary srwr
+		main.go	Hands the arguments to internal/cli; holds the version a release build stamps
+dev/	Development notes (Japanese): the stages, publishing, the material of the UI gates
+	README.md	What dev/ holds
+	publish.md	How a person releases: the tag, the Release, the Marketplace
+	roadmap.md	The stages R0 to R15 of the rebuild, and what each must do
+	review/	The material shown at each UI gate, zipped once the stage is done
+		*.zip	The points, the sample pictures and the page of one UI gate
+docs/	Documents for users and contributors (the source of truth); English, with *_ja.md in Japanese
+	README.md	The map of the documents
+	*_ja.md	The Japanese version of the document of the same name
+	design/	For contributors: the overview, the decisions, the token, the limitations
+		decisions.md	The decisions taken and why
+		limitations.md	Limitations, open points and candidates for later
+		overview.md	What srwr is made of and how the parts fit
+		token.md	The format of the selection token
+		*_ja.md	The Japanese version of the document of the same name
+	examples/	Exchanges taken from real runs; internal/docs checks them against the real thing
+		hook.md	What srwr hook records for Claude Code's own tools
+		look-edit.md	look and edit over MCP, request by request
+		protocol-session.md	A session of the display server protocol
+		workflow.md	A whole round: init, work, tapes, view and cleaning up
+		*_ja.md	The Japanese version of the document of the same name
+	images/	The pictures of the README (the demo and the VSCode picture are made by qsoku readme-media)
+		banner.svg	The banner (drawn by hand)
+		demo-vim_dark.svg	An animated Vim replay of a demo session
+		vscode_dark.svg	The VSCode view of a frame of the demo session
+	reference/	The specification: the promises of each part
+		cli.md	The commands of srwr, installing, files not recorded
+		mcp.md	The MCP tools look, edit, new and session, and their errors
+		protocol.md	The protocol between the display server and the editors
+		settings.md	The settings of Claude Code that srwr init writes
+		tape.md	The tape format
+		vim.md	The screens and keys of the Vim client (fixed)
+		vscode.md	The screens and behavior of the VSCode extension (fixed)
+		*_ja.md	The Japanese version of the document of the same name
+extension/	srwr-view, the VSCode extension (TypeScript, no runtime dependencies)
+	.vscodeignore	What vsce leaves out of the .vsix
+	LICENSE	MIT license of the extension
+	README.md	The README shown on the Marketplace (pictures are PNG)
+	README_ja.md	The Japanese version of the extension's README (not on the Marketplace)
+	package-lock.json	Locked dev dependencies (npm ci)
+	package.json	The extension manifest: commands, views, the setting srwr.path
+	package.nls.json	English texts of package.json
+	package.nls.ja.json	Japanese texts of package.json
+	tsconfig.json	TypeScript settings (strict; out/src and out/test)
+	media/	Icons and the pictures of the README
+		icon.png	The icon on the Marketplace
+		icon.svg	The source of the icon
+		srwr.svg	The icon of the activity bar
+		readme/	The PNG pictures of the extension's README (qsoku readme-media)
+			banner.png	The banner
+			replay.png	The replay view of the demo session
+	src/	The extension's code
+		config.ts	The only setting, srwr.path
+		controls.ts	The status bar: back, forward and the position
+		extension.ts	Activation, the commands, the tape picker, the kinds shown
+		lang.ts	English, or Japanese when VSCode is in Japanese
+		lines.ts	The why rows put above a range
+		live.ts	Live: the replay screen that follows new frames
+		present.ts	What a frame shows: the why row, the range, the line numbers
+		replay.ts	Replay: the virtual document and the two editors of a diff
+		server.ts	Talks to srwr view-server (no vscode import)
+		sidebar.ts	The operation list in the side panel
+		timeline.ts	The frames from the server and small calculations on them
+		times.ts	Shows the UTC times of tapes in the local time zone
+	test/	Tests on a fake vscode, a fake server and the real bin/srwr
+		*.test.ts	Tests (node:test)
+		capture.ts	Takes what the screen shows for every frame, for the baselines and qsoku ui-check
+		fakeserver.ts	A server that answers from given frames
+		fakevscode.ts	A fake vscode module that records what would be on the screen
+		harness.ts	Starts the extension on the fake vscode
+		helpers.ts	Reads the golden data, mapping the names of tape version 1
+		setup.ts	Makes require("vscode") give the fake (node --require)
+		baseline/	The approved screens of the extension (do not rewrite without approval)
+			README.md	What the baselines are and when they were approved
+			en/	The English screens
+				*.json	What the extension showed for every frame of one tape
+			ja/	The Japanese screens
+				*.json	What the extension showed for every frame of one tape
+		fixtures/	Real tapes and what reading them must give (never rewritten)
+			*.tape.jsonl	A real tape
+			*.expected.json	The final file contents and the kinds of frames of the tape of the same name
+			external-text.final.txt	The file as it is after the external-text tape
+			ui-check/	The workspace of the three fixed tapes used by every UI check
+				*.go	The small Go project the fixed tapes work on
+				go.mod	Keeps these files out of the root module (do not delete)
+				.srwr/	The srwr directory of the fixed workspace
+					tapes/	The three fixed tapes
+						*.tape.jsonl	A fixed tape (why-basic, no-why, external)
+		golden/	The frames each tape must give (never rewritten)
+			README.md	What each golden file covers
+			*.json	The frames, files, contentAt and final diff of one case
+internal/	The packages of srwr
+	cli/	The subcommands: mcp, hook, view-server, view, init, tapes, trace
+		cli.go	Dispatches the subcommands; the version
+		init.go	srwr init
+		tapes.go	srwr tapes: list, path, new, prune, check
+		trace.go	srwr trace: reads a diff and names the operations behind its lines
+		view.go	srwr view: writes out the embedded Vim scripts and starts Vim
+		width.go	The width of text on a terminal (wide characters take two cells)
+		*_test.go	Tests, including end-to-end runs of the built srwr
+	core/	What look, edit and new mean: ranges, line correction, external changes
+		content.go	Finding a range by its content (expect, old and new)
+		core.go	The Core type and look and edit
+		correct.go	Moves a token's range to where its lines are now
+		edits.go	edit with edits: several edits, all or none
+		errors.go	The error codes of docs/reference/mcp.md
+		failure.go	Records a failed call on the tape, without the file's contents
+		hook.go	What srwr hook records, and the advice it gives
+		looks.go	look with looks: several files at once
+		near.go	nearMatches and retry: places that differ only in spaces
+		new.go	new: creates a file
+		observe.go	Notices external changes and new files
+		path.go	The one check every entrance passes: inside the workspace, not ignored
+		search.go	look with search, in a file or a directory
+		session.go	The session tool: a new tape with a title
+		*_test.go	Tests of the package
+	docs/	Tests that check docs/: links, language pairs, examples against real runs
+		*_test.go	Tests of the documents
+		testdata/	The material of the examples
+			demo/	A workspace with a Japanese tape in the old +09:00 form
+				.srwr/	srwr directory of the demo
+					tapes/	The demo tape
+						*.tape.jsonl	The tape of docs/examples/protocol-session_ja.md
+				cmd/	The demo program
+					main.go	The file the demo tape works on
+			demo-en/	A workspace with an English tape in UTC
+				.srwr/	srwr directory of the demo
+					tapes/	The demo tape
+						*.tape.jsonl	The tape of docs/examples/protocol-session.md
+				cmd/	The demo program
+					main.go	The file the demo tape works on
+	gittest/	For tests only: keeps the git they run away from the developer's settings
+		gittest.go	Isolate points HOME and GIT_CONFIG_GLOBAL to a temporary directory
+	hook/	srwr hook: reads the hook JSON of Claude Code and makes a core.HookRequest
+		bash.go	Which Bash commands only read files, and which files
+		grep.go	The files and lines a Grep showed
+		hook.go	Reads the hook input and the advice to print
+		*_test.go	Tests of the package
+	ignore/	Files never put on a tape (.srwrignore and the defaults)
+		ignore.go	The matcher, in the .gitignore syntax
+		*_test.go	Tests of the package
+	jsonrpc/	Newline-delimited JSON-RPC 2.0, shared by mcp and viewserver
+		jsonrpc.go	Reads requests and writes responses and notifications
+		*_test.go	Tests of the package
+	lang/	The language of what srwr shows to a person (SRWR_LANG)
+		lang.go	Pick and Sprintf with English and Japanese side by side
+		*_test.go	Tests of the package
+	mcp/	The MCP server: initialize, ping, tools/list, tools/call
+		mcp.go	Reads the tool inputs and calls core
+		*_test.go	Tests of the package
+	session/	The current tape, the lock and reading the tape on
+		key.go	The key of the tokens (.srwr/key), made once
+		lock_unix.go	The file lock on Unix (flock)
+		lock_windows.go	The file lock on Windows (LockFileEx)
+		session.go	Which tape is current, new sessions after 30 minutes, closing tapes
+		*_test.go	Tests of the package, including several processes at once
+	setup/	srwr init: .mcp.json, .claude/settings.json and .gitignore
+		ordered.go	JSON that keeps the order of keys and the form of numbers
+		setup.go	Plans every change, then writes it, with backups
+		*_test.go	Tests of the package
+	tape/	Reading and writing tapes
+		diff.go	Hunks of an external change
+		event.go	The event types
+		ids.go	Tape IDs and file names
+		lines.go	Splitting text into lines the way mcp.md counts them
+		read.go	Parsing a tape, including tapes of version 1
+		state.go	What a tape knows of each file
+		store.go	Raw and gzip tapes: finding, opening, compressing
+		write.go	Writing an event line
+		*_test.go	Tests, against extension/test/fixtures
+	timeline/	A tape turned into frames for the viewers
+		filter.go	The kinds of frames a client asked for
+		timeline.go	Frames, the state of each, diff frames, the final diff
+		*_test.go	Tests, against extension/test/golden
+	token/	Selection tokens (sel_...)
+		token.go	Encoding and decoding: varints, Crockford Base32, HMAC
+		*_test.go	Tests of the package
+	tools/	The MCP tool definitions: names, descriptions, input schemas
+		tools.go	look, edit, new and session as the AI reads them
+		*_test.go	Tests of the package
+	trace/	srwr trace: the operations behind the lines a diff adds
+		diff.go	Reads a unified diff
+		slice.go	--as-tape: a tape cut out of other tapes
+		trace.go	Matches added lines with what edit and new wrote
+		*_test.go	Tests of the package
+	uicheck/	Screens made comparable: a real Vim, the approved images, the extension
+		animate.go	Steps through screens as one animated SVG
+		decisions.go	Screens the R5 gate decided on, redrawn for comparison
+		frame.go	The reduced form of a screen kept in the baselines
+		grid.go	A screen as a grid of cells
+		render.go	A grid from a baseline frame
+		shots.go	Compares what the extension showed with its baseline
+		svg.go	Reads and draws screens as SVG
+		vimcap.go	Takes the screens of a real Vim in a pseudo terminal
+		*_test.go	Tests of the package
+	vcs/	The git state of a workspace, for tape headers and srwr tapes check
+		vcs.go	HEAD, dirty, new files, the files to search
+		*_test.go	Tests of the package
+	viewserver/	The display server (srwr view-server): reads tapes, answers editors
+		files.go	Reads the current file for the final diff, only inside the workspace
+		live.go	Watches a growing tape and sends new frames
+		server.go	The methods of the protocol
+		tapes.go	The list of tapes
+		*_test.go	Tests of the package
+go.mod	Go module and its dependencies
+qsokufile	Named commands for build, test and lint (qsoku)
+trivy.yaml	Trivy settings: what counts as a vulnerability or license failure
+tools/	Tools for building the project (not built into its command)
+	vim-oldest.sh	Builds Vim 9.0.0784 and runs the Vim tests with it (qsoku vim-oldest)
+	dist/	The .vsix: qsoku vsix (run by goreleaser) and qsoku publish-check
+		main.go	The two commands: vsix and publish-check
+		remote.go	Fetches every picture and badge of the READMEs before an upload
+		vsix.go	Packs the .vsix with vsce and checks its contents
+		*_test.go	Tests of the package
+	licenses/	Gathers the license texts of the dependencies for the release archives
+		| go run ./tools/licenses <dir> <main package>; goreleaser runs it before building. Fails if a module has no license file.
+		main.go	Finds the modules linked into the command with go list -deps and copies their licenses
+		main_test.go	Checks the list for srwr
+	ui-check/	Automates what a person checks: qsoku ui-check, ui-open, the *-try checks, readme-media
+		accept.go	qsoku ui-accept: records OK or NG and updates the baselines
+		checks.go	The checks decided by machine, and the tests behind each
+		disttry.go	qsoku dist-try: puts the release archive and the .vsix to use
+		hooktry.go	qsoku hook-try: Claude Code works in a workspace and the tape is checked
+		inittry.go	qsoku init-try: srwr init on a workspace with its own settings
+		longwhy.go	The tape with a long why, made with the real srwr mcp
+		main.go	The subcommands of ui-check
+		maketape.go	Makes tapes by driving the real srwr mcp
+		openvim.go	qsoku ui-open vim: opens a fixed tape in Vim
+		page.go	The page a person looks at
+		readme.go	qsoku readme-media: the pictures of the READMEs
+		readmepage.go	The page to look at the README pictures
+		readmepng.go	The PNG pictures of the extension's README
+		readmevscode.go	The VSCode picture of the README
+		run.go	qsoku ui-check and ui-live: capture, compare, the page
+		sessiontry.go	qsoku session-try: sessions with titles
+		tracetry.go	qsoku trace-try: srwr trace --as-tape on a real commit
+		workspace.go	Makes the fixed workspace in a temporary directory, and opens VSCode
+		*_test.go	Tests of the package
+	usage/	qsoku usage: how the AI used the srwr tools in Claude Code conversations
+		count.go	Counts the forms used, the failures and the other tools used instead
+		main.go	Reads the conversation files
+		page.go	The page and result.json
+		*_test.go	Tests of the package
+		testdata/	A conversation for the tests
+			sample.jsonl	A short Claude Code conversation file
+vim/	srwr-view.vim, the Vim client (Vim9 script), embedded in srwr
+	embed.go	Embeds plugin/ and autoload/ in srwr (go:embed)
+	screen_test.go	Takes the screens of a real Vim and compares them with the baselines
+	autoload/	The code, loaded on demand
+		srwr/	The parts of the client
+			buf.vim	Buffers and lines
+			config.vim	The only setting: where srwr is
+			diff.vim	Diff frames: two windows, changed lines colored
+			hl.vim	The highlight groups
+			lang.vim	English, or Japanese with SRWR_LANG=ja
+			list.vim	The list of tapes
+			live.vim	Starts and stops live watching
+			paint.vim	Paints rows of the frame
+			replay.vim	The replay screen
+			server.vim	The only part that talks to the display server
+			sidebar.vim	The operation list
+			timeline.vim	The frames of an opened tape
+			ui.vim	The entry of every command
+	plugin/	Loaded at startup
+		srwr.vim	The commands, after checking the Vim has what srwr needs
+	test/	Tests in a headless Vim (qsoku vim-test)
+		helpers.vim	Shared by the tests
+		test_*.vim	One test script each
+		baseline/	The approved screens of Vim and the measured colors
+			README.md	What the baselines are and when they were approved
+			hl_*.json	The colors of the highlight groups, dark and light
+			en/	The English screens
+				*.json	One approved screen of a scene, dark or light
+			ja/	The Japanese screens (made from the approved images)
+				*.json	One approved screen of a scene, dark or light
+		screen/	Taking screens of a real Vim
+			capture.vim	The outer Vim that runs srwr-view.vim in a terminal and records each frame

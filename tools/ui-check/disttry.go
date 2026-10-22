@@ -19,7 +19,8 @@ import (
 )
 
 // dist-try is the human check of R13 (`qsoku dist-try`): what is handed to the users, and nothing else, is put to use. The srwr
-// of this machine is taken out of its archive in dist/ (not bin/srwr) and the .vsix of dist/ is installed into VSCode, which
+// of this machine is taken out of its archive in dist/ (made by goreleaser, qsoku snapshot; not bin/srwr) and the .vsix of
+// bin/vsix/ (made by goreleaser's before hook) is installed into VSCode, which
 // opens a fixed tape through the setting srwr.path; then Vim opens the same tape with that srwr. The checks that a machine can do
 // are marked on the page; what a person has to see is written there.
 
@@ -31,7 +32,7 @@ func distArchive(dist string) (string, error) {
 	}
 	matches, err := filepath.Glob(filepath.Join(dist, "srwr_*_"+runtime.GOOS+"_"+runtime.GOARCH+ext))
 	if err != nil || len(matches) != 1 {
-		return "", fmt.Errorf("no archive for %s/%s in %s (found %v); run qsoku dist first", runtime.GOOS, runtime.GOARCH, dist, matches)
+		return "", fmt.Errorf("no archive for %s/%s in %s (found %v); run qsoku snapshot first", runtime.GOOS, runtime.GOARCH, dist, matches)
 	}
 	return matches[0], nil
 }
@@ -159,7 +160,7 @@ func renderDistTryPage(lines []string, vsix, exe string, ok bool) string {
 <li>OK の基準：上の2つが出る。「Vim が見つかりません」などのエラーが出ない（この Vim は、dist/ の srwr に埋め込まれたスクリプトで動いています）。</li>
 </ol>
 <h3>③ 終わったら</h3>
-<p>拡張を戻したいときは、VSCode の拡張の一覧で srwr-view を「アンインストール」します（この確認では、dist/ の .vsix を入れたままにしています）。</p>
+<p>拡張を戻したいときは、VSCode の拡張の一覧で srwr-view を「アンインストール」します（この確認では、bin/vsix/ の .vsix を入れたままにしています）。</p>
 </body></html>
 `)
 	return b.String()
@@ -171,10 +172,11 @@ func runDistTry(root string, in io.Reader, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	vsixes, _ := filepath.Glob(filepath.Join(dist, "*.vsix"))
+	vsixDir := filepath.Join(root, "bin", "vsix")
+	vsixes, _ := filepath.Glob(filepath.Join(vsixDir, "*.vsix"))
 	sort.Strings(vsixes)
 	if len(vsixes) == 0 {
-		return fmt.Errorf("no .vsix in %s; run qsoku dist first", dist)
+		return fmt.Errorf("no .vsix in %s; run qsoku snapshot first", vsixDir)
 	}
 	vsix := vsixes[len(vsixes)-1]
 
@@ -209,7 +211,7 @@ func runDistTry(root string, in io.Reader, out io.Writer) error {
 	if err := checkCodeTerminal(os.Getenv("VSCODE_IPC_HOOK_CLI")); err != nil {
 		return err
 	}
-	_, _ = fmt.Fprintln(out, "▶ dist/ の .vsix を VSCode に入れる")
+	_, _ = fmt.Fprintln(out, "▶ bin/vsix/ の .vsix を VSCode に入れる")
 	if err := command(root, out, "code", "--install-extension", vsix, "--force"); err != nil {
 		return fmt.Errorf("installing the extension: %w", err)
 	}

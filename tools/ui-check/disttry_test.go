@@ -45,7 +45,7 @@ func fakeArchive(t *testing.T, dir string) string {
 func TestDistArchiveAndExtractExe(t *testing.T) {
 	dist := t.TempDir()
 	if _, err := distArchive(dist); err == nil {
-		t.Error("no archive in dist/ should be an error that says to run qsoku dist")
+		t.Error("no archive in dist/ should be an error that says to run qsoku snapshot")
 	}
 	archive := fakeArchive(t, dist)
 	got, err := distArchive(dist)

@@ -34,6 +34,7 @@
 
 ## 書き方
 
+- **docs の例の値（ハッシュ・出力・件数など）は、推測で書かず、道具で求めるか、実際に動かして確かめて書く**（`.claude/rules/testing.md`「期待値は、テストを書く前に決める」と同じ考え方）。実装より先に docs を書くときも同じ
 - **`docs/` の文書は英語が基準。** 日本語版は、同じ名前に `_ja` を付ける（`reference/cli.md` と `reference/cli_ja.md`）。2つは対で、どちらも先頭（3行目）に、言語の切り替えを置く（英語版は `*[日本語](名前_ja.md) | **English***`、日本語版は `*[English](名前.md) | **日本語***`）。**仕様を直すときは、同じ変更の中で両方を直す**（`internal/docs` のテストが、対になっていること・英語版に日本語が混ざっていないことを確かめる）
 - **README は、先頭が中央寄せのブロック（画像・バッジ）なので、言語の切り替えは3行目でなく、先頭12行のどこかに置く**（英語版は `<a href="README_ja.md">日本語</a> | <b>English</b>`、日本語版は `English</a> | <b>日本語</b>`）。`internal/docs/readme_test.go` が、4つの README の対・切り替え・英語版の日本語の混入・画像とリンクの実在・目次の見出しを確かめる。**README には、本物と同じ形の範囲トークンを使う**（`tokens_test.go` は `docs/` だけを見る）
 - 外部サービスのバッジと対話形式のガイドの URL は、`qsoku unit` では確かめない（通信が要る）。**公開の前に `qsoku publish-check` が実際に取りに行って確かめる**（`.claude/rules/distribution.md`）。**shields.io の `visual-studio-marketplace` のバッジは廃止された**（どの拡張でも「retired badge」と出る）ので、Marketplace のバッジは `flat.badgen.net/vs-marketplace/v/…`（版）を使う。インストール数・評価のバッジは、データが付くまで 500 を返すので、付けない。README は拡張と一緒に公開され、公開した版は書き換えられない（直すには版を上げる）。バッジの絵は、badgen で1時間、GitHub と Marketplace のプロキシでさらに、キャッシュされるので、公開直後は古い版が出ても、待てば直る

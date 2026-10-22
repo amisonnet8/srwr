@@ -53,13 +53,14 @@
 - **`.claude/rules/srwr-usage.md`** — srwrの使い方（**緩いモード**）。**ファイルの変更は`look`／`edit`／`new`（理由`why`つき）で行う。`Edit`・`Write`は禁止されていないが、srwrの道具が使えないときだけ使う。作業のまとまりごとに`session`で題つきのテープを始め、コミットの前にテープを閉じる。ファイルを変える前に読む**
 - **`.claude/rules/mtqg-usage.md`** — mtqgの使い方（記録者、種類の使い分け、こまめに記録する）
 - **`.claude/rules/qsoku-usage.md`** — qsokuの使い方（`qsokufile`の名前の一覧、呼び方、書式、`//`、シェル連携）。**ビルド・テスト・lintは`go`などを直接打たず、ここの名前で実行する**
-- **`.claude/rules/testing.md`** — テスト方針（開発環境の前提、動作確認の粒度、Trivy、ShellCheck、`-race`、Bashサンドボックス・CIの落とし穴）
+- **`.claude/rules/crube-usage.md`** — crubeの使い方（MCPの`crube`・`crube-ja`とCLI、場所の探し方、英語と日本語の説明の保ち方）。**場所を探す前、ファイルを足す・動かす・消す前に読む**
+- **`.claude/rules/testing.md`** — テスト方針（開発環境の前提、動作確認の粒度、期待値の決め方、壊して確かめる（Skill`mutation-check`）、Trivy、ShellCheck、`-race`、Bashサンドボックス・CIの落とし穴）
 - **`.claude/rules/directory-structure.md`** — ディレクトリ構成と、ファイルの置き場所の判断基準。**新しいファイルを追加するときに読む**
 - **`.claude/rules/datetime.md`** — 日時の扱い（データは UTC で持ち、表示だけ利用者のタイムゾーンに直す。瞬間で比べる、時計を差し替える）。**日時を保存・表示・比較するコードを書くときに読む**
 - **`.claude/rules/working-with-human.md`** — 人間とのやり取り（頼み方の3種類、小さなつまずきの頼み方、確認の自動化、UIゲート）。**人間に何かを頼む前に読む**
 - **`.claude/rules/naming.md`** — 命名規則（製品名、用語の日本語と英語の対応、JSON・Go・TypeScript・Vim script の名前）
-- **`.claude/rules/distribution.md`** — 配布方法（リリースの流れ、`go install`、GitHub Releases、cgo なし、バージョン、`.vsix`、Vim スクリプトの埋め込み）
-- **`.claude/rules/documentation.md`** — ドキュメントの書き方（文書の役割、仕様と実装がずれたとき、言語、`docs/design/`に書く経緯の線引き）
+- **`.claude/rules/distribution.md`** — 配布方法（goreleaserでの配布物の作り方とリリースの流れ、`go install`、cgo なし、バージョン、`.vsix`、Vim スクリプトの埋め込み）
+- **`.claude/rules/documentation.md`** — ドキュメントの書き方（文書の役割、仕様と実装がずれたとき、言語、例の値は道具で求める、`docs/design/`に書く経緯の線引き）
 - **`.claude/rules/go-code.md`** — Go の srwr 固有の決まり（外部依存ゼロ、書き込みの順序、ロック、記録しないファイル）
 - **`.claude/rules/tape.md`** — テープ・範囲トークン・表示サーバーのプロトコルの互換性、正解データとの答え合わせ。**形式やプロトコルに触れるときに読む**
 - **`.claude/rules/extension.md`** — VSCode 拡張の決まりと落とし穴。**`extension/` を触るときに読む**
@@ -72,9 +73,11 @@
 - **Bashのコマンドは、すべて`bcuz "理由" コマンド…`で実行する**（`bcuz "lintの確認" qsoku lint`）。理由は「何をするか」でなく「なぜするか」。`bcuz`で始まらない・`&&`や`;`でつなぐコマンドは、`.claude/settings.json`の`PreToolUse`フック（`.claude/hooks/require-bcuz.sh`）が実行前に断る。**`git commit`だけは`bcuz`を通さない**（通すとコミットの後に記録が増えるため。理由はコミットメッセージに書く）。実行の記録は`.bcuz/history.jsonl`に残り（コミットする）、`bcuz -H`で見られる。**トークンなどの秘密を、コマンドの引数・`env`の指定・理由に書かない**（記録に残り、コミットされる）（`.claude/rules/bcuz-usage.md`）
 - **ファイルの変更は、srwrの道具（`look`で見て`edit`、新規は`new`）で行い、すべてに理由（`why`）を添える。** このリポジトリは緩いモードで、組み込みの`Edit`・`Write`は禁止されていないが、srwrの道具が使えないとき（道具の不具合など）だけ使う。Bashでの書き換え（`sed -i`・リダイレクト）もしない
 - **作業のまとまり（todo・bug・人間の依頼・作業の種類の変わり目）ごとに、最初に`session`で題つきのテープを始める。** 1つの作業＝1本のテープ、コミットも同じ区切り
-- **コミットの前に、テープを閉じる**（`srwr tapes check`のあと`srwr tapes new`）。書き込み中の生のテープは`.gitignore`で対象外で、閉じて圧縮した`.srwr/tapes/*.tape.jsonl.gz`だけがgitに入る（`.claude/rules/srwr-usage.md`）
+- **コミットの前に、テープを閉じる**（`srwr tapes check`のあと`srwr tapes new`）。コミットまでの手順はSkill`commit-with-tape`。書き込み中の生のテープは`.gitignore`で対象外で、閉じて圧縮した`.srwr/tapes/*.tape.jsonl.gz`だけがgitに入る（`.claude/rules/srwr-usage.md`）
+- **このリポジトリの中の場所は、まずcrubeで引く**（MCPの`find`・`tree`・`show`、または`crube find …`）。ファイル・ディレクトリを足す・動かす・消すときは、同じ変更の中で英語と日本語の説明を直し、コミットの前に両方の言語で`crube status --require all`を通す（`.claude/rules/crube-usage.md`）
 - 実装後は`.claude/rules/testing.md`に従い、ビルド確認に加えて実際の動作確認（`bcuz "…" qsoku check`、必要に応じて`qsoku race`・`qsoku trivy`・`qsoku shellcheck`）を行うこと。判断に迷ったら実行する側に倒すこと
-- 依存ライブラリを足したら、Trivyでライセンス・脆弱性を確認すること（`qsoku trivy`）
+- 依存ライブラリは、標準ライブラリ → `golang.org/x` → 何かの公式のもの → デファクトの順で選ぶ（依存を足すこと自体が人間に聞く判断。`.claude/rules/working-with-human.md`）
+- 依存ライブラリを足したら、Trivyでライセンス・脆弱性を確認すること（`qsoku trivy`）。srwr は外部依存ゼロが方針なので、足すこと自体が重要な判断（人間に聞く）
 - 人間に確認を頼むときは、`.claude/rules/working-with-human.md` 3章の形で、1コマンドと見るところだけを渡すこと
 
 ## gitの扱い（Claude Codeの作業として）
@@ -98,6 +101,8 @@
 **srwrの緩いモード**（2026-10-16、人間の決定）：`.mcp.json`にsrwrのMCPサーバー、`PostToolUse`に`srwr hook`（読み取りと`Edit`・外部変更の記録）があり、`permissions.allow`でsrwrの道具を許可している。厳格モードの`Edit`・`Write`の禁止は**入れていない**（使っているsrwrに不具合があっても、編集の手段を失わないため）。道具として動くのは公開済みの`srwr`（`@latest`）で、開発中の`bin/srwr`ではない。テープ（`.srwr/tapes/`）はgitで共有する（鍵`.srwr/key`は入れない）。引数なしの`srwr init`（厳格モードにする）は動かさない。詳細は`.claude/rules/srwr-usage.md`。
 
 ビルドの自動フック（`PostToolUse`）が設定されている。`Edit`・`Write`かsrwrの`edit`・`new`で、`.go`・`go.mod`・`go.sum`を変えると`.claude/hooks/build.sh`が`qsoku build`を、`extension/`の`.ts`・`package.json`・`tsconfig.json`を編集すると`qsoku ext-build`を実行し、失敗すると理由がClaude Codeに返る。複数ファイルにまたがる編集の途中は、まだ書いていないファイルを参照して一時的に失敗することがある。
+
+**crubeの配線**：`.mcp.json`に、crubeのMCPサーバーが2つある（`crube`は英語、`crube-ja`は日本語。`crube mcp --allow-write`）。srwrの`new`のあとには`.claude/hooks/crube-untracked.sh`が、説明の無いパスを言語ごとに知らせる（止めはしない）。詳細は`.claude/rules/crube-usage.md`。
 
 ## mtqgでの記録について
 

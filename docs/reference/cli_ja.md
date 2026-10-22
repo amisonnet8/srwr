@@ -15,6 +15,7 @@
 | `srwr init` | 人 | 作業場を srwr 用に準備する |
 | `srwr tapes` | 人 | テープの一覧・整理 |
 | `srwr trace [ファイル]` | 人 | 差分の追加行を作ったテープの操作と、その理由を引く |
+| `srwr completion <シェル>` | 人 | シェルの補完スクリプトを出す（bash・zsh・fish・powershell） |
 
 `srwr --version`（または `version`）でバージョン、`srwr --help`（`-h`・`help`）で使い方が出る。コマンドがないとき、知らないコマンドのときは、使い方を標準エラー出力に出して、終了コードは 2。
 
@@ -26,7 +27,7 @@ srwr が出す文言は英語が既定。日本語にするには、環境変数
 go install github.com/amisonnet8/srwr/cmd/srwr@latest
 ```
 
-ビルド済みのバイナリは、Linux・macOS・Windows（amd64・arm64）向けを GitHub Releases で配る。ファイル名は `srwr_<版>_<os>_<arch>.tar.gz`（Windows は `.zip`）で、中に `srwr`（`srwr.exe`）・`LICENSE`・`README.md` が入る。`checksums.txt` に全ファイルの SHA-256 が並ぶ（`sha256sum -c checksums.txt`）。cgo は使わないので、どの OS でも単一のバイナリで動く。
+ビルド済みのバイナリは、Linux・macOS・Windows（amd64・arm64）向けを GitHub Releases で配る。ファイル名は `srwr_<版>_<os>_<arch>.tar.gz`（Windows は `.zip`。版は `v` なしで、`srwr_0.2.0_linux_amd64.tar.gz` のようになる）で、中に `srwr`（`srwr.exe`）・`LICENSE`・`README.md`・`README_ja.md`・`licenses/`（srwr に組み込まれるもののライセンス文）が入る。`checksums.txt` に、srwr-view の `.vsix` も含めて Release の全ファイルの SHA-256 が並ぶ（`sha256sum -c checksums.txt`）。cgo は使わないので、どの OS でも単一のバイナリで動く。
 
 見る道具は、好みで選ぶ。
 
@@ -224,6 +225,29 @@ git log -p -5 | srwr trace --mark
 - **`--as-tape`**：コミットごとに、結びついた操作を再生できる1本のテープとして `.srwr/tapes/` に書き（`srwr view <ID>`、エディタの一覧）、コミットの下にその ID を出す（`→ srwr view <ID>`）。テープは、ファイルごとに、最初から最後の操作までの間のものを全部持つ（[tape_ja.md](tape_ja.md#header)）。同じテキストは同じテープになる。ロックは取らず、一時ファイルを経て書く。このコマンドが作ったのではない同じ ID のテープと、圧縮したテープは、置き換えない。
 - `--mark`・`--json`・`--as-tape` は一緒に使えない。
 - `.srwr/` の下のファイルと、消されたファイルは出さない。何も見つからないときはそう言い、終了コードは 0。
+
+## srwr completion
+
+```
+srwr completion <bash | zsh | fish | powershell>
+```
+
+シェルの補完スクリプトを標準出力に出す。一度入れればよい。
+
+| シェル | 入れ方 |
+|---|---|
+| bash | `srwr completion bash > ~/.local/share/bash-completion/completions/srwr`（bash-completion のパッケージが要る） |
+| zsh | `srwr completion zsh > "${fpath[1]}/_srwr"`（そのあと新しいシェルを開く。`compinit` が有効であること） |
+| fish | `srwr completion fish > ~/.config/fish/completions/srwr.fish` |
+| PowerShell | `srwr completion powershell >> $PROFILE` |
+
+今のシェルでだけ試すときは、`source <(srwr completion bash)`（`zsh` も同じ）、`srwr completion fish | source`、`srwr completion powershell | Out-String | Invoke-Expression`。
+
+- **スクリプトは一覧を持たない。** TAB のたびに `srwr __complete`（スクリプトのためのコマンド。人は使わない）を動かすので、出る候補は、入っている `srwr` といつも一致する。srwr を更新しても、スクリプトを入れ直さなくてよい
+- 出すもの：コマンド。各コマンドのフラグ（すでに付けたフラグはもう出さない。`--keep`・`--older-than` は `tapes prune` のあとだけ、`--live` は `view` にテープを渡していないときだけ）。`srwr tapes` の操作（`new`・`prune`・`path`・`check`）。`srwr view`・`srwr tapes path`・`srwr tapes check`・`srwr trace --tape` では、作業場（行に `--root` があればそこ）のテープ ID を、新しい順に、始めた時刻と題を説明に添えて。`srwr completion` のシェル名
+- srwr が出すものが無いところ（`--root` のディレクトリ、`srwr trace` のファイル）では、シェルがいつもどおりファイルを出す
+- 説明は英語で、`SRWR_LANG=ja` なら日本語。TAB で使うのは各テープの header だけで、何も作らない（`.srwr/` も）
+- `srwr completion` にシェルが無いとき・知らないシェルのときは、使い方を標準エラー出力に出して、終了コードは 2
 
 ## 記録しないファイル
 

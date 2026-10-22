@@ -15,6 +15,7 @@
 | `srwr init` | People | Sets up a workspace for srwr |
 | `srwr tapes` | People | Lists and tidies tapes |
 | `srwr trace [file]` | People | Finds the tape operations (and their why) behind the lines a diff adds |
+| `srwr completion <shell>` | People | Prints a shell completion script (bash, zsh, fish, powershell) |
 
 `srwr --version` (or `version`) shows the version, and `srwr --help` (or `-h`, `help`) shows the usage. With no command, or with a command srwr does not know, the usage goes to standard error and the exit code is 2.
 
@@ -26,7 +27,7 @@ What srwr prints is English by default. Set the environment variable `SRWR_LANG=
 go install github.com/amisonnet8/srwr/cmd/srwr@latest
 ```
 
-Prebuilt binaries for Linux, macOS and Windows (amd64 and arm64) are distributed on GitHub Releases. Each file is named `srwr_<version>_<os>_<arch>.tar.gz` (`.zip` for Windows) and holds `srwr` (`srwr.exe`), `LICENSE` and `README.md`; `checksums.txt` lists the SHA-256 of every file (`sha256sum -c checksums.txt`). cgo is not used, so it runs as a single binary on any OS.
+Prebuilt binaries for Linux, macOS and Windows (amd64 and arm64) are distributed on GitHub Releases. Each file is named `srwr_<version>_<os>_<arch>.tar.gz` (`.zip` for Windows; the version without `v`, as `srwr_0.2.0_linux_amd64.tar.gz`) and holds `srwr` (`srwr.exe`), `LICENSE`, `README.md`, `README_ja.md` and `licenses/` (the license texts of what is built into srwr); `checksums.txt` lists the SHA-256 of every file of the Release, the `.vsix` of srwr-view included (`sha256sum -c checksums.txt`). cgo is not used, so it runs as a single binary on any OS.
 
 Choose the tool for viewing as you like.
 
@@ -224,6 +225,29 @@ Gives the lines a commit adds back to the operations on the tapes that wrote the
 - **`--as-tape`**: writes the operations found for each commit as one tape in `.srwr/tapes/` that can be replayed (`srwr view <ID>`, or the list of the editor), and names it under the commit (`→ srwr view <ID>`). The tape holds, for each file, everything between the first and the last of those operations ([tape.md](tape.md#header)). The same text makes the same tape; it is written without the lock, through a temporary file. A tape of the same ID that this command did not make, or that has been compressed, is never replaced.
 - `--mark`, `--json` and `--as-tape` do not go together.
 - Files under `.srwr/` and deleted files are not listed. When nothing is found it says so and the exit code is still 0.
+
+## srwr completion
+
+```
+srwr completion <bash | zsh | fish | powershell>
+```
+
+Prints the completion script of a shell to standard output. Install it once:
+
+| Shell | Install |
+|---|---|
+| bash | `srwr completion bash > ~/.local/share/bash-completion/completions/srwr` (needs the bash-completion package) |
+| zsh | `srwr completion zsh > "${fpath[1]}/_srwr"` (then start a new shell; `compinit` must be on) |
+| fish | `srwr completion fish > ~/.config/fish/completions/srwr.fish` |
+| PowerShell | `srwr completion powershell >> $PROFILE` |
+
+To try it in the current shell only: `source <(srwr completion bash)` (or `zsh`), `srwr completion fish | source`, `srwr completion powershell | Out-String | Invoke-Expression`.
+
+- **The script holds no list.** At every TAB it runs `srwr __complete` (a command for the scripts, not for people), so what is offered always matches the `srwr` that is installed. Reinstalling the script after updating srwr is not needed
+- What is offered: the commands; the flags of each command (a flag already given is not offered again; `--keep` and `--older-than` only after `tapes prune`, `--live` only while `view` has no tape); the actions of `srwr tapes` (`new`, `prune`, `path`, `check`); the tape IDs of the workspace (of `--root` if it is on the line) for `srwr view`, `srwr tapes path`, `srwr tapes check` and `srwr trace --tape`, newest first, each described by when it started and its title; the shells of `srwr completion`
+- Where srwr has nothing to offer (the directory of `--root`, the file of `srwr trace`), the shell offers files as usual
+- The descriptions are in English, or in Japanese with `SRWR_LANG=ja`. A TAB uses only the header of each tape, and makes nothing (not even `.srwr/`)
+- `srwr completion` with no shell, or one it does not know, prints the usage to standard error and exits with code 2
 
 ## Files that are not recorded
 

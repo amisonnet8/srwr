@@ -159,8 +159,14 @@ extension/	srwr-view, the VSCode extension (TypeScript, no runtime dependencies)
 			README.md	What each golden file covers
 			*.json	The frames, files, contentAt and final diff of one case
 internal/	The packages of srwr
-	cli/	The subcommands: mcp, hook, view-server, view, init, tapes, trace
+	cli/	The subcommands: mcp, hook, view-server, view, init, tapes, trace, completion
 		cli.go	Dispatches the subcommands; the version
+		completion.go	srwr completion, and srwr __complete that the scripts ask at every TAB
+		completion/	The shell completion scripts, embedded in srwr
+			srwr.bash	For bash
+			srwr.fish	For fish
+			srwr.ps1	For PowerShell
+			srwr.zsh	For zsh
 		init.go	srwr init
 		tapes.go	srwr tapes: list, path, new, prune, check
 		trace.go	srwr trace: reads a diff and names the operations behind its lines

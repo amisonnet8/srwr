@@ -65,6 +65,8 @@ Prebuilt binaries for Linux, macOS and Windows are on [GitHub Releases](https://
 
 To view in VSCode, install the extension **srwr-view** as well (it does not contain `srwr`; see [its README](extension/README.md)). To view in Vim, you need Vim 9.0.0784 or later and nothing else.
 
+Shell completion for bash, zsh, fish and PowerShell: `srwr completion <shell>` prints the script ([how to install it](docs/reference/cli.md#srwr-completion)).
+
 ## 🧭 How to use it
 
 1. **Set up your project** (once). This registers `srwr` for [Claude Code](https://claude.com/claude-code) and, by default, forbids its Edit and Write tools so that every change goes through `look`, `edit` and `new`:

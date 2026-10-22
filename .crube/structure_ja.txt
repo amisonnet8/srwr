@@ -159,8 +159,14 @@ extension/	VSCode 拡張 srwr-view（TypeScript、ランタイムの依存なし
 			README.md	各 golden が何を押さえるか
 			*.json	1つの場面のコマの列・files・contentAt・最後の差分
 internal/	srwr のパッケージ
-	cli/	サブコマンド：mcp・hook・view-server・view・init・tapes・trace
+	cli/	サブコマンド：mcp・hook・view-server・view・init・tapes・trace・completion
 		cli.go	サブコマンドの振り分けと版
+		completion.go	srwr completion と、スクリプトが TAB のたびに聞く srwr __complete
+		completion/	シェルの補完スクリプト（srwr に埋め込む）
+			srwr.bash	bash 用
+			srwr.fish	fish 用
+			srwr.ps1	PowerShell 用
+			srwr.zsh	zsh 用
 		init.go	srwr init
 		tapes.go	srwr tapes：一覧・path・new・prune・check
 		trace.go	srwr trace：差分を読み、その行を書いた操作を示す

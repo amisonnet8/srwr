@@ -65,6 +65,8 @@ Linux・macOS・Windows 向けのビルド済みバイナリは [GitHub Releases
 
 VSCode で見るなら、拡張 **srwr-view** も入れます（拡張は `srwr` を含みません。[拡張の README](extension/README_ja.md)）。Vim で見るなら、Vim 9.0.0784 以上があれば、ほかには何も要りません。
 
+bash・zsh・fish・PowerShell の補完：`srwr completion <シェル>` がスクリプトを出します（[入れ方](docs/reference/cli_ja.md#srwr-completion)）。
+
 ## 🧭 使い方
 
 1. **プロジェクトを準備する**（最初に 1 回）。[Claude Code](https://claude.com/claude-code) に `srwr` を登録し、既定では Edit・Write の道具を禁止して、すべての変更が `look`・`edit`・`new` を通るようにします。

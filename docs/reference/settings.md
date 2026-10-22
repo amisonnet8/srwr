@@ -69,6 +69,7 @@ The names `Select` and `Replace` are older names of the colors (blue, orange): t
 | `srwr init` | `--lenient`, `--root <workspace>` | Sets up a workspace. `--lenient` does not forbid Edit and Write |
 | `srwr tapes` | `new`, `prune --keep N` / `--older-than 30d`, `path <tape ID>`, `check [<tape ID>]`, `--root <workspace>` | Lists and tidies tapes |
 | `srwr trace` | `--root <workspace>`, `--tape <tape ID>`, `--mark`, `--json`, `--as-tape`, `[<file>]` | Finds the tape operations behind the lines a diff adds. The diff is the file, or standard input |
+| `srwr completion` | `bash`, `zsh`, `fish` or `powershell` | Prints the shell completion script ([cli.md](cli.md#srwr-completion)) |
 | `srwr` | `--version` (`version`), `--help` (`-h`, `help`) | The version, the usage |
 
 ## 3. Files in the workspace

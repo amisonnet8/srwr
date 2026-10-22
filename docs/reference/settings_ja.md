@@ -69,6 +69,7 @@ srwr が出す文言は**英語が既定**で、日本語にも切り替えら�
 | `srwr init` | `--lenient`、`--root <作業場>` | 作業場を準備する。`--lenient` は Edit・Write を禁止しない |
 | `srwr tapes` | `new`・`prune --keep N`／`--older-than 30d`・`path <テープID>`・`check [<テープID>]`、`--root <作業場>` | テープの一覧・整理 |
 | `srwr trace` | `--root <作業場>`、`--tape <テープID>`、`--mark`、`--json`、`--as-tape`、`[<ファイル>]` | 差分の追加行を作ったテープの操作を引く。差分はファイル、なければ標準入力 |
+| `srwr completion` | `bash`・`zsh`・`fish`・`powershell` | シェルの補完スクリプトを出す（[cli.md](cli_ja.md#srwr-completion)） |
 | `srwr` | `--version`（`version`）、`--help`（`-h`・`help`） | バージョン、使い方 |
 
 ## 3. 作業場のファイル

@@ -32,6 +32,7 @@ Usage:
   srwr tapes [new|prune|check|path]      List, end, tidy and check tapes (--root <workspace>)
   srwr trace [--mark|--json|--as-tape] [--tape <id>] [--root <workspace>] [file]
                                          Find the tape operations (and why) behind the lines a diff adds (pipe git show into it)
+  srwr completion <shell>                Print a shell completion script (bash, zsh, fish, powershell)
   srwr --version                         Version
   srwr --help                            This help
 `
@@ -47,6 +48,7 @@ const usageJA = `srwr: AI のエージェントに、理由を添えてファイ
   srwr tapes [new|prune|check|path]   テープの一覧・終了・整理・検査（--root <作業場>）
   srwr trace [--mark|--json|--as-tape] [--tape <ID>] [--root <作業場>] [file]
                                       差分（git show など）の追加行を作ったテープの操作と理由を引く（git show をパイプで渡す）
+  srwr completion <shell>             シェルの補完スクリプトを出す（bash・zsh・fish・powershell）
   srwr --version                      バージョン
   srwr --help                         この説明
 `
@@ -81,6 +83,11 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		return runView(args[1:], stdin, stdout, stderr)
 	case "trace":
 		return runTrace(args[1:], stdin, stdout, stderr)
+	case "completion":
+		return runCompletion(args[1:], stdout, stderr)
+	case "__complete":
+		// Called by the completion scripts at every TAB; not for people, so not in the usage.
+		return runComplete(args[1:], stdout)
 	default:
 		_, _ = fmt.Fprintf(stderr, lang.Pick("srwr: unknown command %q\n\n%s", "srwr: 知らないコマンド %q\n\n%s"), cmd, usage())
 		return 2

@@ -5,3 +5,15 @@
 #
 # 例（crube の一覧から。照合の「完全一致をパターンより優先する」という約束を壊す）：
 # 照合: 完全一致をパターンより優先しない | internal/match/match.go | ⇥⇥if e.Name == exact {⏎⇥⇥⇥return e | ⇥⇥if false && e.Name == exact {⏎⇥⇥⇥return e
+
+# srwr completion（internal/cli/completion.go）
+補完: 候補を今の語で絞らない | internal/cli/completion.go | ⇥⇥if strings.HasPrefix(c.value, prefix) { | ⇥⇥if true || strings.HasPrefix(c.value, prefix) {
+補完: 付けたフラグをもう一度出す | internal/cli/completion.go | ⇥⇥⇥if !given[c.value] { | ⇥⇥⇥if true || !given[c.value] {
+補完: テープを渡した view にも --live を出す | internal/cli/completion.go | ⇥⇥if len(pos) > 0 {⏎⇥⇥⇥return []candidate{rootFlag} | ⇥⇥if false && len(pos) > 0 {⏎⇥⇥⇥return []candidate{rootFlag}
+補完: prune でなくても --keep を出す | internal/cli/completion.go | if len(pos) > 0 && pos[0] == "prune" { | if true || len(pos) > 0 && pos[0] == "prune" {
+補完: bash が = で割った語をつながない | internal/cli/completion.go | for _, c := range complete(joinEquals(words), word) { | for _, c := range complete(words, word) {
+補完: テープを古い順に出す | internal/cli/completion.go | return heads[i].started.After(heads[j].started) | return heads[i].started.Before(heads[j].started)
+補完: テープの説明に題を入れない | internal/cli/completion.go | ⇥⇥if h.title != "" { | ⇥⇥if false && h.title != "" {
+補完: --root の作業場を読まない | internal/cli/completion.go | ⇥⇥if name == "--root" {⏎⇥⇥⇥root = val | ⇥⇥if false && name == "--root" {⏎⇥⇥⇥root = val
+補完: 次の語を値に取るフラグの値を読み飛ばさない | internal/cli/completion.go | ⇥⇥case !hasEq && i+1 < len(words):⏎⇥⇥⇥i++ | ⇥⇥case !hasEq && i+1 < len(words):⏎⇥⇥⇥i += 0
+補完: 知らないシェルで 0 を返す | internal/cli/completion.go | ⇥return 2⏎}⏎⏎// candidate | ⇥return 0⏎}⏎⏎// candidate

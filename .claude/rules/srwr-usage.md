@@ -94,3 +94,4 @@ git add … && git commit …
 - `srwr`が`PATH`に無いと、`.mcp.json`もhookも動かない（hookは失敗しても作業は止まらず、記録だけが抜ける）。`srwr --version`で確かめる
 - **`session`を呼ぶと、作業場全体のテープが切り替わる**（`srwr tapes new`と同じ）。ほかのセッション（人間が別のClaude Codeを動かしているなど）にも効く。範囲トークンは、閉じたテープのものは使えなくなるので、`session`のあとは`look`し直す
 - `srwr view`は`~/.cache/srwr`に書くので、サンドボックスの中では動かさず、人間のターミナルで動かす
+- **リリースのタグを打った直後にコンテナを作り直すと、前の版の`srwr`が入ることがある**（v0.3.0 で起きた）。Go のモジュールプロキシは`@latest`の答えをしばらく覚えているので、postCreate.sh の`go install …@latest`が前の版を入れ、その版に無い補完（`srwr completion`）も警告を出して飛ばす。作り直したら`srwr --version`を見る。古ければ`go install github.com/amisonnet8/srwr/cmd/srwr@<新しい版>`で入れ直し（サンドボックスの中でもよい。`proxy.golang.org`・`sum.golang.org`・`storage.googleapis.com`への接続が要る）、補完は人間のターミナルで入れ直す（書き先がサンドボックスの外）

@@ -5,7 +5,7 @@ AI は公開しない（`git push`・タグの push・Marketplace へのアッ�
 ## 1. 版を決める
 
 - srwr の版は、**タグ**（`v0.1.0` の形）。Release のバイナリは goreleaser が `-X main.version=<タグ>` で版を埋め、`go install …@v0.1.0` で入れたものはモジュールの版を出すので、どちらも `srwr --version` が `v0.1.0` になる。`qsoku snapshot` は直近のタグを使うので、バイナリはそのタグ（`v0.2.0`）、配布物の名前は次の版の `-snapshot`（`0.2.1-snapshot`）になる
-- 拡張の版は `extension/package.json` の `version`。srwr の版とは別に上げてよい。Marketplace は**同じ版を2回上げられない**ので、更新のたびに上げる
+- 拡張の版は `extension/package.json` の `version`で、**srwr の版と同じにする**（タグ `v0.3.0` なら `0.3.0`。拡張が変わらない版でも上げる）。`package-lock.json` の2か所も直して、タグを打つ前にコミットする。違うままタグを push すると、`release.yml` が最初に止まる。Marketplace は**同じ版を2回上げられない**ので、この決まりでも版は必ず進む
 - 拡張の README に書く `protocolVersion` が、今の表示サーバーのものと同じか確かめる（`extension/README.md` の「Prerequisites」）
 
 ## 2. 公開前の確認（手元）
@@ -35,7 +35,7 @@ AI は公開しない（`git push`・タグの push・Marketplace へのアッ�
 4. *New extension* → *Visual Studio Code* で `.vsix` を選ぶ。更新は、拡張の *…* → *Update*
 5. 検証が終わるのを待ち、拡張のページを見る：アイコン、README の画像、バッジ（版・評価は、公開されて初めて出る）、「Prerequisites」のリンク
 6. 公開後に、インストール数・評価のバッジを README に足し直すかを決める（今は外してある。ルートと拡張の README の英語・日本語の4つ）。使うのは `https://flat.badgen.net/vs-marketplace/i/amisonnet8.srwr-view`（インストール数）と `…/rating/…`（評価。評価が1件もないあいだは 500 になる）。shields.io の Marketplace のバッジは廃止されている
-7. README だけを直して公開し直すときも、`package.json` の `version` を上げる（0.1.0 → 0.1.1）。Marketplace の README は `.vsix` の中のものなので、リポジトリの README を直しても、上げ直すまで公開側は変わらない。main に push して作業ツリーが clean な状態で `qsoku vsix` を動かし、できた `bin/vsix/srwr-view-<版>.vsix` を `qsoku publish-check` に通して上げる（srwr のバイナリは変わらないので、Release は作らなくてよい）
+7. 拡張の README だけを直して公開し直すときも、srwr と一緒に版を上げて（0.3.0 → 0.3.1）、タグを打つ（上の3章）。Marketplace の README は `.vsix` の中のものなので、リポジトリの README を直しても、上げ直すまで公開側は変わらない。上げるのは、その Release に付いた `.vsix`
 
 ## 5. Open VSX（任意）
 

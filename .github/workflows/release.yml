@@ -15,7 +15,23 @@ permissions:
   contents: read
 
 jobs:
+  # srwr and srwr-view are released with the same version
+  # (.claude/rules/distribution.md): a tag that is not v<the extension's
+  # version> makes nothing. This is checked first, before the long checks.
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Stop if the extension's version is not the tag's
+        run: |
+          version=$(jq -r .version extension/package.json)
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::extension/package.json says $version, but the tag is $GITHUB_REF_NAME. Set the extension's version to the tag's, commit, and tag that commit."
+            exit 1
+          fi
+
   checks:
+    needs: version
     uses: ./.github/workflows/ci.yml
 
   release:

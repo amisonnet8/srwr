@@ -53,7 +53,7 @@
 - **GitHub Release への添付までは自動**（上の「リリースの流れ」）。VSCode Marketplace・Open VSX への公開は、人間が判断して行う。**コマンドでは公開せず、`.vsix` を Web サイトからアップロードする**（`dev/publish.md`。PAT・`vsce publish`・Actions は使わない）。公開前に Marketplace で `srwr-view` の名前が空いているかを手で確かめる
 - 拡張は `srwr` のバイナリ（表示サーバー）を必要とする。場所は設定 `srwr.path`。**`.vsix` にバイナリを同梱しない**（R11 で決定。`srwr` は `go install` か GitHub Releases で別に入れる。理由は `docs/design/decisions.md`）。見つからないときは、拡張が入れ方を案内する
 - 拡張の README（`extension/README.md`）は Marketplace に出る。**画像は PNG にする**（vsce は SVG を受けない。`qsoku readme-media` が作る）。相対パスの画像は vsce が公開時にリポジトリの URL に直す（R13 の `vsce package` で確かめる）
-- 拡張のバージョンは `extension/package.json` の `version`。srwr のバイナリとは別に上げてよい。ただし、**対応する表示サーバーの `protocolVersion`** を拡張の README に書く
+- 拡張のバージョンは `extension/package.json` の `version`。**srwr の版（タグから `v` を除いたもの）と同じにする**（2026-10-22、人間の判断。Release に `srwr` と版の違う `.vsix` が並ぶと、どれが対か分からない）。拡張が変わらない版でも上げる。タグを打つ前に、`package.json` と `package-lock.json`（2か所）を次の版にしてコミットする。`release.yml` の最初のジョブが、タグと `package.json` の版が違えば何も作らずに止める。また、**対応する表示サーバーの `protocolVersion`** を拡張の README に書く
 
 ## srwr-view.vim（Vim スクリプト）
 

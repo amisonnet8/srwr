@@ -133,8 +133,10 @@ go install github.com/amisonnet8/crube/cmd/crube@latest
 # goreleaser: builds the release archives (.goreleaser.yaml). Needed here only
 # for `qsoku snapshot`, which makes them without a tag to look at before tagging
 # (.claude/rules/distribution.md); the release workflow installs its own.
-# @latest, like the tools above.
-go install github.com/goreleaser/goreleaser/v2@latest
+# @latest, like the tools above. A new goreleaser can need a newer Go than the
+# image has (v2.19.0 needed 1.27.3 on an image with 1.27.2): GOTOOLCHAIN=auto
+# lets go fetch that Go for this build only. The container's Go stays as it is.
+GOTOOLCHAIN=auto go install github.com/goreleaser/goreleaser/v2@latest
 
 # pwsh has no $PROFILE of its own until asked: query it rather than hardcode
 # the path. zsh's fpath[1] in this image is a root-owned system directory. The

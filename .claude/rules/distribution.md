@@ -25,7 +25,7 @@
 - goreleaser はいったん**下書き**に添付し、すべて添付し終えてから、最後の手順（`gh release edit --draft=false`）で公開する。途中で落ちると下書きだけが残り、公開された Release に配布物が欠けることはない。同じタグでもう一度動かすと、その下書きを置き換える（`replace_existing_draft`）。落ちたときは、原因を直したコミットに新しいタグを打つか、同じコミットのままなら workflow を再実行する
 - **公開済みの Release があるタグでは、何も変えずに失敗する**（最初の手順）。出し直すときは、新しいタグを打つ
 - **srwr だけ、Release の本文を絞る**（`.goreleaser.yaml` の`changelog.filters`。共通の設定から外れる。2026-10-22、人間の決定 q bbd517c9）。題が`chore`・`build`・`ci`・`test`・`docs(dev)`で始まるコミットは本文に載らない。利用者に見せる変更は`feat`・`fix`・`docs`で、内部の変更はそれ以外の題で書く。共通の設定を取り込み直すときに、この filters を消さない
-- **タグを打つ前に、手元で`qsoku snapshot`を動かして中身を見る**（`.vsix`も`bin/vsix/`にできる。入れて開く確認は`qsoku dist-try`）。タグなしで`dist/`に同じ配布物を作る（直近のタグが`v0.2.0`なら、配布物の版は`0.2.1-snapshot`、バイナリの版は`v0.2.0`。タグが1つも無ければ`0.0.1-snapshot`と`v0.0.0`）。goreleaser は`.devcontainer/postCreate.sh`が入れる。コンテナを作り直す前に要るときは、`go install github.com/goreleaser/goreleaser/v2@latest`（Bashサンドボックスの中では、`proxy.golang.org`と`storage.googleapis.com`への接続が要る）。`.goreleaser.yaml`を変えたら`qsoku snapshot`で確かめる。CI の`dist`ジョブも、同じ配布物を毎回作って確かめる
+- **タグを打つ前に、手元で`qsoku snapshot`を動かして中身を見る**（`.vsix`も`bin/vsix/`にできる。入れて開く確認は`qsoku dist-try`）。タグなしで`dist/`に同じ配布物を作る（直近のタグが`v0.2.0`なら、配布物の版は`0.2.1-snapshot`、バイナリの版は`v0.2.0`。タグが1つも無ければ`0.0.1-snapshot`と`v0.0.0`）。goreleaser は`.devcontainer/postCreate.sh`が入れる。コンテナを作り直す前に要るときは、`GOTOOLCHAIN=auto go install github.com/goreleaser/goreleaser/v2@latest`（goreleaser がコンテナより新しい Go を求めるとき、その Go を取ってきてビルドする。Bashサンドボックスの中では、`proxy.golang.org`と`storage.googleapis.com`への接続が要る）。`.goreleaser.yaml`を変えたら`qsoku snapshot`で確かめる。CI の`dist`ジョブも、同じ配布物を毎回作って確かめる
 - ビルド済みのバイナリと`.vsix`は、リポジトリにコミットしない（`/bin/`・`/dist/`・`*.vsix`は`.gitignore`済み。`.claude/rules/directory-structure.md`「配布物」）
 - 手順の全体（版、タグ、Release、Marketplace）は`dev/publish.md`
 

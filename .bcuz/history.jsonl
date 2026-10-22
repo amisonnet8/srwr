@@ -204,3 +204,22 @@
 {"v":1,"ts":"2026-10-22T10:21:04.589Z","why":"人間が入れたsrwrの補完が4つのシェルに置かれたか確かめる","cmd":["sh","-c","ls ~/.local/share/bash-completion/completions/srwr ~/.config/fish/completions/srwr.fish \"$(zsh -fc \"echo \\$fpath[1]\")/_srwr\"; grep -c \"CommandName srwr\" \"$(pwsh -NoLogo -NoProfile -Command \"\\$PROFILE\")\""],"dir":".","exit":0,"ms":467}
 {"v":1,"ts":"2026-10-22T10:21:09.761Z","why":"置かれた補完が、各シェルのふだんの読み込み方で実際に候補を出すか確かめる","cmd":["sh","-c","export SRWR_LANG=; echo \"[bash]\"; bash -c \"source ~/.local/share/bash-completion/completions/srwr; COMP_WORDS=(srwr ta); COMP_CWORD=1; _srwr; printf \\\"%s\\n\\\" \\\"\\${COMPREPLY[@]}\\\"\"; echo \"[zsh]\"; HOME=$TMPDIR/zh zsh -fc \"mkdir -p \\$HOME; autoload -Uz compinit; compinit -u -d \\$HOME/zcd; print -r -- \\$_comps[srwr]\"; echo \"[fish]\"; fish -c \"complete -C \\\"srwr ta\\\"\" 2>/dev/null; echo \"[pwsh]\"; pwsh -NoLogo -Command \"(TabExpansion2 \\\"srwr ta\\\" 7).CompletionMatches | ForEach-Object CompletionText\""],"dir":".","exit":0,"ms":1436}
 {"v":1,"ts":"2026-10-22T10:21:21.358Z","why":"bugを閉じた記録のコミットの前に、テープに無い変更が無いか確かめる","cmd":["srwr","tapes","check"],"dir":".","exit":0,"ms":49}
+{"v":1,"ts":"2026-10-22T22:50:58.730Z","why":"コンテナ作り直し後に goreleaser が入ったか確かめる","cmd":["goreleaser","--version"],"dir":".","exit":0,"ms":78}
+{"v":1,"ts":"2026-10-22T22:50:59.165Z","why":"共通化のための未コミットのルール変更を読む","cmd":["git","diff"],"dir":".","exit":0,"ms":6}
+{"v":1,"ts":"2026-10-22T22:51:07.637Z","why":"goreleaser の入れ方の記述がほかに残っていないか探す","cmd":["grep","-rn","--exclude-dir=node_modules","--exclude-dir=.git","--exclude-dir=.mtqg","--exclude-dir=.bcuz","-e","goreleaser/v2@","-e","GOTOOLCHAIN","."],"dir":".","exit":2,"ms":53}
+{"v":1,"ts":"2026-10-22T22:51:07.874Z","why":"テンプレートのテストが前提にする main.go の文言と照らす","cmd":["cat","tools/licenses/main.go"],"dir":".","exit":0,"ms":1}
+{"v":1,"ts":"2026-10-22T22:51:08.074Z","why":"コンテナの Go と go.mod の版を確かめる","cmd":["sh","-c","go version; head -5 go.mod"],"dir":".","exit":0,"ms":6}
+{"v":1,"ts":"2026-10-22T22:51:11.757Z","why":"snapshot や dist-try が goreleaser の入れ方を案内していないか探す","cmd":["grep","-rn","-i","goreleaser","qsokufile","tools","dev/publish.md","README.md",".github"],"dir":".","exit":0,"ms":2}
+{"v":1,"ts":"2026-10-22T22:51:16.734Z","why":"共通化で足した tools/licenses のテストが、このPJの main.go で通るか確かめる","cmd":["go","test","-count=1","-v","./tools/licenses/"],"dir":".","exit":0,"ms":1526}
+{"v":1,"ts":"2026-10-22T22:51:18.401Z","why":"postCreate.sh の変更が ShellCheck を通るか確かめる","cmd":["qsoku","shellcheck"],"dir":".","exit":0,"ms":198}
+{"v":1,"ts":"2026-10-22T22:51:21.762Z","why":"ルール共通化の変更の区切りで、全体の検査を通す","cmd":["qsoku","check"],"dir":".","exit":0,"ms":39152}
+{"v":1,"ts":"2026-10-22T22:52:01.063Z","why":"作り直したコンテナの goreleaser で配布物が実際に作れるか確かめる","cmd":["qsoku","snapshot"],"dir":".","exit":0,"ms":17146}
+{"v":1,"ts":"2026-10-22T22:52:22.706Z","why":"パイプで隠れた qsoku check と snapshot の終了コードを記録から確かめる","cmd":["sh","-c","tail -3 .bcuz/history.jsonl | cut -c1-200"],"dir":".","exit":0,"ms":2}
+{"v":1,"ts":"2026-10-22T22:52:27.008Z","why":"新ルールの .exe の落とし穴に、ほかのテストが当てはまらないか探す","cmd":["grep","-rn","--include=*.go","-e","\"build\", \"-o\"","-e","go build -o","internal","tools","vim","cmd"],"dir":".","exit":0,"ms":6}
+{"v":1,"ts":"2026-10-22T22:52:29.654Z","why":"e2e と画面のテストのバイナリ名が Windows で .exe になっているか見る","cmd":["sh","-c","sed -n 55,70p internal/cli/e2e_test.go; echo ----; sed -n 30,48p vim/screen_test.go"],"dir":".","exit":0,"ms":3}
+{"v":1,"ts":"2026-10-22T22:52:43.573Z","why":"ルール共通化のコミットの前に、英語の説明の漏れを確かめる","cmd":["crube","status","--require","all"],"dir":".","exit":0,"ms":12}
+{"v":1,"ts":"2026-10-22T22:52:43.796Z","why":"ルール共通化のコミットの前に、日本語の説明の漏れを確かめる","cmd":["env","CRUBE_LANG=ja","crube","status","--require","all"],"dir":".","exit":0,"ms":12}
+{"v":1,"ts":"2026-10-22T22:52:43.994Z","why":"ルール共通化のコミットの前に、テープに無い変更が無いか確かめる","cmd":["srwr","tapes","check"],"dir":".","exit":1,"ms":50}
+{"v":1,"ts":"2026-10-22T22:52:48.010Z","why":"ルール共通化のコミットに入れるため、テープを閉じて圧縮する","cmd":["srwr","tapes","new"],"dir":".","exit":0,"ms":2}
+{"v":1,"ts":"2026-10-22T22:52:48.200Z","why":"コミットの前に git の名前とメールを確かめる","cmd":["sh","-c","git config user.email; git config user.name"],"dir":".","exit":0,"ms":3}
+{"v":1,"ts":"2026-10-22T22:52:49.902Z","why":"ルール共通化のコミットに入るものを確かめる","cmd":["git","status","--short"],"dir":".","exit":0,"ms":5}

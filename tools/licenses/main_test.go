@@ -155,6 +155,29 @@ func TestRunNoLicense(t *testing.T) {
 	}
 }
 
+// TestRunRemovesEarlierOutput makes the directory again from scratch, so that
+// the license of a dependency that was dropped does not stay in the release.
+func TestRunRemovesEarlierOutput(t *testing.T) {
+	root := t.TempDir()
+	writeFiles(t, root, map[string]string{
+		"app/go.mod":                         "module example.com/app\n",
+		"app/cmd/hello/main.go":              "package main\n\nfunc main() {}\n",
+		"out/example.com/dropped/LICENSE":    "the license of a dropped dependency\n",
+		"out/example.com/dropped/README.txt": "left by hand\n",
+	})
+	t.Chdir(filepath.Join(root, "app"))
+	dir := filepath.Join(root, "out")
+	if err := run(dir, "./cmd/hello"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "example.com")); !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("the earlier output is still there: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "go", "LICENSE")); err != nil {
+		t.Errorf("the license of Go is not there: %v", err)
+	}
+}
+
 // TestCommand runs the built command: the usage and 2 without its two
 // arguments, the error and 1 when run fails, and the licenses in the given
 // directory when it works.

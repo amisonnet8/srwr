@@ -223,3 +223,21 @@
 {"v":1,"ts":"2026-10-22T22:52:48.010Z","why":"ルール共通化のコミットに入れるため、テープを閉じて圧縮する","cmd":["srwr","tapes","new"],"dir":".","exit":0,"ms":2}
 {"v":1,"ts":"2026-10-22T22:52:48.200Z","why":"コミットの前に git の名前とメールを確かめる","cmd":["sh","-c","git config user.email; git config user.name"],"dir":".","exit":0,"ms":3}
 {"v":1,"ts":"2026-10-22T22:52:49.902Z","why":"ルール共通化のコミットに入るものを確かめる","cmd":["git","status","--short"],"dir":".","exit":0,"ms":5}
+{"v":1,"ts":"2026-10-23T00:22:54.898Z","why":"共通化のルール変更の中身を把握する","cmd":["git","status","--short"],"dir":".","exit":0,"ms":5}
+{"v":1,"ts":"2026-10-23T00:22:55.287Z","why":"共通化のルール変更の中身を把握する","cmd":["git","diff"],"dir":".","exit":0,"ms":4}
+{"v":1,"ts":"2026-10-23T00:22:59.313Z","why":"直前の共通化コミットの範囲を知る","cmd":["git","show","--stat","HEAD"],"dir":".","exit":0,"ms":8}
+{"v":1,"ts":"2026-10-23T00:23:05.236Z","why":"共通化で足されたライセンスのテストが、このPJの実装で通るか確かめる","cmd":["qsoku","unit"],"dir":".","exit":0,"ms":6095}
+{"v":1,"ts":"2026-10-23T00:23:16.074Z","why":"新しいテストが RemoveAll を消すと落ちる（効いている）かを写しで確かめる","cmd":["sh","-c","d=$TMPDIR/mut-lic; rm -rf \"$d\"; mkdir -p \"$d\"; cp go.mod \"$d\"/; mkdir -p \"$d/tools\"; cp -r tools/licenses \"$d/tools/\"; cd \"$d\" && sed -i \"s|if err := os.RemoveAll(dir); err != nil {|if err := error(nil); err != nil {|\" tools/licenses/main.go && grep -n \"error(nil)\" tools/licenses/main.go && go test ./tools/licenses/ 2>&1 | tail -8"],"dir":".","exit":0,"ms":833}
+{"v":1,"ts":"2026-10-23T00:23:23.331Z","why":"共通化のテストを取り込む前に、全体の検査を通す","cmd":["qsoku","check"],"dir":".","exit":0,"ms":38332}
+{"v":1,"ts":"2026-10-23T00:24:03.987Z","why":"qsoku check の終了コードと lint の結果を見る","cmd":["sh","-c","qsoku check >/dev/null 2>&1; echo exit=$?"],"dir":".","exit":0,"ms":18987}
+{"v":1,"ts":"2026-10-23T00:25:30.715Z","why":"人間が閉じた todo を確かめる","cmd":["mtqg","log","-n","3"],"dir":".","exit":2,"ms":3}
+{"v":1,"ts":"2026-10-23T00:25:33.599Z","why":"人間が閉じた todo を確かめる","cmd":["mtqg","log","--limit","3","--events"],"dir":".","exit":2,"ms":3}
+{"v":1,"ts":"2026-10-23T00:25:36.020Z","why":"人間が閉じた todo を確かめる","cmd":["mtqg","log","--limit","3","--kind","todo"],"dir":".","exit":0,"ms":9}
+{"v":1,"ts":"2026-10-23T00:25:39.148Z","why":"人間が閉じた todo の記録を差分で確かめる","cmd":["git","diff",".mtqg/journal.jsonl"],"dir":".","exit":0,"ms":7}
+{"v":1,"ts":"2026-10-23T00:25:41.755Z","why":"閉じた todo の中身を見る","cmd":["mtqg","show","20e2ba1df9"],"dir":".","exit":0,"ms":8}
+{"v":1,"ts":"2026-10-23T00:26:09.139Z","why":"ライセンスのテストのコミットの前に、英語の説明の漏れを確かめる","cmd":["crube","status","--require","all"],"dir":".","exit":0,"ms":11}
+{"v":1,"ts":"2026-10-23T00:26:09.359Z","why":"ライセンスのテストのコミットの前に、日本語の説明の漏れを確かめる","cmd":["env","CRUBE_LANG=ja","crube","status","--require","all"],"dir":".","exit":0,"ms":13}
+{"v":1,"ts":"2026-10-23T00:26:09.574Z","why":"ライセンスのテストのコミットの前に、テープに無い変更が無いか確かめる","cmd":["srwr","tapes","check"],"dir":".","exit":1,"ms":9}
+{"v":1,"ts":"2026-10-23T00:26:13.942Z","why":"ライセンスのテストのコミットに入れるため、テープを閉じて圧縮する","cmd":["srwr","tapes","new"],"dir":".","exit":0,"ms":10}
+{"v":1,"ts":"2026-10-23T00:26:14.152Z","why":"コミットの前に git の名前とメールを確かめる","cmd":["sh","-c","git config user.email; git config user.name"],"dir":".","exit":0,"ms":3}
+{"v":1,"ts":"2026-10-23T00:26:15.980Z","why":"ライセンスのテストのコミットに入るものを確かめる","cmd":["git","status","--short"],"dir":".","exit":0,"ms":5}
